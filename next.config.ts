@@ -1,5 +1,10 @@
 import type { NextConfig } from 'next';
 import CopyWebpackPlugin from 'copy-webpack-plugin';
+import fs from 'fs';
+import path from 'path';
+
+const queryEnginePath = path.resolve('generated/client/libquery_engine-rhel-openssl-3.0.x.so.node');
+const hasQueryEngine = fs.existsSync(queryEnginePath);
 
 const nextConfig: NextConfig = {
     webpack: (config, { isServer }) => {
@@ -11,18 +16,30 @@ const nextConfig: NextConfig = {
                 return external === '@prisma/client' ? {} : external;
             });
 
-            // Copy the Query Engine to .next/server
+            // Copy Query Engine only if it exists
             config.plugins = config.plugins || [];
-            config.plugins.push(
-                new CopyWebpackPlugin({
-                    patterns: [
-                        {
-                            from: 'node_modules/.prisma/client/libquery_engine-rhel-openssl-3.0.x.so.node',
-                            to: '.next/server/libquery_engine-rhel-openssl-3.0.x.so.node',
-                        },
-                    ],
-                })
-            );
+            if (hasQueryEngine) {
+                config.plugins.push(
+                    new CopyWebpackPlugin({
+                        patterns: [
+                            {
+                                from: queryEnginePath,
+                                to: '.next/server/libquery_engine-rhel-openssl-3.0.x.so.node',
+                            },
+                        ],
+                    })
+                );
+            } else {
+                console.warn(
+                    `Warning: Prisma Query Engine file not found at ${queryEnginePath}. Skipping copy.`
+                );
+            }
+
+            // Optimize large string serialization (to address Webpack warning)
+            config.optimization = {
+                ...config.optimization,
+                concatenateModules: false,
+            };
         }
         return config;
     },
