@@ -1,0 +1,11 @@
+{
+  "builds": [
+    {
+      "src": "next.config.ts",
+      "use": "@vercel/next",
+      "config": {
+        "buildCommand": "bunx prisma generate && next build"
+      }
+    }
+  ]
+}

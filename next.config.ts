@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
                         patterns: [
                             {
                                 from: queryEnginePath,
-                                to: '/var/task/generated/prismalibquery_engine-rhel-openssl-3.0.x.so.node',
+                                to: '/var/task/generated/prisma/libquery_engine-rhel-openssl-3.0.x.so.node',
                             },
                         ],
                     })
