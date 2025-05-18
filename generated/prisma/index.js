@@ -172,6 +172,10 @@ const config = {
         "fromEnvVar": null,
         "value": "debian-openssl-3.0.x",
         "native": true
+      },
+      {
+        "fromEnvVar": null,
+        "value": "rhel-openssl-3.0.x"
       }
     ],
     "previewFeatures": [],
@@ -198,8 +202,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"mongodb\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel User {\n  id           String    @id @default(auto()) @map(\"_id\") @db.ObjectId\n  clerkUserId  String    @unique\n  email        String?   @unique\n  name         String?\n  phone        String?   @unique\n  emailOtp     String?\n  phoneOtp     String?\n  otpExpiry    DateTime?\n  createdAt    DateTime  @default(now())\n  updatedAt    DateTime  @updatedAt\n  profileImage String?\n  drafts       Folder[]\n}\n\nmodel Question {\n  id              String           @id @default(auto()) @map(\"_id\") @db.ObjectId\n  question_number Int\n  file_name       String?\n  question_text   String\n  isQuestionImage Boolean          @default(false)\n  question_image  String?\n  isOptionImage   Boolean          @default(false)\n  options         String[]\n  option_images   String[]\n  section_name    String?\n  question_type   String?\n  topic           String?\n  exam_name       String?\n  subject         String?\n  chapter         String?\n  answer          String?\n  folderRelations FolderQuestion[] @relation(\"QuestionToFolderQuestion\")\n\n  @@index([question_number])\n  @@index([exam_name])\n  @@index([subject])\n  @@index([chapter])\n}\n\nmodel Folder {\n  id                String           @id @default(auto()) @map(\"_id\") @db.ObjectId\n  name              String\n  userId            String           @db.ObjectId\n  user              User             @relation(fields: [userId], references: [id])\n  questionRelations FolderQuestion[] @relation(\"FolderToFolderQuestion\")\n  createdAt         DateTime         @default(now())\n  updatedAt         DateTime         @updatedAt\n\n  @@index([userId])\n  @@index([name])\n}\n\nmodel FolderQuestion {\n  id         String   @id @default(auto()) @map(\"_id\") @db.ObjectId\n  folderId   String   @db.ObjectId\n  questionId String   @db.ObjectId\n  folder     Folder   @relation(fields: [folderId], references: [id], name: \"FolderToFolderQuestion\")\n  question   Question @relation(fields: [questionId], references: [id], name: \"QuestionToFolderQuestion\")\n\n  @@index([folderId])\n  @@index([questionId])\n}\n",
-  "inlineSchemaHash": "e3becba48d71103e749ab2ae69b37a6f6505ddfe1bdfc784b4181d0e60c21feb",
+  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider      = \"prisma-client-js\"\n  output        = \"../generated/prisma\"\n  binaryTargets = [\"native\", \"rhel-openssl-3.0.x\"]\n}\n\ndatasource db {\n  provider = \"mongodb\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel User {\n  id           String    @id @default(auto()) @map(\"_id\") @db.ObjectId\n  clerkUserId  String    @unique\n  email        String?   @unique\n  name         String?\n  phone        String?   @unique\n  emailOtp     String?\n  phoneOtp     String?\n  otpExpiry    DateTime?\n  createdAt    DateTime  @default(now())\n  updatedAt    DateTime  @updatedAt\n  profileImage String?\n  drafts       Folder[]\n}\n\nmodel Question {\n  id              String           @id @default(auto()) @map(\"_id\") @db.ObjectId\n  question_number Int\n  file_name       String?\n  question_text   String\n  isQuestionImage Boolean          @default(false)\n  question_image  String?\n  isOptionImage   Boolean          @default(false)\n  options         String[]\n  option_images   String[]\n  section_name    String?\n  question_type   String?\n  topic           String?\n  exam_name       String?\n  subject         String?\n  chapter         String?\n  answer          String?\n  folderRelations FolderQuestion[] @relation(\"QuestionToFolderQuestion\")\n\n  @@index([question_number])\n  @@index([exam_name])\n  @@index([subject])\n  @@index([chapter])\n}\n\nmodel Folder {\n  id                String           @id @default(auto()) @map(\"_id\") @db.ObjectId\n  name              String\n  userId            String           @db.ObjectId\n  user              User             @relation(fields: [userId], references: [id])\n  questionRelations FolderQuestion[] @relation(\"FolderToFolderQuestion\")\n  createdAt         DateTime         @default(now())\n  updatedAt         DateTime         @updatedAt\n\n  @@index([userId])\n  @@index([name])\n}\n\nmodel FolderQuestion {\n  id         String   @id @default(auto()) @map(\"_id\") @db.ObjectId\n  folderId   String   @db.ObjectId\n  questionId String   @db.ObjectId\n  folder     Folder   @relation(fields: [folderId], references: [id], name: \"FolderToFolderQuestion\")\n  question   Question @relation(fields: [questionId], references: [id], name: \"QuestionToFolderQuestion\")\n\n  @@index([folderId])\n  @@index([questionId])\n}\n",
+  "inlineSchemaHash": "7ba9984ad91bfbb24e42db59697437bbef961674fe8c18808d9c40d7b21d1f25",
   "copyEngine": true
 }
 
@@ -240,6 +244,10 @@ Object.assign(exports, Prisma)
 // file annotations for bundling tools to include these files
 path.join(__dirname, "libquery_engine-debian-openssl-3.0.x.so.node");
 path.join(process.cwd(), "generated/prisma/libquery_engine-debian-openssl-3.0.x.so.node")
+
+// file annotations for bundling tools to include these files
+path.join(__dirname, "libquery_engine-rhel-openssl-3.0.x.so.node");
+path.join(process.cwd(), "generated/prisma/libquery_engine-rhel-openssl-3.0.x.so.node")
 // file annotations for bundling tools to include these files
 path.join(__dirname, "schema.prisma");
 path.join(process.cwd(), "generated/prisma/schema.prisma")
