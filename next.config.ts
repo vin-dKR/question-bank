@@ -24,11 +24,12 @@ const nextConfig: NextConfig = {
                         patterns: [
                             {
                                 from: queryEnginePath,
-                                to: '.next/server/libquery_engine-rhel-openssl-3.0.x.so.node',
+                                to: '/var/task/generated/prismalibquery_engine-rhel-openssl-3.0.x.so.node',
                             },
                         ],
                     })
                 );
+                console.log("rhel - installed")
             } else {
                 console.warn(
                     `Warning: Prisma Query Engine file not found at ${queryEnginePath}. Skipping copy.`
