@@ -3,7 +3,7 @@ import CopyWebpackPlugin from 'copy-webpack-plugin';
 import fs from 'fs';
 import path from 'path';
 
-const queryEnginePath = path.resolve('generated/prisma/libquery_engine-rhel-openssl-3.0.x.so.node');
+const queryEnginePath = path.resolve('generated/prisma/query-engine-rhel-openssl-3.0.x');
 const hasQueryEngine = fs.existsSync(queryEnginePath);
 
 const nextConfig: NextConfig = {
@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
                         patterns: [
                             {
                                 from: queryEnginePath,
-                                to: '.next/server/generated/prisma/libquery_engine-rhel-openssl-3.0.x.so.node',
+                                to: '.next/server/generated/prisma/query-engine-rhel-openssl-3.0.x',
                             },
                         ],
                     })
