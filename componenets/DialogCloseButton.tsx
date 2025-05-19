@@ -38,7 +38,7 @@ export function DialogCloseButton({ selectedQuestions }: { selectedQuestions: Pi
             <DialogTrigger asChild>
                 <Button variant="outline">Save to Folder</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md bg-white">
                 <DialogHeader>
                     <DialogTitle>Create New Folder</DialogTitle>
                 </DialogHeader>
@@ -62,6 +62,7 @@ export function DialogCloseButton({ selectedQuestions }: { selectedQuestions: Pi
                             onClick={createFolder}
                             type="button"
                             disabled={!folderName.trim() || selectedQuestions.length === 0}
+                            className="bg-indigo-600 text-white"
                         >
                             Create Folder
                         </Button>
