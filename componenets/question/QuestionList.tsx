@@ -1,22 +1,34 @@
 'use client';
 
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
 import renderMixedLatex from '@/lib/render-tex';
+import { Flag, FlagOff } from 'lucide-react';
 
 interface QuestionProps {
     question: Question;
     isSelected: boolean;
     toggleQuestionSelection: (id: string) => void;
+    toggleQuestionFlag: (id: string) => void;
 }
 
-const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection }: QuestionProps) => {
-    // Memoize LaTeX rendering
+const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, toggleQuestionFlag }: QuestionProps) => {
+    const [isFlagging, setIsFlagging] = useState(false);
+
     const questionText = useMemo(() => renderMixedLatex(question.question_text), [question.question_text]);
     const renderedOptions = useMemo(
         () => question.options.map((option) => renderMixedLatex(option)),
         [question.options]
     );
+
+    const handleFlagToggle = () => {
+        setIsFlagging(true);
+        try {
+            toggleQuestionFlag(question.id);
+        } finally {
+            setIsFlagging(false);
+        }
+    };
 
     return (
         <div
@@ -31,7 +43,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection }: Qu
                     className="mt-1 mr-2 sm:mr-3 h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
                 />
                 <div className="flex-1 w-full text-wrap">
-                    <div className="flex flex-wrap gap-2 mb-2">
+                    <div className="flex flex-wrap gap-2 mb-2 items-center">
                         <span className="text-xs font-medium px-2 py-1 bg-slate-100 text-slate-700 rounded-full">
                             {question.exam_name}
                         </span>
@@ -43,6 +55,19 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection }: Qu
                                 {question.chapter}
                             </span>
                         )}
+                        <button
+                            onClick={handleFlagToggle}
+                            disabled={isFlagging}
+                            className={`ml-2 p-1 text-slate-600 hover:text-amber-600 transition ${isFlagging ? 'opacity-50 cursor-not-allowed' : ''
+                                }`}
+                            title={question.flagged ? 'Unflag question' : 'Flag question'}
+                        >
+                            {question.flagged ? (
+                                <Flag className="h-4 w-4 text-amber-600" />
+                            ) : (
+                                <FlagOff className="h-4 w-4" />
+                            )}
+                        </button>
                     </div>
 
                     <h3 className="text-base font-semibold mb-2 text-slate-800 sm:text-lg">
@@ -82,7 +107,31 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection }: Qu
 });
 
 export default function QuestionList() {
-    const { questions, selectedQuestionIds, toggleQuestionSelection } = useQuestionBankContext();
+    const { questions, loading, error } = useQuestionBankContext();
+
+    if (loading) {
+        return (
+            <div className="text-center py-6">
+                <p className="text-slate-600">Loading questions...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="text-center py-6">
+                <p className="text-red-600">{error}</p>
+            </div>
+        );
+    }
+
+    if (questions.length === 0 && !loading) {
+        return (
+            <div className="text-center py-6">
+                <p className="text-slate-600">No questions found matching your criteria.</p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-4 sm:space-y-6">
@@ -90,8 +139,9 @@ export default function QuestionList() {
                 <QuestionItem
                     key={question.id}
                     question={question}
-                    isSelected={selectedQuestionIds.has(question.id)}
-                    toggleQuestionSelection={toggleQuestionSelection}
+                    isSelected={useQuestionBankContext().selectedQuestionIds.has(question.id)}
+                    toggleQuestionSelection={useQuestionBankContext().toggleQuestionSelection}
+                    toggleQuestionFlag={useQuestionBankContext().toggleQuestionFlag}
                 />
             ))}
         </div>

@@ -27,6 +27,7 @@ declare global {
         answer: string;
         folderId?: string | null;
         folder?: FetchDraft | null;
+        flagged?: boolean
     }
 
     interface FetchDraft {

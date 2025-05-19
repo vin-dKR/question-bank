@@ -48,6 +48,7 @@ model Question {
   subject         String?
   chapter         String?
   answer          String?
+  flagged         Boolean?
   folderRelations FolderQuestion[] @relation("QuestionToFolderQuestion")
 
 
@@ -55,6 +56,8 @@ model Question {
   @@index([exam_name])
   @@index([subject])
   @@index([chapter])
+  @@index([flagged])
+  @@index([section_name])
 }
 
 model Folder {

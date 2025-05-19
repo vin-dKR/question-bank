@@ -29,7 +29,8 @@ export const useQuestionForm = () => {
                 exam_name: formData.exam_name || null,
                 subject: formData.subject || null,
                 chapter: formData.chapter || null,
-                answer: formData.answer
+                answer: formData.answer,
+                flagged: false
             };
 
             let result;

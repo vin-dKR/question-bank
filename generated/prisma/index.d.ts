@@ -2294,6 +2294,7 @@ export namespace Prisma {
     subject: string | null
     chapter: string | null
     answer: string | null
+    flagged: boolean | null
   }
 
   export type QuestionMaxAggregateOutputType = {
@@ -2311,6 +2312,7 @@ export namespace Prisma {
     subject: string | null
     chapter: string | null
     answer: string | null
+    flagged: boolean | null
   }
 
   export type QuestionCountAggregateOutputType = {
@@ -2330,6 +2332,7 @@ export namespace Prisma {
     subject: number
     chapter: number
     answer: number
+    flagged: number
     _all: number
   }
 
@@ -2357,6 +2360,7 @@ export namespace Prisma {
     subject?: true
     chapter?: true
     answer?: true
+    flagged?: true
   }
 
   export type QuestionMaxAggregateInputType = {
@@ -2374,6 +2378,7 @@ export namespace Prisma {
     subject?: true
     chapter?: true
     answer?: true
+    flagged?: true
   }
 
   export type QuestionCountAggregateInputType = {
@@ -2393,6 +2398,7 @@ export namespace Prisma {
     subject?: true
     chapter?: true
     answer?: true
+    flagged?: true
     _all?: true
   }
 
@@ -2499,6 +2505,7 @@ export namespace Prisma {
     subject: string | null
     chapter: string | null
     answer: string | null
+    flagged: boolean | null
     _count: QuestionCountAggregateOutputType | null
     _avg: QuestionAvgAggregateOutputType | null
     _sum: QuestionSumAggregateOutputType | null
@@ -2537,6 +2544,7 @@ export namespace Prisma {
     subject?: boolean
     chapter?: boolean
     answer?: boolean
+    flagged?: boolean
     folderRelations?: boolean | Question$folderRelationsArgs<ExtArgs>
     _count?: boolean | QuestionCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["question"]>
@@ -2560,9 +2568,10 @@ export namespace Prisma {
     subject?: boolean
     chapter?: boolean
     answer?: boolean
+    flagged?: boolean
   }
 
-  export type QuestionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "question_number" | "file_name" | "question_text" | "isQuestionImage" | "question_image" | "isOptionImage" | "options" | "option_images" | "section_name" | "question_type" | "topic" | "exam_name" | "subject" | "chapter" | "answer", ExtArgs["result"]["question"]>
+  export type QuestionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "question_number" | "file_name" | "question_text" | "isQuestionImage" | "question_image" | "isOptionImage" | "options" | "option_images" | "section_name" | "question_type" | "topic" | "exam_name" | "subject" | "chapter" | "answer" | "flagged", ExtArgs["result"]["question"]>
   export type QuestionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     folderRelations?: boolean | Question$folderRelationsArgs<ExtArgs>
     _count?: boolean | QuestionCountOutputTypeDefaultArgs<ExtArgs>
@@ -2590,6 +2599,7 @@ export namespace Prisma {
       subject: string | null
       chapter: string | null
       answer: string | null
+      flagged: boolean | null
     }, ExtArgs["result"]["question"]>
     composites: {}
   }
@@ -2999,6 +3009,7 @@ export namespace Prisma {
     readonly subject: FieldRef<"Question", 'String'>
     readonly chapter: FieldRef<"Question", 'String'>
     readonly answer: FieldRef<"Question", 'String'>
+    readonly flagged: FieldRef<"Question", 'Boolean'>
   }
     
 
@@ -5418,7 +5429,8 @@ export namespace Prisma {
     exam_name: 'exam_name',
     subject: 'subject',
     chapter: 'chapter',
-    answer: 'answer'
+    answer: 'answer',
+    flagged: 'flagged'
   };
 
   export type QuestionScalarFieldEnum = (typeof QuestionScalarFieldEnum)[keyof typeof QuestionScalarFieldEnum]
@@ -5636,6 +5648,7 @@ export namespace Prisma {
     subject?: StringNullableFilter<"Question"> | string | null
     chapter?: StringNullableFilter<"Question"> | string | null
     answer?: StringNullableFilter<"Question"> | string | null
+    flagged?: BoolNullableFilter<"Question"> | boolean | null
     folderRelations?: FolderQuestionListRelationFilter
   }
 
@@ -5656,6 +5669,7 @@ export namespace Prisma {
     subject?: SortOrder
     chapter?: SortOrder
     answer?: SortOrder
+    flagged?: SortOrder
     folderRelations?: FolderQuestionOrderByRelationAggregateInput
   }
 
@@ -5679,6 +5693,7 @@ export namespace Prisma {
     subject?: StringNullableFilter<"Question"> | string | null
     chapter?: StringNullableFilter<"Question"> | string | null
     answer?: StringNullableFilter<"Question"> | string | null
+    flagged?: BoolNullableFilter<"Question"> | boolean | null
     folderRelations?: FolderQuestionListRelationFilter
   }, "id">
 
@@ -5699,6 +5714,7 @@ export namespace Prisma {
     subject?: SortOrder
     chapter?: SortOrder
     answer?: SortOrder
+    flagged?: SortOrder
     _count?: QuestionCountOrderByAggregateInput
     _avg?: QuestionAvgOrderByAggregateInput
     _max?: QuestionMaxOrderByAggregateInput
@@ -5726,6 +5742,7 @@ export namespace Prisma {
     subject?: StringNullableWithAggregatesFilter<"Question"> | string | null
     chapter?: StringNullableWithAggregatesFilter<"Question"> | string | null
     answer?: StringNullableWithAggregatesFilter<"Question"> | string | null
+    flagged?: BoolNullableWithAggregatesFilter<"Question"> | boolean | null
   }
 
   export type FolderWhereInput = {
@@ -5949,6 +5966,7 @@ export namespace Prisma {
     subject?: string | null
     chapter?: string | null
     answer?: string | null
+    flagged?: boolean | null
     folderRelations?: FolderQuestionCreateNestedManyWithoutQuestionInput
   }
 
@@ -5969,6 +5987,7 @@ export namespace Prisma {
     subject?: string | null
     chapter?: string | null
     answer?: string | null
+    flagged?: boolean | null
     folderRelations?: FolderQuestionUncheckedCreateNestedManyWithoutQuestionInput
   }
 
@@ -5988,6 +6007,7 @@ export namespace Prisma {
     subject?: NullableStringFieldUpdateOperationsInput | string | null
     chapter?: NullableStringFieldUpdateOperationsInput | string | null
     answer?: NullableStringFieldUpdateOperationsInput | string | null
+    flagged?: NullableBoolFieldUpdateOperationsInput | boolean | null
     folderRelations?: FolderQuestionUpdateManyWithoutQuestionNestedInput
   }
 
@@ -6007,6 +6027,7 @@ export namespace Prisma {
     subject?: NullableStringFieldUpdateOperationsInput | string | null
     chapter?: NullableStringFieldUpdateOperationsInput | string | null
     answer?: NullableStringFieldUpdateOperationsInput | string | null
+    flagged?: NullableBoolFieldUpdateOperationsInput | boolean | null
     folderRelations?: FolderQuestionUncheckedUpdateManyWithoutQuestionNestedInput
   }
 
@@ -6027,6 +6048,7 @@ export namespace Prisma {
     subject?: string | null
     chapter?: string | null
     answer?: string | null
+    flagged?: boolean | null
   }
 
   export type QuestionUpdateManyMutationInput = {
@@ -6045,6 +6067,7 @@ export namespace Prisma {
     subject?: NullableStringFieldUpdateOperationsInput | string | null
     chapter?: NullableStringFieldUpdateOperationsInput | string | null
     answer?: NullableStringFieldUpdateOperationsInput | string | null
+    flagged?: NullableBoolFieldUpdateOperationsInput | boolean | null
   }
 
   export type QuestionUncheckedUpdateManyInput = {
@@ -6063,6 +6086,7 @@ export namespace Prisma {
     subject?: NullableStringFieldUpdateOperationsInput | string | null
     chapter?: NullableStringFieldUpdateOperationsInput | string | null
     answer?: NullableStringFieldUpdateOperationsInput | string | null
+    flagged?: NullableBoolFieldUpdateOperationsInput | boolean | null
   }
 
   export type FolderCreateInput = {
@@ -6353,6 +6377,12 @@ export namespace Prisma {
     isEmpty?: boolean
   }
 
+  export type BoolNullableFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
+    not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
+    isSet?: boolean
+  }
+
   export type FolderQuestionListRelationFilter = {
     every?: FolderQuestionWhereInput
     some?: FolderQuestionWhereInput
@@ -6380,6 +6410,7 @@ export namespace Prisma {
     subject?: SortOrder
     chapter?: SortOrder
     answer?: SortOrder
+    flagged?: SortOrder
   }
 
   export type QuestionAvgOrderByAggregateInput = {
@@ -6401,6 +6432,7 @@ export namespace Prisma {
     subject?: SortOrder
     chapter?: SortOrder
     answer?: SortOrder
+    flagged?: SortOrder
   }
 
   export type QuestionMinOrderByAggregateInput = {
@@ -6418,6 +6450,7 @@ export namespace Prisma {
     subject?: SortOrder
     chapter?: SortOrder
     answer?: SortOrder
+    flagged?: SortOrder
   }
 
   export type QuestionSumOrderByAggregateInput = {
@@ -6446,6 +6479,15 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedBoolFilter<$PrismaModel>
     _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type BoolNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
+    not?: NestedBoolNullableWithAggregatesFilter<$PrismaModel> | boolean | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedBoolNullableFilter<$PrismaModel>
+    _max?: NestedBoolNullableFilter<$PrismaModel>
+    isSet?: boolean
   }
 
   export type UserScalarRelationFilter = {
@@ -6607,6 +6649,11 @@ export namespace Prisma {
   export type QuestionUpdateoption_imagesInput = {
     set?: string[]
     push?: string | string[]
+  }
+
+  export type NullableBoolFieldUpdateOperationsInput = {
+    set?: boolean | null
+    unset?: boolean
   }
 
   export type FolderQuestionUpdateManyWithoutQuestionNestedInput = {
@@ -6865,6 +6912,12 @@ export namespace Prisma {
     not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
+  export type NestedBoolNullableFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
+    not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
+    isSet?: boolean
+  }
+
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
     in?: number[] | ListIntFieldRefInput<$PrismaModel>
@@ -6898,6 +6951,15 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedBoolFilter<$PrismaModel>
     _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type NestedBoolNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
+    not?: NestedBoolNullableWithAggregatesFilter<$PrismaModel> | boolean | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedBoolNullableFilter<$PrismaModel>
+    _max?: NestedBoolNullableFilter<$PrismaModel>
+    isSet?: boolean
   }
 
   export type FolderCreateWithoutUserInput = {
@@ -7139,6 +7201,7 @@ export namespace Prisma {
     subject?: string | null
     chapter?: string | null
     answer?: string | null
+    flagged?: boolean | null
   }
 
   export type QuestionUncheckedCreateWithoutFolderRelationsInput = {
@@ -7158,6 +7221,7 @@ export namespace Prisma {
     subject?: string | null
     chapter?: string | null
     answer?: string | null
+    flagged?: boolean | null
   }
 
   export type QuestionCreateOrConnectWithoutFolderRelationsInput = {
@@ -7217,6 +7281,7 @@ export namespace Prisma {
     subject?: NullableStringFieldUpdateOperationsInput | string | null
     chapter?: NullableStringFieldUpdateOperationsInput | string | null
     answer?: NullableStringFieldUpdateOperationsInput | string | null
+    flagged?: NullableBoolFieldUpdateOperationsInput | boolean | null
   }
 
   export type QuestionUncheckedUpdateWithoutFolderRelationsInput = {
@@ -7235,6 +7300,7 @@ export namespace Prisma {
     subject?: NullableStringFieldUpdateOperationsInput | string | null
     chapter?: NullableStringFieldUpdateOperationsInput | string | null
     answer?: NullableStringFieldUpdateOperationsInput | string | null
+    flagged?: NullableBoolFieldUpdateOperationsInput | boolean | null
   }
 
   export type FolderCreateManyUserInput = {

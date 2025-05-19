@@ -6,28 +6,29 @@ interface UpdateQuestionInput
     extends Partial<
         Pick<
             Question,
-            | "question_text"
-            | "options"
-            | "answer"
-            | "question_image"
-            | "option_images"
-            | "isQuestionImage"
-            | "isOptionImage"
-            | "section_name"
-            | "question_type"
-            | "topic"
-            | "exam_name"
-            | "subject"
-            | "chapter"
-            | "folderId"
+            | 'question_text'
+            | 'options'
+            | 'answer'
+            | 'question_image'
+            | 'option_images'
+            | 'isQuestionImage'
+            | 'isOptionImage'
+            | 'section_name'
+            | 'question_type'
+            | 'topic'
+            | 'exam_name'
+            | 'subject'
+            | 'chapter'
+            | 'folderId'
         >
     > { }
-
 
 export async function getQuestions(filters: {
     exam_name?: string;
     subject?: string;
     chapter?: string;
+    section_name?: string;
+    flagged?: boolean;
     limit?: number;
     skip?: number;
 }) {
@@ -36,7 +37,9 @@ export async function getQuestions(filters: {
             where: {
                 exam_name: filters.exam_name,
                 subject: filters.subject,
-                chapter: filters.chapter
+                chapter: filters.chapter,
+                section_name: filters.section_name,
+                flagged: filters.flagged,
             },
             select: {
                 id: true,
@@ -46,13 +49,15 @@ export async function getQuestions(filters: {
                 answer: true,
                 subject: true,
                 exam_name: true,
-                chapter: true
+                chapter: true,
+                section_name: true,
+                flagged: true,
             },
             take: filters.limit,
             skip: filters.skip,
             orderBy: {
-                question_number: 'asc'
-            }
+                question_number: 'asc',
+            },
         });
         return { success: true, data: questions };
     } catch (error) {
@@ -61,56 +66,135 @@ export async function getQuestions(filters: {
     }
 }
 
-
-{/*
-export async function updateQuestion(fileName: string, updates: UpdateQuestionInput) {
-    try {
-        const updatedQuestion = await prisma.question.update({
-            where: { file_name: fileName },
-            data: {
-                question_text: updates.question_text,
-                options: updates.options,
-                answer: updates.answer,
-                question_image: updates.question_image,
-                option_images: updates.option_images,
-                isQuestionImage: updates.isQuestionImage,
-                isOptionImage: updates.isOptionImage,
-                section_name: updates.section_name,
-                question_type: updates.question_type,
-                topic: updates.topic,
-                exam_name: updates.exam_name,
-                subject: updates.subject,
-                chapter: updates.chapter,
-                folderId: updates.folderId,
-            },
-        });
-
-        return { success: true, data: updatedQuestion };
-    } catch (error) {
-        console.error("Error updating question:", error);
-        return { success: false, error: "Failed to update question" };
-    }
-}
-*/}
-
-
-
 export async function getQuestionCount(filters: {
     exam_name?: string;
     subject?: string;
     chapter?: string;
+    section_name?: string;
+    flagged?: boolean;
 }) {
     try {
         const count = await prisma.question.count({
             where: {
                 exam_name: filters.exam_name,
                 subject: filters.subject,
-                chapter: filters.chapter
-            }
+                chapter: filters.chapter,
+                section_name: filters.section_name,
+                flagged: filters.flagged,
+            },
         });
         return { success: true, data: count };
     } catch (error) {
         console.error('Error counting questions:', error);
         return { success: false, data: 0, error: 'Failed to count questions' };
+    }
+}
+
+export async function getFilterOptions(filters: {
+    exam_name?: string;
+    subject?: string;
+    chapter?: string;
+}) {
+    try {
+        const [exams, subjects, chapters, sections] = await Promise.all([
+            prisma.question.findMany({
+                select: { exam_name: true },
+                distinct: ['exam_name'],
+                where: {
+                    exam_name: { not: null },
+                },
+            }),
+            prisma.question.findMany({
+                select: { subject: true },
+                distinct: ['subject'],
+                where: {
+                    exam_name: filters.exam_name || undefined,
+                    subject: { not: null },
+                },
+            }),
+            prisma.question.findMany({
+                select: { chapter: true },
+                distinct: ['chapter'],
+                where: {
+                    exam_name: filters.exam_name || undefined,
+                    subject: filters.subject || undefined,
+                    chapter: { not: null },
+                },
+            }),
+            prisma.question.findMany({
+                select: { section_name: true },
+                distinct: ['section_name'],
+                where: {
+                    exam_name: filters.exam_name || undefined,
+                    subject: filters.subject || undefined,
+                    chapter: filters.chapter || undefined,
+                    section_name: { not: null },
+                },
+            }),
+        ]);
+
+        return {
+            success: true,
+            data: {
+                exams: exams.map((e) => e.exam_name).filter((e): e is string => !!e),
+                subjects: subjects.map((s) => s.subject).filter((s): s is string => !!s),
+                chapters: chapters.map((c) => c.chapter).filter((c): c is string => !!c),
+                section_names: sections.map((s) => s.section_name).filter((s): s is string => !!s),
+            },
+        };
+    } catch (error) {
+        console.error('Error fetching filter options:', error);
+        return {
+            success: false,
+            data: { exams: [], subjects: [], chapters: [], section_names: [] },
+            error: 'Failed to fetch filter options',
+        };
+    }
+}
+
+export async function selectFlagged(id: string) {
+    try {
+        const updatedQuestion = await prisma.question.update({
+            where: { id },
+            data: {
+                flagged: true,
+            },
+            select: {
+                id: true,
+                flagged: true,
+            },
+        });
+        return { success: true, data: updatedQuestion };
+    } catch (error) {
+        console.error('Error setting question flag:', error);
+        return { success: false, data: null, error: 'Failed to set question flag' };
+    }
+}
+
+export async function toggleFlag(id: string) {
+    try {
+        const question = await prisma.question.findUnique({
+            where: { id },
+            select: { flagged: true },
+        });
+
+        if (!question) {
+            throw new Error('Question not found');
+        }
+
+        const updatedQuestion = await prisma.question.update({
+            where: { id },
+            data: {
+                flagged: !question.flagged,
+            },
+            select: {
+                id: true,
+                flagged: true,
+            },
+        });
+        return { success: true, data: updatedQuestion };
+    } catch (error) {
+        console.error('Error toggling question flag:', error);
+        return { success: false, data: null, error: 'Failed to toggle question flag' };
     }
 }

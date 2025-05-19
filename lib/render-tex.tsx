@@ -31,19 +31,19 @@ const toMixedLatex = (text: string): StringPart[] => {
 
             // Define patterns with higher specificity first
             const patterns = [
-                // Proportionality with fraction: e.g., T_n \propto \frac{1}{n^2}
+                // Proportionality with fraction: e.g., T_n \propto \frac{1}{n^2}, T_n \propto \frac{1}{n}
                 /(\w+_\w+\s*\\propto\s*\\frac\{([^{}]+)\}\{([^{}]+)\})/,
+                // Proportionality with power or variable: e.g., r_n \propto n^2, r_n \propto n
+                /(\w+_\w+\s*\\propto\s*\w+(\^\d+)?)/,
                 // LaTeX fraction: e.g., \frac{1}{n^2}
                 /\\frac\{([^{}]+)\}\{([^{}]+)\}/,
-                // Proportionality with expression: e.g., r_n \propto n^2
-                /(\w+_\w+\s*\\propto\s*\w+\^\d+)/,
                 // Sub/superscript: e.g., x^2, x^y
                 /(\w+)\^(\w+|\d+)/,
                 // Fraction: e.g., 1/2
                 /(\d+)\/(\d+)/,
                 // Square root: e.g., sqrt x
                 /sqrt\s*(\w+)/,
-                // Trig functions with word boundaries: e.g., sin x, but not in "increasing"
+                // Trig functions with word boundaries: e.g., sin x
                 /\b(sin|cos|tan|ln)\s+(\w+)/,
                 // Subscript: e.g., x_2
                 /(\w+)_(\d+)/,
@@ -84,10 +84,10 @@ const toMixedLatex = (text: string): StringPart[] => {
                 let latex = match[0];
                 if (match[0].match(/\w+_\w+\s*\\propto\s*\\frac\{[^{}]+\}\{[^{}]+\}/)) {
                     latex = match[0]; // Already in LaTeX form
+                } else if (match[0].match(/\w+_\w+\s*\\propto\s*\w+(\^\d+)?/)) {
+                    latex = `${match[1]} \\propto ${match[2]}`;
                 } else if (match[0].match(/\\frac\{[^{}]+\}\{[^{}]+\}/)) {
                     latex = match[0]; // Already in LaTeX form
-                } else if (match[0].match(/\w+_\w+\s*\\propto\s*\w+\^\d+/)) {
-                    latex = `${match[1]} \\propto ${match[2]}`;
                 } else if (match[0].match(/\w+\^(\w+|\d+)/)) {
                     latex = `${match[1]}^{${match[2]}}`;
                 } else if (match[0].match(/\d+\/\d+/)) {

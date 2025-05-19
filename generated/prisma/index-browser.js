@@ -143,7 +143,8 @@ exports.Prisma.QuestionScalarFieldEnum = {
   exam_name: 'exam_name',
   subject: 'subject',
   chapter: 'chapter',
-  answer: 'answer'
+  answer: 'answer',
+  flagged: 'flagged'
 };
 
 exports.Prisma.FolderScalarFieldEnum = {
