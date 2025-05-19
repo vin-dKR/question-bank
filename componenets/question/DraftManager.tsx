@@ -39,7 +39,7 @@ const DraftManager = () => {
         await getAllFolders();
     };
 
-    console.log('.............................', selectedQuestions);
+    //console.log('.............................', selectedQuestions);
 
     useEffect(() => {
         refreshFolders();

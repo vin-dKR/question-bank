@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
         }) as WebhookEvent
 
         // Log the webhook details for debugging
-        console.log(`Clerk Webhook: ${evt.type}`, evt.data)
+        // console.log(`Clerk Webhook: ${evt.type}`, evt.data)
 
 
         // Handle user events
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true })
 
     } catch (err) {
-        console.error('Error processing webhook:', err)
+        // console.error('Error processing webhook:', err)
         return NextResponse.json(
             { error: 'Webhook verification failed' },
             { status: 400 }
