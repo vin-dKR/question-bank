@@ -40,7 +40,7 @@ export const useFolders = () => {
         } catch (e) {
             const errorMessage = e instanceof Error ? e.message : "Failed to fetch folders";
             setErr(errorMessage);
-            console.error("Error fetching folders:", e);
+            // console.error("Error fetching folders:", e);
             return null;
         } finally {
             setLoading(false);
@@ -61,7 +61,7 @@ export const useFolders = () => {
         } catch (e) {
             const errorMessage = e instanceof Error ? e.message : "Failed to create folder";
             setErr(errorMessage);
-            console.error("Error creating folder:", e);
+            // console.error("Error creating folder:", e);
             return false;
         } finally {
             setLoading(false);
@@ -79,7 +79,7 @@ export const useFolders = () => {
         } catch (e) {
             const errorMessage = e instanceof Error ? e.message : "Failed to delete folder";
             setErr(errorMessage);
-            console.error("Error deleting folder:", e);
+            // console.error("Error deleting folder:", e);
             return false;
         } finally {
             setLoading(false);
@@ -99,7 +99,7 @@ export const useFolders = () => {
         } catch (e) {
             const errorMessage = e instanceof Error ? e.message : "Failed to rename folder";
             setErr(errorMessage);
-            console.error("Error renaming folder:", e);
+            // console.error("Error renaming folder:", e);
             return false;
         } finally {
             setLoading(false);
@@ -125,7 +125,7 @@ export const useFolders = () => {
         } catch (e) {
             const errorMessage = e instanceof Error ? e.message : "Failed to update folder questions";
             setErr(errorMessage);
-            console.error("Error updating folder questions:", e);
+            // console.error("Error updating folder questions:", e);
             return false;
         } finally {
             setLoading(false);

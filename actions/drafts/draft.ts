@@ -10,7 +10,7 @@ interface FolderWithRelations extends Folder {
 
 export const createFolder = async (name: string, questions: { id: string }[]): Promise<FolderWithRelations> => {
     try {
-        console.log("Available Prisma models:", Object.keys(prisma)); // Debug log
+        // console.log("Available Prisma models:", Object.keys(prisma)); // Debug log
         if (!prisma.folderQuestion) {
             throw new Error("prisma.folderQuestion is undefined");
         }
@@ -73,7 +73,7 @@ export const createFolder = async (name: string, questions: { id: string }[]): P
 
         return result;
     } catch (error) {
-        console.error("Error creating folder:", error);
+        // console.error("Error creating folder:", error);
         throw error instanceof Error ? error : new Error("Failed to create folder");
     }
 };
@@ -112,7 +112,7 @@ export const getFolders = async (): Promise<FolderWithRelations[] | null> => {
 
         return folders;
     } catch (error) {
-        console.error("Error fetching folders:", error);
+        // console.error("Error fetching folders:", error);
         throw error instanceof Error ? error : new Error("Failed to fetch folders");
     }
 };
@@ -153,9 +153,9 @@ export const deleteFolder = async (id: string): Promise<void> => {
             }),
         ]);
 
-        console.log(`Folder ${id} deleted successfully.`);
+        // console.log(`Folder ${id} deleted successfully.`);
     } catch (error) {
-        console.error("Error deleting folder:", error);
+        // console.error("Error deleting folder:", error);
         throw error instanceof Error ? error : new Error("Failed to delete folder");
     }
 };
@@ -201,7 +201,7 @@ export const renameFolder = async (id: string, name: string): Promise<Folder> =>
 
         return updatedFolder;
     } catch (error) {
-        console.error("Error renaming folder:", error);
+        // console.error("Error renaming folder:", error);
         throw error instanceof Error ? error : new Error("Failed to rename folder");
     }
 };
@@ -270,7 +270,7 @@ export const updateFolderQuestions = async (
 
         return updatedFolder;
     } catch (error) {
-        console.error("Error updating folder questions:", error);
+        // console.error("Error updating folder questions:", error);
         throw error instanceof Error ? error : new Error("Failed to update folder questions");
     }
 };
