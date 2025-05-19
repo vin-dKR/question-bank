@@ -110,6 +110,7 @@ const toMixedLatex = (text: string): StringPart[] => {
 
         return parts;
     } catch (error) {
+        console.log(error)
         return [{ type: 'text', value: text }];
     }
 };
