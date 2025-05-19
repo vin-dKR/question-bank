@@ -14,40 +14,58 @@ interface LatexPart {
 
 type StringPart = TextPart | LatexPart;
 
-// Utility function to convert math parts of a string to LaTeX, preserving plain text
 const toMixedLatex = (text: string): StringPart[] => {
     try {
-        // If the string is already fully LaTeX (starts with \), return as-is
-        if (text.match(/^\s*\\[a-zA-Z|begin|end|left|right|frac|sqrt|sum|int|lim|infty]/)) {
+        // If the string is fully LaTeX (starts with \), return as-is
+        if (text.match(/^\s*\\[a-zA-Z|begin|end|left|right|frac|sqrt|sum|int|lim|infty|propto]/)) {
             return [{ type: 'latex', value: text }];
         }
 
-        // Split string into parts, identifying math expressions
         const parts: StringPart[] = [];
         let current = '';
         let i = 0;
+
         while (i < text.length) {
-            // Look for potential math expression
             let match: RegExpMatchArray | null = null;
             let matched = false;
 
-            // Check for common math patterns
-            for (const pattern of [
-                /(\w+)\^(\d+)/, // e.g., x^2
-                /(\w+)\^(\w+)/, // e.g., x^y
-                /(\d+)\/(\d+)/, // e.g., 1/2
-                /sqrt\s*(\w+)/, // e.g., sqrt x
-                /(sin|cos|tan|ln)\s*(\w+)/, // e.g., sin x, ln x
-                /(\w+)_(\d+)/, // e.g., x_2
-                /\d+\s*[+\-*\/]\s*\d+/, // e.g., 2 + 3
-                /lim\s*(\w+)\s*->\s*([0-9]+|infty)\s*([^\s]+)/, // e.g., lim x->0 1/x
-                /int\s*([^\s]+)\s*dx/, // e.g., int x dx
-                /\|\s*([^\s|]+)\s*\|/, // e.g., |x|
-                /\(\s*([^\s()]+)\s*\)\^(\d+)/, // e.g., (x + 1)^2
-                /(\w+)\s*(>|<|>=|<=|=)\s*(\d+)/, // e.g., x > 2
-                /(\w+)\!/, // e.g., n!
-                /sum\s*(\w+)=(\d+)\s*to\s*(\w+)\s*([^\s]+)/, // e.g., sum i=1 to n i
-            ]) {
+            // Define patterns with higher specificity first
+            const patterns = [
+                // Proportionality with fraction: e.g., T_n \propto \frac{1}{n^2}
+                /(\w+_\w+\s*\\propto\s*\\frac\{([^{}]+)\}\{([^{}]+)\})/,
+                // LaTeX fraction: e.g., \frac{1}{n^2}
+                /\\frac\{([^{}]+)\}\{([^{}]+)\}/,
+                // Proportionality with expression: e.g., r_n \propto n^2
+                /(\w+_\w+\s*\\propto\s*\w+\^\d+)/,
+                // Sub/superscript: e.g., x^2, x^y
+                /(\w+)\^(\w+|\d+)/,
+                // Fraction: e.g., 1/2
+                /(\d+)\/(\d+)/,
+                // Square root: e.g., sqrt x
+                /sqrt\s*(\w+)/,
+                // Trig functions with word boundaries: e.g., sin x, but not in "increasing"
+                /\b(sin|cos|tan|ln)\s+(\w+)/,
+                // Subscript: e.g., x_2
+                /(\w+)_(\d+)/,
+                // Basic arithmetic: e.g., 2 + 3
+                /\d+\s*[+\-*\/]\s*\d+/,
+                // Limit: e.g., lim x->0 1/x
+                /lim\s*(\w+)\s*->\s*([0-9]+|infty)\s*([^\s]+)/,
+                // Integral: e.g., int x dx
+                /int\s*([^\s]+)\s*dx/,
+                // Absolute value: e.g., |x|
+                /\|\s*([^\s|]+)\s*\|/,
+                // Parentheses with superscript: e.g., (x + 1)^2
+                /\(\s*([^\s()]+)\s*\)\^(\d+)/,
+                // Inequalities: e.g., x > 2
+                /(\w+)\s*(>|<|>=|<=|=)\s*(\d+)/,
+                // Factorial: e.g., n!
+                /(\w+)\!/,
+                // Summation: e.g., sum i=1 to n i
+                /sum\s*(\w+)=(\d+)\s*to\s*(\w+)\s*([^\s]+)/,
+            ];
+
+            for (const pattern of patterns) {
                 match = text.slice(i).match(pattern);
                 if (match && match.index === 0) {
                     matched = true;
@@ -64,15 +82,19 @@ const toMixedLatex = (text: string): StringPart[] => {
 
                 // Convert matched math to LaTeX
                 let latex = match[0];
-                if (match[0].match(/\w+\^\d+/)) {
-                    latex = `${match[1]}^{${match[2]}}`;
-                } else if (match[0].match(/\w+\^\w+/)) {
+                if (match[0].match(/\w+_\w+\s*\\propto\s*\\frac\{[^{}]+\}\{[^{}]+\}/)) {
+                    latex = match[0]; // Already in LaTeX form
+                } else if (match[0].match(/\\frac\{[^{}]+\}\{[^{}]+\}/)) {
+                    latex = match[0]; // Already in LaTeX form
+                } else if (match[0].match(/\w+_\w+\s*\\propto\s*\w+\^\d+/)) {
+                    latex = `${match[1]} \\propto ${match[2]}`;
+                } else if (match[0].match(/\w+\^(\w+|\d+)/)) {
                     latex = `${match[1]}^{${match[2]}}`;
                 } else if (match[0].match(/\d+\/\d+/)) {
                     latex = `\\frac{${match[1]}}{${match[2]}}`;
                 } else if (match[0].match(/sqrt\s*\w+/)) {
                     latex = `\\sqrt{${match[1]}}`;
-                } else if (match[0].match(/(sin|cos|tan|ln)\s*\w+/)) {
+                } else if (match[0].match(/\b(sin|cos|tan|ln)\s+\w+/)) {
                     latex = `\\${match[1]}{${match[2]}}`;
                 } else if (match[0].match(/\w+_\d+/)) {
                     latex = `${match[1]}_{${match[2]}}`;
@@ -110,12 +132,11 @@ const toMixedLatex = (text: string): StringPart[] => {
 
         return parts;
     } catch (error) {
-        console.log(error)
+        console.error('Error in toMixedLatex:', error);
         return [{ type: 'text', value: text }];
     }
 };
 
-// Helper function to render mixed LaTeX and text
 const renderMixedLatex = (text: string): JSX.Element[] => {
     const parts = toMixedLatex(text);
     return parts.map((part, index) => (

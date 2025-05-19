@@ -36,7 +36,7 @@ export function DialogCloseButton({ selectedQuestions }: { selectedQuestions: Pi
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button variant="outline">Save to Folder</Button>
+                <Button className="px-2" variant="outline">Save to Folder</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md bg-white">
                 <DialogHeader>

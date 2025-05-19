@@ -12,6 +12,7 @@ import {
     DialogTrigger,
     DialogClose,
 } from '@/components/ui/dialog';
+import { Download } from 'lucide-react';
 
 export default function PDFGenerator({ institution, selectedQuestions, options }: PDFConfig) {
     const [isGenerating, setIsGenerating] = useState(false);
@@ -61,7 +62,13 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
                         disabled={isGenerating}
                         className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed"
                     >
-                        {isGenerating ? 'Generating...' : 'Preview PDF'}
+                        {isGenerating ?
+                            'Generating...' :
+                            (
+                                <>
+                                    <Download /><span>PDF</span>
+                                </>
+                            )}
                     </Button>
                 </DialogTrigger>
                 {previewUrl && (

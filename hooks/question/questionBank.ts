@@ -1,7 +1,5 @@
-'use client';
-
 import { useState, useEffect } from 'react';
-import { getQuestions, getQuestionCount } from "@/actions/question/questionBank"
+import { getQuestions, getQuestionCount } from '@/actions/question/questionBank';
 
 export const useQuestionBank = (initialFilters = {}) => {
     const [questions, setQuestions] = useState<Question[]>([]);
@@ -11,10 +9,9 @@ export const useQuestionBank = (initialFilters = {}) => {
     const [filters, setFilters] = useState(initialFilters);
     const [pagination, setPagination] = useState({
         page: 1,
-        limit: 100
-    })
-
-    const [selectedQuestions, setSelectedQuestions] = useState<Question[]>([]);
+        limit: 20,
+    });
+    const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(new Set());
 
     const fetchQuestions = async () => {
         setLoading(true);
@@ -25,9 +22,9 @@ export const useQuestionBank = (initialFilters = {}) => {
                 getQuestions({
                     ...filters,
                     limit: pagination.limit,
-                    skip: (pagination.page - 1) * pagination.limit
+                    skip: (pagination.page - 1) * pagination.limit,
                 }),
-                getQuestionCount(filters)
+                getQuestionCount(filters),
             ]);
 
             if (questionsRes.success && countRes.success) {
@@ -45,18 +42,28 @@ export const useQuestionBank = (initialFilters = {}) => {
     };
 
     const toggleQuestionSelection = (id: string) => {
-        setSelectedQuestions((prev) => {
-            const isSelected = prev.some((q) => q.id === id);
-
-            if (isSelected) {
-                return prev.filter((q) => q.id !== id);
+        setSelectedQuestionIds((prev) => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) {
+                newSet.delete(id);
             } else {
-                const questionToAdd = questions.find((q) => q.id === id);
-                return questionToAdd ? [...prev, questionToAdd] : prev;
+                newSet.add(id);
             }
+            return newSet;
         });
     };
 
+    const selectAllQuestions = () => {
+        setSelectedQuestionIds(new Set(questions.map((q) => q.id)));
+    };
+
+    const unselectAllQuestions = () => {
+        setSelectedQuestionIds(new Set());
+    };
+
+    const getSelectedQuestions = () => {
+        return questions.filter((q) => selectedQuestionIds.has(q.id));
+    };
 
     useEffect(() => {
         fetchQuestions();
@@ -64,7 +71,7 @@ export const useQuestionBank = (initialFilters = {}) => {
 
     const updateFilters = (newFilters: any) => {
         setFilters(newFilters);
-        setPagination(prev => ({ ...prev, page: 1 }));
+        setPagination((prev) => ({ ...prev, page: 1 }));
     };
 
     return {
@@ -74,10 +81,13 @@ export const useQuestionBank = (initialFilters = {}) => {
         count,
         filters,
         pagination,
-        selectedQuestions,
+        selectedQuestionIds,
+        selectedQuestions: getSelectedQuestions(),
         setPagination,
         updateFilters,
         toggleQuestionSelection,
-        refresh: fetchQuestions
+        selectAllQuestions,
+        unselectAllQuestions,
+        refresh: fetchQuestions,
     };
 };
