@@ -22,7 +22,7 @@ function QuestionBankViewerContent() {
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-6">
                 <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
-                    <aside className="lg:w-80 xl:w-96 flex-shrink-0 lg:sticky lg:top-4 lg:self-start lg:h-[calc(100vh-2rem)] lg:overflow-y-auto">
+                    <aside className="lg:w-80 xl:w-96 flex-shrink-0 lg:sticky lg:top-4 lg:self-start lg:h-[calc(100vh-2rem)] ">
                         <div className="space-y-4 sm:space-y-6">
                             <InstitutionDetails />
                             <PDFOptions />
