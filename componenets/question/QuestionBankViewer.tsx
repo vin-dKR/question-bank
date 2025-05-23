@@ -25,7 +25,9 @@ function QuestionBankViewerContent() {
                     <aside className="lg:w-80 xl:w-96 flex-shrink-0 lg:sticky lg:top-4 lg:self-start lg:h-[calc(100vh-2rem)] ">
                         <div className="space-y-4 sm:space-y-6">
                             <InstitutionDetails />
+                            {/*
                             <PDFOptions />
+                            */}
                             <FilterControls />
                         </div>
                     </aside>
