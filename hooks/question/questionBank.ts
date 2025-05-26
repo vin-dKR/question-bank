@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getQuestions, getQuestionCount, toggleFlag, getFilterOptions } from '@/actions/question/questionBank'
+import { getQuestions, getQuestionCount, toggleFlag, getFilterOptions, searchQuestions } from '@/actions/question/questionBank';
 
 interface FilterOptions {
     exams: string[];
@@ -8,7 +8,6 @@ interface FilterOptions {
     section_names: string[];
 }
 
-// Simple debounce function
 const debounce = <F extends (...args: any[]) => any>(func: F, wait: number) => {
     let timeout: NodeJS.Timeout;
     return (...args: Parameters<F>): Promise<ReturnType<F>> => {
@@ -43,8 +42,8 @@ export const useQuestionBank = (initialFilters = {
         section_names: [],
     });
     const [optionsLoading, setOptionsLoading] = useState(false);
+    const [searchKeyword, setSearchKeyword] = useState<string | null>(null);
 
-    // Cache for filter options (key: filter combination, value: options)
     const optionsCache = useState<Map<string, { options: FilterOptions; timestamp: number }>>(new Map())[0];
     const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
@@ -53,34 +52,50 @@ export const useQuestionBank = (initialFilters = {
         setError(null);
 
         try {
-            const [questionsRes, countRes] = await Promise.all([
-                getQuestions({
-                    exam_name: filters.exam_name,
-                    subject: filters.subject,
-                    chapter: filters.chapter,
-                    section_name: filters.section_name,
-                    flagged: filters.flagged,
-                    limit: pagination.limit,
-                    skip: (pagination.page - 1) * pagination.limit,
-                }),
-                getQuestionCount({
-                    exam_name: filters.exam_name,
-                    subject: filters.subject,
-                    chapter: filters.chapter,
-                    section_name: filters.section_name,
-                    flagged: filters.flagged,
-                }),
-            ]);
-
-            if (questionsRes.success && countRes.success) {
-                setQuestions(questionsRes.data as Question[]);
-                setCount(countRes.data);
+            if (searchKeyword && searchKeyword.trim().length >= 2) {
+                const searchRes = await searchQuestions(searchKeyword);
+                if (searchRes.success) {
+                    setQuestions(searchRes.data as Question[]);
+                    setCount(searchRes.data.length);
+                } else {
+                    setError(searchRes.error || 'Failed to search questions');
+                    setQuestions([]);
+                    setCount(0);
+                }
             } else {
-                setError(questionsRes.error || countRes.error || 'Failed to fetch data');
+                const [questionsRes, countRes] = await Promise.all([
+                    getQuestions({
+                        exam_name: filters.exam_name,
+                        subject: filters.subject,
+                        chapter: filters.chapter,
+                        section_name: filters.section_name,
+                        flagged: filters.flagged,
+                        limit: pagination.limit,
+                        skip: (pagination.page - 1) * pagination.limit,
+                    }),
+                    getQuestionCount({
+                        exam_name: filters.exam_name,
+                        subject: filters.subject,
+                        chapter: filters.chapter,
+                        section_name: filters.section_name,
+                        flagged: filters.flagged,
+                    }),
+                ]);
+
+                if (questionsRes.success && countRes.success) {
+                    setQuestions(questionsRes.data as Question[]);
+                    setCount(countRes.data);
+                } else {
+                    setError(questionsRes.error || countRes.error || 'Failed to fetch data');
+                    setQuestions([]);
+                    setCount(0);
+                }
             }
         } catch (err) {
             setError('An unexpected error occurred');
             console.error(err);
+            setQuestions([]);
+            setCount(0);
         } finally {
             setLoading(false);
         }
@@ -94,7 +109,6 @@ export const useQuestionBank = (initialFilters = {
         const cacheKey = `${filterParams.exam_name || ''}|${filterParams.subject || ''}|${filterParams.chapter || ''}`;
         const cached = optionsCache.get(cacheKey);
 
-        // Check cache and TTL
         if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
             setFilterOptions(cached.options);
             return;
@@ -118,7 +132,6 @@ export const useQuestionBank = (initialFilters = {
         }
     };
 
-    // Debounced fetchFilterOptions
     const debouncedFetchFilterOptions = useCallback(
         debounce(fetchFilterOptions, 300),
         [optionsCache]
@@ -169,6 +182,16 @@ export const useQuestionBank = (initialFilters = {
         return questions.filter((q) => selectedQuestionIds.has(q.id));
     };
 
+    const searchQuestionsHook = (keyword: string) => {
+        setSearchKeyword(keyword);
+        setPagination((prev) => ({ ...prev, page: 1 }));
+    };
+
+    const clearSearch = () => {
+        setSearchKeyword(null);
+        setPagination((prev) => ({ ...prev, page: 1 }));
+    };
+
     useEffect(() => {
         debouncedFetchFilterOptions({
             exam_name: filters.exam_name,
@@ -179,12 +202,11 @@ export const useQuestionBank = (initialFilters = {
 
     useEffect(() => {
         fetchQuestions();
-    }, [filters.exam_name, filters.subject, filters.chapter, filters.section_name, filters.flagged, pagination.page, pagination.limit]);
+    }, [filters.exam_name, filters.subject, filters.chapter, filters.section_name, filters.flagged, pagination.page, pagination.limit, searchKeyword]);
 
     const updateFilters = (newFilters: any) => {
         setFilters((prev) => {
             const updated = { ...prev, ...newFilters };
-            // Reset dependent filters when parent changes
             if (newFilters.exam_name !== undefined && newFilters.exam_name !== prev.exam_name) {
                 updated.subject = undefined;
                 updated.chapter = undefined;
@@ -218,5 +240,7 @@ export const useQuestionBank = (initialFilters = {
         unselectAllQuestions,
         toggleQuestionFlag,
         refresh: fetchQuestions,
+        searchQuestions: searchQuestionsHook,
+        clearSearch,
     };
 };

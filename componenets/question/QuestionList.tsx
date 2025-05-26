@@ -2,7 +2,7 @@
 
 import { memo, useMemo, useState } from 'react';
 import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
-import renderMixedLatex from '@/lib/render-tex';
+import { renderMixedLatex } from '@/lib/render-tex';
 import { Flag, FlagOff } from 'lucide-react';
 
 interface QuestionProps {
@@ -21,7 +21,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
         [question.options]
     );
 
-    const handleFlagToggle = () => {
+    const handleFlagToggle = async () => {
         setIsFlagging(true);
         try {
             toggleQuestionFlag(question.id);
@@ -44,12 +44,16 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                 />
                 <div className="flex-1 w-full text-wrap">
                     <div className="flex flex-wrap gap-2 mb-2 items-center">
-                        <span className="text-xs font-medium px-2 py-1 bg-slate-100 text-slate-700 rounded-full">
-                            {question.exam_name}
-                        </span>
-                        <span className="text-xs font-medium px-2 py-1 bg-slate-100 text-slate-700 rounded-full">
-                            {question.subject}
-                        </span>
+                        {question.exam_name && (
+                            <span className="text-xs font-medium px-2 py-1 bg-slate-100 text-slate-700 rounded-full">
+                                {question.exam_name}
+                            </span>
+                        )}
+                        {question.subject && (
+                            <span className="text-xs font-medium px-2 py-1 bg-slate-100 text-slate-700 rounded-full">
+                                {question.subject}
+                            </span>
+                        )}
                         {question.chapter && (
                             <span className="text-xs font-medium px-2 py-1 bg-slate-100 text-slate-700 rounded-full">
                                 {question.chapter}
@@ -97,9 +101,11 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                         })}
                     </div>
 
-                    <div className="text-sm text-green-600">
-                        <span className="font-medium">Answer:</span> {question.answer}
-                    </div>
+                    {question.answer && (
+                        <div className="text-sm text-green-600">
+                            <span className="font-medium">Answer:</span> {question.answer}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -109,41 +115,44 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
 export default function QuestionList() {
     const { questions, loading, error } = useQuestionBankContext();
 
-    if (loading) {
-        return (
-            <div className="text-center py-6">
-                <p className="text-slate-600">Loading questions...</p>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="text-center py-6">
-                <p className="text-red-600">{error}</p>
-            </div>
-        );
-    }
-
-    if (questions.length === 0 && !loading) {
-        return (
-            <div className="text-center py-6">
-                <p className="text-slate-600">No questions found matching your criteria.</p>
-            </div>
-        );
-    }
-
     return (
-        <div className="space-y-4 sm:space-y-6">
-            {questions.map((question) => (
-                <QuestionItem
-                    key={question.id}
-                    question={question}
-                    isSelected={useQuestionBankContext().selectedQuestionIds.has(question.id)}
-                    toggleQuestionSelection={useQuestionBankContext().toggleQuestionSelection}
-                    toggleQuestionFlag={useQuestionBankContext().toggleQuestionFlag}
-                />
-            ))}
+        <div className="min-h-screen bg-gray-100">
+            {/* Search Bar */}
+
+            {/* Question List */}
+            <div className="w-full max-w-4xl mx-auto p-4">
+                {loading && (
+                    <div className="text-center py-6">
+                        <p className="text-slate-600">Loading questions...</p>
+                    </div>
+                )}
+
+                {error && (
+                    <div className="text-center py-6">
+                        <p className="text-red-600">{error}</p>
+                    </div>
+                )}
+
+                {!loading && questions.length === 0 && (
+                    <div className="text-center py-6">
+                        <p className="text-slate-600">No questions found matching your criteria.</p>
+                    </div>
+                )}
+
+                {!loading && questions.length > 0 && (
+                    <div className="space-y-4 sm:space-y-6">
+                        {questions.map((question) => (
+                            <QuestionItem
+                                key={question.id}
+                                question={question}
+                                isSelected={useQuestionBankContext().selectedQuestionIds.has(question.id)}
+                                toggleQuestionSelection={useQuestionBankContext().toggleQuestionSelection}
+                                toggleQuestionFlag={useQuestionBankContext().toggleQuestionFlag}
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

@@ -3,13 +3,13 @@
 import { Suspense } from 'react';
 import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
 import InstitutionDetails from './InstitutionDetails';
-import PDFOptions from './PDFOptions';
 import FilterControls from './FilterControls';
 import FoldersControls from './FoldersControls';
 import SelectedQuestionsActions from './SelectedQuestionsActions';
 import QuestionList from './QuestionList';
 import PaginationControls from './PaginationControls';
 import EmptyState from './EmptyState';
+import SearchBar from './SearchBar';
 
 function QuestionBankViewerContent() {
     const { questions, loading, error, count, selectedQuestionIds } = useQuestionBankContext();
@@ -34,6 +34,7 @@ function QuestionBankViewerContent() {
 
                     <main className="flex-1 space-y-4 sm:space-y-6">
                         <FoldersControls />
+                        <SearchBar />
                         {selectedQuestionIds.size > 0 && (
                             <SelectedQuestionsActions />
                         )}

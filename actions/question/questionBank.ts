@@ -198,3 +198,35 @@ export async function toggleFlag(id: string) {
         return { success: false, data: null, error: 'Failed to toggle question flag' };
     }
 }
+
+export async function searchQuestions(keyword: string) {
+    if (!keyword || keyword.trim().length < 2) {
+        return { success: false, data: [], error: 'Keyword must be at least 2 characters' };
+    }
+
+    try {
+        const questions = await prisma.question.findMany({
+            where: {
+                OR: [
+                    { question_text: { contains: keyword, mode: 'insensitive' } },
+                    { options: { has: keyword } },
+                ],
+            },
+            select: {
+                id: true,
+                question_text: true,
+                options: true,
+                exam_name: true,
+                subject: true,
+                chapter: true,
+                section_name: true,
+                flagged: true,
+            },
+            take: 50,
+        });
+        return { success: true, data: questions };
+    } catch (error) {
+        console.error('Error searching questions:', error);
+        return { success: false, data: [], error: 'Failed to search questions' };
+    }
+}

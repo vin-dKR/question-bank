@@ -57,6 +57,7 @@ model Question {
   @@index([chapter])
   @@index([flagged])
   @@index([section_name])
+  @@index([question_text])
 }
 
 model Folder {

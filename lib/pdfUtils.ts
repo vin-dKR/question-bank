@@ -9,6 +9,7 @@ export async function generatePDF(config: PDFConfig): Promise<Blob> {
     const { selectedQuestions, options } = config;
     const { includeAnswers, watermarkOpacity, logo } = options;
 
+
     // Convert logo File to base64 if provided
     let logoBase64: string | undefined;
     if (logo) {
@@ -74,15 +75,6 @@ export async function generatePDF(config: PDFConfig): Promise<Blob> {
                             style: 'answer',
                             margin: [0, 5, 0, 5],
                         },
-                        {/*
-                        question.explanation
-                            ? {
-                                text: `Explanation: ${question.explanation}`,
-                                style: 'explanation',
-                                margin: [0, 0, 0, 10],
-                            }
-                            : null
-                            */}
                     );
                 }
 
