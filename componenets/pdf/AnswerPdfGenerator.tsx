@@ -81,7 +81,7 @@ export default function AnswerPDFGenerator({ institution, selectedQuestions, opt
                             <iframe
                                 src={previewUrl}
                                 title="Answer Key Preview"
-                                className="w-full h-[60vh] sm:h-[70vh] border border-slate-200 rounded-md"
+                                className="w-full h-[60vh] sm:h-[65vh] border border-slate-200 rounded-md"
                             />
                         </div>
                         <DialogFooter className="sm:justify-between">

@@ -47,7 +47,7 @@ export default function LogoUploader({ onUpload }: LogoUploaderProps) {
                         onChange={handleFileChange}
                         accept="image/*"
                         ref={fileInputRef}
-                        className="w-full h-full sm:p-3 border border-slate-200 rounded-md text-slate-700 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition text-sm sm:text-base file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
+                        className="w-full h-10 sm:p-1 border border-slate-200 rounded-md text-slate-700 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition text-sm sm:text-base file:mr-4 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 file:justify-center cursor-pointer"
                     />
                 </div>
             </div>

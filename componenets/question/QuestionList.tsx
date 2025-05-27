@@ -120,7 +120,7 @@ export default function QuestionList() {
             {/* Search Bar */}
 
             {/* Question List */}
-            <div className="w-full max-w-4xl mx-auto p-4">
+            <div className="w-full max-w-4xl mx-auto">
                 {loading && (
                     <div className="text-center py-6">
                         <p className="text-slate-600">Loading questions...</p>
