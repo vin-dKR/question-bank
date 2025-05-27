@@ -15,6 +15,7 @@ import PDFGenerator from '../pdf/pdfPreview';
 import { Input } from '@/components/ui/input';
 import { usePDFGeneratorContext } from '@/lib/context/PDFGeneratorContext';
 import AnswerPDFGenerator from '../pdf/AnswerPdfGenerator';
+import { renderMixedLatex } from '@/lib/render-tex';
 
 
 const DraftManager = () => {
@@ -169,7 +170,7 @@ const DraftManager = () => {
                                         Add Questions
                                     </Button>
                                 </DialogTrigger>
-                                <DialogContent className="sm:max-w-md">
+                                <DialogContent className="sm:max-w-md bg-white max-h-[100vh] !top-[50%] !left-[50%] !transform !-translate-x-1/2 !-translate-y-1/2">
                                     <DialogHeader>
                                         <DialogTitle>Add Questions to {selectedFolder.name}</DialogTitle>
                                     </DialogHeader>
@@ -245,12 +246,12 @@ const DraftManager = () => {
                                         className="p-3 bg-slate-50 rounded-md border border-slate-200 shadow-sm"
                                     >
                                         <p className="text-sm font-medium text-slate-800 sm:text-base">
-                                            Q{question.question_number}: {question.question_text}
+                                            Q: {renderMixedLatex(question.question_text)}
                                         </p>
-                                        <p className="text-xs text-slate-600 sm:text-sm">
+                                        <span className="text-xs text-slate-600 sm:text-xs mt-2 bg-white px-2 py-1 rounded-md">
                                             {question.subject || 'No subject'} • {question.exam_name || 'No exam'} •{' '}
                                             {question.chapter || 'No chapter'} • Answer: {question.answer}
-                                        </p>
+                                        </span>
                                         {question.question_image && (
                                             <img
                                                 src={question.question_image}
