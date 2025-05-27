@@ -73,7 +73,7 @@ export default function AnswerPDFGenerator({ institution, selectedQuestions, opt
                     </Button>
                 </DialogTrigger>
                 {previewUrl && (
-                    <DialogContent className="bg-white sm:max-w-4xl w-full max-h-[90vh] flex flex-col">
+                    <DialogContent className="sm:max-w-4xl bg-white max-h-[100vh] !top-[50%] !left-[50%] !transform !-translate-x-1/2 !-translate-y-1/2">
                         <DialogHeader>
                             <DialogTitle>Answer Key Preview</DialogTitle>
                         </DialogHeader>

@@ -75,7 +75,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                     </div>
 
                     <h3 className="text-base font-semibold mb-2 text-slate-800 sm:text-lg">
-                        Q{question.question_number}: {questionText}
+                        Q: {questionText}
                     </h3>
 
                     <div className="space-y-2 mb-2">

@@ -54,55 +54,51 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
     };
 
     return (
-        <div>
-            <Dialog>
-                <DialogTrigger asChild>
-                    <Button
-                        onClick={handlePreview}
-                        disabled={isGenerating}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed"
-                    >
-                        {isGenerating ?
-                            'Generating...' :
-                            (
-                                <>
-                                    <Download /><span>PDF</span>
-                                </>
-                            )}
-                    </Button>
-                </DialogTrigger>
-                {previewUrl && (
-                    <DialogContent className="bg-white sm:max-w-4xl w-full max-h-[90vh] flex flex-col">
-                        <DialogHeader>
-                            <DialogTitle>PDF Preview</DialogTitle>
-                        </DialogHeader>
-                        <div className="flex-1 overflow-auto">
-                            <iframe
-                                src={previewUrl}
-                                title="PDF Preview"
-                                className="w-full h-[60vh] sm:h-[70vh] border border-slate-200 rounded-md"
-                            />
-                        </div>
-                        <DialogFooter className="sm:justify-between">
-                            <DialogClose asChild>
-                                <Button
-                                    variant="outline"
-                                    onClick={handleClose}
-                                    className="border-slate-500 text-slate-50 bg-black cursor-pointer"
-                                >
-                                    Cancel
-                                </Button>
-                            </DialogClose>
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button
+                    onClick={handlePreview}
+                    disabled={isGenerating}
+                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed"
+                >
+                    {isGenerating ? 'Generating...' : (
+                        <>
+                            <Download className="h-4 w-4" />
+                            <span>PDF</span>
+                        </>
+                    )}
+                </Button>
+            </DialogTrigger>
+            {previewUrl && (
+                <DialogContent className="sm:max-w-4xl bg-white max-h-[100vh] !top-[50%] !left-[50%] !transform !-translate-x-1/2 !-translate-y-1/2">
+                    <DialogHeader>
+                        <DialogTitle className="text-center">PDF Preview</DialogTitle>
+                    </DialogHeader>
+                    <div className="mt-4">
+                        <iframe
+                            src={previewUrl}
+                            title="PDF Preview"
+                            className="w-full h-[70vh] lg:h-[80vh] border border-gray-200 rounded-md"
+                        />
+                    </div>
+                    <DialogFooter className="sm:justify-between mt-4">
+                        <DialogClose asChild>
                             <Button
-                                onClick={handleDownload}
-                                className="bg-indigo-600 text-white hover:bg-indigo-700 cursor-pointer"
+                                variant="outline"
+                                onClick={handleClose}
                             >
-                                Download PDF
+                                Cancel
                             </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                )}
-            </Dialog>
-        </div>
+                        </DialogClose>
+                        <Button
+                            onClick={handleDownload}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                        >
+                            Download PDF
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            )}
+        </Dialog>
     );
 }
