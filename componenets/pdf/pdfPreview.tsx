@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { generatePDF } from '@/lib/pdfUtils';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,9 +14,24 @@ import {
 } from '@/components/ui/dialog';
 import { Download } from 'lucide-react';
 
+
 export default function PDFGenerator({ institution, selectedQuestions, options }: PDFConfig) {
     const [isGenerating, setIsGenerating] = useState(false);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [isMobile, setIsMobile] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        // Detect mobile device
+        const userAgent = navigator.userAgent || navigator.vendor;
+        setIsMobile(/android|iPad|iPhone|iPod/i.test(userAgent));
+
+        return () => {
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+            }
+        };
+    }, [previewUrl]);
 
     const handlePreview = async () => {
         if (selectedQuestions.length === 0) {
@@ -25,13 +40,14 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
         }
 
         setIsGenerating(true);
+        setError(null);
         try {
             const pdfBlob = await generatePDF({ institution, selectedQuestions, options });
             const url = URL.createObjectURL(pdfBlob);
             setPreviewUrl(url);
         } catch (error) {
             console.error('Error generating PDF preview:', error);
-            alert('Failed to generate PDF preview');
+            setError('Failed to generate PDF preview');
         } finally {
             setIsGenerating(false);
         }
@@ -51,6 +67,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
             URL.revokeObjectURL(previewUrl);
             setPreviewUrl(null);
         }
+        setError(null);
     };
 
     return (
@@ -75,11 +92,25 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
                         <DialogTitle className="text-center">PDF Preview</DialogTitle>
                     </DialogHeader>
                     <div className="mt-4">
-                        <iframe
-                            src={previewUrl}
-                            title="PDF Preview"
-                            className="w-full h-[70vh] lg:h-[80vh] border border-gray-200 rounded-md"
-                        />
+                        {error ? (
+                            <div className="text-red-600 text-center">{error}</div>
+                        ) : isMobile ? (
+                            <div className="text-center p-4">
+                                <p className="mb-4">PDF preview is not supported on mobile devices. Please download the PDF.</p>
+                                <Button
+                                    onClick={handleDownload}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                                >
+                                    Download PDF
+                                </Button>
+                            </div>
+                        ) : (
+                            <iframe
+                                src={previewUrl}
+                                title="PDF Preview"
+                                className="w-full h-[70vh] lg:h-[80vh] border border-gray-200 rounded-md"
+                            />
+                        )}
                     </div>
                     <DialogFooter className="sm:justify-between mt-4">
                         <DialogClose asChild>
@@ -90,12 +121,14 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
                                 Cancel
                             </Button>
                         </DialogClose>
-                        <Button
-                            onClick={handleDownload}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                        >
-                            Download PDF
-                        </Button>
+                        {!isMobile && (
+                            <Button
+                                onClick={handleDownload}
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                            >
+                                Download PDF
+                            </Button>
+                        )}
                     </DialogFooter>
                 </DialogContent>
             )}

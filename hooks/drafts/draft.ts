@@ -132,6 +132,38 @@ export const useFolders = () => {
         }
     };
 
+    // Remove a question from a folder
+    const removeQuestionFromFolder = async (folderId: string, questionId: string) => {
+        try {
+            setLoading(true);
+            setErr(null);
+            const folder = drafts.find((draft) => draft.id === folderId);
+
+            if (!folder) {
+                throw new Error("Folder not found");
+            }
+
+            const updatedQuestionIds = folder.questions
+                .filter((q) => q.id !== questionId)
+                .map((q) => q.id);
+            const updatedFolder = await updateFolderQuestions(folderId, updatedQuestionIds);
+            if (updatedFolder) {
+                setDrafts((prev) =>
+                    prev.map((draft) => (draft.id === folderId ? mapFolderToDraft(updatedFolder) : draft))
+                );
+                return true;
+            }
+            return false;
+        } catch (e) {
+            const errorMessage = e instanceof Error ? e.message : "Failed to remove question";
+            setErr(errorMessage);
+            // console.error("Error removing question:", e);
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Initial fetch
     useEffect(() => {
         getAllFolders();
@@ -146,5 +178,6 @@ export const useFolders = () => {
         delFolder,
         renameDrafts,
         updateQuestionsInFolder,
+        removeQuestionFromFolder,
     };
 };

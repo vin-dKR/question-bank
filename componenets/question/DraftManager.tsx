@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { usePDFGeneratorContext } from '@/lib/context/PDFGeneratorContext';
 import AnswerPDFGenerator from '../pdf/AnswerPdfGenerator';
 import { renderMixedLatex } from '@/lib/render-tex';
+import { Trash } from 'lucide-react';
 
 
 const DraftManager = () => {
@@ -24,6 +25,7 @@ const DraftManager = () => {
         delFolder,
         renameDrafts,
         updateQuestionsInFolder,
+        removeQuestionFromFolder,
         drafts,
         loading,
         err,
@@ -32,15 +34,13 @@ const DraftManager = () => {
     const [selectedFolder, setSelectedFolder] = useState<FetchDraft | null>(null);
     const [editMode, setEditMode] = useState<string | null>(null);
     const [newName, setNewName] = useState('');
-    const { options, institution } = usePDFGeneratorContext()
-
+    const { options, institution } = usePDFGeneratorContext();
+    const [questionToRemove, setQuestionToRemove] = useState<string | null>(null);
 
     const refreshFolders = async () => {
         console.log('Refreshing folders');
         await getAllFolders();
     };
-
-    //console.log('.............................', selectedQuestions);
 
     useEffect(() => {
         refreshFolders();
@@ -57,8 +57,8 @@ const DraftManager = () => {
 
     const handleRenameFolder = async (id: string, name: string) => {
         try {
-            await renameDrafts(id, name);
-            if (selectedFolder?.id === id) {
+            const success = await renameDrafts(id, name);
+            if (success && selectedFolder?.id === id) {
                 setSelectedFolder((prev) => (prev ? { ...prev, name } : null));
             }
             setEditMode(null);
@@ -71,16 +71,15 @@ const DraftManager = () => {
 
     const handleDeleteFolder = async (id: string) => {
         try {
-            await delFolder(id);
-            await refreshFolders();
-            if (selectedFolder?.id === id) {
+            const success = await delFolder(id);
+            if (success && selectedFolder?.id === id) {
                 setSelectedFolder(null);
             }
+            await refreshFolders();
         } catch (error) {
             console.error('Failed to delete folder:', error);
         }
     };
-
 
     const handleAddQuestionsToFolder = async () => {
         if (!selectedFolder || selectedQuestions.length === 0) {
@@ -88,43 +87,71 @@ const DraftManager = () => {
             return;
         }
         try {
-            await updateQuestionsInFolder(
+            const success = await updateQuestionsInFolder(
                 selectedFolder.id,
-                selectedQuestions.map((q) => {
-                    return {
-                        id: q.id
-                    }
-                })
+                selectedQuestions.map((q) => ({
+                    id: q.id,
+                }))
             );
-            setSelectedFolder((prev) => ({
-                ...prev!,
-                questions: [
-                    ...prev!.questions,
-                    ...selectedQuestions.map((q) => ({
-                        id: q.id,
-                        question_number: q.question_number,
-                        question_text: q.question_text,
-                        options: q.options,
-                        answer: q.answer,
-                        subject: q.subject,
-                        exam_name: q.exam_name,
-                        chapter: q.chapter,
-                        file_name: q.file_name || null,
-                        isQuestionImage: q.isQuestionImage || false,
-                        question_image: q.question_image || null,
-                        isOptionImage: q.isOptionImage || false,
-                        option_images: q.option_images || null,
-                        section_name: q.section_name || null,
-                        question_type: q.question_type || null,
-                        topic: q.topic || null,
-                        folderId: selectedFolder.id,
-                        folder: null,
-                    })),
-                ],
-            }));
-            await refreshFolders();
+            if (success) {
+                setSelectedFolder((prev) => ({
+                    ...prev!,
+                    questions: [
+                        ...prev!.questions,
+                        ...selectedQuestions.map((q) => ({
+                            id: q.id,
+                            question_number: q.question_number,
+                            question_text: q.question_text,
+                            options: q.options,
+                            answer: q.answer,
+                            subject: q.subject,
+                            exam_name: q.exam_name,
+                            chapter: q.chapter,
+                            file_name: q.file_name || null,
+                            isQuestionImage: q.isQuestionImage || false,
+                            question_image: q.question_image || null,
+                            isOptionImage: q.isOptionImage || false,
+                            option_images: q.option_images || null,
+                            section_name: q.section_name || null,
+                            question_type: q.question_type || null,
+                            topic: q.topic || null,
+                            folderId: selectedFolder.id,
+                            folder: null,
+                        })),
+                    ],
+                }));
+                await refreshFolders();
+            }
         } catch (error) {
             console.error('Failed to add questions:', error);
+        }
+    };
+
+    const handleRemoveQuestion = async (questionId: string) => {
+        if (!selectedFolder) return;
+        const originalQuestions = [...selectedFolder.questions];
+
+        try {
+            // Optimistic update
+            setSelectedFolder((prev) => ({
+                ...prev!,
+                questions: prev!.questions.filter((q) => q.id !== questionId),
+            }));
+
+            const success = await removeQuestionFromFolder(selectedFolder.id, questionId);
+            if (!success) {
+                throw new Error('Failed to remove question');
+            }
+            await refreshFolders();
+            setQuestionToRemove(null);
+        } catch (error) {
+            console.error('Failed to remove question:', error);
+            // Revert on failure
+            setSelectedFolder((prev) => ({
+                ...prev!,
+                questions: originalQuestions,
+            }));
+            alert('Failed to remove question');
         }
     };
 
@@ -166,7 +193,11 @@ const DraftManager = () => {
                             </Button>
                             <Dialog>
                                 <DialogTrigger asChild>
-                                    <Button variant="outline" size="sm" className="border-indigo-500 text-indigo-600 hover:bg-indigo-50">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="border-indigo-500 text-indigo-600 hover:bg-indigo-50"
+                                    >
                                         Add Questions
                                     </Button>
                                 </DialogTrigger>
@@ -182,7 +213,7 @@ const DraftManager = () => {
                                             <Button
                                                 onClick={handleAddQuestionsToFolder}
                                                 disabled={selectedQuestions.length === 0}
-                                                className="bg-indigo-600 hover:bg-indigo-700 "
+                                                className="bg-indigo-600 hover:bg-indigo-700"
                                             >
                                                 Add Questions
                                             </Button>
@@ -191,7 +222,7 @@ const DraftManager = () => {
                                 </DialogContent>
                             </Dialog>
                             {selectedFolder.questions.length > 0 && (
-                                <div className='flex gap-1'>
+                                <div className="flex gap-1">
                                     <PDFGenerator
                                         institution={institution}
                                         selectedQuestions={selectedFolder.questions}
@@ -203,7 +234,6 @@ const DraftManager = () => {
                                         options={options}
                                     />
                                 </div>
-
                             )}
                         </div>
                     </div>
@@ -243,11 +273,54 @@ const DraftManager = () => {
                                 {selectedFolder.questions.map((question) => (
                                     <li
                                         key={question.id}
-                                        className="p-3 bg-slate-50 rounded-md border border-slate-200 shadow-sm"
+                                        className="p-3 bg-slate-50 rounded-md border border-slate-200 shadow-sm flex flex-col gap-2"
                                     >
-                                        <p className="text-sm font-medium text-slate-800 sm:text-base">
-                                            Q: {renderMixedLatex(question.question_text)}
-                                        </p>
+                                        <div className="flex justify-between items-start">
+                                            <p className="text-sm font-medium text-slate-800 sm:text-base">
+                                                Q: {renderMixedLatex(question.question_text)}
+                                            </p>
+                                            <Dialog
+                                                open={questionToRemove === question.id}
+                                                onOpenChange={(open) =>
+                                                    setQuestionToRemove(open ? question.id : null)
+                                                }
+                                            >
+                                                <DialogTrigger asChild>
+                                                    <Button
+                                                        variant="destructive"
+                                                        size="sm"
+                                                        className="bg-red-500 hover:bg-red-600"
+                                                    >
+                                                        <Trash />
+                                                    </Button>
+                                                </DialogTrigger>
+                                                <DialogContent className="sm:max-w-md bg-white max-h-[100vh] !top-[50%] !left-[50%] !transform !-translate-x-1/2 !-translate-y-1/2">
+                                                    <DialogHeader>
+                                                        <DialogTitle>Remove Question</DialogTitle>
+                                                    </DialogHeader>
+                                                    <div className="text-sm text-slate-600">
+                                                        Are you sure you want to remove this question from{' '}
+                                                        {selectedFolder.name}?
+                                                    </div>
+                                                    <DialogFooter className="sm:justify-start">
+                                                        <DialogClose asChild>
+                                                            <Button
+                                                                variant="outline"
+                                                                className="border-slate-500 text-slate-600 hover:bg-slate-100"
+                                                            >
+                                                                Cancel
+                                                            </Button>
+                                                        </DialogClose>
+                                                        <Button
+                                                            onClick={() => handleRemoveQuestion(question.id)}
+                                                            className="bg-red-500 hover:bg-red-600"
+                                                        >
+                                                            Remove
+                                                        </Button>
+                                                    </DialogFooter>
+                                                </DialogContent>
+                                            </Dialog>
+                                        </div>
                                         <span className="text-xs text-slate-600 sm:text-xs mt-2 bg-white px-2 py-1 rounded-md">
                                             {question.subject || 'No subject'} • {question.exam_name || 'No exam'} •{' '}
                                             {question.chapter || 'No chapter'} • Answer: {question.answer}
