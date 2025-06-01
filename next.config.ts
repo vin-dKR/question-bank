@@ -7,6 +7,7 @@ const queryEnginePath = path.resolve('generated/prisma/query-engine-rhel-openssl
 const hasQueryEngine = fs.existsSync(queryEnginePath);
 
 const nextConfig: NextConfig = {
+    crossOrigin: 'anonymous',
     webpack: (config, { isServer }) => {
         if (isServer) {
             // Prevent Prisma Client from being treated as an external module
