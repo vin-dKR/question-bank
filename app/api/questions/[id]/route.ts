@@ -3,12 +3,12 @@ import prisma from "@/lib/prisma";
 
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { id } = params;
+        const { id } = await params;
         const body = await request.json();
-        
+
         const {
             question_number,
             file_name,
@@ -26,19 +26,19 @@ export async function PUT(
             chapter,
             answer
         } = body;
-        
+
         // Find the question first
         const existingQuestion = await prisma.question.findUnique({
             where: { id }
         });
-        
+
         if (!existingQuestion) {
             return NextResponse.json(
                 { success: false, error: 'Question not found' },
                 { status: 404 }
             );
         }
-        
+
         // Update the question
         const updatedQuestion = await prisma.question.update({
             where: { id },
@@ -60,7 +60,7 @@ export async function PUT(
                 answer
             }
         });
-        
+
         return NextResponse.json({ success: true, data: updatedQuestion });
     } catch (error) {
         console.error('Error updating question:', error);
@@ -73,26 +73,26 @@ export async function PUT(
 
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { id } = params;
-        
+        const { id } = await params;
+
         // Find and delete the question
         const question = await prisma.question.delete({
             where: { id }
         });
-        
+
         if (!question) {
             return NextResponse.json(
                 { success: false, error: 'Question not found' },
                 { status: 404 }
             );
         }
-        
-        return NextResponse.json({ 
-            success: true, 
-            message: 'Question deleted successfully' 
+
+        return NextResponse.json({
+            success: true,
+            message: 'Question deleted successfully'
         });
     } catch (error) {
         console.error('Error deleting question:', error);

@@ -16,20 +16,21 @@ export async function GET(request: NextRequest) {
         const chapter = searchParams.get('chapter');
         const file_name = searchParams.get('file_name');
 
+        // eslint-disable-next-line
         const query: any = {};
-        
+
         // Add filters if provided
         if (subject) query['subject'] = subject;
         if (exam) query['exam_name'] = exam;
         if (type) query['question_type'] = type;
         if (difficulty) query['difficulty'] = difficulty;
-        
+
         // Add name-based filters
         if (subject_name) query['subject'] = subject_name;
         if (exam_name) query['exam_name'] = exam_name;
         if (chapter) query['chapter'] = chapter;
         if (file_name) query['file_name'] = file_name;
-        
+
         // Add text search if provided
         if (search) {
             query.OR = [
@@ -37,10 +38,10 @@ export async function GET(request: NextRequest) {
                 { options: { has: search } }
             ];
         }
-        
+
         // Calculate pagination
         const skip = (page - 1) * limit;
-        
+
         // Get questions with pagination
         const [questions, total] = await Promise.all([
             prisma.question.findMany({
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest) {
             }),
             prisma.question.count({ where: query })
         ]);
-        
+
         return NextResponse.json({
             success: true,
             data: {
@@ -76,7 +77,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        
+
         // Check if we're receiving an array of questions
         if (Array.isArray(body)) {
             const questions = [];
@@ -102,13 +103,13 @@ export async function POST(request: NextRequest) {
                         chapter,
                         answer
                     } = questionData;
-                    
+
                     // Validate required fields
                     if (!question_text) {
                         errors.push(`Question ${question_number}: Question text is required`);
                         continue;
                     }
-                    
+
                     const newQuestion = await prisma.question.create({
                         data: {
                             question_number,
@@ -129,13 +130,15 @@ export async function POST(request: NextRequest) {
                             flagged: false
                         }
                     });
-                    
+
                     questions.push(newQuestion);
-                } catch (err) {
+
+                    // eslint-disable-next-line
+                } catch (err: any) {
                     errors.push(`Error processing question ${questionData.question_number || 'unknown'}: ${err.message}`);
                 }
             }
-            
+
             return NextResponse.json({
                 success: true,
                 count: questions.length,
@@ -161,7 +164,7 @@ export async function POST(request: NextRequest) {
                 chapter,
                 answer
             } = body;
-            
+
             // Validate required fields
             if (!question_text) {
                 return NextResponse.json(
@@ -169,7 +172,7 @@ export async function POST(request: NextRequest) {
                     { status: 400 }
                 );
             }
-            
+
             const question = await prisma.question.create({
                 data: {
                     question_number,
@@ -190,7 +193,7 @@ export async function POST(request: NextRequest) {
                     flagged: false
                 }
             });
-            
+
             return NextResponse.json({ success: true, data: question }, { status: 201 });
         }
     } catch (error) {
