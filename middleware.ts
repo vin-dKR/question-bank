@@ -1,36 +1,56 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse, type NextRequest } from 'next/server';
 
-// Export the middleware function
-export default function middleware(request: NextRequest) {
-    // Get the response
-    const response = NextResponse.next()
+// Define which routes should be protected by Clerk
+const isProtectedRoute = createRouteMatcher([
+    '/dashboard(.*)',
+]);
 
-    // Add CORS headers to all responses
-    response.headers.set('Access-Control-Allow-Origin', '*')
-    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-    response.headers.set('Access-Control-Allow-Headers', '*')
-    response.headers.set('Access-Control-Max-Age', '86400')
+// Define your API routes that need CORS
+const isApiRoute = (pathname: string) => {
+    return pathname.startsWith('/api/');
+};
 
-    // Handle preflight requests
-    if (request.method === 'OPTIONS') {
-        return new NextResponse(null, {
-            status: 204,
-            headers: {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-                'Access-Control-Allow-Headers': '*',
-                'Access-Control-Max-Age': '86400',
-            },
-        })
+export default async function middleware(request: NextRequest) {
+    // Handle API routes with CORS
+    if (isApiRoute(request.nextUrl.pathname)) {
+        const response = NextResponse.next();
+
+        // Set CORS headers
+        response.headers.set('Access-Control-Allow-Origin', '*');
+        response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        response.headers.set('Access-Control-Allow-Headers', '*');
+        response.headers.set('Access-Control-Max-Age', '86400');
+
+        // Handle preflight requests
+        if (request.method === 'OPTIONS') {
+            return new NextResponse(null, {
+                status: 204,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                    'Access-Control-Allow-Headers': '*',
+                    'Access-Control-Max-Age': '86400',
+                },
+            });
+        }
+
+        return response;
     }
 
-    return response
+    // Handle protected routes with Clerk
+    if (isProtectedRoute(request)) {
+        return clerkMiddleware()
+    }
+
+    // For all other routes, just continue
+    return NextResponse.next();
 }
 
-// Apply middleware to all API routes
 export const config = {
     matcher: [
-        '/api/:path*',
+        '/((?!.*\\..*|_next).*)', // Don't run middleware on static files
+        '/',
+        '/(api|trpc)(.*)'         // Run middleware on API routes
     ],
 };
