@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
 // Define allowed origins
-const allowedOrigins = ['https://multi-crop.vercel.app']
+const allowedOrigins = ['https://question-editor.vercel.app/']
 
 // Define public API paths that don't require authentication
 const isPublicRoute = createRouteMatcher(['/api/questions(.*)']);
