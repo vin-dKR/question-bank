@@ -1,14 +1,9 @@
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
-// Define public API paths that don't require authentication
 const isPublicRoute = createRouteMatcher(['/api/questions(.*)']);
-
-// Define protected routes (e.g., frontend routes)
 const isProtectedRoute = createRouteMatcher(['/dashboard(.*)', '/forum(.*)']);
 
-// Common headers to allow in CORS
 const allowedHeaders = [
     'Content-Type',
     'Cache-Control',
@@ -21,11 +16,9 @@ const allowedHeaders = [
     'Expires',
 ];
 
-export default clerkMiddleware(async (auth, req: NextRequest) => {
-    // Get the request's Origin header
+export default clerkMiddleware(async (auth, req) => {
     const origin = req.headers.get('origin') || '';
 
-    // Log request details for debugging
     console.log('Request:', {
         path: req.nextUrl.pathname,
         method: req.method,
@@ -34,36 +27,33 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
         isPublicRoute: isPublicRoute(req),
     });
 
-    // Handle CORS preflight requests for public API routes
-    if (req.method === 'OPTIONS' && isPublicRoute(req)) {
-        return new NextResponse(null, {
-            status: 204,
-            headers: {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-                'Access-Control-Allow-Headers': allowedHeaders.join(', '),
-                'Access-Control-Max-Age': '86400',
-                'Vary': 'Origin',
-            },
-        });
-    }
-
-    // For public API routes, add CORS headers
     if (isPublicRoute(req)) {
+        if (req.method === 'OPTIONS') {
+            return new NextResponse(null, {
+                status: 204,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                    'Access-Control-Allow-Headers': allowedHeaders.join(', '),
+                    'Access-Control-Max-Age': '86400',
+                    'Vary': 'Origin',
+                },
+            });
+        }
+
         const response = NextResponse.next();
         response.headers.set('Access-Control-Allow-Origin', '*');
         response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
         response.headers.set('Access-Control-Allow-Headers', allowedHeaders.join(', '));
         response.headers.set('Vary', 'Origin');
+        console.log('Response Headers:', [...response.headers.entries()]);
         return response;
     }
 
-    // For protected routes, enforce Clerk authentication
     if (isProtectedRoute(req)) {
         await auth.protect();
     }
 
-    // For other routes, continue without modification
     return NextResponse.next();
 });
 
@@ -73,3 +63,4 @@ export const config = {
         '/(api|trpc)(.*)',
     ],
 };
+
