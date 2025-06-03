@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
 // Define allowed origins
-const allowedOrigins = ['https://question-editor.vercel.app/']
+const allowedOrigins = ['https://question-editor.vercel.app', 'http://localhost:5173'];
 
 // Define public API paths that don't require authentication
 const isPublicRoute = createRouteMatcher(['/api/questions(.*)']);
@@ -36,23 +36,27 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
         headers: [...req.headers.entries()],
     });
 
-    // Normalize origin for comparison (handle null, case sensitivity, etc.)
+    // Normalize origin for comparison
     const isAllowedOrigin = origin && allowedOrigins.some(
-        (allowed) => allowed.toLowerCase() === origin.toLowerCase()
+        (allowed) => {
+            const normalizedAllowed = allowed.toLowerCase().replace(/\/+$/, '');
+            const normalizedOrigin = origin.toLowerCase().replace(/\/+$/, '');
+            return normalizedAllowed === normalizedOrigin;
+        }
     );
 
     // Handle CORS preflight requests for public API routes
     if (req.method === 'OPTIONS' && isPublicRoute(req)) {
-        return new NextResponse(null, {
-            status: 204,
-            headers: {
-                'Access-Control-Allow-Origin': isAllowedOrigin ? origin : '',
-                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-                'Access-Control-Allow-Headers': allowedHeaders.join(', '),
-                'Access-Control-Max-Age': '86400',
-                ...(isAllowedOrigin && { 'Vary': 'Origin' }),
-            },
-        });
+        const headers: Record<string, string> = {
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': allowedHeaders.join(', '),
+            'Access-Control-Max-Age': '86400',
+        };
+        if (isAllowedOrigin) {
+            headers['Access-Control-Allow-Origin'] = origin;
+            headers['Vary'] = 'Origin';
+        }
+        return new NextResponse(null, { status: 204, headers });
     }
 
     // For public API routes, add CORS headers and restrict unallowed origins
@@ -61,18 +65,19 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
             console.log('Blocking unallowed origin:', origin);
             return new NextResponse(JSON.stringify({ error: 'Origin not allowed' }), {
                 status: 403,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
             });
         }
 
         const response = NextResponse.next();
-        // Allow same-origin or no-origin requests (e.g., curl without Origin header)
-        response.headers.set('Access-Control-Allow-Origin', isAllowedOrigin ? origin : '*');
+        if (isAllowedOrigin) {
+            response.headers.set('Access-Control-Allow-Origin', origin);
+            response.headers.set('Vary', 'Origin');
+        } else {
+            response.headers.set('Access-Control-Allow-Origin', '*'); // For same-origin or no-origin
+        }
         response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
         response.headers.set('Access-Control-Allow-Headers', allowedHeaders.join(', '));
-        response.headers.set('Vary', 'Origin');
         return response;
     }
 
@@ -87,9 +92,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
 export const config = {
     matcher: [
-        // Skip Next.js internals and static files, unless found in search params
         '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-        // Always run for API routes
         '/(api|trpc)(.*)',
     ],
 };
