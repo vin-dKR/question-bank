@@ -3,7 +3,10 @@ import type { NextRequest } from 'next/server';
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
 // Define allowed origins
-const allowedOrigins = ['https://question-editor.vercel.app', 'http://localhost:5173'];
+const allowedOrigins = [
+    'https://question-editor.vercel.app',
+    'http://localhost:5173',
+];
 
 // Define public API paths that don't require authentication
 const isPublicRoute = createRouteMatcher(['/api/questions(.*)']);
@@ -34,6 +37,12 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
         method: req.method,
         origin,
         headers: [...req.headers.entries()],
+        isPublicRoute: isPublicRoute(req),
+        isAllowedOrigin: allowedOrigins.some(allowed => {
+            const normalizedAllowed = allowed.toLowerCase().replace(/\/+$/, '');
+            const normalizedOrigin = origin.toLowerCase().replace(/\/+$/, '');
+            return normalizedAllowed === normalizedOrigin;
+        }),
     });
 
     // Normalize origin for comparison
