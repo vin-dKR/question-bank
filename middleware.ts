@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
 const isPublicRoute = createRouteMatcher(['/api/questions(.*)']);
@@ -11,10 +10,6 @@ const allowedHeaders = [
     'Accept',
     'Accept-Language',
     'User-Agent',
-    'Referer',
-    'X-Requested-With',
-    'Pragma',
-    'Expires',
 ];
 
 export default clerkMiddleware(async (auth, req) => {
@@ -34,10 +29,6 @@ export default clerkMiddleware(async (auth, req) => {
                 status: 204,
                 headers: {
                     'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-                    'Access-Control-Allow-Headers': allowedHeaders.join(', '),
-                    'Access-Control-Max-Age': '86400',
-                    'Vary': 'Origin',
                 },
             });
         }
