@@ -1,0 +1,15 @@
+``toml
+[[headers]]
+  for = "/api/questions"  # This specifies the path(s) to apply these headers to.
+  [headers.values]
+    Access-Control-Allow-Origin = "https://question-editor.vercel.app" # Your allowed frontend origin
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"  # Allowed HTTP methods
+    Access-Control-Allow-Headers = "Content-Type, Authorization"      # Allowed request headers
+    Access-Control-Max-Age = "86400"                                # Cache preflight response for 24 hours
+
+# You can add other Netlify configurations below this headers section,
+# such as build settings, redirects, etc.
+# Example:
+# [build]
+#   command = "npm run build"
+#   publish = "dist"
