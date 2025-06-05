@@ -15,6 +15,7 @@ export default clerkMiddleware(async (auth, req) => {
     // Handle CORS for public routes
     if (isPublicRoute(req)) {
         // Handle preflight (OPTIONS) requests
+        {/*
         if (req.method === 'OPTIONS') {
             return new NextResponse(null, {
                 status: 204,
@@ -26,6 +27,7 @@ export default clerkMiddleware(async (auth, req) => {
                 },
             });
         }
+        */}
 
         // Handle actual requests
         const response = NextResponse.next();
