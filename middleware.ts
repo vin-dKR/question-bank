@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:3001', 
-    'https://localhost:5173',
+    'http://localhost:5173',
     'https://question-editor.vercel.app',
     'https://multi-crop.vercel.app'
     // Add more domains as needed
