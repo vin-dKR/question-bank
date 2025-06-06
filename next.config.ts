@@ -7,7 +7,14 @@ const queryEnginePath = path.resolve('generated/prisma/query-engine-rhel-openssl
 const hasQueryEngine = fs.existsSync(queryEnginePath);
 
 const nextConfig: NextConfig = {
-    crossOrigin: 'anonymous',
+    async rewrites() {
+        return [
+            {
+                source: '/api/:path*',
+                destination: 'https://question-banks.netlify.app/api/:path*',
+            },
+        ]
+    },
     webpack: (config, { isServer }) => {
         if (isServer) {
             // Prevent Prisma Client from being treated as an external module
