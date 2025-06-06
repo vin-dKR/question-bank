@@ -22,6 +22,14 @@ function handleCors(request: NextRequest) {
     const origin = request.headers.get('origin')
     const isAllowedOrigin = origin && allowedOrigins.includes(origin)
     
+    console.log('CORS Debug:', { 
+        origin, 
+        isAllowedOrigin, 
+        allowedOrigins,
+        method: request.method,
+        url: request.url 
+    })
+    
     // Handle preflight requests (OPTIONS)
     if (request.method === 'OPTIONS') {
         const response = new NextResponse(null, { status: 200 })
