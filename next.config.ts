@@ -15,6 +15,15 @@ const nextConfig: NextConfig = {
             },
         ]
     },
+    images: {
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'jrekcngltfkghrgzgvju.supabase.co',
+                pathname: '/storage/v1/object/public/images/**',
+            },
+        ],
+    },
     webpack: (config, { isServer }) => {
         if (isServer) {
             // Prevent Prisma Client from being treated as an external module

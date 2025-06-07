@@ -4,6 +4,7 @@ import { memo, useMemo, useState } from 'react';
 import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
 import { renderMixedLatex } from '@/lib/render-tex';
 import { Flag, FlagOff } from 'lucide-react';
+import Image from 'next/image';
 
 interface QuestionProps {
     question: Question;
@@ -14,6 +15,8 @@ interface QuestionProps {
 
 const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, toggleQuestionFlag }: QuestionProps) => {
     const [isFlagging, setIsFlagging] = useState(false);
+
+    console.log(question.question_image)
 
     const questionText = useMemo(() => renderMixedLatex(question.question_text), [question.question_text]);
     const renderedOptions = useMemo(
@@ -74,9 +77,22 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                         </button>
                     </div>
 
-                    <h3 className="text-base font-semibold mb-2 text-slate-800 sm:text-lg">
-                        Q: {questionText}
-                    </h3>
+                    <div>
+                        <h3 className="text-base font-semibold mb-2 text-slate-800 sm:text-lg">
+                            Q: {questionText}
+                        </h3>
+
+                        {question.question_image && (
+                            <div>
+                                <Image
+                                    src={question.question_image}
+                                    width={300}
+                                    height={300}
+                                    alt='questionss'
+                                />
+                            </div>
+                        )}
+                    </div>
 
                     <div className="space-y-2 mb-2">
                         {question.options.map((option, index) => {

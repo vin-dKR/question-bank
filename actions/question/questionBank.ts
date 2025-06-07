@@ -2,27 +2,6 @@
 
 import prisma from '@/lib/prisma';
 
-interface UpdateQuestionInput
-    extends Partial<
-        Pick<
-            Question,
-            | 'question_text'
-            | 'options'
-            | 'answer'
-            | 'question_image'
-            | 'option_images'
-            | 'isQuestionImage'
-            | 'isOptionImage'
-            | 'section_name'
-            | 'question_type'
-            | 'topic'
-            | 'exam_name'
-            | 'subject'
-            | 'chapter'
-            | 'folderId'
-        >
-    > { }
-
 export async function getQuestions(filters: {
     exam_name?: string;
     subject?: string;
@@ -216,6 +195,7 @@ export async function searchQuestions(keyword: string) {
                 id: true,
                 question_text: true,
                 options: true,
+                question_image: true,
                 exam_name: true,
                 subject: true,
                 chapter: true,
