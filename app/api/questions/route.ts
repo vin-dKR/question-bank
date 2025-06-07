@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { handleCorsResponse, handleOptionsRequest } from "@/lib/cors";
+
+export async function OPTIONS(request: NextRequest) {
+    return handleOptionsRequest(request);
+}
 
 export async function GET(request: NextRequest) {
     try {
@@ -53,7 +58,7 @@ export async function GET(request: NextRequest) {
             prisma.question.count({ where: query })
         ]);
 
-        return NextResponse.json({
+        const response = NextResponse.json({
             success: true,
             data: {
                 questions,
@@ -65,12 +70,16 @@ export async function GET(request: NextRequest) {
                 }
             }
         });
+        
+        return handleCorsResponse(request, response);
     } catch (error) {
         console.error('Error fetching questions:', error);
-        return NextResponse.json(
+        const response = NextResponse.json(
             { success: false, error: 'Failed to fetch questions' },
             { status: 500 }
         );
+        
+        return handleCorsResponse(request, response);
     }
 }
 
@@ -139,12 +148,14 @@ export async function POST(request: NextRequest) {
                 }
             }
 
-            return NextResponse.json({
+            const response = NextResponse.json({
                 success: true,
                 count: questions.length,
                 questions,
                 errors: errors.length > 0 ? errors : undefined
             }, { status: 201 });
+            
+            return handleCorsResponse(request, response);
         } else {
             // Single question creation
             const {
@@ -167,10 +178,12 @@ export async function POST(request: NextRequest) {
 
             // Validate required fields
             if (!question_text) {
-                return NextResponse.json(
+                const response = NextResponse.json(
                     { success: false, error: 'Question text is required' },
                     { status: 400 }
                 );
+                
+                return handleCorsResponse(request, response);
             }
 
             const question = await prisma.question.create({
@@ -194,13 +207,17 @@ export async function POST(request: NextRequest) {
                 }
             });
 
-            return NextResponse.json({ success: true, data: question }, { status: 201 });
+            const response = NextResponse.json({ success: true, data: question }, { status: 201 });
+            
+            return handleCorsResponse(request, response);
         }
     } catch (error) {
         console.error('Error creating question:', error);
-        return NextResponse.json(
+        const response = NextResponse.json(
             { success: false, error: 'Failed to create question' },
             { status: 500 }
         );
+        
+        return handleCorsResponse(request, response);
     }
 } 

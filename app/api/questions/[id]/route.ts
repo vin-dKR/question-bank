@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { handleCorsResponse, handleOptionsRequest } from "@/lib/cors";
+
+export async function OPTIONS(request: NextRequest) {
+    return handleOptionsRequest(request);
+}
 
 export async function PUT(
     request: NextRequest,
@@ -33,10 +38,12 @@ export async function PUT(
         });
 
         if (!existingQuestion) {
-            return NextResponse.json(
+            const response = NextResponse.json(
                 { success: false, error: 'Question not found' },
                 { status: 404 }
             );
+            
+            return handleCorsResponse(request, response);
         }
 
         // Update the question
@@ -61,13 +68,17 @@ export async function PUT(
             }
         });
 
-        return NextResponse.json({ success: true, data: updatedQuestion });
+        const response = NextResponse.json({ success: true, data: updatedQuestion });
+        
+        return handleCorsResponse(request, response);
     } catch (error) {
         console.error('Error updating question:', error);
-        return NextResponse.json(
+        const response = NextResponse.json(
             { success: false, error: 'Failed to update question' },
             { status: 500 }
         );
+        
+        return handleCorsResponse(request, response);
     }
 }
 
@@ -84,21 +95,27 @@ export async function DELETE(
         });
 
         if (!question) {
-            return NextResponse.json(
+            const response = NextResponse.json(
                 { success: false, error: 'Question not found' },
                 { status: 404 }
             );
+            
+            return handleCorsResponse(request, response);
         }
 
-        return NextResponse.json({
+        const response = NextResponse.json({
             success: true,
             message: 'Question deleted successfully'
         });
+        
+        return handleCorsResponse(request, response);
     } catch (error) {
         console.error('Error deleting question:', error);
-        return NextResponse.json(
+        const response = NextResponse.json(
             { success: false, error: 'Failed to delete question' },
             { status: 500 }
         );
+        
+        return handleCorsResponse(request, response);
     }
 } 
