@@ -7,14 +7,6 @@ const queryEnginePath = path.resolve('generated/prisma/query-engine-rhel-openssl
 const hasQueryEngine = fs.existsSync(queryEnginePath);
 
 const nextConfig: NextConfig = {
-    async rewrites() {
-        return [
-            {
-                source: '/api/:path*',
-                destination: 'https://question-banks.netlify.app/api/:path*',
-            },
-        ]
-    },
     images: {
         remotePatterns: [
             {

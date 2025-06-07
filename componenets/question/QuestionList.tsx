@@ -16,8 +16,6 @@ interface QuestionProps {
 const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, toggleQuestionFlag }: QuestionProps) => {
     const [isFlagging, setIsFlagging] = useState(false);
 
-    console.log(question.question_image)
-
     const questionText = useMemo(() => renderMixedLatex(question.question_text), [question.question_text]);
     const renderedOptions = useMemo(
         () => question.options.map((option) => renderMixedLatex(option)),
@@ -81,8 +79,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                         <h3 className="text-base font-semibold mb-2 text-slate-800 sm:text-lg">
                             Q: {questionText}
                         </h3>
-
-                        {question.question_image && (
+                        {question.question_image?.startsWith('https') && (
                             <div>
                                 <Image
                                     src={question.question_image}

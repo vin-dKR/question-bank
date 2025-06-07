@@ -42,7 +42,7 @@ export async function PUT(
                 { success: false, error: 'Question not found' },
                 { status: 404 }
             );
-            
+
             return handleCorsResponse(request, response);
         }
 
@@ -69,7 +69,7 @@ export async function PUT(
         });
 
         const response = NextResponse.json({ success: true, data: updatedQuestion });
-        
+
         return handleCorsResponse(request, response);
     } catch (error) {
         console.error('Error updating question:', error);
@@ -77,7 +77,7 @@ export async function PUT(
             { success: false, error: 'Failed to update question' },
             { status: 500 }
         );
-        
+
         return handleCorsResponse(request, response);
     }
 }
@@ -99,7 +99,7 @@ export async function DELETE(
                 { success: false, error: 'Question not found' },
                 { status: 404 }
             );
-            
+
             return handleCorsResponse(request, response);
         }
 
@@ -107,7 +107,7 @@ export async function DELETE(
             success: true,
             message: 'Question deleted successfully'
         });
-        
+
         return handleCorsResponse(request, response);
     } catch (error) {
         console.error('Error deleting question:', error);
@@ -115,7 +115,7 @@ export async function DELETE(
             { success: false, error: 'Failed to delete question' },
             { status: 500 }
         );
-        
+
         return handleCorsResponse(request, response);
     }
 } 

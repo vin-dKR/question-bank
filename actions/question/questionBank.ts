@@ -24,6 +24,7 @@ export async function getQuestions(filters: {
                 id: true,
                 question_number: true,
                 question_text: true,
+                question_image: true,
                 options: true,
                 answer: true,
                 subject: true,
@@ -194,8 +195,8 @@ export async function searchQuestions(keyword: string) {
             select: {
                 id: true,
                 question_text: true,
-                options: true,
                 question_image: true,
+                options: true,
                 exam_name: true,
                 subject: true,
                 chapter: true,
