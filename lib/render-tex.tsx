@@ -61,6 +61,7 @@ const toMixedLatex = (text: string): StringPart[] => {
                     /(\w+)\s*(>|<|>=|<=|=)\s*(\d+)/,
                     /(\w+)\!/,
                     /sum\s*(\w+)=(\d+)\s*to\s*(\w+)\s*([^\s]+)/,
+                    /\\n/,
                 ];
 
                 for (const pattern of patterns) {
@@ -82,7 +83,7 @@ const toMixedLatex = (text: string): StringPart[] => {
                         latex = match[0];
                     } else if (match[0].match(/\w+_\w+\s*\\propto\s*\w+(\^\d+)?/)) {
                         latex = `${match[1]} \\propto ${match[2]}`;
-                    } else if (match[0].match(/\\frac\{[^{}]+\}\{[^{}]+\}/)) {
+                    } else if (match[0].match(/\\frac\{[^{}]+}\{[^{}]+}\}/)) {
                         latex = match[0];
                     } else if (match[0].match(/√(\[[^\]]+\])_(\d+)/)) {
                         latex = `\\sqrt{${match[1]}}_{${match[2]}}`;
@@ -118,6 +119,8 @@ const toMixedLatex = (text: string): StringPart[] => {
                         latex = `${match[1]}!`;
                     } else if (match[0].match(/sum\s*\w+=(\d+)\s*to\s*\w+\s*[^\s]+/)) {
                         latex = `\\sum_{${match[1]} = ${match[2]}}^{${match[3]}} ${match[4]}`;
+                    } else if (match[0].match(/\\n/)) {
+                        latex = `\\\\`;
                     }
 
                     parts.push({ type: 'latex', value: latex });

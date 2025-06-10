@@ -116,7 +116,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
 
                     {question.answer && (
                         <div className="text-sm text-green-600">
-                            <span className="font-medium">Answer:</span> {question.answer}
+                            <span className="font-medium">Answer:</span> {renderMixedLatex(question.answer)}
                         </div>
                     )}
                 </div>
