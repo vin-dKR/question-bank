@@ -91,13 +91,13 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                         )}
                     </div>
 
-                    {question.option_images && question.option_images.length > 0 && (
+                    {question.option_images && question.option_images.length && question.option_images[0].startsWith('https') && (
                         <div className="grid grid-cols-2 gap-4 mb-4">
                             {question.option_images.map((imageUrl, index) => {
                                 const optionLetter = String.fromCharCode(65 + index);
                                 return (
                                     <div key={index} className="relative">
-                                        <div className="absolute top-0 left-0 z-10 bg-slate-800 text-white px-2 py-1 rounded-br-md text-[9px] font-medium">
+                                        <div className="absolute -top-2 -left-2 z-10 bg-slate-800/30 text-white px-2 py-1 rounded-br-md text-[9px] font-medium">
                                             {optionLetter}
                                         </div>
                                         <Image 
