@@ -91,18 +91,31 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                         )}
                     </div>
 
-                    {question.option_images && question?.option_images[0]?.startsWith('https') && (
+                    {question.option_images && question.option_images.length > 0 && (
                         <div className="grid grid-cols-2 gap-4 mb-4">
                             {question.option_images.map((imageUrl, index) => {
                                 const optionLetter = String.fromCharCode(65 + index);
+                                const answers = (question.answer || '')
+                                    .toString()
+                                    .split(',')
+                                    .map((a) => a.trim().toUpperCase());
+                                const isCorrect = answers.includes(optionLetter);
+
+                                console.log(isCorrect);
+                                console.log(answers);
+
                                 return (
                                     <div key={index} className="relative flex justify-center items-center">
-                                        <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 z-10 bg-slate-800/40 text-white px-2 py-1 rounded-md text-[9px] font-medium">
+                                        <div className={`absolute -bottom-3 left-1/2 transform -translate-x-1/2 z-10 px-2 py-1 rounded-md text-[9px] font-medium ${
+                                            isCorrect 
+                                                ? 'bg-green-600 text-white' 
+                                                : 'bg-slate-700/80 text-white'
+                                        }`}>
                                             {optionLetter}
                                         </div>
-                                        <Image
-                                            src={imageUrl}
-                                            alt={`Option ${optionLetter}`}
+                                        <Image 
+                                            src={imageUrl} 
+                                            alt={`Option ${optionLetter}`} 
                                             width={100}
                                             height={100}
                                             className="object-contain rounded-md"
