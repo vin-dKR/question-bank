@@ -95,14 +95,15 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                         <div className="grid grid-cols-2 gap-4 mb-4">
                             {question.option_images.map((imageUrl, index) => {
                                 const optionLetter = String.fromCharCode(65 + index);
+                                const optionNumber = String(index + 1);
                                 const answers = (question.answer || '')
                                     .toString()
                                     .split(',')
                                     .map((a) => a.trim().toUpperCase());
-                                const isCorrect = answers.includes(optionLetter);
 
-                                console.log(isCorrect);
-                                console.log(answers);
+                                const isCorrect = answers.some(answer => 
+                                    answer === optionLetter || answer === optionNumber
+                                );
 
                                 return (
                                     <div key={index} className="relative flex justify-center items-center">
