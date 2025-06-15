@@ -91,32 +91,18 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                         )}
                     </div>
 
-                    {question.option_images && question.option_images.length > 0 && (
+                    {question.option_images && question?.option_images[0]?.startsWith('https') && (
                         <div className="grid grid-cols-2 gap-4 mb-4">
                             {question.option_images.map((imageUrl, index) => {
                                 const optionLetter = String.fromCharCode(65 + index);
-                                const optionNumber = String(index + 1);
-                                const answers = (question.answer || '')
-                                    .toString()
-                                    .split(',')
-                                    .map((a) => a.trim().toUpperCase());
-
-                                const isCorrect = answers.some(answer => 
-                                    answer === optionLetter || answer === optionNumber
-                                );
-
                                 return (
                                     <div key={index} className="relative flex justify-center items-center">
-                                        <div className={`absolute -bottom-3 left-1/2 transform -translate-x-1/2 z-10 px-2 py-1 rounded-md text-[9px] font-medium ${
-                                            isCorrect 
-                                                ? 'bg-green-600 text-white' 
-                                                : 'bg-slate-700/80 text-white'
-                                        }`}>
+                                        <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 z-10 bg-slate-800/40 text-white px-2 py-1 rounded-md text-[9px] font-medium">
                                             {optionLetter}
                                         </div>
-                                        <Image 
-                                            src={imageUrl} 
-                                            alt={`Option ${optionLetter}`} 
+                                        <Image
+                                            src={imageUrl}
+                                            alt={`Option ${optionLetter}`}
                                             width={100}
                                             height={100}
                                             className="object-contain rounded-md"
@@ -127,30 +113,28 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                         </div>
                     )}
 
-                    {!question.isOptionImage && (
-                        <div className="space-y-2 mb-2">
-                            {question.options.map((option, index) => {
-                                const optionLetter = String.fromCharCode(65 + index);
-                                const optionNumber = String(index + 1);
-                                const answers = (question.answer || '')
-                                    .toString()
-                                    .split(',')
-                                    .map((a) => a.trim().toUpperCase());
+                    <div className="space-y-2 mb-2">
+                        {question.options.map((option, index) => {
+                            const optionLetter = String.fromCharCode(65 + index);
+                            const optionNumber = String(index + 1);
+                            const answers = (question.answer || '')
+                                .toString()
+                                .split(',')
+                                .map((a) => a.trim().toUpperCase());
 
-                                const isCorrect = answers.includes(optionLetter) || answers.includes(optionNumber);
+                            const isCorrect = answers.includes(optionLetter) || answers.includes(optionNumber);
 
-                                return (
-                                    <div
-                                        key={index}
-                                        className={`pl-3 border-l-4 py-1 rounded-r-md ${isCorrect ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200'
-                                            }`}
-                                    >
-                                        <span className="text-sm sm:text-base">{renderedOptions[index]}</span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
+                            return (
+                                <div
+                                    key={index}
+                                    className={`pl-3 border-l-4 py-1 rounded-r-md ${isCorrect ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200'
+                                        }`}
+                                >
+                                    <span className="text-sm sm:text-base">{renderedOptions[index]}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
 
                     {question.answer && (
                         <div className="text-sm text-green-600">
