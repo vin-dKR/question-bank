@@ -113,28 +113,30 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                         </div>
                     )}
 
-                    <div className="space-y-2 mb-2">
-                        {question.options.map((option, index) => {
-                            const optionLetter = String.fromCharCode(65 + index);
-                            const optionNumber = String(index + 1);
-                            const answers = (question.answer || '')
-                                .toString()
-                                .split(',')
-                                .map((a) => a.trim().toUpperCase());
+                    {!question.isOptionImage && (
+                        <div className="space-y-2 mb-2">
+                            {question.options.map((option, index) => {
+                                const optionLetter = String.fromCharCode(65 + index);
+                                const optionNumber = String(index + 1);
+                                const answers = (question.answer || '')
+                                    .toString()
+                                    .split(',')
+                                    .map((a) => a.trim().toUpperCase());
 
-                            const isCorrect = answers.includes(optionLetter) || answers.includes(optionNumber);
+                                const isCorrect = answers.includes(optionLetter) || answers.includes(optionNumber);
 
-                            return (
-                                <div
-                                    key={index}
-                                    className={`pl-3 border-l-4 py-1 rounded-r-md ${isCorrect ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200'
-                                        }`}
-                                >
-                                    <span className="text-sm sm:text-base">{renderedOptions[index]}</span>
-                                </div>
-                            );
-                        })}
-                    </div>
+                                return (
+                                    <div
+                                        key={index}
+                                        className={`pl-3 border-l-4 py-1 rounded-r-md ${isCorrect ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200'
+                                            }`}
+                                    >
+                                        <span className="text-sm sm:text-base">{renderedOptions[index]}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
 
                     {question.answer && (
                         <div className="text-sm text-green-600">
