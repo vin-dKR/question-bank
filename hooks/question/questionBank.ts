@@ -47,18 +47,18 @@ export const useQuestionBank = (initialFilters = {
     const optionsCache = useState<Map<string, { options: FilterOptions; timestamp: number }>>(new Map())[0];
     const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-    const fetchQuestions = async () => {
+    const fetchQuestions = useCallback(async () => {
         setLoading(true);
         setError(null);
 
         try {
             if (searchKeyword && searchKeyword.trim().length >= 2) {
                 const searchRes = await searchQuestions(searchKeyword);
-                if (searchRes.success) {
+                if (searchRes && searchRes.success) {
                     setQuestions(searchRes.data as Question[]);
                     setCount(searchRes.data.length);
                 } else {
-                    setError(searchRes.error || 'Failed to search questions');
+                    setError(searchRes?.error || 'Failed to search questions');
                     setQuestions([]);
                     setCount(0);
                 }
@@ -82,26 +82,25 @@ export const useQuestionBank = (initialFilters = {
                     }),
                 ]);
 
-                if (questionsRes.success && countRes.success) {
+                if (questionsRes && questionsRes.success && countRes && countRes.success) {
                     setQuestions(questionsRes.data as Question[]);
                     setCount(countRes.data);
                 } else {
-                    setError(questionsRes.error || countRes.error || 'Failed to fetch data');
+                    setError(questionsRes?.error || countRes?.error || 'Failed to fetch data');
                     setQuestions([]);
                     setCount(0);
                 }
             }
         } catch (err) {
             setError('An unexpected error occurred');
-            console.error(err);
             setQuestions([]);
             setCount(0);
         } finally {
             setLoading(false);
         }
-    };
+    }, [filters, pagination, searchKeyword]);
 
-    const fetchFilterOptions = async (filterParams: {
+    const fetchFilterOptions = useCallback(async (filterParams: {
         exam_name?: string;
         subject?: string;
         chapter?: string;
@@ -115,27 +114,52 @@ export const useQuestionBank = (initialFilters = {
         }
 
         setOptionsLoading(true);
+        setError(null);
         try {
             const response = await getFilterOptions(filterParams);
-            if (response.success) {
+            if (response && response.success) {
                 const newOptions = response.data;
                 setFilterOptions(newOptions);
                 optionsCache.set(cacheKey, { options: newOptions, timestamp: Date.now() });
             } else {
-                throw new Error(response.error || 'Failed to fetch filter options');
+                setFilterOptions({
+                    exams: [],
+                    subjects: [],
+                    chapters: [],
+                    section_names: [],
+                });
+                setError((response && response.error) || 'Failed to fetch filter options');
             }
         } catch (err) {
-            console.error('Error fetching filter options:', err);
-            setError('Failed to fetch filter options');
+            console.error('Error fetching filter options in hooks catch err:', err);
+            setFilterOptions({
+                exams: [],
+                subjects: [],
+                chapters: [],
+                section_names: [],
+            });
+            setError('Failed to fetch filter options (network/server error)');
         } finally {
             setOptionsLoading(false);
         }
-    };
+    }, [optionsCache]);
 
     const debouncedFetchFilterOptions = useCallback(
         debounce(fetchFilterOptions, 300),
-        [optionsCache]
+        [fetchFilterOptions]
     );
+
+    useEffect(() => {
+        debouncedFetchFilterOptions({
+            exam_name: filters.exam_name,
+            subject: filters.subject,
+            chapter: filters.chapter,
+        });
+    }, [filters.exam_name, filters.subject, filters.chapter, debouncedFetchFilterOptions]);
+
+    useEffect(() => {
+        fetchQuestions();
+    }, [filters.exam_name, filters.subject, filters.chapter, filters.section_name, filters.flagged, pagination.page, pagination.limit, searchKeyword, fetchQuestions]);
 
     const toggleQuestionSelection = (id: string) => {
         setSelectedQuestionIds((prev) => {
@@ -168,9 +192,8 @@ export const useQuestionBank = (initialFilters = {
 
         try {
             const response = await toggleFlag(id);
-            if (!response.success) throw new Error(response.error);
+            if (!response || !response.success) throw new Error(response?.error);
         } catch (err) {
-            console.error('Error toggling flag:', err);
             setQuestions((prev) =>
                 prev.map((q) => (q.id === id ? { ...q, flagged: originalFlagged } : q))
             );
@@ -191,18 +214,6 @@ export const useQuestionBank = (initialFilters = {
         setSearchKeyword(null);
         setPagination((prev) => ({ ...prev, page: 1 }));
     };
-
-    useEffect(() => {
-        debouncedFetchFilterOptions({
-            exam_name: filters.exam_name,
-            subject: filters.subject,
-            chapter: filters.chapter,
-        });
-    }, [filters.exam_name, filters.subject, filters.chapter]);
-
-    useEffect(() => {
-        fetchQuestions();
-    }, [filters.exam_name, filters.subject, filters.chapter, filters.section_name, filters.flagged, pagination.page, pagination.limit, searchKeyword]);
 
     const updateFilters = (newFilters: any) => {
         setFilters((prev) => {

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useCustomAuth } from '@/hooks/auth';
 import { FancyLoader, LoadingOverlay } from './Loader';
 import { Eye, EyeOff } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 type AuthMode = 'signin' | 'signup';
 
@@ -14,7 +14,6 @@ interface AuthFormProps {
 
 export default function AuthForm({ mode }: AuthFormProps) {
     const [showPass, setShowPass] = useState(false)
-    const [captchaReady, setCaptchaReady] = useState(false);
 
     const {
         email,
@@ -32,14 +31,6 @@ export default function AuthForm({ mode }: AuthFormProps) {
         handleOtpSubmit,
     } = useCustomAuth(mode);
 
-    useEffect(() => {
-        // Listen for Clerk CAPTCHA ready event
-        function onCaptchaReady() {
-            setCaptchaReady(true);
-        }
-        window.addEventListener('clerk-captcha-ready', onCaptchaReady);
-        return () => window.removeEventListener('clerk-captcha-ready', onCaptchaReady);
-    }, []);
 
     const onChangeEye = () => {
         if (!password) {
