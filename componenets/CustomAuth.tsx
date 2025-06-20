@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useCustomAuth } from '@/hooks/auth';
 import { FancyLoader, LoadingOverlay } from './Loader';
 import { Eye, EyeOff } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 type AuthMode = 'signin' | 'signup';
 
@@ -14,6 +14,7 @@ interface AuthFormProps {
 
 export default function AuthForm({ mode }: AuthFormProps) {
     const [showPass, setShowPass] = useState(false)
+    const [captchaReady, setCaptchaReady] = useState(false);
 
     const {
         email,
@@ -30,6 +31,15 @@ export default function AuthForm({ mode }: AuthFormProps) {
         handleEmailPasswordSubmit,
         handleOtpSubmit,
     } = useCustomAuth(mode);
+
+    useEffect(() => {
+        // Listen for Clerk CAPTCHA ready event
+        function onCaptchaReady() {
+            setCaptchaReady(true);
+        }
+        window.addEventListener('clerk-captcha-ready', onCaptchaReady);
+        return () => window.removeEventListener('clerk-captcha-ready', onCaptchaReady);
+    }, []);
 
     const onChangeEye = () => {
         if (!password) {
@@ -138,6 +148,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
                                     </div>
                                 )}
 
+                                <div id="clerk-captcha" />
+
                                 <button
                                     type="submit"
                                     disabled={loading || !isLoaded}
@@ -165,7 +177,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                                 <div className="flex flex-row space-y-4 mb-6 items-center justify-center gap-6">
                                     <button
                                         onClick={() => signInWith('oauth_google')}
-                                        disabled={loading}
+                                        disabled={loading || !isLoaded}
                                         className="w-10 h-10 my-auto flex items-center justify-center gap-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200 disabled:opacity-50"
                                     >
                                         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
