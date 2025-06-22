@@ -29,7 +29,8 @@ export async function PUT(
             exam_name,
             subject,
             chapter,
-            answer
+            answer,
+            flagged
         } = body;
 
         // Find the question first
@@ -64,7 +65,8 @@ export async function PUT(
                 exam_name,
                 subject,
                 chapter,
-                answer
+                answer,
+                flagged
             }
         });
 
