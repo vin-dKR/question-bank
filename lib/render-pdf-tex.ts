@@ -1,0 +1,2 @@
+const filterTex = (text: string) => {
+}

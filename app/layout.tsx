@@ -22,6 +22,9 @@ export default function RootLayout({
     return (
         <ClerkProvider>
             <html lang="en">
+                <head>
+                    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+                </head>
                 <body className={inter.variable}>
                     <main className="min-h-screen bg-slate-100">
                         {children}
