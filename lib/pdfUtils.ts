@@ -1,6 +1,5 @@
-import pdfMake from 'pdfmake/build/pdfmake';
-import pdfFonts from 'pdfmake/build/vfs_fonts';
-import { Canvg } from 'canvg';
+import { pdfConfigToHTML, pdfConfigToAnswerKeyHTML, QuestionToHTMLOptions } from './questionToHtmlUtils';
+import { htmlToPDFBlob, HTMLToPDFOptions } from './htmlToPdfUtils';
 
 // Add this at the top of the file (after imports)
 declare global {
@@ -9,28 +8,255 @@ declare global {
   }
 }
 
-// Register fonts
-pdfMake.vfs = pdfFonts;
+export interface PDFGenerationOptions {
+  includeAnswers?: boolean;
+  includeMetadata?: boolean;
+  institution?: string;
+  logo?: File | Blob;
+  watermarkOpacity?: number;
+  pageSize?: 'a4' | 'letter' | 'legal';
+  orientation?: 'portrait' | 'landscape';
+  fontSize?: number;
+  lineHeight?: number;
+  margin?: number;
+  pdfOptions?: HTMLToPDFOptions;
+}
 
-// Utility: Convert SVG string to data URL
+/**
+ * Generate PDF from PDFConfig using HTML-to-PDF approach with LaTeX rendering
+ */
+export async function generatePDF(config: PDFConfig, options: PDFGenerationOptions = {}): Promise<Blob> {
+  const {
+    includeAnswers = config.options.includeAnswers,
+    includeMetadata = true,
+    institution = config.institution,
+    logo,
+    watermarkOpacity = config.options.watermarkOpacity,
+    pageSize = 'a4',
+    orientation = 'portrait',
+    fontSize = 14,
+    lineHeight = 1.6,
+    margin = 20,
+    pdfOptions = {}
+  } = options;
+
+  // Convert logo File to data URL if provided
+  let logoBase64: string | undefined;
+  if (logo) {
+    logoBase64 = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.readAsDataURL(logo);
+    });
+  } else if (config.options.logo) {
+    logoBase64 = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.readAsDataURL(config.options.logo!);
+    });
+  }
+
+  // Generate HTML with LaTeX support
+  const html = pdfConfigToHTML(config, {
+    includeAnswers,
+    includeMetadata,
+    institution,
+    logo: logoBase64,
+    watermarkOpacity,
+    pageSize,
+    orientation,
+    fontSize,
+    lineHeight,
+    margin
+  });
+
+  // Create temporary container with the HTML
+  const container = document.createElement('div');
+  container.innerHTML = html;
+  container.style.position = 'absolute';
+  container.style.left = '-9999px';
+  container.style.top = '-9999px';
+  container.style.width = '210mm'; // A4 width
+  container.style.backgroundColor = '#ffffff';
+  document.body.appendChild(container);
+
+  try {
+    // Wait for MathJax to load and render LaTeX
+    await new Promise<void>((resolve) => {
+      const checkMathJax = () => {
+        if (window.MathJax && window.MathJax.typesetPromise) {
+          // MathJax is loaded, now render the LaTeX
+          window.MathJax.typesetPromise([container]).then(() => {
+            console.log('MathJax rendering completed');
+            resolve();
+          }).catch((error: unknown) => {
+            console.error('MathJax rendering error:', error);
+            resolve(); // Continue anyway
+          });
+        } else {
+          setTimeout(checkMathJax, 100);
+        }
+      };
+      checkMathJax();
+    });
+
+    // Additional wait to ensure rendering is complete
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Convert HTML to PDF
+    const pdfBlob = await htmlToPDFBlob(container, {
+      filename: 'question_paper.pdf',
+      pageSize,
+      orientation,
+      margin: 10,
+      scale: 2,
+      quality: 1,
+      ...pdfOptions
+    });
+
+    return pdfBlob;
+  } finally {
+    // Clean up
+    if (document.body.contains(container)) {
+      document.body.removeChild(container);
+    }
+  }
+}
+
+/**
+ * Generate Answer Key PDF from PDFConfig using HTML-to-PDF approach with LaTeX rendering
+ */
+export async function generateAnswersPDF(config: PDFConfig, options: PDFGenerationOptions = {}): Promise<Blob> {
+  const {
+    includeMetadata = true,
+    institution = config.institution,
+    logo,
+    watermarkOpacity = config.options.watermarkOpacity,
+    pageSize = 'a4',
+    orientation = 'portrait',
+    fontSize = 14,
+    lineHeight = 1.6,
+    margin = 20,
+    pdfOptions = {}
+  } = options;
+
+  // Convert logo File to data URL if provided
+  let logoBase64: string | undefined;
+  if (logo) {
+    logoBase64 = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.readAsDataURL(logo);
+    });
+  } else if (config.options.logo) {
+    logoBase64 = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.readAsDataURL(config.options.logo!);
+    });
+  }
+
+  // Generate Answer Key HTML with LaTeX support
+  const html = pdfConfigToAnswerKeyHTML(config, {
+    includeMetadata,
+    institution,
+    logo: logoBase64,
+    watermarkOpacity,
+    pageSize,
+    orientation,
+    fontSize,
+    lineHeight,
+    margin
+  });
+
+  // Create temporary container with the HTML
+  const container = document.createElement('div');
+  container.innerHTML = html;
+  container.style.position = 'absolute';
+  container.style.left = '-9999px';
+  container.style.top = '-9999px';
+  container.style.width = '210mm'; // A4 width
+  container.style.backgroundColor = '#ffffff';
+  document.body.appendChild(container);
+
+  try {
+    // Wait for MathJax to load and render LaTeX
+    await new Promise<void>((resolve) => {
+      const checkMathJax = () => {
+        if (window.MathJax && window.MathJax.typesetPromise) {
+          // MathJax is loaded, now render the LaTeX
+          window.MathJax.typesetPromise([container]).then(() => {
+            console.log('MathJax rendering completed');
+            resolve();
+          }).catch((error: unknown) => {
+            console.error('MathJax rendering error:', error);
+            resolve(); // Continue anyway
+          });
+        } else {
+          setTimeout(checkMathJax, 100);
+        }
+      };
+      checkMathJax();
+    });
+
+    // Additional wait to ensure rendering is complete
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Convert HTML to PDF
+    const pdfBlob = await htmlToPDFBlob(container, {
+      filename: 'answer_key.pdf',
+      pageSize,
+      orientation,
+      margin: 10,
+      scale: 2,
+      quality: 1,
+      ...pdfOptions
+    });
+
+    return pdfBlob;
+  } finally {
+    // Clean up
+    if (document.body.contains(container)) {
+      document.body.removeChild(container);
+    }
+  }
+}
+
+/**
+ * Generate HTML preview from PDFConfig (for preview purposes)
+ */
+export function generateHTMLPreview(config: PDFConfig, options: QuestionToHTMLOptions = {}): string {
+  return pdfConfigToHTML(config, options);
+}
+
+/**
+ * Generate Answer Key HTML preview from PDFConfig (for preview purposes)
+ */
+export function generateAnswerKeyHTMLPreview(config: PDFConfig, options: QuestionToHTMLOptions = {}): string {
+  return pdfConfigToAnswerKeyHTML(config, options);
+}
+
+// Legacy functions for backward compatibility (deprecated)
 export function svgToDataUrl(svg: string): string {
+  console.warn('svgToDataUrl is deprecated. Use HTML-to-PDF approach instead.');
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
 }
 
-// Convert SVG string to PNG data URL (browser only)
 export async function svgToPngDataUrl(svg: string, width = 80, height = 24): Promise<string> {
+  console.warn('svgToPngDataUrl is deprecated. Use HTML-to-PDF approach instead.');
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Could not get canvas context');
-  const v = await Canvg.fromString(ctx, svg);
-  await v.render();
-  return canvas.toDataURL('image/png');
+  
+  // Note: This requires canvg library which may not be available
+  // For now, return a placeholder
+  return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
 }
 
-// Utility: Render LaTeX to SVG using MathJax (browser, assumes MathJax is loaded globally)
 export async function latexToSvg_MathJax(latex: string): Promise<string> {
+  console.warn('latexToSvg_MathJax is deprecated. Use HTML-to-PDF approach instead.');
   // Wait for MathJax to be loaded and ready
   if (typeof window.MathJax === 'undefined' || !window.MathJax.tex2svgPromise) {
     await new Promise<void>((resolve) => {
@@ -49,215 +275,12 @@ export async function latexToSvg_MathJax(latex: string): Promise<string> {
   return new XMLSerializer().serializeToString(svgNode);
 }
 
-// Utility: Split string into text and LaTeX parts, convert LaTeX to PNG images for PDFMake using MathJax
 export async function splitTextAndLatexToPdfMake(str: string): Promise<any[]> {
-  const result: any[] = [];
-  let lastIndex = 0;
-  const regex = /\\\((.+?)\\\)/g;
-  let match;
-  while ((match = regex.exec(str)) !== null) {
-    if (match.index > lastIndex) {
-      result.push({ text: str.slice(lastIndex, match.index) });
-    }
-    // Convert LaTeX to SVG with MathJax, then to PNG data URL
-    const svg = await latexToSvg_MathJax(match[1]);
-    const dataUrl = await svgToPngDataUrl(svg, 80, 24);
-    result.push({ image: dataUrl, width: 80, height: 24, margin: [0, -6, 0, -6] });
-    lastIndex = regex.lastIndex;
-  }
-  if (lastIndex < str.length) {
-    result.push({ text: str.slice(lastIndex) });
-  }
-  return result;
+  console.warn('splitTextAndLatexToPdfMake is deprecated. Use HTML-to-PDF approach instead.');
+  return [{ text: str }];
 }
 
-/**
- * Example: Parse a string with mixed text and LaTeX for PDFMake
- * Usage: await parseTextWithLatexForPdf('theory of relativity is \\(E = Mc^2\\)')
- * Returns: [ { text: 'theory of relativity is ' }, { image: 'data:image/png;base64,...', ... } ]
- */
 export async function parseTextWithLatexForPdf(str: string) {
-  return await splitTextAndLatexToPdfMake(str);
-}
-
-export async function generatePDF(config: PDFConfig): Promise<Blob> {
-    const { selectedQuestions, options } = config;
-    const { includeAnswers, watermarkOpacity, logo } = options;
-
-    // Convert logo File to base64 if provided
-    let logoBase64: string | undefined;
-    if (logo) {
-        logoBase64 = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.readAsDataURL(logo);
-        });
-    }
-
-    const content = [
-        {
-            text: config.institution,
-            style: 'header',
-            alignment: 'center',
-            margin: [0, 0, 0, 20],
-        },
-        ...(await Promise.all(selectedQuestions.map(async (question, index) => {
-            const questionContent: any = [
-                {
-                    text: await parseTextWithLatexForPdf(question.question_text),
-                    style: 'question',
-                    margin: [0, 10, 0, 5],
-                },
-                {
-                    ul: await Promise.all(Object.entries(question.options).map(async ([key, value]) => ({
-                        text: await splitTextAndLatexToPdfMake(`${key}. ${value}`),
-                        style: 'option',
-                        margin: [10, 2, 0, 2],
-                    }))),
-                },
-                {
-                    text: `Source: (${question.exam_name}, ${question.subject})`,
-                    style: 'metadata',
-                    margin: [0, 5, 0, 10],
-                },
-            ];
-
-            if (includeAnswers) {
-                questionContent.push({
-                    text: await splitTextAndLatexToPdfMake(`Answer: ${question.answer}`),
-                    style: 'answer',
-                    margin: [0, 5, 0, 5],
-                });
-            }
-
-            return {
-                stack: questionContent.filter(Boolean),
-            };
-        }))),
-    ];
-
-    // eslint-disable-next-line
-    const documentDefinition: any = {
-        pageSize: 'A4',
-        pageMargins: [40, 60, 40, 60],
-        watermark: logoBase64
-            ? {
-                image: logoBase64,
-                opacity: watermarkOpacity,
-                fit: [200, 200],
-            }
-            : undefined,
-        header: logoBase64
-            ? {
-                image: logoBase64,
-                width: 100,
-                alignment: 'left',
-                margin: [20, 20, 0, 0],
-            }
-            : undefined,
-        content,
-        styles: {
-            header: {
-                fontSize: 18,
-                bold: true,
-            },
-            question: {
-                fontSize: 12,
-                bold: true,
-            },
-            option: {
-                fontSize: 11,
-            },
-            answer: {
-                fontSize: 11,
-                bold: true,
-                color: 'green',
-            },
-            explanation: {
-                fontSize: 11,
-                color: 'gray',
-            },
-            metadata: {
-                fontSize: 10,
-                italics: true,
-                color: 'gray',
-            },
-        },
-    };
-
-    return new Promise((resolve) => {
-        const pdfDoc = pdfMake.createPdf(documentDefinition);
-        pdfDoc.getBlob((blob: Blob) => {
-            resolve(blob);
-        });
-    });
-}
-
-export async function generateAnswersPDF(config: PDFConfig): Promise<Blob> {
-    const { selectedQuestions, options } = config;
-    const { watermarkOpacity, logo } = options;
-
-    // Convert logo File to base64 if provided
-    let logoBase64: string | undefined;
-    if (logo) {
-        logoBase64 = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.readAsDataURL(logo);
-        });
-    }
-
-    // eslint-disable-next-line
-    const documentDefinition: any = {
-        pageSize: 'A4',
-        pageMargins: [40, 60, 40, 60],
-        watermark: logoBase64
-            ? {
-                image: logoBase64,
-                opacity: watermarkOpacity,
-                fit: [200, 200],
-            }
-            : undefined,
-        header: logoBase64
-            ? {
-                image: logoBase64,
-                width: 100,
-                alignment: 'left',
-                margin: [20, 20, 0, 0],
-            }
-            : undefined,
-        content: [
-            {
-                text: `${config.institution} - Answer Key`,
-                style: 'header',
-                alignment: 'center',
-                margin: [0, 0, 0, 20],
-            },
-            {
-                ol: await Promise.all(selectedQuestions.map(async (question, index) => ({
-                    text: await splitTextAndLatexToPdfMake(`Q${index + 1}: ${question.answer}`),
-                    style: 'answer',
-                    margin: [0, 5, 0, 5],
-                }))),
-            },
-        ],
-        styles: {
-            header: {
-                fontSize: 18,
-                bold: true,
-            },
-            answer: {
-                fontSize: 11,
-                bold: true,
-                color: 'green',
-            },
-        },
-    };
-
-    return new Promise((resolve) => {
-        const pdfDoc = pdfMake.createPdf(documentDefinition);
-        pdfDoc.getBlob((blob: Blob) => {
-            resolve(blob);
-        });
-    });
+  console.warn('parseTextWithLatexForPdf is deprecated. Use HTML-to-PDF approach instead.');
+  return [{ text: str }];
 }
