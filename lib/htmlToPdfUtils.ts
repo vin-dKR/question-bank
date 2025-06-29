@@ -31,7 +31,28 @@ export async function htmlToPDF(
   } = options;
 
   try {
-    // Convert HTML to canvas
+    // Pre-process images to handle loading errors
+    const images = element.querySelectorAll('img');
+    const imagePromises = Array.from(images).map(img => {
+      return new Promise<void>((resolve) => {
+        if (img.complete && img.naturalHeight !== 0) {
+          resolve();
+        } else {
+          img.onload = () => resolve();
+          img.onerror = () => {
+            console.warn('Image failed to load:', img.src);
+            // Replace broken image with placeholder or remove it
+            img.style.display = 'none';
+            resolve();
+          };
+        }
+      });
+    });
+
+    // Wait for all images to load or fail
+    await Promise.all(imagePromises);
+
+    // Convert HTML to canvas with better error handling
     const canvas = await html2canvas(element, {
       scale,
       useCORS: true,
@@ -39,7 +60,17 @@ export async function htmlToPDF(
       backgroundColor: '#ffffff',
       logging: false,
       width: element.scrollWidth,
-      height: element.scrollHeight
+      height: element.scrollHeight,
+      imageTimeout: 5000, // 5 second timeout for images
+      onclone: (clonedDoc) => {
+        // Handle any additional processing on the cloned document
+        const clonedImages = clonedDoc.querySelectorAll('img');
+        clonedImages.forEach(img => {
+          if (img.naturalHeight === 0) {
+            img.style.display = 'none';
+          }
+        });
+      }
     });
 
     // Create PDF

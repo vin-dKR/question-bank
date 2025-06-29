@@ -18,21 +18,54 @@ export interface QuestionToHTMLOptions {
 function textToHtmlWithLatex(text: string): string {
     if (!text) return '';
 
-    // Replace \(...\) with MathJax inline math syntax (no extra spaces)
-    // Also ensure no line breaks interfere with LaTeX
-    return text
-        .replace(/\\\(/g, '\\(')
-        .replace(/\\\)/g, '\\)')
-        // Don't convert newlines to <br> as they can interfere with LaTeX
-        // .replace(/\n/g, '<br>')
+    // First, escape HTML entities
+    let processed = text
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;')
-        // Ensure LaTeX expressions are not broken by whitespace
-        .replace(/\s*\\\(\s*/g, '\\(')
-        .replace(/\s*\\\)\s*/g, '\\)');
+        .replace(/'/g, '&#39;');
+
+    // Handle LaTeX expressions more carefully to prevent newlines
+    // Replace \(...\) with proper inline math syntax
+    processed = processed.replace(/\\\(([^)]+)\\\)/g, (match, latex) => {
+        // Clean up the LaTeX expression and ensure proper spacing
+        const cleanLatex = latex.trim();
+        return `<span class="math-inline">\\(${cleanLatex}\\)</span>`;
+    });
+    
+    // Handle \[...\] for display math
+    processed = processed.replace(/\\\[([^\]]+)\\\]/g, (match, latex) => {
+        const cleanLatex = latex.trim();
+        return `<div class="math-display">\\[${cleanLatex}\\]</div>`;
+    });
+    
+    // Handle dollar sign math expressions $...$
+    processed = processed.replace(/\$([^$]+)\$/g, (match, latex) => {
+        const cleanLatex = latex.trim();
+        return `<span class="math-inline">\\(${cleanLatex}\\)</span>`;
+    });
+    
+    // Handle double dollar sign math expressions $$...$$
+    processed = processed.replace(/\$\$([^$]+)\$\$/g, (match, latex) => {
+        const cleanLatex = latex.trim();
+        return `<div class="math-display">\\[${cleanLatex}\\]</div>`;
+    });
+
+    // Handle special case where LaTeX is embedded in option text like "(A)\\(Q = 2E1 - E2\\)"
+    // This pattern matches option letters followed by LaTeX expressions
+    processed = processed.replace(/(\([A-D]\))\\\(([^)]+)\\\)/g, (match, optionLetter, latex) => {
+        const cleanLatex = latex.trim();
+        return `${optionLetter}<span class="math-inline">\\(${cleanLatex}\\)</span>`;
+    });
+
+    // Remove any newlines that might interfere with LaTeX
+    processed = processed.replace(/\n/g, ' ');
+    
+    // Clean up multiple spaces but preserve single spaces
+    processed = processed.replace(/\s+/g, ' ');
+    
+    return processed.trim();
 }
 
 /**
@@ -62,17 +95,10 @@ export function questionToHTML(question: Question, index: number, options: Quest
         const optionText = textToHtmlWithLatex(option);
 
         return `
-      <div class="option ${isCorrect ? 'correct' : ''}" style="
-        padding: 4px 12px;
-        margin: 4px 0;
-        border-left: 4px solid ${isCorrect ? '#10b981' : '#e5e7eb'};
-        background-color: ${isCorrect ? '#f0fdf4' : '#ffffff'};
-        border-radius: 0 6px 6px 0;
-      ">
-        <span style="font-weight: 500; margin-right: 8px;">${optionLetter}.</span>
-        <span>${optionText}</span>
-      </div>
-    `;
+      <div class="option ${isCorrect ? 'correct' : ''}" style="padding: 4px 12px; margin: 4px 0; border-left: 4px solid ${isCorrect ? '#10b981' : '#e5e7eb'}; background-color: ${isCorrect ? '#f0fdf4' : '#ffffff'}; border-radius: 0 6px 6px 0; display: flex; align-items: flex-start;">
+        <strong style="font-weight: 500; margin-right: 8px; flex-shrink: 0;">${optionLetter}.</strong>
+        <div style="flex: 1; display: inline;">${optionText}</div>
+      </div>`;
     }).join('');
 
     // Render answer with LaTeX
@@ -84,8 +110,11 @@ export function questionToHTML(question: Question, index: number, options: Quest
       border: 1px solid #10b981;
       border-radius: 6px;
       color: #065f46;
+      display: flex;
+      align-items: flex-start;
     ">
-      <span style="font-weight: 600;">Answer:</span> ${textToHtmlWithLatex(question.answer)}
+      <strong style="font-weight: 600; margin-right: 8px; flex-shrink: 0;">Answer:</strong>
+      <div style="flex: 1; display: inline;">${textToHtmlWithLatex(question.answer)}</div>
     </div>
   ` : '';
 
@@ -115,26 +144,26 @@ export function questionToHTML(question: Question, index: number, options: Quest
       <div class="question-header" style="
         margin-bottom: 12px;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         gap: 8px;
       ">
         <span class="question-number" style="
           background-color: #3b82f6;
           color: white;
-          padding: 4px 8px;
           border-radius: 4px;
           font-weight: 600;
           font-size: 14px;
-          min-width: 24px;
+          width: 24px;
+          height: 24px;
           text-align: center;
+          line-height: 1;
         ">${questionNumber}</span>
-        <h3 class="question-text" style="
-          margin: 0;
-          font-size: ${fontSize}px;
-          line-height: ${lineHeight};
+        <span class="question-text" style="
+          margin: -5px 0 0 0;
+
           color: #1f2937;
-          font-weight: 600;
-        ">${questionText}</h3>
+          flex: 1;
+          ">${questionText}</span>
       </div>
       
       <div class="options" style="margin: 16px 0;">
@@ -191,7 +220,7 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
         font-size: 24px;
         font-weight: 700;
         color: #1f2937;
-      ">${institution}</h1>
+      ">${institution}</h1>3
     </div>
   ` : `
     <div class="header" style="
@@ -245,12 +274,36 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
       <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
       <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       <script>
-      MathJax.Hub.Config({
-    tex2jax: {
-      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
-      processEscapes: true
-    }
-  });
+        window.MathJax = {
+          tex: {
+            inlineMath: [['\\(', '\\)'], ['$', '$']],
+            displayMath: [['\\[', '\\]'], ['$$', '$$']],
+            processEscapes: true,
+            processEnvironments: true,
+            processRefs: true
+          },
+          options: {
+            skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+            enableMenu: false,
+            menuOptions: {
+              settings: {
+                texHints: true,
+                semantics: false,
+                zoom: 'NoZoom',
+                zscale: '200%'
+              }
+            }
+          },
+          startup: {
+            pageReady: () => {
+              return window.MathJax.startup.defaultPageReady().then(() => {
+                console.log('MathJax is ready');
+                // Force inline rendering after MathJax is ready
+                forceInlineMath();
+              });
+            }
+          }
+        };
       </script>
       <style>
         * {
@@ -277,62 +330,61 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
           break-inside: avoid;
         }
         
-        .option {
-          page-break-inside: avoid;
-          break-inside: avoid;
-        }
-        
-        .answer {
-          page-break-inside: avoid;
-          break-inside: avoid;
-        }
-        
-        /* Print styles */
-        @media print {
-          body {
-            -webkit-print-color-adjust: exact;
-            color-adjust: exact;
-          }
-          
-          .question {
-            page-break-inside: avoid;
-            break-inside: avoid;
-          }
-        }
-        
-        /* MathJax inline math styles - Force inline display */
+        /* MathJax inline math styles - Enhanced for better rendering */
         .MathJax {
+          display: inline !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          vertical-align: baseline !important;
+          font-size: inherit !important;
+        }
+        
+        .MathJax_Display {
+          display: block !important;
+          text-align: center;
+          margin: 10px 0;
+        }
+        
+        /* Ensure all text containers flow naturally */
+        .question-text,
+        .option > div,
+        .answer > div {
+          display: inline !important;
+          white-space: normal !important;
+          word-wrap: break-word !important;
+        }
+        
+        /* Force all MathJax elements to be truly inline */
+        .MathJax,
+        .MathJax_Display,
+        .MathJax_Display > .MathJax {
           display: inline !important;
           margin: 0 !important;
           padding: 0 !important;
           vertical-align: baseline !important;
         }
         
-        .MathJax_Display {
+        /* Remove any block display that might be applied */
+        [class*="MathJax"] {
+          display: inline !important;
+        }
+        
+        /* Specific styles for math-inline and math-display classes */
+        .math-inline {
+          display: inline !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        
+        .math-display {
           display: block !important;
-          margin: 1em 0 !important;
+          text-align: center;
+          margin: 10px 0;
         }
         
-        /* Force all MathJax elements to be inline */
-        .MathJax_Display > .MathJax {
-          display: inline !important;
-        }
-        
-        /* Specific rules for inline math */
-        .MathJax[data-mathml] {
-          display: inline !important;
-        }
-        
-        /* Override any display: block that might be applied */
-        .MathJax[style*="display: block"] {
-          display: inline !important;
-        }
-        
-        /* Ensure text elements containing MathJax are inline */
-        .question-text .MathJax,
-        .option .MathJax,
-        .answer .MathJax {
-          display: inline !important;
+        /* Ensure MathJax SVG elements are properly sized */
+        .MathJax svg {
+          vertical-align: baseline !important;
         }
         
         ${watermarkCSS}
@@ -353,46 +405,22 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
         color: #6b7280;
       ">
         <p>Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
-        <p>Total Questions: ${selectedQuestions.length}</p>
       </div>
       
       <script>
-        // Ensure MathJax renders after the page loads
-        if (window.MathJax && window.MathJax.typesetPromise) {
-          window.MathJax.typesetPromise().then(() => {
-            // Force all MathJax elements to be inline after rendering
-            const mathElements = document.querySelectorAll('.MathJax');
-            mathElements.forEach(el => {
-              if (el instanceof HTMLElement) {
-                el.style.display = 'inline';
-                el.style.verticalAlign = 'baseline';
-                el.style.margin = '0';
-                el.style.padding = '0';
-              }
-            });
-          });
-        } else {
-          // Wait for MathJax to load
-          const checkMathJax = () => {
-            if (window.MathJax && window.MathJax.typesetPromise) {
-              window.MathJax.typesetPromise().then(() => {
-                // Force all MathJax elements to be inline after rendering
-                const mathElements = document.querySelectorAll('.MathJax');
-                mathElements.forEach(el => {
-                  if (el instanceof HTMLElement) {
-                    el.style.display = 'inline';
-                    el.style.verticalAlign = 'baseline';
-                    el.style.margin = '0';
-                    el.style.padding = '0';
-                  }
-                });
-              });
-            } else {
-              setTimeout(checkMathJax, 100);
+        // Simple and effective MathJax inline rendering
+        const forceInlineMath = () => {
+          // Force all MathJax elements to be inline
+          const mathElements = document.querySelectorAll('[class*="MathJax"]');
+          mathElements.forEach(el => {
+            if (el instanceof HTMLElement) {
+              el.style.display = 'inline';
+              el.style.margin = '0';
+              el.style.padding = '0';
+              el.style.verticalAlign = 'baseline';
             }
-          };
-          checkMathJax();
-        }
+          });
+        };
       </script>
     </body>
     </html>
@@ -439,7 +467,6 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
           border-radius: 4px;
           font-weight: 600;
           font-size: 14px;
-          min-width: 32px;
           text-align: center;
         ">${questionNumber}</span>
         <div class="answer-content" style="flex: 1;">
@@ -534,10 +561,11 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
       <script>
         window.MathJax = {
           tex: {
-            inlineMath: [['\\(', '\\)']],
-            displayMath: [['\\[', '\\]']],
+            inlineMath: [['\\(', '\\)'], ['$', '$']],
+            displayMath: [['\\[', '\\]'], ['$$', '$$']],
             processEscapes: true,
-            processEnvironments: true
+            processEnvironments: true,
+            processRefs: true
           },
           options: {
             skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
@@ -555,6 +583,8 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
             pageReady: () => {
               return window.MathJax.startup.defaultPageReady().then(() => {
                 console.log('MathJax is ready');
+                // Force inline rendering after MathJax is ready
+                forceInlineMath();
               });
             }
           }
@@ -598,39 +628,60 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
           }
         }
         
-        /* MathJax inline math styles - Force inline display */
+        /* MathJax inline math styles - Enhanced for better rendering */
         .MathJax {
+          display: inline !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          vertical-align: baseline !important;
+          font-size: inherit !important;
+        }
+        
+        .MathJax_Display {
+          display: block !important;
+          text-align: center;
+          margin: 10px 0;
+        }
+        
+        /* Ensure all text containers flow naturally */
+        .question-text,
+        .option > div,
+        .answer > div {
+          display: inline !important;
+          white-space: normal !important;
+          word-wrap: break-word !important;
+        }
+        
+        /* Force all MathJax elements to be truly inline */
+        .MathJax,
+        .MathJax_Display,
+        .MathJax_Display > .MathJax {
           display: inline !important;
           margin: 0 !important;
           padding: 0 !important;
           vertical-align: baseline !important;
         }
         
-        .MathJax_Display {
+        /* Remove any block display that might be applied */
+        [class*="MathJax"] {
+          display: inline !important;
+        }
+        
+        /* Specific styles for math-inline and math-display classes */
+        .math-inline {
+          display: inline !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        
+        .math-display {
           display: block !important;
-          margin: 1em 0 !important;
+          text-align: center;
+          margin: 10px 0;
         }
         
-        /* Force all MathJax elements to be inline */
-        .MathJax_Display > .MathJax {
-          display: inline !important;
-        }
-        
-        /* Specific rules for inline math */
-        .MathJax[data-mathml] {
-          display: inline !important;
-        }
-        
-        /* Override any display: block that might be applied */
-        .MathJax[style*="display: block"] {
-          display: inline !important;
-        }
-        
-        /* Ensure text elements containing MathJax are inline */
-        .question-text .MathJax,
-        .option .MathJax,
-        .answer .MathJax {
-          display: inline !important;
+        /* Ensure MathJax SVG elements are properly sized */
+        .MathJax svg {
           vertical-align: baseline !important;
         }
         
@@ -656,42 +707,19 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
       </div>
       
       <script>
-        // Ensure MathJax renders after the page loads
-        if (window.MathJax && window.MathJax.typesetPromise) {
-          window.MathJax.typesetPromise().then(() => {
-            // Force all MathJax elements to be inline after rendering
-            const mathElements = document.querySelectorAll('.MathJax');
-            mathElements.forEach(el => {
-              if (el instanceof HTMLElement) {
-                el.style.display = 'inline';
-                el.style.verticalAlign = 'baseline';
-                el.style.margin = '0';
-                el.style.padding = '0';
-              }
-            });
-          });
-        } else {
-          // Wait for MathJax to load
-          const checkMathJax = () => {
-            if (window.MathJax && window.MathJax.typesetPromise) {
-              window.MathJax.typesetPromise().then(() => {
-                // Force all MathJax elements to be inline after rendering
-                const mathElements = document.querySelectorAll('.MathJax');
-                mathElements.forEach(el => {
-                  if (el instanceof HTMLElement) {
-                    el.style.display = 'inline';
-                    el.style.verticalAlign = 'baseline';
-                    el.style.margin = '0';
-                    el.style.padding = '0';
-                  }
-                });
-              });
-            } else {
-              setTimeout(checkMathJax, 100);
+        // Simple and effective MathJax inline rendering
+        const forceInlineMath = () => {
+          // Force all MathJax elements to be inline
+          const mathElements = document.querySelectorAll('[class*="MathJax"]');
+          mathElements.forEach(el => {
+            if (el instanceof HTMLElement) {
+              el.style.display = 'inline';
+              el.style.margin = '0';
+              el.style.padding = '0';
+              el.style.verticalAlign = 'baseline';
             }
-          };
-          checkMathJax();
-        }
+          });
+        };
       </script>
     </body>
     </html>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { generatePDF } from '@/lib/pdfUtils';
+import { generatePDF, generatePDFWithoutMathJax } from '@/lib/pdfUtils';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -39,15 +39,42 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
             return;
         }
 
+        // Clear any existing preview
+        if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(null);
+        }
+
         setIsGenerating(true);
         setError(null);
+        
         try {
-            const pdfBlob = await generatePDF({ institution, selectedQuestions, options });
+            let pdfBlob: Blob;
+            
+            // Try with MathJax first with longer timeout
+            try {
+                console.log('Attempting PDF generation with MathJax...');
+                pdfBlob = await generatePDF({ institution, selectedQuestions, options });
+                console.log('PDF generated successfully with MathJax');
+            } catch (mathJaxError) {
+                console.warn('MathJax PDF generation failed, trying without MathJax:', mathJaxError);
+                
+                // Fallback to PDF without MathJax
+                try {
+                    console.log('Attempting PDF generation without MathJax...');
+                    pdfBlob = await generatePDFWithoutMathJax({ institution, selectedQuestions, options });
+                    console.log('PDF generated successfully without MathJax');
+                } catch (fallbackError) {
+                    console.error('Both MathJax and fallback PDF generation failed:', fallbackError);
+                    throw new Error('Failed to generate PDF. Please try again.');
+                }
+            }
+            
             const url = URL.createObjectURL(pdfBlob);
             setPreviewUrl(url);
         } catch (error) {
             console.error('Error generating PDF preview:', error);
-            setError('Failed to generate PDF preview');
+            setError(error instanceof Error ? error.message : 'Failed to generate PDF preview');
         } finally {
             setIsGenerating(false);
         }
@@ -68,6 +95,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
             setPreviewUrl(null);
         }
         setError(null);
+        setIsGenerating(false);
     };
 
     return (
@@ -93,7 +121,15 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
                     </DialogHeader>
                     <div className="mt-4">
                         {error ? (
-                            <div className="text-red-600 text-center">{error}</div>
+                            <div className="text-red-600 text-center p-4">
+                                <p className="mb-2">{error}</p>
+                                <Button
+                                    onClick={handlePreview}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                                >
+                                    Try Again
+                                </Button>
+                            </div>
                         ) : isMobile ? (
                             <div className="text-center p-4">
                                 <p className="mb-4">PDF preview is not supported on mobile devices. Please download the PDF.</p>
@@ -121,7 +157,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
                                 Cancel
                             </Button>
                         </DialogClose>
-                        {!isMobile && (
+                        {!isMobile && !error && (
                             <Button
                                 onClick={handleDownload}
                                 className="bg-indigo-600 hover:bg-indigo-700 text-white"

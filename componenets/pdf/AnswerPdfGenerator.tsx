@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { generateAnswersPDF } from '@/lib/pdfUtils';
+import { generateAnswersPDF, generateAnswersPDFWithoutMathJax } from '@/lib/pdfUtils';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -17,6 +17,7 @@ import { Download } from 'lucide-react';
 export default function AnswerPDFGenerator({ institution, selectedQuestions, options }: PDFConfig) {
     const [isGenerating, setIsGenerating] = useState(false);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     const handlePreview = async () => {
         if (selectedQuestions.length === 0) {
@@ -25,13 +26,33 @@ export default function AnswerPDFGenerator({ institution, selectedQuestions, opt
         }
 
         setIsGenerating(true);
+        setError(null);
+        
         try {
-            const pdfBlob = await generateAnswersPDF({ institution, selectedQuestions, options });
+            let pdfBlob: Blob;
+            
+            // Try with MathJax first
+            try {
+                pdfBlob = await generateAnswersPDF({ institution, selectedQuestions, options });
+                console.log('Answer PDF generated successfully with MathJax');
+            } catch (mathJaxError) {
+                console.warn('MathJax Answer PDF generation failed, trying without MathJax:', mathJaxError);
+                
+                // Fallback to PDF without MathJax
+                try {
+                    pdfBlob = await generateAnswersPDFWithoutMathJax({ institution, selectedQuestions, options });
+                    console.log('Answer PDF generated successfully without MathJax');
+                } catch (fallbackError) {
+                    console.error('Both MathJax and fallback Answer PDF generation failed:', fallbackError);
+                    throw new Error('Failed to generate Answer PDF. Please try again.');
+                }
+            }
+            
             const url = URL.createObjectURL(pdfBlob);
             setPreviewUrl(url);
         } catch (error) {
             console.error('Error generating answers PDF preview:', error);
-            alert('Failed to generate answers PDF preview');
+            setError(error instanceof Error ? error.message : 'Failed to generate answers PDF preview');
         } finally {
             setIsGenerating(false);
         }
@@ -51,6 +72,7 @@ export default function AnswerPDFGenerator({ institution, selectedQuestions, opt
             URL.revokeObjectURL(previewUrl);
             setPreviewUrl(null);
         }
+        setError(null);
     };
 
     return (
@@ -78,11 +100,23 @@ export default function AnswerPDFGenerator({ institution, selectedQuestions, opt
                             <DialogTitle>Answer Key Preview</DialogTitle>
                         </DialogHeader>
                         <div className="flex-1 overflow-auto">
-                            <iframe
-                                src={previewUrl}
-                                title="Answer Key Preview"
-                                className="w-full h-[60vh] sm:h-[65vh] border border-slate-200 rounded-md"
-                            />
+                            {error ? (
+                                <div className="text-red-600 text-center p-4">
+                                    <p className="mb-2">{error}</p>
+                                    <Button
+                                        onClick={handlePreview}
+                                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                    >
+                                        Try Again
+                                    </Button>
+                                </div>
+                            ) : (
+                                <iframe
+                                    src={previewUrl}
+                                    title="Answer Key Preview"
+                                    className="w-full h-[60vh] sm:h-[65vh] border border-slate-200 rounded-md"
+                                />
+                            )}
                         </div>
                         <DialogFooter className="sm:justify-between">
                             <DialogClose asChild>
@@ -94,12 +128,14 @@ export default function AnswerPDFGenerator({ institution, selectedQuestions, opt
                                     Cancel
                                 </Button>
                             </DialogClose>
-                            <Button
-                                onClick={handleDownload}
-                                className="bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer"
-                            >
-                                Download Answer Key
-                            </Button>
+                            {!error && (
+                                <Button
+                                    onClick={handleDownload}
+                                    className="bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer"
+                                >
+                                    Download Answer Key
+                                </Button>
+                            )}
                         </DialogFooter>
                     </DialogContent>
                 )}
