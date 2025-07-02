@@ -3,16 +3,7 @@
 import { useState } from 'react';
 import { generatePDFFromConfig, generateAnswersPDFFromConfig } from '@/lib/pdfConfigToPdfUtils';
 import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-    DialogTrigger,
-    DialogClose,
-} from '@/components/ui/dialog';
-import { Download, FileText, CheckCircle, Settings } from 'lucide-react';
+import { FileText, CheckCircle, Settings } from 'lucide-react';
 
 export default function EnhancedPDFGenerator({ institution, selectedQuestions, options }: PDFConfig) {
     const [isGenerating, setIsGenerating] = useState(false);
@@ -30,7 +21,7 @@ export default function EnhancedPDFGenerator({ institution, selectedQuestions, o
 
         try {
             const config = { institution, selectedQuestions, options };
-            
+
             if (isAnswerKey) {
                 await generateAnswersPDFFromConfig(config);
             } else {

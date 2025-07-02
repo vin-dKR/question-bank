@@ -26,45 +26,29 @@ function textToHtmlWithLatex(text: string): string {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 
-    // Handle LaTeX expressions more carefully to prevent newlines
-    // Replace \(...\) with proper inline math syntax
+    // Replace all newlines and carriage returns with a single space
+    processed = processed.replace(/[\n\r]+/g, ' ');
+
+    // Now process LaTeX
     processed = processed.replace(/\\\(([^)]+)\\\)/g, (match, latex) => {
-        // Clean up the LaTeX expression and ensure proper spacing
-        const cleanLatex = latex.trim();
-        return `<span class="math-inline">\\(${cleanLatex}\\)</span>`;
+        return `<span class="math-inline">\\(${latex.trim()}\\)</span>`;
     });
-    
-    // Handle \[...\] for display math
     processed = processed.replace(/\\\[([^\]]+)\\\]/g, (match, latex) => {
-        const cleanLatex = latex.trim();
-        return `<div class="math-display">\\[${cleanLatex}\\]</div>`;
+        return `<div class="math-display">\\[${latex.trim()}\\]</div>`;
     });
-    
-    // Handle dollar sign math expressions $...$
     processed = processed.replace(/\$([^$]+)\$/g, (match, latex) => {
-        const cleanLatex = latex.trim();
-        return `<span class="math-inline">\\(${cleanLatex}\\)</span>`;
+        return `<span class="math-inline">\\(${latex.trim()}\\)</span>`;
     });
-    
-    // Handle double dollar sign math expressions $$...$$
     processed = processed.replace(/\$\$([^$]+)\$\$/g, (match, latex) => {
-        const cleanLatex = latex.trim();
-        return `<div class="math-display">\\[${cleanLatex}\\]</div>`;
+        return `<div class="math-display">\\[${latex.trim()}\\]</div>`;
     });
 
     // Handle special case where LaTeX is embedded in option text like "(A)\\(Q = 2E1 - E2\\)"
-    // This pattern matches option letters followed by LaTeX expressions
     processed = processed.replace(/(\([A-D]\))\\\(([^)]+)\\\)/g, (match, optionLetter, latex) => {
-        const cleanLatex = latex.trim();
-        return `${optionLetter}<span class="math-inline">\\(${cleanLatex}\\)</span>`;
+        return `${optionLetter}<span class="math-inline">\\(${latex.trim()}\\)</span>`;
     });
 
-    // Remove any newlines that might interfere with LaTeX
-    processed = processed.replace(/\n/g, ' ');
-    
-    // Clean up multiple spaces but preserve single spaces
-    processed = processed.replace(/\s+/g, ' ');
-    
+    // Do NOT collapse spaces globally!
     return processed.trim();
 }
 
@@ -75,12 +59,12 @@ export function questionToHTML(question: Question, index: number, options: Quest
     const {
         includeAnswers = true,
         includeMetadata = true,
-        fontSize = 14,
-        lineHeight = 1.6
     } = options;
 
     const questionNumber = index + 1;
     const questionText = textToHtmlWithLatex(question.question_text);
+
+    console.log("---------------------------------sdfaesdfawds", question)
 
     // Render options with LaTeX
     const optionsHTML = question.options.map((option, optIndex) => {
@@ -160,10 +144,9 @@ export function questionToHTML(question: Question, index: number, options: Quest
         ">${questionNumber}</span>
         <span class="question-text" style="
           margin: -5px 0 0 0;
-
           color: #1f2937;
           flex: 1;
-          ">${questionText}</span>
+        ">${questionText}</span>
       </div>
       
       <div class="options" style="margin: 16px 0;">
@@ -330,61 +313,18 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
           break-inside: avoid;
         }
         
-        /* MathJax inline math styles - Enhanced for better rendering */
-        .MathJax {
-          display: inline !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          vertical-align: baseline !important;
-          font-size: inherit !important;
-        }
-        
-        .MathJax_Display {
-          display: block !important;
-          text-align: center;
-          margin: 10px 0;
-        }
-        
-        /* Ensure all text containers flow naturally */
-        .question-text,
-        .option > div,
-        .answer > div {
-          display: inline !important;
-          white-space: normal !important;
-          word-wrap: break-word !important;
-        }
-        
-        /* Force all MathJax elements to be truly inline */
-        .MathJax,
-        .MathJax_Display,
-        .MathJax_Display > .MathJax {
-          display: inline !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          vertical-align: baseline !important;
-        }
-        
-        /* Remove any block display that might be applied */
-        [class*="MathJax"] {
-          display: inline !important;
-        }
-        
-        /* Specific styles for math-inline and math-display classes */
+        /* Only minimal MathJax wrapper styles */
         .math-inline {
-          display: inline !important;
-          margin: 0 !important;
-          padding: 0 !important;
+          display: inline;
         }
-        
         .math-display {
-          display: block !important;
+          display: block;
           text-align: center;
           margin: 10px 0;
         }
-        
-        /* Ensure MathJax SVG elements are properly sized */
-        .MathJax svg {
-          vertical-align: baseline !important;
+        /* Optional: tweak inline math vertical alignment */
+        .math-inline .MathJax {
+          vertical-align: -0.2em;
         }
         
         ${watermarkCSS}
@@ -628,61 +568,18 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
           }
         }
         
-        /* MathJax inline math styles - Enhanced for better rendering */
-        .MathJax {
-          display: inline !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          vertical-align: baseline !important;
-          font-size: inherit !important;
-        }
-        
-        .MathJax_Display {
-          display: block !important;
-          text-align: center;
-          margin: 10px 0;
-        }
-        
-        /* Ensure all text containers flow naturally */
-        .question-text,
-        .option > div,
-        .answer > div {
-          display: inline !important;
-          white-space: normal !important;
-          word-wrap: break-word !important;
-        }
-        
-        /* Force all MathJax elements to be truly inline */
-        .MathJax,
-        .MathJax_Display,
-        .MathJax_Display > .MathJax {
-          display: inline !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          vertical-align: baseline !important;
-        }
-        
-        /* Remove any block display that might be applied */
-        [class*="MathJax"] {
-          display: inline !important;
-        }
-        
-        /* Specific styles for math-inline and math-display classes */
+        /* Only minimal MathJax wrapper styles */
         .math-inline {
-          display: inline !important;
-          margin: 0 !important;
-          padding: 0 !important;
+          display: inline;
         }
-        
         .math-display {
-          display: block !important;
+          display: block;
           text-align: center;
           margin: 10px 0;
         }
-        
-        /* Ensure MathJax SVG elements are properly sized */
-        .MathJax svg {
-          vertical-align: baseline !important;
+        /* Optional: tweak inline math vertical alignment */
+        .math-inline .MathJax {
+          vertical-align: -0.2em;
         }
         
         ${watermarkCSS}
