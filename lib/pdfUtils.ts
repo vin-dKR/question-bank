@@ -269,6 +269,8 @@ export async function generatePDF(config: PDFConfig, options: PDFGenerationOptio
         margin
     });
 
+    console.log("pdfUtlis- 69696996969696969696999696969", html)
+
     // Create temporary container with the HTML
     const container = document.createElement('div');
     container.innerHTML = html;
@@ -278,6 +280,8 @@ export async function generatePDF(config: PDFConfig, options: PDFGenerationOptio
     container.style.width = '210mm'; // A4 width
     container.style.backgroundColor = '#ffffff';
     document.body.appendChild(container);
+
+
 
     try {
         // Debug MathJax status

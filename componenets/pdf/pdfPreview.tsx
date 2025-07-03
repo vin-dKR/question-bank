@@ -13,6 +13,7 @@ import {
     DialogClose,
 } from '@/components/ui/dialog';
 import { Download } from 'lucide-react';
+import { pdfConfigToHTML } from '@/lib/questionToHtmlUtils';
 
 
 export default function PDFGenerator({ institution, selectedQuestions, options }: PDFConfig) {
@@ -80,6 +81,19 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
         }
     };
 
+    // Handler for previewing compiled LaTeX HTML in a new tab
+    const handlePreviewCompiledHTML = () => {
+        if (!selectedQuestions || selectedQuestions.length === 0) {
+            alert('Please select at least one question');
+            return;
+        }
+        const html = pdfConfigToHTML({ institution, selectedQuestions, options });
+        console.log(html)
+        const blob = new Blob([html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+    };
+
     const handleDownload = () => {
         if (previewUrl) {
             const link = document.createElement('a');
@@ -101,18 +115,28 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button
-                    onClick={handlePreview}
-                    disabled={isGenerating}
-                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed"
-                >
-                    {isGenerating ? 'Generating...' : (
-                        <>
-                            <Download className="h-4 w-4" />
-                            <span>PDF</span>
-                        </>
-                    )}
-                </Button>
+                <div className="flex gap-2">
+                    <Button
+                        onClick={handlePreview}
+                        disabled={isGenerating}
+                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed"
+                    >
+                        {isGenerating ? 'Generating...' : (
+                            <>
+                                <Download className="h-4 w-4" />
+                                <span>PDF</span>
+                            </>
+                        )}
+                    </Button>
+                    {/* New button for compiled LaTeX HTML preview */}
+                    <Button
+                        onClick={handlePreviewCompiledHTML}
+                        disabled={!selectedQuestions || selectedQuestions.length === 0}
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed"
+                    >
+                        LaTeX HTML
+                    </Button>
+                </div>
             </DialogTrigger>
             {previewUrl && (
                 <DialogContent className="sm:max-w-4xl bg-white max-h-[100vh] !top-[50%] !left-[50%] !transform !-translate-x-1/2 !-translate-y-1/2">

@@ -7,8 +7,49 @@ export interface PDFConfigToPDFOptions extends QuestionToHTMLOptions, HTMLToPDFO
 }
 
 /**
- * Convert PDFConfig directly to PDF using HTML conversion
- * This is the main function you'll use to replace your existing PDF generation
+ * Helper: Wait for MathJax to be fully ready (typesetPromise available)
+ */
+async function waitForMathJaxReady(timeoutMs = 15000): Promise<boolean> {
+  const start = Date.now();
+  while (
+    (!window.MathJax || !window.MathJax.typesetPromise) &&
+    Date.now() - start < timeoutMs
+  ) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  return !!(window.MathJax && window.MathJax.typesetPromise);
+}
+
+/**
+ * Helper: Convert File/Blob to base64 string
+ */
+async function fileToBase64(file: File | Blob): Promise<string> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Helper: Create and clean up a temporary DOM container
+ */
+function withTempContainer(html: string, fn: (container: HTMLElement) => Promise<void>): Promise<void> {
+  const container = document.createElement('div');
+  container.innerHTML = html;
+  container.style.position = 'absolute';
+  container.style.left = '-9999px';
+  container.style.top = '-9999px';
+  container.style.width = '210mm';
+  container.style.backgroundColor = '#fff';
+  document.body.appendChild(container);
+  return fn(container).finally(() => {
+    document.body.removeChild(container);
+  });
+}
+
+/**
+ * Convert PDFConfig directly to PDF using HTML conversion (with MathJax support)
  */
 export async function pdfConfigToPDF(
   config: PDFConfig,
@@ -39,17 +80,10 @@ export async function pdfConfigToPDF(
   // Convert logo File to data URL if provided
   let logoBase64: string | undefined;
   if (logo) {
-    // logoBase64 = await new Promise<string>((resolve) => {
-    //   const reader = new FileReader();
-    //   reader.onload = () => resolve(reader.result as string);
-    //   reader.readAsDataURL(logo);
-    // });
+    // logoBase64 = await fileToBase64(logo);
+    console.log('logo', logo);
   } else if (config.options.logo) {
-    logoBase64 = await new Promise<string>((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.readAsDataURL(config.options.logo!);
-    });
+    logoBase64 = await fileToBase64(config.options.logo);
   }
 
   // Generate HTML
@@ -70,32 +104,23 @@ export async function pdfConfigToPDF(
     ? pdfConfigToAnswerKeyHTML(config, htmlOptions)
     : pdfConfigToHTML(config, htmlOptions);
 
-  // Create temporary container
-  const container = document.createElement('div');
-  container.innerHTML = html;
-  container.style.position = 'absolute';
-  container.style.left = '-9999px';
-  container.style.top = '-9999px';
-  container.style.width = '210mm'; // A4 width
-  container.style.backgroundColor = '#ffffff';
-  document.body.appendChild(container);
-
-  try {
+  await withTempContainer(html, async (container) => {
     // Wait for MathJax to render LaTeX if needed
     if (waitForMathJax) {
-      await new Promise<void>((resolve) => {
-        const checkMathJax = () => {
-          if (window.MathJax && window.MathJax.startup && window.MathJax.startup.document.state() === 'ready') {
-            resolve();
-          } else {
-            setTimeout(checkMathJax, 100);
-          }
-        };
-        checkMathJax();
-      });
+      // Wait for MathJax to be loaded and ready
+      const mathJaxReady = await waitForMathJaxReady(15000);
+      if (!mathJaxReady) {
+        console.warn('MathJax did not load in time, proceeding without LaTeX rendering');
+      } else {
+        // Wait for MathJax to finish typesetting all math in the container
+        try {
+          await window.MathJax.typesetPromise([container]);
+        } catch (error) {
+          console.warn('MathJax rendering failed, proceeding without LaTeX:', error);
+        }
+      }
     }
-
-    // Convert to PDF
+    // Now MathJax has rendered all math, so snapshot to PDF
     await htmlToPDF(container, {
       filename,
       pageSize,
@@ -104,10 +129,7 @@ export async function pdfConfigToPDF(
       scale,
       quality
     });
-  } finally {
-    // Clean up
-    document.body.removeChild(container);
-  }
+  });
 }
 
 /**
@@ -117,14 +139,11 @@ export async function generateQuestionPaperAndAnswerKey(
   config: PDFConfig,
   options: PDFConfigToPDFOptions = {}
 ): Promise<void> {
-  // Generate question paper
   await pdfConfigToPDF(config, {
     ...options,
     isAnswerKey: false,
     filename: options.filename || 'question_paper.pdf'
   });
-
-  // Generate answer key if answers are included
   if (config.options.includeAnswers) {
     await pdfConfigToPDF(config, {
       ...options,
@@ -154,7 +173,6 @@ export function previewPDFConfigAsHTML(
     margin: 20,
     ...options
   };
-
   return isAnswerKey 
     ? pdfConfigToAnswerKeyHTML(config, defaultOptions)
     : pdfConfigToHTML(config, defaultOptions);
@@ -162,7 +180,6 @@ export function previewPDFConfigAsHTML(
 
 /**
  * Replace your existing generatePDF function with this
- * Usage: await generatePDFFromConfig(config)
  */
 export async function generatePDFFromConfig(config: PDFConfig): Promise<void> {
   return pdfConfigToPDF(config);
@@ -170,7 +187,6 @@ export async function generatePDFFromConfig(config: PDFConfig): Promise<void> {
 
 /**
  * Replace your existing generateAnswersPDF function with this
- * Usage: await generateAnswersPDFFromConfig(config)
  */
 export async function generateAnswersPDFFromConfig(config: PDFConfig): Promise<void> {
   return pdfConfigToPDF(config, { isAnswerKey: true });

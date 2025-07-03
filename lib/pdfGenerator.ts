@@ -79,4 +79,3 @@ export const generatePDF = async (
     // Generate and download PDF
     pdf.create().download('mcq-questions.pdf');
 };
-

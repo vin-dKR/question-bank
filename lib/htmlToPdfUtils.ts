@@ -15,11 +15,13 @@ export interface HTMLToPDFOptions {
  * Convert HTML element to PDF using html2canvas and jsPDF
  * @param element - HTML element to convert
  * @param options - PDF generation options
+ * @returns Promise<Blob | void> - Blob if returnBlob is true, otherwise triggers download
  */
 export async function htmlToPDF(
   element: HTMLElement,
   options: HTMLToPDFOptions = {}
 ): Promise<Blob | void> {
+  console.log("htmlToPDF- 69696996969696969696999696969", element.outerHTML, options)
   const {
     filename = 'document.pdf',
     pageSize = 'a4',
@@ -41,18 +43,15 @@ export async function htmlToPDF(
           img.onload = () => resolve();
           img.onerror = () => {
             console.warn('Image failed to load:', img.src);
-            // Replace broken image with placeholder or remove it
             img.style.display = 'none';
             resolve();
           };
         }
       });
     });
-
-    // Wait for all images to load or fail
     await Promise.all(imagePromises);
 
-    // Convert HTML to canvas with better error handling
+    // Convert HTML to canvas
     const canvas = await html2canvas(element, {
       scale,
       useCORS: true,
@@ -61,9 +60,8 @@ export async function htmlToPDF(
       logging: false,
       width: element.scrollWidth,
       height: element.scrollHeight,
-      imageTimeout: 5000, // 5 second timeout for images
+      imageTimeout: 5000,
       onclone: (clonedDoc) => {
-        // Handle any additional processing on the cloned document
         const clonedImages = clonedDoc.querySelectorAll('img');
         clonedImages.forEach(img => {
           if (img.naturalHeight === 0) {
@@ -84,8 +82,7 @@ export async function htmlToPDF(
     const pageHeight = pdf.internal.pageSize.getHeight();
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
     let heightLeft = imgHeight;
-
-    let position = margin; // Top margin
+    let position = margin;
 
     // Add image to PDF
     const imgData = canvas.toDataURL('image/png', quality);
@@ -93,7 +90,7 @@ export async function htmlToPDF(
     heightLeft -= pageHeight;
 
     // Add new pages if content is longer than one page
-    while (heightLeft >= 0) {
+    while (heightLeft >= 30) {
       position = heightLeft - imgHeight + margin;
       pdf.addPage();
       pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
@@ -118,11 +115,13 @@ export async function htmlToPDF(
  * Convert HTML element to PDF and return as Blob
  * @param element - HTML element to convert
  * @param options - PDF generation options
+ * @returns Promise<Blob>
  */
 export async function htmlToPDFBlob(
   element: HTMLElement,
   options: HTMLToPDFOptions = {}
 ): Promise<Blob> {
+
   const result = await htmlToPDF(element, { ...options, returnBlob: true });
   if (result instanceof Blob) {
     return result;
@@ -134,23 +133,21 @@ export async function htmlToPDFBlob(
  * Convert HTML string to PDF
  * @param htmlString - HTML string to convert
  * @param options - PDF generation options
+ * @returns Promise<void>
  */
 export async function htmlStringToPDF(
   htmlString: string,
   options: HTMLToPDFOptions = {}
 ): Promise<void> {
-  // Create temporary container
   const container = document.createElement('div');
   container.innerHTML = htmlString;
   container.style.position = 'absolute';
   container.style.left = '-9999px';
   container.style.top = '-9999px';
   document.body.appendChild(container);
-
   try {
     await htmlToPDF(container, options);
   } finally {
-    // Clean up
     document.body.removeChild(container);
   }
 }
@@ -159,23 +156,21 @@ export async function htmlStringToPDF(
  * Convert HTML string to PDF and return as Blob
  * @param htmlString - HTML string to convert
  * @param options - PDF generation options
+ * @returns Promise<Blob>
  */
 export async function htmlStringToPDFBlob(
   htmlString: string,
   options: HTMLToPDFOptions = {}
 ): Promise<Blob> {
-  // Create temporary container
   const container = document.createElement('div');
   container.innerHTML = htmlString;
   container.style.position = 'absolute';
   container.style.left = '-9999px';
   container.style.top = '-9999px';
   document.body.appendChild(container);
-
   try {
     return await htmlToPDFBlob(container, options);
   } finally {
-    // Clean up
     document.body.removeChild(container);
   }
 }
@@ -184,6 +179,7 @@ export async function htmlStringToPDFBlob(
  * Convert URL to PDF (requires CORS access)
  * @param url - URL to convert
  * @param options - PDF generation options
+ * @returns Promise<void>
  */
 export async function urlToPDF(
   url: string,

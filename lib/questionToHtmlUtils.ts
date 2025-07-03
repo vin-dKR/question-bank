@@ -64,7 +64,9 @@ export function questionToHTML(question: Question, index: number, options: Quest
     const questionNumber = index + 1;
     const questionText = textToHtmlWithLatex(question.question_text);
 
-    console.log("---------------------------------sdfaesdfawds", question)
+    console.log("---------------------------------sdfaesdfawds", questionText)
+
+    // `Suppose that the Sun consists entirely of hydrogen atom and releases the energy by the nuclear reaction, <span class="math-inline">\(4,^1\mathrm{H} \longrightarrow, ^4\mathrm{He}\)</span> with <span class="math-inline">\(26 MeV\)</span> of energy released. If the total output power of the Sun is assumed to remain constant at <span class="math-inline">\(3.9 \times 10^{26} \mathrm{W}\)</span>, find the time it will take to burn all the hydrogen.  \nTake the mass of the Sun as <span class="math-inline">\(1.7 \times 10^{30} \mathrm{kg}\)</span>.`
 
     // Render options with LaTeX
     const optionsHTML = question.options.map((option, optIndex) => {
@@ -254,13 +256,12 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>${institution} - Question Paper</title>
-      <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-      <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
       <script>
         window.MathJax = {
           tex: {
-            inlineMath: [['\\(', '\\)'], ['$', '$']],
-            displayMath: [['\\[', '\\]'], ['$$', '$$']],
+            inlineMath: [['\\\\(', '\\\\)']],
+            displayMath: [['\\[', '\\]']],
             processEscapes: true,
             processEnvironments: true,
             processRefs: true
@@ -288,6 +289,10 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
           }
         };
       </script>
+
+      <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
       <style>
         * {
           box-sizing: border-box;
@@ -324,7 +329,8 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
         }
         /* Optional: tweak inline math vertical alignment */
         .math-inline .MathJax {
-          vertical-align: -0.2em;
+          background-color: red;
+          // vertical-align: -0.2em;
         }
         
         ${watermarkCSS}

@@ -111,11 +111,11 @@ export default function AnswerPDFGenerator({ institution, selectedQuestions, opt
                                     </Button>
                                 </div>
                             ) : (
-                                <iframe
-                                    src={previewUrl}
-                                    title="Answer Key Preview"
-                                    className="w-full h-[60vh] sm:h-[65vh] border border-slate-200 rounded-md"
-                                />
+                            <iframe
+                                src={previewUrl}
+                                title="Answer Key Preview"
+                                className="w-full h-[60vh] sm:h-[65vh] border border-slate-200 rounded-md"
+                            />
                             )}
                         </div>
                         <DialogFooter className="sm:justify-between">
@@ -129,12 +129,12 @@ export default function AnswerPDFGenerator({ institution, selectedQuestions, opt
                                 </Button>
                             </DialogClose>
                             {!error && (
-                                <Button
-                                    onClick={handleDownload}
-                                    className="bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer"
-                                >
-                                    Download Answer Key
-                                </Button>
+                            <Button
+                                onClick={handleDownload}
+                                className="bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer"
+                            >
+                                Download Answer Key
+                            </Button>
                             )}
                         </DialogFooter>
                     </DialogContent>
