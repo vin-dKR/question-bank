@@ -10,5 +10,5 @@
 # such as build settings, redirects, etc.
 # Example:
 # [build]
-#   command = "npm run build"
+#   command = "bun run build"
 #   publish = "dist"
