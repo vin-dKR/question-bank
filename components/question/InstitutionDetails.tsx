@@ -1,7 +1,7 @@
 'use client';
 
 import { usePDFGeneratorContext } from '@/lib/context/PDFGeneratorContext';
-import LogoUploader from '@/componenets/question/LogoUploader';
+import LogoUploader from './LogoUploader';
 import { Input } from '@/components/ui/input';
 
 export default function InstitutionDetails() {

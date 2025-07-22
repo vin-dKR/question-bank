@@ -92,6 +92,11 @@ declare global {
         >;
     }
 
+    interface Institution {
+        name: string;
+        logo?: string;
+    }
+
 }
 
 

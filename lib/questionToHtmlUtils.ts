@@ -1,14 +1,14 @@
 export interface QuestionToHTMLOptions {
-    includeAnswers?: boolean;
-    includeMetadata?: boolean;
-    institution?: string;
-    logo?: string;
-    watermarkOpacity?: number;
-    pageSize?: 'a4' | 'letter' | 'legal';
-    orientation?: 'portrait' | 'landscape';
-    fontSize?: number;
-    lineHeight?: number;
-    margin?: number;
+  includeAnswers?: boolean;
+  includeMetadata?: boolean;
+  institution?: string;
+  logo?: string;
+  watermarkOpacity?: number;
+  pageSize?: 'a4' | 'letter' | 'legal';
+  orientation?: 'portrait' | 'landscape';
+  fontSize?: number;
+  lineHeight?: number;
+  margin?: number;
 }
 
 /**
@@ -16,79 +16,79 @@ export interface QuestionToHTMLOptions {
  * This function converts \(...\) to proper MathJax syntax
  */
 function textToHtmlWithLatex(text: string): string {
-    if (!text) return '';
+  if (!text) return '';
 
-    // First, escape HTML entities
-    let processed = text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+  // First, escape HTML entities
+  let processed = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 
-    // Replace all newlines and carriage returns with a single space
-    processed = processed.replace(/[\n\r]+/g, ' ');
+  // Replace all newlines and carriage returns with a single space
+  processed = processed.replace(/[\n\r]+/g, ' ');
 
-    // Now process LaTeX
-    processed = processed.replace(/\\\(([^)]+)\\\)/g, (match, latex) => {
-        return `<span class="math-inline">\\(${latex.trim()}\\)</span>`;
-    });
-    processed = processed.replace(/\\\[([^\]]+)\\\]/g, (match, latex) => {
-        return `<div class="math-display">\\[${latex.trim()}\\]</div>`;
-    });
-    processed = processed.replace(/\$([^$]+)\$/g, (match, latex) => {
-        return `<span class="math-inline">\\(${latex.trim()}\\)</span>`;
-    });
-    processed = processed.replace(/\$\$([^$]+)\$\$/g, (match, latex) => {
-        return `<div class="math-display">\\[${latex.trim()}\\]</div>`;
-    });
+  // Now process LaTeX
+  processed = processed.replace(/\\\(([^)]+)\\\)/g, (match, latex) => {
+    return `<span class="math-inline">\\(${latex.trim()}\\)</span>`;
+  });
+  processed = processed.replace(/\\\[([^\]]+)\\\]/g, (match, latex) => {
+    return `<div class="math-display">\\[${latex.trim()}\\]</div>`;
+  });
+  processed = processed.replace(/\$([^$]+)\$/g, (match, latex) => {
+    return `<span class="math-inline">\\(${latex.trim()}\\)</span>`;
+  });
+  processed = processed.replace(/\$\$([^$]+)\$\$/g, (match, latex) => {
+    return `<div class="math-display">\\[${latex.trim()}\\]</div>`;
+  });
 
-    // Handle special case where LaTeX is embedded in option text like "(A)\\(Q = 2E1 - E2\\)"
-    processed = processed.replace(/(\([A-D]\))\\\(([^)]+)\\\)/g, (match, optionLetter, latex) => {
-        return `${optionLetter}<span class="math-inline">\\(${latex.trim()}\\)</span>`;
-    });
+  // Handle special case where LaTeX is embedded in option text like "(A)\\(Q = 2E1 - E2\\)"
+  processed = processed.replace(/(\([A-D]\))\\\(([^)]+)\\\)/g, (match, optionLetter, latex) => {
+    return `${optionLetter}<span class="math-inline">\\(${latex.trim()}\\)</span>`;
+  });
 
-    // Do NOT collapse spaces globally!
-    return processed.trim();
+  // Do NOT collapse spaces globally!
+  return processed.trim();
 }
 
 /**
  * Convert a single question to HTML with LaTeX rendering
  */
 export function questionToHTML(question: Question, index: number, options: QuestionToHTMLOptions = {}): string {
-    const {
-        includeAnswers = true,
-        includeMetadata = true,
-    } = options;
+  const {
+    includeAnswers = true,
+    includeMetadata = true,
+  } = options;
 
-    const questionNumber = index + 1;
-    const questionText = textToHtmlWithLatex(question.question_text);
+  const questionNumber = index + 1;
+  const questionText = textToHtmlWithLatex(question.question_text);
 
-    console.log("---------------------------------sdfaesdfawds", questionText)
+  console.log("---------------------------------sdfaesdfawds", questionText)
 
-    // `Suppose that the Sun consists entirely of hydrogen atom and releases the energy by the nuclear reaction, <span class="math-inline">\(4,^1\mathrm{H} \longrightarrow, ^4\mathrm{He}\)</span> with <span class="math-inline">\(26 MeV\)</span> of energy released. If the total output power of the Sun is assumed to remain constant at <span class="math-inline">\(3.9 \times 10^{26} \mathrm{W}\)</span>, find the time it will take to burn all the hydrogen.  \nTake the mass of the Sun as <span class="math-inline">\(1.7 \times 10^{30} \mathrm{kg}\)</span>.`
+  // `Suppose that the Sun consists entirely of hydrogen atom and releases the energy by the nuclear reaction, <span class="math-inline">\(4,^1\mathrm{H} \longrightarrow, ^4\mathrm{He}\)</span> with <span class="math-inline">\(26 MeV\)</span> of energy released. If the total output power of the Sun is assumed to remain constant at <span class="math-inline">\(3.9 \times 10^{26} \mathrm{W}\)</span>, find the time it will take to burn all the hydrogen.  \nTake the mass of the Sun as <span class="math-inline">\(1.7 \times 10^{30} \mathrm{kg}\)</span>.`
 
-    // Render options with LaTeX
-    const optionsHTML = question.options.map((option, optIndex) => {
-        const optionLetter = String.fromCharCode(65 + optIndex);
-        const optionNumber = String(optIndex + 1);
-        const answers = (question.answer || '')
-            .toString()
-            .split(',')
-            .map((a) => a.trim().toUpperCase());
+  // Render options with LaTeX
+  const optionsHTML = question.options.map((option, optIndex) => {
+    const optionLetter = String.fromCharCode(65 + optIndex);
+    const optionNumber = String(optIndex + 1);
+    const answers = (question.answer || '')
+      .toString()
+      .split(',')
+      .map((a) => a.trim().toUpperCase());
 
-        const isCorrect = answers.includes(optionLetter) || answers.includes(optionNumber);
-        const optionText = textToHtmlWithLatex(option);
+    const isCorrect = answers.includes(optionLetter) || answers.includes(optionNumber);
+    const optionText = textToHtmlWithLatex(option);
 
-        return `
+    return `
       <div class="option ${isCorrect ? 'correct' : ''}" style="padding: 4px 12px; margin: 4px 0; border-left: 4px solid ${isCorrect ? '#10b981' : '#e5e7eb'}; background-color: ${isCorrect ? '#f0fdf4' : '#ffffff'}; border-radius: 0 6px 6px 0; display: flex; align-items: flex-start;">
         <strong style="font-weight: 500; margin-right: 8px; flex-shrink: 0;">${optionLetter}.</strong>
         <div style="flex: 1; display: inline;">${optionText}</div>
       </div>`;
-    }).join('');
+  }).join('');
 
-    // Render answer with LaTeX
-    const answerHTML = includeAnswers ? `
+  // Render answer with LaTeX
+  const answerHTML = includeAnswers ? `
     <div class="answer" style="
       margin-top: 12px;
       padding: 8px 12px;
@@ -104,8 +104,8 @@ export function questionToHTML(question: Question, index: number, options: Quest
     </div>
   ` : '';
 
-    // Render metadata
-    const metadataHTML = includeMetadata ? `
+  // Render metadata
+  const metadataHTML = includeMetadata ? `
     <div class="metadata" style="
       margin-top: 8px;
       font-size: 12px;
@@ -118,7 +118,7 @@ export function questionToHTML(question: Question, index: number, options: Quest
     </div>
   ` : '';
 
-    return `
+  return `
     <div class="question" style="
       margin-bottom: 24px;
       padding: 16px;
@@ -165,28 +165,28 @@ export function questionToHTML(question: Question, index: number, options: Quest
  * Convert PDFConfig to complete HTML document
  */
 export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOptions = {}): string {
-    const {
-        includeAnswers = true,
-        includeMetadata = true,
-        institution = 'Institution',
-        logo,
-        watermarkOpacity = 0.1,
-        pageSize = 'a4',
-        orientation = 'portrait',
-        fontSize = 14,
-        lineHeight = 1.6,
-        margin = 20
-    } = options;
+  const {
+    includeAnswers = true,
+    includeMetadata = true,
+    institution = 'Institution',
+    logo,
+    watermarkOpacity = 0.1,
+    pageSize = 'a4',
+    orientation = 'portrait',
+    fontSize = 14,
+    lineHeight = 1.6,
+    margin = 20
+  } = options;
 
-    const { selectedQuestions } = config;
+  const { selectedQuestions } = config;
 
-    // Generate questions HTML
-    const questionsHTML = selectedQuestions.map((question, index) =>
-        questionToHTML(question, index, { includeAnswers, includeMetadata, fontSize, lineHeight })
-    ).join('');
+  // Generate questions HTML
+  const questionsHTML = selectedQuestions.map((question, index) =>
+    questionToHTML(question, index, { includeAnswers, includeMetadata, fontSize, lineHeight })
+  ).join('');
 
-    // Generate header with logo if provided
-    const headerHTML = logo ? `
+  // Generate header with logo if provided
+  const headerHTML = logo ? `
     <div class="header" style="
       display: flex;
       align-items: center;
@@ -228,8 +228,8 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
     </div>
   `;
 
-    // Generate watermark if logo provided
-    const watermarkCSS = logo ? `
+  // Generate watermark if logo provided
+  const watermarkCSS = logo ? `
     body::before {
       content: '';
       position: fixed;
@@ -248,8 +248,8 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
     }
   ` : '';
 
-    // Complete HTML document
-    return `
+  // Complete HTML document
+  return `
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -257,41 +257,7 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>${institution} - Question Paper</title>
 
-      <script>
-        window.MathJax = {
-          tex: {
-            inlineMath: [['\\\\(', '\\\\)']],
-            displayMath: [['\\[', '\\]']],
-            processEscapes: true,
-            processEnvironments: true,
-            processRefs: true
-          },
-          options: {
-            skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
-            enableMenu: false,
-            menuOptions: {
-              settings: {
-                texHints: true,
-                semantics: false,
-                zoom: 'NoZoom',
-                zscale: '200%'
-              }
-            }
-          },
-          startup: {
-            pageReady: () => {
-              return window.MathJax.startup.defaultPageReady().then(() => {
-                console.log('MathJax is ready');
-                // Force inline rendering after MathJax is ready
-                forceInlineMath();
-              });
-            }
-          }
-        };
-      </script>
-
-      <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-      <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-svg.js"></script>
 
       <style>
         * {
@@ -329,8 +295,15 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
         }
         /* Optional: tweak inline math vertical alignment */
         .math-inline .MathJax {
-          background-color: red;
+          color: #4d4d4d !important;
+          font-weight: normal !important;
+          background-color: white;
           // vertical-align: -0.2em;
+        }
+        
+        /* Ensure all MathJax elements have normal font weight */
+        .MathJax, .MathJax * {
+          font-weight: normal !important;
         }
         
         ${watermarkCSS}
@@ -353,21 +326,6 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
         <p>Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
       </div>
       
-      <script>
-        // Simple and effective MathJax inline rendering
-        const forceInlineMath = () => {
-          // Force all MathJax elements to be inline
-          const mathElements = document.querySelectorAll('[class*="MathJax"]');
-          mathElements.forEach(el => {
-            if (el instanceof HTMLElement) {
-              el.style.display = 'inline';
-              el.style.margin = '0';
-              el.style.padding = '0';
-              el.style.verticalAlign = 'baseline';
-            }
-          });
-        };
-      </script>
     </body>
     </html>
   `;
@@ -377,25 +335,25 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
  * Convert PDFConfig to answer key HTML
  */
 export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToHTMLOptions = {}): string {
-    const {
-        institution = 'Institution',
-        logo,
-        watermarkOpacity = 0.1,
-        pageSize = 'a4',
-        orientation = 'portrait',
-        fontSize = 14,
-        lineHeight = 1.6,
-        margin = 20
-    } = options;
+  const {
+    institution = 'Institution',
+    logo,
+    watermarkOpacity = 0.1,
+    pageSize = 'a4',
+    orientation = 'portrait',
+    fontSize = 14,
+    lineHeight = 1.6,
+    margin = 20
+  } = options;
 
-    const { selectedQuestions } = config;
+  const { selectedQuestions } = config;
 
-    // Generate answers HTML
-    const answersHTML = selectedQuestions.map((question, index) => {
-        const questionNumber = index + 1;
-        const answerText = textToHtmlWithLatex(question.answer);
+  // Generate answers HTML
+  const answersHTML = selectedQuestions.map((question, index) => {
+    const questionNumber = index + 1;
+    const answerText = textToHtmlWithLatex(question.answer);
 
-        return `
+    return `
       <div class="answer-item" style="
         display: flex;
         align-items: center;
@@ -430,10 +388,10 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
         </div>
       </div>
     `;
-    }).join('');
+  }).join('');
 
-    // Generate header with logo if provided
-    const headerHTML = logo ? `
+  // Generate header with logo if provided
+  const headerHTML = logo ? `
     <div class="header" style="
       display: flex;
       align-items: center;
@@ -475,8 +433,8 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
     </div>
   `;
 
-    // Generate watermark if logo provided
-    const watermarkCSS = logo ? `
+  // Generate watermark if logo provided
+  const watermarkCSS = logo ? `
     body::before {
       content: '';
       position: fixed;
@@ -495,47 +453,16 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
     }
   ` : '';
 
-    return `
+  return `
     <!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>${institution} - Answer Key</title>
-      <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-      <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-      <script>
-        window.MathJax = {
-          tex: {
-            inlineMath: [['\\(', '\\)'], ['$', '$']],
-            displayMath: [['\\[', '\\]'], ['$$', '$$']],
-            processEscapes: true,
-            processEnvironments: true,
-            processRefs: true
-          },
-          options: {
-            skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
-            enableMenu: false,
-            menuOptions: {
-              settings: {
-                texHints: true,
-                semantics: false,
-                zoom: 'NoZoom',
-                zscale: '200%'
-              }
-            }
-          },
-          startup: {
-            pageReady: () => {
-              return window.MathJax.startup.defaultPageReady().then(() => {
-                console.log('MathJax is ready');
-                // Force inline rendering after MathJax is ready
-                forceInlineMath();
-              });
-            }
-          }
-        };
-      </script>
+      
+      <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-svg.js"></script>
+      
       <style>
         * {
           box-sizing: border-box;
@@ -609,21 +536,6 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
         <p>Total Questions: ${selectedQuestions.length}</p>
       </div>
       
-      <script>
-        // Simple and effective MathJax inline rendering
-        const forceInlineMath = () => {
-          // Force all MathJax elements to be inline
-          const mathElements = document.querySelectorAll('[class*="MathJax"]');
-          mathElements.forEach(el => {
-            if (el instanceof HTMLElement) {
-              el.style.display = 'inline';
-              el.style.margin = '0';
-              el.style.padding = '0';
-              el.style.verticalAlign = 'baseline';
-            }
-          });
-        };
-      </script>
     </body>
     </html>
   `;

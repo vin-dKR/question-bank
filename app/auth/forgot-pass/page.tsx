@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { FancyLoader, LoadingButton } from '@/componenets/Loader';
+import { FancyLoader, LoadingButton } from '@/components/Loader';
 import { useForgotPass } from '@/hooks/forgotPass';
 
 export default function ResetPasswordPage() {

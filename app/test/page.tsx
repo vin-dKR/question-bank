@@ -1,11 +1,11 @@
 "use client"
 
 import React, { useState } from 'react';
-import MathJaxRenderer from '@/componenets/MathJaxRenderer';
+import MathJaxRenderer from '@/components/MathJaxRenderer';
 
-const App: React.FC = () => {
+const TestPage: React.FC = () => {
   const [latexInput, setLatexInput] = useState<string>('E = mc^2');
-  
+
   return (
     <div>
       <input
@@ -14,13 +14,13 @@ const App: React.FC = () => {
         onChange={(e) => setLatexInput(e.target.value)}
         placeholder="Enter LaTeX formula"
       />
-      
-      <MathJaxRenderer 
-        latex={latexInput} 
-        displayMode={true} 
+
+      <MathJaxRenderer
+        latex={latexInput}
+        displayMode={true}
       />
     </div>
   );
 };
 
-export default App;
+export default TestPage;
