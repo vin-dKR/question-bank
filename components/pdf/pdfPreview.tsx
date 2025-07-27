@@ -33,6 +33,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
         };
     }, [previewUrl]);
 
+    {/**
     const handlePreview = async () => {
         if (selectedQuestions.length === 0) {
             alert('Please select at least one question');
@@ -78,6 +79,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
             // setIsGenerating(false); // Removed unused state
         }
     };
+        */}
 
     const handlePreviewCompiledHTML = async () => {
         if (selectedQuestions.length === 0) {
@@ -153,7 +155,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
                             <div className="text-red-600 text-center p-4">
                                 <p className="mb-2">{error}</p>
                                 <Button
-                                    onClick={handlePreview}
+                                    onClick={handlePreviewCompiledHTML}
                                     className="bg-indigo-600 hover:bg-indigo-700 text-white"
                                 >
                                     Try Again
