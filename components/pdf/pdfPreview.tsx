@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { generatePDF, generatePDFWithoutMathJax } from '@/lib/pdfUtils';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,

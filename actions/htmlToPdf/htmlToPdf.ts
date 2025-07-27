@@ -20,7 +20,7 @@ export const htmlTopdfBlob = async (html: string): Promise<HtmlTopdfBlobReturn> 
         console.log("3. html try");
 
         const browser = await puppeteer.launch({
-            headless: true,
+            headless: false,
             args: [
                 "--no-sandbox",
                 "--disable-setuid-sandbox",
