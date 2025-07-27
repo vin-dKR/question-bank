@@ -1,6 +1,5 @@
 import { pdfConfigToHTML, pdfConfigToAnswerKeyHTML } from './questionToHtmlUtils';
 import { htmlToPDFBlob } from './htmlToPdfUtils';
-import html2pdf from 'html2pdf.js';
 import { initializeMathJax, loadMathJax, fixMathJaxForPDF } from './jax/jaxUtils';
 
 
@@ -8,6 +7,10 @@ import { initializeMathJax, loadMathJax, fixMathJaxForPDF } from './jax/jaxUtils
  * Generate PDF from PDFConfig using simplified HTML-to-PDF approach
  */
 export async function generatePDF(config: PDFConfig, options: PDFGenerationOptions = {}): Promise<Blob> {
+    // Check if we're in a browser environment
+    if (typeof window === 'undefined') {
+        throw new Error('PDF generation is only available in browser environment');
+    }
     const {
         includeAnswers = config.options.includeAnswers,
         includeMetadata = true,
@@ -160,6 +163,7 @@ export async function generatePDF(config: PDFConfig, options: PDFGenerationOptio
         });
 
         console.log('Generating PDF with html2pdf...');
+        const html2pdf = (await import('html2pdf.js')).default;
         const pdfBlob = await html2pdf().set(html2pdfOptions).from(container).outputPdf('blob');
         console.log('PDF generation complete, blob size:', pdfBlob.size);
 
@@ -183,6 +187,10 @@ export async function generatePDF(config: PDFConfig, options: PDFGenerationOptio
  * Generate PDF without MathJax (fallback function)
  */
 export async function generatePDFWithoutMathJax(config: PDFConfig, options: PDFGenerationOptions = {}): Promise<Blob> {
+    // Check if we're in a browser environment
+    if (typeof window === 'undefined') {
+        throw new Error('PDF generation is only available in browser environment');
+    }
     const {
         includeAnswers = config.options.includeAnswers,
         includeMetadata = true,
@@ -261,6 +269,10 @@ export async function generatePDFWithoutMathJax(config: PDFConfig, options: PDFG
  * Generate Answer Key PDF from PDFConfig using simplified HTML-to-PDF approach
  */
 export async function generateAnswersPDF(config: PDFConfig, options: PDFGenerationOptions = {}): Promise<Blob> {
+    // Check if we're in a browser environment
+    if (typeof window === 'undefined') {
+        throw new Error('PDF generation is only available in browser environment');
+    }
     const {
         includeMetadata = true,
         institution = config.institution,
@@ -373,6 +385,7 @@ export async function generateAnswersPDF(config: PDFConfig, options: PDFGenerati
         console.log('Generating Answer Key PDF with html2pdf...');
 
         // Generate PDF from the container (which now has rendered MathJax)
+        const html2pdf = (await import('html2pdf.js')).default;
         const pdfBlob = await html2pdf().set(html2pdfOptions).from(container).outputPdf('blob');
         console.log('Answer Key PDF generation complete, blob size:', pdfBlob.size);
         return pdfBlob;
@@ -388,6 +401,10 @@ export async function generateAnswersPDF(config: PDFConfig, options: PDFGenerati
  * Generate Answer Key PDF without MathJax (fallback function)
  */
 export async function generateAnswersPDFWithoutMathJax(config: PDFConfig, options: PDFGenerationOptions = {}): Promise<Blob> {
+    // Check if we're in a browser environment
+    if (typeof window === 'undefined') {
+        throw new Error('PDF generation is only available in browser environment');
+    }
     const {
         includeMetadata = true,
         institution = config.institution,

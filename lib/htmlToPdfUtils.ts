@@ -1,5 +1,3 @@
-import html2pdf from 'html2pdf.js';
-
 /**
  * Convert HTML string or element to PDF using html2pdf.js
  * @param htmlInput - HTML string or element to convert
@@ -10,6 +8,11 @@ export async function htmlToPDF(
     htmlInput: string | HTMLElement,
     options: HTMLToPDFOptions = {}
 ): Promise<Blob | void> {
+    // Check if we're in a browser environment
+    if (typeof window === 'undefined') {
+        throw new Error('PDF generation is only available in browser environment');
+    }
+
     const {
         filename = 'document.pdf',
         pageSize = 'a4',
@@ -83,6 +86,9 @@ export async function htmlToPDF(
                 orientation: orientation
             }
         };
+
+        // Dynamically import html2pdf to avoid SSR issues
+        const html2pdf = (await import('html2pdf.js')).default;
 
         let result;
         if (returnBlob) {
