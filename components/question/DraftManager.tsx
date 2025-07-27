@@ -17,6 +17,7 @@ import { usePDFGeneratorContext } from '@/lib/context/PDFGeneratorContext';
 import AnswerPDFGenerator from '../pdf/AnswerPdfGenerator';
 import { renderMixedLatex } from '@/lib/render-tex';
 import { Trash } from 'lucide-react';
+import Image from 'next/image';
 
 
 const DraftManager = () => {
@@ -228,11 +229,7 @@ const DraftManager = () => {
                                         selectedQuestions={selectedFolder.questions}
                                         options={options}
                                     />
-                                    <AnswerPDFGenerator
-                                        institution={institution}
-                                        selectedQuestions={selectedFolder.questions}
-                                        options={options}
-                                    />
+                                    <AnswerPDFGenerator />
                                 </div>
                             )}
                         </div>
@@ -326,10 +323,12 @@ const DraftManager = () => {
                                             {question.chapter || 'No chapter'} • Answer: {question.answer}
                                         </span>
                                         {question.question_image && (
-                                            <img
+                                            <Image
                                                 src={question.question_image}
                                                 alt="Question"
                                                 className="mt-2 w-full max-w-[200px] sm:max-w-[300px] h-auto rounded-md"
+                                                width={300}
+                                                height={300}
                                             />
                                         )}
                                     </li>

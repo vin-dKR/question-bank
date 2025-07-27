@@ -148,9 +148,10 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
         </div>
     );
 });
+QuestionItem.displayName = 'QuestionItem';
 
 export default function QuestionList() {
-    const { questions, loading, error } = useQuestionBankContext();
+    const { questions, loading, error, selectedQuestionIds, toggleQuestionSelection, toggleQuestionFlag } = useQuestionBankContext();
 
     return (
         <div className="min-h-screen bg-gray-100">
@@ -182,9 +183,9 @@ export default function QuestionList() {
                             <QuestionItem
                                 key={question.id}
                                 question={question}
-                                isSelected={useQuestionBankContext().selectedQuestionIds.has(question.id)}
-                                toggleQuestionSelection={useQuestionBankContext().toggleQuestionSelection}
-                                toggleQuestionFlag={useQuestionBankContext().toggleQuestionFlag}
+                                isSelected={selectedQuestionIds.has(question.id)}
+                                toggleQuestionSelection={toggleQuestionSelection}
+                                toggleQuestionFlag={toggleQuestionFlag}
                             />
                         ))}
                     </div>

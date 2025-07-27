@@ -5,7 +5,7 @@ import LogoUploader from './LogoUploader';
 import { Input } from '@/components/ui/input';
 
 export default function InstitutionDetails() {
-    const { setLogo, institution, setInstitution } = usePDFGeneratorContext();
+    const { setLogo, setInstitution } = usePDFGeneratorContext();
 
     const handleInstitutionName = (e: React.ChangeEvent<HTMLInputElement>) => {
         setInstitution(e.target.value);

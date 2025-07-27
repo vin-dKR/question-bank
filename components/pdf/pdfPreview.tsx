@@ -12,12 +12,11 @@ import {
     DialogTrigger,
     DialogClose,
 } from '@/components/ui/dialog';
-import { Download } from 'lucide-react';
 import { pdfConfigToHTML } from '@/lib/questionToHtmlUtils';
 import { htmlTopdfBlob } from '@/actions/htmlToPdf/htmlToPdf';
 
 export default function PDFGenerator({ institution, selectedQuestions, options }: PDFConfig) {
-    const [isGenerating, setIsGenerating] = useState(false);
+    // const [isGenerating, setIsGenerating] = useState(false); // Removed unused state
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isMobile, setIsMobile] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -46,7 +45,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
             setPreviewUrl(null);
         }
 
-        setIsGenerating(true);
+        // setIsGenerating(true); // Removed unused state
         setError(null);
 
         try {
@@ -76,7 +75,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
             console.error('Error generating PDF preview:', error);
             setError(error instanceof Error ? error.message : 'Failed to generate PDF preview');
         } finally {
-            setIsGenerating(false);
+            // setIsGenerating(false); // Removed unused state
         }
     };
 
@@ -128,7 +127,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
             setPreviewUrl(null);
         }
         setError(null);
-        setIsGenerating(false);
+        // setIsGenerating(false); // Removed unused state
     };
 
     return (

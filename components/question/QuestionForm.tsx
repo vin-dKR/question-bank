@@ -143,7 +143,7 @@ const QuestionForm = ({ initialData }: { initialData?: Question }) => {
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Correct Answer (e.g., "A", "B", etc.)
+                        Correct Answer (e.g., &quot;A&quot;, &quot;B&quot;, etc.)
                     </label>
                     <input
                         type="text"

@@ -20,6 +20,7 @@
     "@types/file-saver": "^2.0.7",
     "@types/lodash.debounce": "^4.0.9",
     "@types/mathjax": "^0.0.40",
+    "@types/react-katex": "^3.0.4",
     "canvg": "^4.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

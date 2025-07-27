@@ -3,6 +3,7 @@
 import { Input } from '@/components/ui/input';
 import { useState, useRef } from 'react';
 import { X } from 'lucide-react';
+import Image from 'next/image';
 
 export default function LogoUploader({ onUpload }: LogoUploaderProps) {
     const [preview, setPreview] = useState<string | null>(null);
@@ -53,10 +54,12 @@ export default function LogoUploader({ onUpload }: LogoUploaderProps) {
             </div>
             {preview && (
                 <div className="relative max-w-full sm:max-w-xs mx-auto">
-                    <img
+                    <Image
                         src={preview}
                         alt="Logo preview"
                         className="w-full h-auto object-contain rounded-md border border-slate-200 shadow-sm"
+                        width={300}
+                        height={300}
                     />
                     <button
                         onClick={handleRemoveImage}

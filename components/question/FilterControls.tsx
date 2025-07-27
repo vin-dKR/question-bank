@@ -2,7 +2,15 @@
 
 import { useState, useMemo } from 'react';
 import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
-import Select from 'react-select';
+import Select, { StylesConfig } from 'react-select';
+
+// Define a type for filterUpdate
+interface FilterUpdate {
+  [key: string]: string | undefined;
+  subject?: string;
+  chapter?: string;
+  section_name?: string;
+}
 
 export default function FilterControls() {
     const { updateFilters, filterOptions, optionsLoading } = useQuestionBankContext();
@@ -19,10 +27,10 @@ export default function FilterControls() {
         setLocalFilters(newLocalFilters);
 
         // Immediately update filters for cascading, but only for parent filters
-        if (['exam_name', 'subject', 'chapter'].includes(name)) {
-            const filterUpdate: any = { [name]: value || undefined };
+        if (["exam_name", "subject", "chapter"].includes(name)) {
+            const filterUpdate: FilterUpdate = { [name]: value || undefined };
             // Reset dependent filters
-            if (name === 'exam_name') {
+            if (name === "exam_name") {
                 filterUpdate.subject = undefined;
                 filterUpdate.chapter = undefined;
                 filterUpdate.section_name = undefined;
@@ -30,13 +38,13 @@ export default function FilterControls() {
                 newLocalFilters.chapter = '';
                 newLocalFilters.section_name = '';
                 setLocalFilters(newLocalFilters); // Update local state to reflect reset
-            } else if (name === 'subject') {
+            } else if (name === "subject") {
                 filterUpdate.chapter = undefined;
                 filterUpdate.section_name = undefined;
                 newLocalFilters.chapter = '';
                 newLocalFilters.section_name = '';
                 setLocalFilters(newLocalFilters);
-            } else if (name === 'chapter') {
+            } else if (name === "chapter") {
                 filterUpdate.section_name = undefined;
                 newLocalFilters.section_name = '';
                 setLocalFilters(newLocalFilters);
@@ -80,14 +88,15 @@ export default function FilterControls() {
         { value: 'false', label: 'Unflagged' },
     ];
 
-    const selectStyles = {
-        control: (base: any) => ({
+    // Update selectStyles to use correct types
+    const selectStyles: StylesConfig<{ value: string; label: string }, false> = {
+        control: (base) => ({
             ...base,
             borderColor: '#e2e8f0',
             '&:hover': { borderColor: '#f59e0b' },
             boxShadow: 'none',
         }),
-        option: (base: any, state: any) => ({
+        option: (base, state) => ({
             ...base,
             backgroundColor: state.isSelected ? '#f59e0b' : state.isFocused ? '#fef3c7' : 'white',
             color: state.isSelected ? 'white' : '#1e293b',

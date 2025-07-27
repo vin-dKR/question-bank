@@ -17,7 +17,7 @@ function QuestionBankViewerContent() {
     return (
         <div className="min-h-screen bg-slate-100">
             <h1 className="text-3xl font-bold py-6 text-center text-slate-800 tracking-tight md:text-4xl">
-                Educator's Question Bank
+                Educator&apos;s Question Bank
             </h1>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-6">

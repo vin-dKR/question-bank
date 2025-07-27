@@ -18,8 +18,7 @@ export async function generatePDF(config: PDFConfig, options: PDFGenerationOptio
         orientation = 'portrait',
         fontSize = 14,
         lineHeight = 1.6,
-        margin = 20,
-        pdfOptions = {}
+        margin = 20
     } = options;
 
     // Convert logo File to data URL if provided
@@ -194,8 +193,7 @@ export async function generatePDFWithoutMathJax(config: PDFConfig, options: PDFG
         orientation = 'portrait',
         fontSize = 14,
         lineHeight = 1.6,
-        margin = 20,
-        pdfOptions = {}
+        margin = 20
     } = options;
 
     // Convert logo File to data URL if provided
@@ -247,7 +245,7 @@ export async function generatePDFWithoutMathJax(config: PDFConfig, options: PDFG
             margin: 10,
             scale: 2,
             quality: 1,
-            ...pdfOptions
+            ...options
         });
 
         return pdfBlob;
@@ -272,8 +270,7 @@ export async function generateAnswersPDF(config: PDFConfig, options: PDFGenerati
         orientation = 'portrait',
         fontSize = 14,
         lineHeight = 1.6,
-        margin = 20,
-        pdfOptions = {}
+        margin = 20
     } = options;
 
     // Convert logo File to data URL if provided
@@ -400,8 +397,7 @@ export async function generateAnswersPDFWithoutMathJax(config: PDFConfig, option
         orientation = 'portrait',
         fontSize = 14,
         lineHeight = 1.6,
-        margin = 20,
-        pdfOptions = {}
+        margin = 20
     } = options;
 
     // Convert logo File to data URL if provided
@@ -452,7 +448,7 @@ export async function generateAnswersPDFWithoutMathJax(config: PDFConfig, option
             margin: 10,
             scale: 2,
             quality: 1,
-            ...pdfOptions
+            ...options
         });
 
         return pdfBlob;

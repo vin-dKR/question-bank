@@ -40,11 +40,7 @@ export default function SelectedQuestionsActions() {
                     selectedQuestions={selectedQuestions}
                     options={options}
                 />
-                <AnswerPDFGenerator
-                    institution={institution}
-                    selectedQuestions={selectedQuestions}
-                    options={options}
-                />
+                <AnswerPDFGenerator />
                 <DialogCloseButton selectedQuestions={selectedQuestions} />
             </div>
 

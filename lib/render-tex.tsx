@@ -78,9 +78,8 @@ const renderMixedLatex = (text: string): JSX.Element[] => {
     const parts = toMixedLatex(text);
     return parts.map((part, index) => {
         if (part.type === 'latex') {
-            return <InlineMath key={index} math={part.value} />;
+            return <InlineMath key={index}>{part.value}</InlineMath>;
         }
-
         // Split text by \n and map each part to a span with a line break
         return part.value.split('\n').map((line, lineIndex, array) => (
             <span key={`${index}-${lineIndex}`}>

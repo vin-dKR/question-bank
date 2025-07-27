@@ -24,7 +24,7 @@ export async function loadMathJax(timeoutMs = 15000): Promise<boolean> {
                     resolve(false);
                 });
                 return;
-            } catch (error) {
+            } catch {
                 console.log('MathJax test failed, reinitializing...');
                 resolve(false);
                 return;
@@ -58,7 +58,7 @@ export async function loadMathJax(timeoutMs = 15000): Promise<boolean> {
                         document.body.removeChild(testElement);
                         setTimeout(checkMathJax, 100);
                     });
-                } catch (error) {
+                } catch {
                     setTimeout(checkMathJax, 100);
                 }
             } else {
@@ -228,8 +228,8 @@ export function resetMathJaxState(): void {
             if (window.MathJax.startup.document) {
                 window.MathJax.startup.document.clear();
             }
-        } catch (error) {
-            console.log('Could not reset MathJax state:', error);
+        } catch {
+            console.log('Could not reset MathJax state:');
         }
     }
 
@@ -308,13 +308,13 @@ export async function testLatexRendering(latex: string = 'x^2 + y^2 = z^2'): Pro
             document.body.removeChild(testElement);
 
             return success;
-        } catch (error) {
-            console.error('LaTeX rendering test failed:', error);
+        } catch {
+            console.error('LaTeX rendering test failed:');
             document.body.removeChild(testElement);
             return false;
         }
-    } catch (error) {
-        console.error('LaTeX rendering test setup failed:', error);
+    } catch {
+        console.error('LaTeX rendering test setup failed:');
         return false;
     }
 }
