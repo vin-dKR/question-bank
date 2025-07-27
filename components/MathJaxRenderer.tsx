@@ -1,4 +1,3 @@
-// MathJaxRendererWithPdf.tsx
 import React, { useRef, useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -17,16 +16,31 @@ const MathJaxRendererWithPdf: React.FC<MathJaxRendererProps> = ({
 
   useEffect(() => {
     const convertLatexToSvg = async () => {
-      if (!window.MathJax) return;
-      const options = { display: displayMode, em: 12, ex: 6 };
-      const wrapper = window.MathJax.tex2svg(latex, options);
-      const svgElement = wrapper.querySelector('svg');
-      if (svgElement) {
-        svgElement.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-        setSvg(svgElement.outerHTML);
+      if (!window.MathJax || !window.MathJax.tex2svg) return;
+
+      try {
+        const options = { display: displayMode, em: 12, ex: 6 };
+        const wrapper = (window.MathJax as any).tex2svg(latex, options);
+        const svgElement = wrapper.querySelector('svg');
+        if (svgElement) {
+          svgElement.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+          setSvg(svgElement.outerHTML);
+        }
+      } catch (error) {
+        console.error('Error converting LaTeX to SVG:', error);
+        // Fallback: show the raw LaTeX
+        setSvg(`<span>${latex}</span>`);
       }
     };
-    convertLatexToSvg();
+
+    // Wait for MathJax to be fully loaded
+    if (window.MathJax && window.MathJax.startup) {
+      window.MathJax.startup.promise.then(() => {
+        convertLatexToSvg();
+      });
+    } else {
+      convertLatexToSvg();
+    }
   }, [latex, displayMode]);
 
   const handlePreviewPdf = async () => {

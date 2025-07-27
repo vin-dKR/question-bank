@@ -1,6 +1,13 @@
 export { }
 
 declare global {
+    interface Window {
+        // eslint-disable-next-line
+        MathJax: any;
+    }
+}
+
+declare global {
     interface PDFGenerationOptions {
         includeAnswers: boolean;
         watermarkOpacity: number;
@@ -97,6 +104,55 @@ declare global {
         logo?: string;
     }
 
+    interface PDFGenerationOptions {
+        includeAnswers?: boolean;
+        includeMetadata?: boolean;
+        institution?: string;
+        logo?: File | Blob;
+        watermarkOpacity?: number;
+        pageSize?: 'a4' | 'letter' | 'legal';
+        orientation?: 'portrait' | 'landscape';
+        fontSize?: number;
+        lineHeight?: number;
+        margin?: number;
+        pdfOptions?: HTMLToPDFOptions;
+    }
+
+    interface QuestionToHTMLOptions {
+        includeAnswers?: boolean;
+        includeMetadata?: boolean;
+        institution?: string;
+        logo?: string;
+        watermarkOpacity?: number;
+        pageSize?: 'a4' | 'letter' | 'legal';
+        orientation?: 'portrait' | 'landscape';
+        fontSize?: number;
+        lineHeight?: number;
+        margin?: number;
+    }
+
+    interface HTMLToPDFOptions {
+        filename?: string;
+        pageSize?: 'a4' | 'letter' | 'legal';
+        orientation?: 'portrait' | 'landscape';
+        margin?: number;
+        scale?: number;
+        quality?: number;
+        returnBlob?: boolean;
+    }
+    interface PDFGenerationOptions {
+        includeAnswers?: boolean;
+        includeMetadata?: boolean;
+        institution?: string;
+        logo?: File | Blob;
+        watermarkOpacity?: number;
+        pageSize?: 'a4' | 'letter' | 'legal';
+        orientation?: 'portrait' | 'landscape';
+        fontSize?: number;
+        lineHeight?: number;
+        margin?: number;
+        pdfOptions?: HTMLToPDFOptions;
+    }
 }
 
 

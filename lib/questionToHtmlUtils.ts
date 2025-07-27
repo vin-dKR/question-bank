@@ -1,16 +1,3 @@
-export interface QuestionToHTMLOptions {
-  includeAnswers?: boolean;
-  includeMetadata?: boolean;
-  institution?: string;
-  logo?: string;
-  watermarkOpacity?: number;
-  pageSize?: 'a4' | 'letter' | 'legal';
-  orientation?: 'portrait' | 'landscape';
-  fontSize?: number;
-  lineHeight?: number;
-  margin?: number;
-}
-
 /**
  * Convert text with LaTeX to HTML string for PDF generation
  * This function converts \(...\) to proper MathJax syntax
@@ -63,8 +50,6 @@ export function questionToHTML(question: Question, index: number, options: Quest
 
   const questionNumber = index + 1;
   const questionText = textToHtmlWithLatex(question.question_text);
-
-  console.log("---------------------------------sdfaesdfawds", questionText)
 
   // `Suppose that the Sun consists entirely of hydrogen atom and releases the energy by the nuclear reaction, <span class="math-inline">\(4,^1\mathrm{H} \longrightarrow, ^4\mathrm{He}\)</span> with <span class="math-inline">\(26 MeV\)</span> of energy released. If the total output power of the Sun is assumed to remain constant at <span class="math-inline">\(3.9 \times 10^{26} \mathrm{W}\)</span>, find the time it will take to burn all the hydrogen.  \nTake the mass of the Sun as <span class="math-inline">\(1.7 \times 10^{30} \mathrm{kg}\)</span>.`
 
@@ -267,7 +252,6 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
         body {
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
           line-height: ${lineHeight};
-          color: #1f2937;
           background-color: #ffffff;
           margin: 0;
           padding: ${margin}mm;
@@ -278,12 +262,16 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
           size: ${pageSize} ${orientation};
           margin: ${margin}mm;
         }
-        
-        .question {
-          page-break-inside: avoid;
-          break-inside: avoid;
+        /* MathJax SVG output: no shadow DOM, so html2canvas can capture */
+        /* .math-inline mjx-container {
+          display: inline !important;
+          vertical-align: -0.2em;
         }
-        
+        .math-display mjx-container {
+          display: block !important;
+          text-align: center;
+          margin: 10px 0;
+        } */
         /* Only minimal MathJax wrapper styles */
         .math-inline {
           display: inline;
@@ -293,15 +281,6 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
           text-align: center;
           margin: 10px 0;
         }
-        /* Optional: tweak inline math vertical alignment */
-        .math-inline .MathJax {
-          color: #4d4d4d !important;
-          font-weight: normal !important;
-          background-color: white;
-          // vertical-align: -0.2em;
-        }
-        
-        /* Ensure all MathJax elements have normal font weight */
         .MathJax, .MathJax * {
           font-weight: normal !important;
         }
@@ -482,25 +461,16 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
           size: ${pageSize} ${orientation};
           margin: ${margin}mm;
         }
-        
-        .answer-item {
-          page-break-inside: avoid;
-          break-inside: avoid;
+        /* MathJax SVG output: no shadow DOM, so html2canvas can capture */
+        /* .math-inline mjx-container {
+          display: inline !important;
+          vertical-align: -0.2em;
         }
-        
-        /* Print styles */
-        @media print {
-          body {
-            -webkit-print-color-adjust: exact;
-            color-adjust: exact;
-          }
-          
-          .answer-item {
-            page-break-inside: avoid;
-            break-inside: avoid;
-          }
-        }
-        
+        .math-display mjx-container {
+          display: block !important;
+          text-align: center;
+          margin: 10px 0;
+        } */
         /* Only minimal MathJax wrapper styles */
         .math-inline {
           display: inline;
@@ -510,9 +480,8 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
           text-align: center;
           margin: 10px 0;
         }
-        /* Optional: tweak inline math vertical alignment */
-        .math-inline .MathJax {
-          vertical-align: -0.2em;
+        .MathJax, .MathJax * {
+          font-weight: normal !important;
         }
         
         ${watermarkCSS}
@@ -539,4 +508,4 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
     </body>
     </html>
   `;
-} 
+}
