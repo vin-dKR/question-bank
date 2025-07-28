@@ -142,7 +142,6 @@ export function questionToHTML(question: Question, index: number, options: Quest
           width: 24px;
           height: 24px;
           text-align: center;
-          line-height: 1;
         ">${questionNumber}</span>
         <span class="question-text" style="
           margin: -5px 0 0 0;

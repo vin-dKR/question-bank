@@ -44,6 +44,7 @@ const DraftManager = () => {
     };
 
     useEffect(() => {
+        console.log("refresing")
         refreshFolders();
     }, []);
 
