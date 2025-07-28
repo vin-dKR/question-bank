@@ -15,7 +15,7 @@ import { pdfConfigToHTML } from '@/lib/questionToHtmlUtils';
 import { htmlTopdfBlob } from '@/actions/htmlToPdf/htmlToPdf';
 
 export default function PDFGenerator({ institution, selectedQuestions, options }: PDFConfig) {
-    // const [isGenerating, setIsGenerating] = useState(false); // Removed unused state
+    const [isGenerating, setIsGenerating] = useState(false)
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isMobile, setIsMobile] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -86,6 +86,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
             return;
         }
 
+        setIsGenerating(true)
         const html = pdfConfigToHTML({ institution, selectedQuestions, options });
         console.log("-------HTML------", html)
 
@@ -108,6 +109,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
         */}
 
         // Clean up the URL after a delay
+        setIsGenerating(false)
     };
 
     const handleDownload = () => {
@@ -140,7 +142,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
                         disabled={!selectedQuestions || selectedQuestions.length === 0}
                         className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed"
                     >
-                        PDF Preview
+                        {isGenerating ? "Generating..." : "PDF Preview"}
                     </Button>
                 </div>
             </DialogTrigger>
