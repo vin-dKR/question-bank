@@ -129,6 +129,9 @@ declare global {
         fontSize?: number;
         lineHeight?: number;
         margin?: number;
+        testName?: string;
+        subject?: string;
+        fullMarks?: string;
     }
 
     interface HTMLToPDFOptions {
