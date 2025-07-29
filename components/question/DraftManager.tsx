@@ -14,7 +14,6 @@ import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
 import PDFGenerator from '../pdf/pdfPreview';
 import { Input } from '@/components/ui/input';
 import { usePDFGeneratorContext } from '@/lib/context/PDFGeneratorContext';
-import AnswerPDFGenerator from '../pdf/AnswerPdfGenerator';
 import { renderMixedLatex } from '@/lib/render-tex';
 import { Trash } from 'lucide-react';
 import Image from 'next/image';
@@ -230,7 +229,6 @@ const DraftManager = () => {
                                         selectedQuestions={selectedFolder.questions}
                                         options={options}
                                     />
-                                    <AnswerPDFGenerator />
                                 </div>
                             )}
                         </div>

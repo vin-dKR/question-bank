@@ -11,11 +11,11 @@ import {
     DialogTrigger,
     DialogClose,
 } from '@/components/ui/dialog';
-import { pdfConfigToHTML } from '@/lib/questionToHtmlUtils';
+import { pdfConfigToAnswerKeyHTML, pdfConfigToHTML } from '@/lib/questionToHtmlUtils';
 import { htmlTopdfBlob } from '@/actions/htmlToPdf/htmlToPdf';
 
 export default function PDFGenerator({ institution, selectedQuestions, options }: PDFConfig) {
-    const [isGenerating, setIsGenerating] = useState(false)
+    const [isGenerating, setIsGenerating] = useState<"question" | "answer" | null>(null)
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isMobile, setIsMobile] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -86,7 +86,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
             return;
         }
 
-        setIsGenerating(true)
+        setIsGenerating("question")
         const html = pdfConfigToHTML({ institution, selectedQuestions, options });
         console.log("-------HTML------", html)
 
@@ -109,7 +109,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
         */}
 
         // Clean up the URL after a delay
-        setIsGenerating(false)
+        setIsGenerating(null)
     };
 
     const handleDownload = () => {
@@ -133,6 +133,28 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
         // setIsGenerating(false); // Removed unused state
     };
 
+    const handlePreviewAnswer = async () => {
+        if (selectedQuestions.length === 0) {
+            alert('Please select at least one question');
+            return;
+        }
+
+        setIsGenerating("answer")
+        const html = pdfConfigToAnswerKeyHTML({ institution, selectedQuestions, options });
+        console.log("-------HTML------", html)
+
+        const blob = await htmlTopdfBlob(html)
+        if (!blob.data) {
+            alert(blob.errorMessage)
+        } else {
+            const pdfBlob = new Blob([blob.data], { type: 'application/pdf' });
+            const pdfUrl = URL.createObjectURL(pdfBlob);
+            console.log(pdfUrl)
+            setPreviewUrl(pdfUrl)
+        }
+        setIsGenerating(null)
+    }
+
     return (
         <Dialog>
             <DialogTrigger asChild>
@@ -142,7 +164,14 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
                         disabled={!selectedQuestions || selectedQuestions.length === 0}
                         className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed"
                     >
-                        {isGenerating ? "Generating..." : "PDF Preview"}
+                        {isGenerating === "question" ? "Generating..." : "PDF"}
+                    </Button>
+                    <Button
+                        onClick={handlePreviewAnswer}
+                        disabled={!selectedQuestions || selectedQuestions.length === 0}
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed"
+                    >
+                        {isGenerating === "answer" ? "Generating..." : "Preview Answers"}
                     </Button>
                 </div>
             </DialogTrigger>

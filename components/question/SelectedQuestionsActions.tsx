@@ -3,7 +3,6 @@
 import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
 import { usePDFGeneratorContext } from '@/lib/context/PDFGeneratorContext';
 import PDFGenerator from '../pdf/pdfPreview';
-import AnswerPDFGenerator from '../pdf/AnswerPdfGenerator';
 import { DialogCloseButton } from '../DialogCloseButton';
 import { Button } from '@/components/ui/button';
 
@@ -32,16 +31,15 @@ export default function SelectedQuestionsActions() {
                 >
                     Unselect All
                 </Button>
-            </div>
-
-            <div className='flex gap-2 items-center'>
                 <PDFGenerator
                     institution={institution}
                     selectedQuestions={selectedQuestions}
                     options={options}
                 />
-                <AnswerPDFGenerator />
                 <DialogCloseButton selectedQuestions={selectedQuestions} />
+            </div>
+
+            <div className='flex gap-2 items-center'>
             </div>
 
         </div>
