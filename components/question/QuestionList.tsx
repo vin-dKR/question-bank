@@ -17,6 +17,8 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
     const [isFlagging, setIsFlagging] = useState(false);
 
     const questionText = useMemo(() => renderMixedLatex(question.question_text), [question.question_text]);
+    const answerText = useMemo(() => renderMixedLatex(question.answer), [question.answer])
+
     const renderedOptions = useMemo(
         () => question.options.map((option) => renderMixedLatex(option)),
         [question.options]
@@ -140,7 +142,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
 
                     {question.answer && (
                         <div className="text-sm text-green-600">
-                            <span className="font-medium">Answer:</span> {renderMixedLatex(question.answer)}
+                            <span className="font-medium">Answer:</span> {answerText}
                         </div>
                     )}
                 </div>

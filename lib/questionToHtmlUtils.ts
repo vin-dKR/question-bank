@@ -1,7 +1,3 @@
-/**
- * Convert text with LaTeX to HTML string for PDF generation
- * This function converts \(...\) to proper MathJax syntax
- */
 function textToHtmlWithLatex(text: string): string {
     if (!text) return '';
 
@@ -39,9 +35,6 @@ function textToHtmlWithLatex(text: string): string {
     return processed.trim();
 }
 
-/**
- * Convert a single question to HTML with LaTeX rendering
- */
 export function questionToHTML(question: Question, index: number, options: QuestionToHTMLOptions = {}): string {
     const {
         includeAnswers = true,
@@ -142,6 +135,7 @@ export function questionToHTML(question: Question, index: number, options: Quest
           width: 24px;
           height: 24px;
           text-align: center;
+          line-height: 1;
         ">${questionNumber}</span>
         <span class="question-text" style="
           margin: -5px 0 0 0;
@@ -361,10 +355,6 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
   `;
 }
 
-/**
- * Convert PDFConfig to answer key HTML
- */
-
 export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToHTMLOptions = {}): string {
     const {
         institution = 'Institution',
@@ -374,7 +364,7 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
         orientation = 'portrait',
         fontSize = 14,
         lineHeight = 1.6,
-        margin = 1
+        margin = 10
     } = options;
 
     const { selectedQuestions } = config;
@@ -387,13 +377,11 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
         return `
       <div class="answer-item" style="
         display: flex;
-        align-items: center;
+        flex-direction: row;
+        align-items: flex-start;
         gap: 12px;
         padding: 12px;
         margin: 8px 0;
-        border: 1px solid #e5e7eb;
-        border-radius: 6px;
-        background-color: #f9fafb;
       ">
         <span class="question-number" style="
           background-color: #10b981;
@@ -404,18 +392,12 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
           font-size: 14px;
           text-align: center;
         ">${questionNumber}</span>
-        <div class="answer-content" style="flex: 1;">
+        <div class="answer-content">
           <div class="answer-text" style="
             font-size: ${fontSize}px;
             font-weight: 600;
             color: #065f46;
           ">${answerText}</div>
-          <div class="question-preview" style="
-            font-size: 12px;
-            color: #6b7280;
-            margin-top: 4px;
-            font-style: italic;
-          ">${question.question_text.substring(0, 100)}${question.question_text.length > 100 ? '...' : ''}</div>
         </div>
       </div>
     `;
@@ -492,7 +474,7 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>${institution} - Answer Key</title>
       
-      <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-svg.js"></script>
+      <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       
       <style>
         * {
@@ -513,24 +495,35 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
           size: ${pageSize} ${orientation};
           margin: ${margin}mm;
         }
-        /* MathJax SVG output: no shadow DOM, so html2canvas can capture */
-        /* .math-inline mjx-container {
-          display: inline !important;
-          vertical-align: -0.2em;
-        }
-        .math-display mjx-container {
-          display: block !important;
-          text-align: center;
-          margin: 10px 0;
-        } */
-        /* Only minimal MathJax wrapper styles */
+
+        /* MathJax styles for LaTeX rendering */
         .math-inline {
           display: inline;
+          font-weight: normal;
         }
         .math-display {
           display: block;
-          text-align: center;
+          text-align: left;
           margin: 10px 0;
+          font-weight: normal;
+        }
+
+        /* Ensure MathJax-rendered elements are not bold in HTML and PDF */
+        mjx-container, mjx-math, mjx-mrow, mjx-mi, mjx-mn, mjx-mo {
+          font-weight: normal !important;
+        }
+        
+        @media print {
+          body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          mjx-container, mjx-math, mjx-mrow, mjx-mi, mjx-mn, mjx-mo {
+            font-weight: normal !important;
+          }
+          .math-display {
+            text-align: left;
+          }
         }
         
         ${watermarkCSS}
@@ -550,7 +543,7 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
         font-size: 12px;
         color: #6b7280;
       ">
-        <p>Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
+        <p>Generated on: ${new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' })}</p>
         <p>Total Questions: ${selectedQuestions.length}</p>
       </div>
       

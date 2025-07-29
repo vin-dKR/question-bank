@@ -162,7 +162,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
                     <Button
                         onClick={handlePreviewCompiledHTML}
                         disabled={!selectedQuestions || selectedQuestions.length === 0}
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed"
+                        className="bg-indigo-600 hover:bg-indigo-600 text-white px-4 py-2 text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed"
                     >
                         {isGenerating === "question" ? "Generating..." : "PDF"}
                     </Button>
