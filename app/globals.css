@@ -5,6 +5,13 @@
 :root {
   --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
+@theme {
+  --tracking-0: -0.1em;
+  --tracking-1: -0.05em;
+  --tracking-2: -0.06em;
+  --tracking-3: 0.05em;
+  --tracking-4: 0.1em;
+}
 
 html {
   font-size: 16px; /* Base font size for rem units */
