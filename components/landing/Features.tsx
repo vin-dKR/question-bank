@@ -1,15 +1,14 @@
-import {
-    Database,
-    Brain,
-    FileText,
-    Monitor,
-    ScanLine,
-    BarChart3,
-    Bubbles,
-    Waves
-} from "lucide-react";
 
 const Features = () => {
+    {/*
+        import {
+        FileText,
+        Monitor,
+        ScanLine,
+        BarChart3,
+        Bubbles,
+        Waves
+        } from "lucide-react";
     const features = [
         {
             icon: Waves,
@@ -42,6 +41,7 @@ const Features = () => {
             description: "Comprehensive performance analytics with detailed insights into student progress and learning patterns."
         }
     ];
+    */}
 
     const featureSteps = [
         {
@@ -59,6 +59,21 @@ const Features = () => {
             title: "PDF",
             description: "Export"
         },
+        {
+            img: "",
+            title: "Testing",
+            description: "Online"
+        },
+        {
+            img: "",
+            title: "Scanning",
+            description: "OMR"
+        },
+        {
+            img: "",
+            title: "Analytics",
+            description: "Students"
+        },
     ]
     return (
         <section className="py-2 md:py-5 bg-background relative">
@@ -68,11 +83,12 @@ const Features = () => {
                     {featureSteps.map((feature, index) => (
                         <div
                             key={index}
-                            className="p-6 rounded-2xl bg-[#999999]/20 hover:bg-muted transition-all duration-300 aspect-square flex flex-col items-center"
+                            className="p-6 rounded-2xl bg-[#F5F5F5] hover:bg-muted transition-all duration-300 aspect-square flex flex-col items-center"
                         >
                             <div className="flex-grow flex items-center justify-center mb-4">
                                 <div className="h-20 w-20 bg-white flex items-center justify-center rounded-full">
-                                    <div className="h-20 w-20 bg-primary rounded-full"></div>
+                                    <div className="h-20 w-20 bg-primary rounded-full">
+                                    </div>
                                 </div>
                             </div>
                             <p className="text-xs md:text-sm text-muted-foreground leading-relaxed text-center tracking-1">
@@ -85,27 +101,6 @@ const Features = () => {
                     ))}
                 </div>
 
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mt-20">
-                    {features.map((feature, index) => {
-                        const IconComponent = feature.icon;
-                        return (
-                            <div
-                                key={index}
-                                className="p-6 rounded-2xl bg-[#999999]/20 hover:bg-muted transition-all duration-300"
-                            >
-                                <div className="mb-4">
-                                    <IconComponent size={24} className="text-foreground" />
-                                </div>
-                                <h3 className="text-lg font-semibold text-foreground mb-2 font-inter">
-                                    {feature.title}
-                                </h3>
-                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                    {feature.description}
-                                </p>
-                            </div>
-                        );
-                    })}
-                </div>
             </div>
         </section>
     );

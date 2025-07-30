@@ -1,7 +1,5 @@
 import React from 'react';
 import { Twitter, Linkedin, Instagram, Mail, Phone, MapPin } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 
 const Footer = () => {
     return (
