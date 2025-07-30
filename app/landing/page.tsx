@@ -11,7 +11,7 @@ import Footer from "@/components/landing/Footer";
 
 const Index = () => {
     return (
-        <div className="min-h-screen w-full bg-background flex flex-col overflow-x-hidden">
+        <div className="min-h-screen w-full bg-white flex flex-col overflow-x-hidden">
             <Header />
             <main className="max-w-[1000px] w-full mx-auto lg:border-l lg:border-r lg:border-gray-300">
                 <Hero />

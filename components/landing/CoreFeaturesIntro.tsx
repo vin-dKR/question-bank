@@ -11,7 +11,7 @@ const CoreFeaturesIntro = () => {
                     <h2 className="text-3xl sm:text-4xl font-bold text-foreground font-inter tracking-2">
                         Core Features
                     </h2>
-                    <p style={{ lineHeight: "normal" }} className="text-md/10 text-md md:text-2xl text-black/60 tracking-1 leading-relaxed max-w-3xl mx-auto px-8">
+                    <p style={{ lineHeight: "normal" }} className="text-md md:text-lg text-black/60 tracking-1 leading-relaxed max-w-3xl mx-auto px-8 w-100">
                         Everything you need to transform your teaching and assessment workflow
                     </p>
                 </div>
