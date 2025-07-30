@@ -42,18 +42,18 @@ const FAQ = () => {
                 <div className="absolute -right-8 top-0 w-px h-full bg-border"></div>
 
                 <div className="text-center mb-16">
-                    <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4 font-inter">
+                    <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-2 font-inter tracking-1">
                         Frequently Asked Questions
                     </h2>
-                    <p className="text-lg text-muted-foreground">
+                    <p style={{ lineHeight: "normal" }} className="text-md md:text-lg text-black/60 tracking-1 leading-relaxed max-w-3xl mx-auto px-8 w-full md:w-100 text-center">
                         Everything you need to know about Eduents
                     </p>
                 </div>
 
-                <div className="max-w-3xl mx-auto">
+                <div className="max-w-3xl mx-auto tracking-3 pb-6">
                     <Accordion type="single" collapsible className="space-y-4">
                         {faqs.map((faq, index) => (
-                            <AccordionItem key={index} value={`item-${index}`} className="border border-border">
+                            <AccordionItem key={index} value={`item-${index}`} className="border border-black/10 rounded-2xl">
                                 <AccordionTrigger className="px-6 py-4 text-left font-medium">
                                     {faq.question}
                                 </AccordionTrigger>

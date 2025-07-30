@@ -51,10 +51,10 @@ const Pricing = () => {
                 <div className="absolute -right-8 top-0 w-px h-full bg-border"></div>
 
                 <div className="text-center mb-16">
-                    <h2 className="text-3xl sm:text-4xl font-bold text-foreground font-inter tracking-2">
+                    <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-2 font-inter tracking-2">
                         Simple, Transparent Pricing
                     </h2>
-                    <p style={{ lineHeight: "normal" }} className="text-md md:text-lg text-black/60 tracking-1 leading-relaxed max-w-3xl mx-auto px-8 w-100">
+                    <p style={{ lineHeight: "normal" }} className="text-md md:text-lg text-black/60 tracking-1 leading-relaxed max-w-3xl mx-auto px-8 w-full md:w-100 text-center">
                         Choose the plan that fits your needs
                     </p>
                 </div>

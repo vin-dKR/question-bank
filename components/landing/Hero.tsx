@@ -14,23 +14,23 @@ const Hero = () => {
                             Create Exams Effortlessly.
                             <span className="block text-gray-400">Streamline test creation and analytics for teachers.</span>
                         </h1>
-                        <p style={{ lineHeight: "normal" }} className="text-md/10 text-md md:text-2xl text-black/60 tracking-1 leading-relaxed max-w-3xl mx-auto px-8">
+                        <p style={{ lineHeight: "normal" }} className="text-md md:text-lg text-black/60 tracking-1 leading-relaxed max-w-3xl mx-auto px-8 w-full md:w-100 text-center">
                             with AI-powered question extraction, PDF generation, and comprehensive student performance analytics.
                         </p>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-2 justify-center items-center">
-                        <Button size="sm" className="text-lg px-4 md:px-8 py-4 bg-black text-white md:size-md">
+                    <div className="flex flex-col sm:flex-row gap-2 justify-center items-center tracking-1">
+                        <Button size="sm" className="text-lg px-4 md:px-8 py-4 bg-black text-white md:size-md font-bold">
                             Get Started
                             <ArrowRight className="ml-2" size={20} />
                         </Button>
-                        <Button variant="outline" size="sm" className="text-lg px-4 md:px-8 py-4 md:size-md">
+                        <Button variant="outline" size="sm" className="text-lg px-4 md:px-8 py-4 md:size-md font-bold">
                             Watch Demo
                         </Button>
                     </div>
 
                     <div className="flex items-center justify-center text-sm text-muted-foreground mx-auto">
-                        <div className="hidden md:block flex flex-row items-center justify-center text-xs text-sm bg-[#999999] gap-4 px-4 py-1 rounded-full border border-black/10">
+                        <div className="hidden md:block flex flex-row items-center justify-center text-xs text-sm bg-[#999999] gap-4 px-4 py-1 rounded-full border border-black/10 tracking-2">
                             <span>Free to start</span>
                             <span className="mx-4">•</span>
                             <span>No credit card required</span>

@@ -33,10 +33,10 @@ const SecondaryFeatures = () => {
                 <div className="absolute -right-8 top-0 w-px h-full bg-border"></div>
 
                 <div className="text-center mb-16">
-                    <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4 font-inter">
+                    <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-2 font-inter tracking-2">
                         Why Choose Eduents?
                     </h2>
-                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                    <p style={{ lineHeight: "normal" }} className="text-md md:text-lg text-black/60 tracking-1 leading-relaxed max-w-3xl mx-auto px-8 w-full md:w-100 text-center">
                         Built specifically for Indian educators with features that matter most
                     </p>
                 </div>
@@ -46,13 +46,13 @@ const SecondaryFeatures = () => {
                         const IconComponent = feature.icon;
                         return (
                             <div key={index} className="text-center">
-                                <div className="mx-auto w-12 h-12 flex items-center justify-center border border-border mb-4">
+                                <div className="mx-auto w-30 md:w-12 h-30 md:h-12 bg-[#F5F5F5] flex items-center justify-center border border-black/10 rounded-2xl mb-4">
                                     <IconComponent size={24} className="text-foreground" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-foreground mb-2 font-inter">
+                                <h3 className="text-lg font-semibold text-foreground mb-2 font-inter tracking-3">
                                     {feature.title}
                                 </h3>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-sm text-black/50 tracking-3">
                                     {feature.description}
                                 </p>
                             </div>
