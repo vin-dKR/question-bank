@@ -30,7 +30,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
         handleOtpSubmit,
     } = useCustomAuth(mode);
 
-    // Text and labels based on mode and loading state
+
     const title = mode === 'signin' ? 'Welcome Back' : 'Create Your Account';
     const description = mode === 'signin' ? 'Sign in to access your account' : 'Get started with your new account';
     const otpDescription = mode === 'signin' ? 'Enter the OTP sent to your phone' : 'Enter the OTP sent to your email';
@@ -38,9 +38,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
     const alternativeActionLink = mode === 'signin' ? '/auth/signup' : '/auth/signin';
     const alternativeActionLabel = mode === 'signin' ? 'Create new account' : 'Sign in instead';
 
-    if (!isLoaded) return <LoadingOverlay />
+    if (!isLoaded) return <LoadingOverlay />;
 
-    console.log(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY)
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
             <div className="w-full max-w-md">
@@ -51,7 +50,13 @@ export default function AuthForm({ mode }: AuthFormProps) {
                             <p className="text-gray-600 mt-2">{description}</p>
                         </div>
 
-                        <div className="cf-turnstile" data-sitekey={process.env.TURNSTILE_SITE_KEY}></div>
+                        <div
+                            id="clerk-captcha"
+                            data-cl-theme="auto"
+                            data-cl-size="normal"
+                            data-cl-language="auto"
+                            className="mb-4"
+                        />
 
                         {!showOtpInput ? (
                             <>
