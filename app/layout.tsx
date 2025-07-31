@@ -20,24 +20,18 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <ClerkProvider
-            appearance={{
-                captcha: {
-                    theme: 'dark',
-                    size: 'flexible',
-                    language: 'es-ES',
-                }
-            }}
-        >
-            <html lang="en">
+        <html lang="en">
+            <head>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js" async></script>
-
-                <body className={inter.variable}>
+                <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+            </head>
+            <body className={inter.variable}>
+                <ClerkProvider>
                     <main className="min-h-screen bg-gray-50">
                         {children}
                     </main>
-                </body>
-            </html>
-        </ClerkProvider>
+                </ClerkProvider>
+            </body>
+        </html>
     );
 }

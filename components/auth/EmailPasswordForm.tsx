@@ -90,11 +90,10 @@ export function EmailPasswordForm({
             <button
                 type="submit"
                 disabled={loading || !isLoaded}
-                className="w-full bg-black/80 hover:bg-black text-white font-medium py-3 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="w-full bg-black/80 hover:bg-black text-white font-medium py-3 px-4 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
                 {loading ? (
                     <span className="flex items-center justify-center gap-2">
-                        <span className="loader" /> {/* Replace with your FancyLoader or similar */}
                         {submitText}
                     </span>
                 ) : (

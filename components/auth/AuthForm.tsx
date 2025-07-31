@@ -72,6 +72,9 @@ export default function AuthForm({ mode }: AuthFormProps) {
                                 isLoaded={isLoaded}
                                 handleSubmit={handleEmailPasswordSubmit}
                             />
+
+                            <div id="clerk-captcha" />
+
                         </CardContent>
                         <CardFooter>
                             <p className="text-center text-sm text-muted-foreground w-full">
