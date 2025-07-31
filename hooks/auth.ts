@@ -2,18 +2,26 @@
 
 import { useState } from 'react';
 import { useSignIn, useSignUp, useSession } from '@clerk/nextjs';
-import { OAuthStrategy } from "@clerk/types"
+import { OAuthStrategy } from "@clerk/types";
 import { useRouter } from 'next/navigation';
 import { useClerk } from '@clerk/nextjs';
 
 type AuthMode = 'signin' | 'signup';
+
+function getClerkError(err: any): string {
+    return (
+        err?.errors?.[0]?.message ||
+        err?.message ||
+        'Something went wrong, please try again'
+    );
+}
 
 export const useCustomAuth = (mode: AuthMode) => {
     const { isLoaded: isSignInLoaded, signIn, setActive: setSignInActive } = useSignIn();
     const { isLoaded: isSignUpLoaded, signUp, setActive: setSignUpActive } = useSignUp();
     const { session } = useSession();
     const router = useRouter();
-    const { signOut } = useClerk()
+    const { signOut } = useClerk();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -24,37 +32,40 @@ export const useCustomAuth = (mode: AuthMode) => {
 
     const isLoaded = mode === 'signin' ? isSignInLoaded : isSignUpLoaded;
 
-    const signInWith = (strategy: OAuthStrategy) => {
-        if (mode === 'signin') {
-            if (!signIn) {
-                setError('Sign in service not ready');
-                return;
-            }
-            return signIn.authenticateWithRedirect({
-                strategy,
-                redirectUrl: '/auth/sso-callback',
-                redirectUrlComplete: '/',
-            });
-        } else {
-            if (!signUp) {
-                setError('Sign up service not ready');
-                return;
-            }
-            return signUp.authenticateWithRedirect({
-                strategy,
-                redirectUrl: '/auth/sso-callback',
-                redirectUrlComplete: '/',
-            });
+    // ### Social/oAuth ###
+    const signInWith = async (strategy: OAuthStrategy) => {
+        setLoading(true);
+        setError('');
+        const authObj = mode === 'signin' ? signIn : signUp;
+        if (!authObj) {
+            setError(
+                mode === 'signin' ? 'Sign in service not ready' : 'Sign up service not ready'
+            );
+            setLoading(false);
+            return;
         }
+
+        try {
+            await authObj.authenticateWithRedirect({
+                strategy,
+                redirectUrl: '/auth/sso-callback',
+                redirectUrlComplete: '/',
+            });
+            // App will redirect before this point
+        } catch (err: any) {
+            setError(getClerkError(err));
+            setLoading(false);
+        }
+        // no setLoading(false) here after redirect
     };
 
+    // ### Email/Password ###
     const handleEmailPasswordSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!isLoaded) {
             setError('Authentication service not ready');
             return;
         }
-
         setError('');
         setLoading(true);
 
@@ -73,7 +84,8 @@ export const useCustomAuth = (mode: AuthMode) => {
                     setShowOtpInput(true);
                 } else if (result.status === 'complete' && setSignInActive) {
                     await setSignInActive({ session: result.createdSessionId });
-                    router.push("/")
+                    router.push('/');
+                    return; // Avoid setLoading after redirect
                 }
             } else {
                 if (!signUp) throw new Error('Sign up service not available');
@@ -87,27 +99,28 @@ export const useCustomAuth = (mode: AuthMode) => {
                     setShowOtpInput(true);
                 } else if (result.status === 'complete' && setSignUpActive) {
                     await setSignUpActive({ session: result.createdSessionId });
+                    router.push('/');
+                    return;
                 }
             }
         } catch (err: any) {
-            if (err.errors?.[0]?.code === 'single_session_mode') {
+            if (err?.errors?.[0]?.code === 'single_session_mode') {
                 await signOut();
-
                 setError('You can only be signed in on one device at a time. Please sign out elsewhere first.');
             }
-            setError(err.errors?.[0]?.message || err.message || 'Authentication failed');
+            setError(getClerkError(err));
         } finally {
             setLoading(false);
         }
     };
 
+    // ### OTP ###
     const handleOtpSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!isLoaded) {
             setError('Authentication service not ready');
             return;
         }
-
         setError('');
         setLoading(true);
 
@@ -121,7 +134,8 @@ export const useCustomAuth = (mode: AuthMode) => {
 
                 if (result.status === 'complete') {
                     await setSignInActive({ session: result.createdSessionId });
-                    router.push("/")
+                    router.push('/');
+                    return;
                 }
             } else {
                 if (!signUp || !setSignUpActive) throw new Error('Sign up service not available');
@@ -131,25 +145,22 @@ export const useCustomAuth = (mode: AuthMode) => {
 
                 if (result.status === 'complete') {
                     await setSignUpActive({ session: result.createdSessionId });
-                    router.push("/")
+                    router.push('/');
+                    return;
                 }
             }
         } catch (err: any) {
-            setError(err.errors?.[0]?.message || err.message || 'Verification failed');
+            setError(getClerkError(err));
         } finally {
             setLoading(false);
-            // router.push("/")
         }
     };
 
     return {
         session,
-        email,
-        setEmail,
-        password,
-        setPassword,
-        otp,
-        setOtp,
+        email, setEmail,
+        password, setPassword,
+        otp, setOtp,
         error,
         loading,
         showOtpInput,
@@ -157,6 +168,6 @@ export const useCustomAuth = (mode: AuthMode) => {
         signInWith,
         handleEmailPasswordSubmit,
         handleOtpSubmit,
-        router
+        router,
     };
 };
