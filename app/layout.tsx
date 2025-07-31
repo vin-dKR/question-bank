@@ -31,7 +31,7 @@ export default function RootLayout({
         >
             <html lang="en">
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js" async></script>
-                <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
                 <body className={inter.variable}>
                     <main className="min-h-screen bg-slate-100">
                         {children}

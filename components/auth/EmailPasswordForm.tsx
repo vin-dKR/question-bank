@@ -27,7 +27,7 @@ export function EmailPasswordForm({
     handleSubmit,
 }: EmailPasswordFormProps) {
     const submitText =
-        mode === 'signin' ? (loading ? 'Signing in...' : 'Sign in') : loading ? 'Creating account...' : 'Create account';
+        mode === 'signin' ? (loading ? 'Signing in...' : 'Sign in') : loading ? 'Please wait for 30sec...' : 'Create account';
 
     return (
         <form className="space-y-6" onSubmit={handleSubmit} noValidate>

@@ -50,14 +50,6 @@ export default function AuthForm({ mode }: AuthFormProps) {
                             <p className="text-gray-600 mt-2">{description}</p>
                         </div>
 
-                        <div
-                            id="clerk-captcha"
-                            data-cl-theme="auto"
-                            data-cl-size="normal"
-                            data-cl-language="auto"
-                            className="mb-4"
-                        />
-
                         {!showOtpInput ? (
                             <>
                                 <EmailPasswordForm
