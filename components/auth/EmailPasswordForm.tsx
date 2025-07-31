@@ -2,6 +2,7 @@
 
 import { PasswordInput } from './PasswordInput';
 import { ErrorMessage } from './ErrorMessage';
+import { Mail } from 'lucide-react';
 
 interface EmailPasswordFormProps {
     email: string;
@@ -32,22 +33,29 @@ export function EmailPasswordForm({
     return (
         <form className="space-y-6" onSubmit={handleSubmit} noValidate>
             <div className="space-y-4">
-                <div>
+                <div className="relative">
                     <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                        Email Address
+                        Email
                     </label>
-                    <input
-                        id="email"
-                        name="email"
-                        type="email"
-                        required
-                        autoComplete="email"
-                        className="w-full px-4 py-3 text-gray-700 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition duration-200"
-                        placeholder="your@email.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                    />
+                    {/* Icon positioned absolutely */}
+                    <div className='relative'>
+                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                        <input
+                            id="email"
+                            name="email"
+                            type="email"
+                            required
+                            autoComplete="email"
+                            className="w-full pl-10 pr-4 py-3 text-gray-700 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition duration-200"
+                            placeholder="your@email.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                        />
+                    </div>
                 </div>
+
+                {/* For password input, add icon inside PasswordInput component (recommended).
+                    But if PasswordInput doesn't have icon, add same pattern here */}
 
                 <PasswordInput
                     password={password}
@@ -82,7 +90,7 @@ export function EmailPasswordForm({
             <button
                 type="submit"
                 disabled={loading || !isLoaded}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-black/80 hover:bg-black text-white font-medium py-3 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
                 {loading ? (
                     <span className="flex items-center justify-center gap-2">

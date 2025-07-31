@@ -24,7 +24,7 @@ export default function Home() {
 
 
     return (
-        <div className="container bg-slate-100 mx-auto">
+        <div className="container bg-gray-50 mx-auto">
             <QuestionBankProvider>
                 <FolderProvider>
                     <PDFGeneratorProvider>

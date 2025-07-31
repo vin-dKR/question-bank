@@ -1,5 +1,5 @@
 import AuthRedirect from "@/components/authRedirect";
-import AuthForm from "@/components/CustomAuth";
+import AuthForm from "@/components/auth/AuthForm";
 
 export default function Page() {
     return (

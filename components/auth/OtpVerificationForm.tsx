@@ -1,6 +1,10 @@
 'use client';
 
 import { ErrorMessage } from './ErrorMessage';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface OtpVerificationFormProps {
     otp: string;
@@ -24,45 +28,34 @@ export function OtpVerificationForm({
     const verifyText = loading ? 'Verifying...' : 'Verify Code';
 
     return (
-        <form className="space-y-6" onSubmit={handleSubmit} noValidate>
-            <div className="text-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-800">Verification Required</h2>
-                <p className="text-gray-600 mt-1">{otpDescription}</p>
-            </div>
+        <Card>
+            <CardHeader className="space-y-1">
+                <CardTitle className="text-2xl text-center tracking-3">Verification Required</CardTitle>
+                <CardDescription className="text-center tracking-3 text-black/50">{otpDescription}</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <ErrorMessage error={error} />
 
-            <div>
-                <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-1">
-                    Verification Code
-                </label>
-                <input
-                    id="otp"
-                    name="otp"
-                    type="text"
-                    required
-                    className="w-full px-4 py-3 rounded-lg border text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition duration-200 text-center text-lg tracking-widest"
-                    placeholder="123456"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    autoComplete="one-time-code"
-                />
-            </div>
+                    <div className="space-y-2 tracking-3">
+                        <Label htmlFor="otp">Verification Code</Label>
+                        <Input
+                            id="otp"
+                            type="text"
+                            placeholder="123456"
+                            value={otp}
+                            onChange={(e) => setOtp(e.target.value)}
+                            className="text-center text-lg tracking-widest border-black/20"
+                            autoComplete="one-time-code"
+                            required
+                        />
+                    </div>
 
-            <ErrorMessage error={error} />
-
-            <button
-                type="submit"
-                disabled={loading || !isLoaded}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-gray-700 font-medium py-3 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-                {loading ? (
-                    <span className="flex items-center justify-center gap-2">
-                        <span className="loader" /> {/* Replace with your FancyLoader or similar */}
+                    <Button type="submit" className="w-full bg-black/80 hover:bg-black text-white tracking-3" disabled={loading || !isLoaded}>
                         {verifyText}
-                    </span>
-                ) : (
-                    verifyText
-                )}
-            </button>
-        </form>
+                    </Button>
+                </form>
+            </CardContent>
+        </Card>
     );
 }

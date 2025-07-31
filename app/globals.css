@@ -23,8 +23,7 @@ body {
   font-size: clamp(0.875rem, 2.5vw, 1rem); /* 14px-16px */
   font-weight: 400;
   line-height: 1.5;
-  color: #1e293b; /* slate-800 */
-  background-color: #f1f5f9; /* slate-100 */
+  color: #1e293b;
   margin: 0;
   padding: 0;
 }
