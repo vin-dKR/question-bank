@@ -32,7 +32,6 @@ export const useCustomAuth = (mode: AuthMode) => {
 
     const isLoaded = mode === 'signin' ? isSignInLoaded : isSignUpLoaded;
 
-    // ### Social/oAuth ###
     const signInWith = async (strategy: OAuthStrategy) => {
         setLoading(true);
         setError('');
@@ -51,12 +50,10 @@ export const useCustomAuth = (mode: AuthMode) => {
                 redirectUrl: '/auth/sso-callback',
                 redirectUrlComplete: '/',
             });
-            // App will redirect before this point
         } catch (err: any) {
             setError(getClerkError(err));
             setLoading(false);
         }
-        // no setLoading(false) here after redirect
     };
 
     // ### Email/Password ###
@@ -66,6 +63,17 @@ export const useCustomAuth = (mode: AuthMode) => {
             setError('Authentication service not ready');
             return;
         }
+
+        if (!email.trim()) {
+            setError('Email is required');
+            return;
+        }
+
+        if (!password.trim()) {
+            setError('Password is required');
+            return;
+        }
+
         setError('');
         setLoading(true);
 
@@ -76,43 +84,54 @@ export const useCustomAuth = (mode: AuthMode) => {
                     identifier: email,
                     password: password,
                 });
+                console.log("mode: signin")
 
                 if (result.status === 'needs_second_factor') {
+                    console.log("mode: needs_second_factor")
                     await signIn.prepareSecondFactor({
                         strategy: 'phone_code',
                     });
                     setShowOtpInput(true);
                 } else if (result.status === 'complete' && setSignInActive) {
+                    console.log("mode: complete")
                     await setSignInActive({ session: result.createdSessionId });
                     router.push('/');
                     return; // Avoid setLoading after redirect
                 }
             } else {
                 if (!signUp) throw new Error('Sign up service not available');
+                console.log("mode: !signUp")
                 const result = await signUp.create({
                     emailAddress: email,
                     password: password,
                 });
+                console.log("mode: !result")
 
                 if (result.status === 'missing_requirements') {
+                    console.log("mode: missing_requirements")
                     await signUp.prepareEmailAddressVerification();
                     setShowOtpInput(true);
                 } else if (result.status === 'complete' && setSignUpActive) {
+                    console.log("mode: !complete")
                     await setSignUpActive({ session: result.createdSessionId });
                     router.push('/');
                     return;
                 }
+                console.log("mode: !done")
             }
         } catch (err: any) {
+            console.log("mode: cathc")
             if (err?.errors?.[0]?.code === 'single_session_mode') {
                 await signOut();
                 setError('You can only be signed in on one device at a time. Please sign out elsewhere first.');
+            } else {
+                setError(getClerkError(err));
             }
-            setError(getClerkError(err));
         } finally {
             setLoading(false);
         }
     };
+
 
     // ### OTP ###
     const handleOtpSubmit = async (e: React.FormEvent) => {
