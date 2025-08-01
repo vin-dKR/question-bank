@@ -155,6 +155,7 @@ QuestionItem.displayName = 'QuestionItem';
 export default function QuestionList() {
     const { questions, loading, error, selectedQuestionIds, toggleQuestionSelection, toggleQuestionFlag } = useQuestionBankContext();
 
+    console.log(selectedQuestionIds)
     return (
         <div className="min-h-screen bg-gray-100">
             {/* Search Bar */}

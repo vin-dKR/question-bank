@@ -14,8 +14,10 @@ interface LatexPart {
 
 type StringPart = TextPart | LatexPart;
 
-const toMixedLatex = (text: string): StringPart[] => {
+const toMixedLatex = (text: string | null | undefined): StringPart[] => {
+    text = text ?? "";
     try {
+
         const parts: StringPart[] = [];
         let current = '';
         let i = 0;

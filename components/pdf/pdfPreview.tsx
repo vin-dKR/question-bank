@@ -20,6 +20,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
     const [isMobile, setIsMobile] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    console.log("selectedQuestion", selectedQuestions)
     useEffect(() => {
         // Detect mobile device
         const userAgent = navigator.userAgent;
@@ -88,7 +89,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
 
         setIsGenerating("question")
         const html = pdfConfigToHTML({ institution, selectedQuestions, options });
-        console.log("-------HTML------", html)
+        // console.log("-------HTML------", html)
 
         const blob = await htmlTopdfBlob(html)
         if (!blob.data) {
@@ -97,7 +98,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
             // Create a Blob from the Uint8Array
             const pdfBlob = new Blob([blob.data], { type: 'application/pdf' });
             const pdfUrl = URL.createObjectURL(pdfBlob);
-            console.log(pdfUrl)
+            // console.log(pdfUrl)
             setPreviewUrl(pdfUrl)
         }
         {/*

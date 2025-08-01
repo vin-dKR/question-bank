@@ -35,6 +35,7 @@ export const useQuestionBank = (initialFilters = {
         limit: 20,
     });
     const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(new Set());
+    const [selectedQuestionObjects, setSelectedQuestionObjects] = useState<Map<string, Question>>(new Map());
     const [filterOptions, setFilterOptions] = useState<FilterOptions>({
         exams: [],
         subjects: [],
@@ -166,12 +167,25 @@ export const useQuestionBank = (initialFilters = {
             const newSet = new Set(prev);
             if (newSet.has(id)) {
                 newSet.delete(id);
+                setSelectedQuestionObjects((objMap) => {
+                    const copy = new Map(objMap);
+                    copy.delete(id);
+                    return copy;
+                });
             } else {
                 newSet.add(id);
+                const question = questions.find((q) => q.id === id);
+                if (question) {
+                    setSelectedQuestionObjects((objMap) => {
+                        const copy = new Map(objMap);
+                        copy.set(id, question);
+                        return copy;
+                    });
+                }
             }
             return newSet;
         });
-    };
+    }
 
     const selectAllQuestions = () => {
         setSelectedQuestionIds(new Set(questions.map((q) => q.id)));
@@ -201,9 +215,7 @@ export const useQuestionBank = (initialFilters = {
         }
     };
 
-    const getSelectedQuestions = () => {
-        return questions.filter((q) => selectedQuestionIds.has(q.id));
-    };
+    const getSelectedQuestions = () => Array.from(selectedQuestionObjects.values());
 
     const searchQuestionsHook = (keyword: string) => {
         setSearchKeyword(keyword);
