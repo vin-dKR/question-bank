@@ -68,7 +68,7 @@ export async function generatePDF(config: PDFConfig, options: PDFGenerationOptio
     container.innerHTML = bodyContent;
     // Prepend all <style> tags to the container
     styleTags.forEach(style => {
-      container.prepend(style.cloneNode(true));
+        container.prepend(style.cloneNode(true));
     });
     container.style.position = 'absolute';
     container.style.top = '-10000px';

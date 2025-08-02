@@ -34,8 +34,10 @@ export const useQuestionBank = (initialFilters = {
         page: 1,
         limit: 20,
     });
+
     const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(new Set());
     const [selectedQuestionObjects, setSelectedQuestionObjects] = useState<Map<string, Question>>(new Map());
+
     const [filterOptions, setFilterOptions] = useState<FilterOptions>({
         exams: [],
         subjects: [],

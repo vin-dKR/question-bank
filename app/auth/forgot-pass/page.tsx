@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { FancyLoader, LoadingButton } from '@/components/Loader';
 import { useForgotPass } from '@/hooks/forgotPass';
+import { Mail } from 'lucide-react';
 
 export default function ResetPasswordPage() {
 
@@ -24,7 +25,7 @@ export default function ResetPasswordPage() {
 
     if (success) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+            <div className="min-h-screen flex items-center justify-center p-4">
                 <div className="w-full max-w-md bg-white rounded-lg shadow-xl overflow-hidden p-8 text-center">
                     <div className="mb-6">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-green-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -41,14 +42,14 @@ export default function ResetPasswordPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-            <div className="w-full max-w-md bg-white rounded-lg shadow-xl overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center p-4 border border-black/20">
+            <div className="w-full max-w-md bg-white rounded-lg border border-black/10 overflow-hidden">
                 <div className="p-8">
                     <div className="text-center mb-8">
-                        <h1 className="text-3xl font-bold text-gray-800">
+                        <h1 className="text-2xl font-bold text-gray-800 tracking-3">
                             {otpSent ? 'Enter OTP & New Password' : 'Reset Your Password'}
                         </h1>
-                        <p className="text-gray-600 mt-2">
+                        <p className="text-sm text-black/50 mt-2 tracking-3">
                             {otpSent
                                 ? `We've sent a 6-digit OTP to ${email}`
                                 : 'Enter your email to receive an OTP'}
@@ -58,19 +59,23 @@ export default function ResetPasswordPage() {
                     {!otpSent ? (
                         <form className="space-y-6" onSubmit={handleRequestOTP}>
                             <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1 tracking-3">
                                     Email Address
                                 </label>
-                                <input
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    required
-                                    className="w-full px-4 py-3 text-gray-700 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition duration-200"
-                                    placeholder="your@email.com"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                />
+
+                                <div className='relative'>
+                                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                                    <input
+                                        id="email"
+                                        name="email"
+                                        type="email"
+                                        required
+                                        className="w-full pl-10 px-4 py-3 text-gray-700 tracking-3 rounded-lg border border-gray-300 focus:border-black focus:ring-2 focus:ring-black outline-none transition duration-200"
+                                        placeholder="your@email.com"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                    />
+                                </div>
                             </div>
 
                             {error && (
@@ -82,7 +87,7 @@ export default function ResetPasswordPage() {
                             <LoadingButton
                                 type="submit"
                                 isLoading={loading}
-                                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200"
+                                className="w-full bg-black/80 hover:bg-black text-white font-medium py-3 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition duration-200"
                             >
                                 {loading ? (
                                     <span className="flex items-center justify-center gap-2">
@@ -108,7 +113,7 @@ export default function ResetPasswordPage() {
                                     pattern="[0-9]{6}"
                                     required
                                     maxLength={6}
-                                    className="w-full px-4 py-3 text-gray-700 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition duration-200 text-center tracking-widest text-2xl"
+                                    className="w-full px-4 py-3 text-gray-700 rounded-lg border border-gray-300 focus:border-black focus:ring-2 focus:ring-black outline-none transition duration-200 text-center tracking-widest text-2xl"
                                     placeholder="• • • • • •"
                                     value={otp}
                                     onChange={(e) => {
@@ -128,7 +133,7 @@ export default function ResetPasswordPage() {
                                     type="password"
                                     required
                                     minLength={8}
-                                    className="w-full px-4 py-3 text-gray-700 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition duration-200"
+                                    className="w-full px-4 py-3 text-gray-700 rounded-lg border border-gray-300 focus:border-black focus:ring-2 focus:ring-black outline-none transition duration-200"
                                     placeholder="••••••••"
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
@@ -147,7 +152,7 @@ export default function ResetPasswordPage() {
                             <LoadingButton
                                 type="submit"
                                 isLoading={loading}
-                                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200"
+                                className="w-full bg-black/80 hover:bg-black text-white font-medium py-3 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition duration-200"
                             >
                                 {loading ? (
                                     <span className="flex items-center justify-center gap-2">
@@ -164,7 +169,7 @@ export default function ResetPasswordPage() {
                                     type="button"
                                     onClick={handleResendOTP}
                                     disabled={loading}
-                                    className="text-indigo-600 hover:text-indigo-500 font-medium text-sm disabled:opacity-50"
+                                    className="text-black/60 hover:text-black font-medium text-sm disabled:opacity-50"
                                 >
                                     Didn&aops;t receive OTP? Resend
                                 </button>
@@ -175,7 +180,7 @@ export default function ResetPasswordPage() {
                     <div className="mt-6 text-center">
                         <Link
                             href="/auth/signin"
-                            className="text-indigo-600 hover:text-indigo-500 font-medium text-sm"
+                            className="text-black/60 hover:underline font-medium text-sm"
                         >
                             Remember your password? Sign in
                         </Link>

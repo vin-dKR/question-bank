@@ -104,7 +104,7 @@ export const LoadingButton = ({
     variant?: 'primary' | 'secondary' | 'success' | 'danger';
 } & React.ButtonHTMLAttributes<HTMLButtonElement>) => {
     const variantClasses = {
-        primary: 'bg-indigo-600 hover:bg-indigo-700 text-white',
+        primary: 'bg-black/80 hover:bg-black text-white',
         secondary: 'bg-gray-600 hover:bg-gray-700 text-white',
         success: 'bg-green-600 hover:bg-green-700 text-white',
         danger: 'bg-red-600 hover:bg-red-700 text-white',
