@@ -46,9 +46,9 @@ export default function TeacherSetupPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 py-12">
-            <div className="mx-auto max-w-2xl px-6">
-                <div className="mb-8">
-                    <Button variant="ghost" onClick={() => router.back()} className="mb-4">
+            <div className="mx-auto max-w-4xl px-6">
+                <div className="mb-12">
+                    <Button variant="ghost" onClick={() => router.back()} className="mb-4 bg-black/4 border border-black/5">
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Back
                     </Button>
@@ -59,8 +59,8 @@ export default function TeacherSetupPage() {
                 </div>
 
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Teaching Information</CardTitle>
+                    <CardHeader className="gap-0">
+                        <CardTitle className="text-lg m-0">Teaching Information</CardTitle>
                         <CardDescription>This helps us customize your question bank and test templates</CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -74,6 +74,7 @@ export default function TeacherSetupPage() {
                                         onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                                         placeholder="Enter your full name"
                                         required
+                                        className="border border-black/10"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -85,6 +86,7 @@ export default function TeacherSetupPage() {
                                         onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                                         placeholder="Enter your email"
                                         required
+                                        className="border border-black/10"
                                     />
                                 </div>
                             </div>
@@ -96,6 +98,7 @@ export default function TeacherSetupPage() {
                                     value={formData.school}
                                     onChange={(e) => setFormData((prev) => ({ ...prev, school: e.target.value }))}
                                     placeholder="Enter your school or institution name"
+                                    className="border border-black/10"
                                 />
                             </div>
 
@@ -103,10 +106,10 @@ export default function TeacherSetupPage() {
                                 <div className="space-y-2">
                                     <Label htmlFor="experience">Teaching Experience</Label>
                                     <Select onValueChange={(value) => setFormData((prev) => ({ ...prev, experience: value }))}>
-                                        <SelectTrigger>
+                                        <SelectTrigger className="border border-black/10">
                                             <SelectValue placeholder="Select experience" />
                                         </SelectTrigger>
-                                        <SelectContent>
+                                        <SelectContent className="bg-white text-black border border-black/10">
                                             <SelectItem value="0-2">0-2 years</SelectItem>
                                             <SelectItem value="3-5">3-5 years</SelectItem>
                                             <SelectItem value="6-10">6-10 years</SelectItem>
@@ -117,10 +120,10 @@ export default function TeacherSetupPage() {
                                 <div className="space-y-2">
                                     <Label htmlFor="student-count">Number of Students</Label>
                                     <Select onValueChange={(value) => setFormData((prev) => ({ ...prev, studentCount: value }))}>
-                                        <SelectTrigger>
+                                        <SelectTrigger className="border border-black/10">
                                             <SelectValue placeholder="Select range" />
                                         </SelectTrigger>
-                                        <SelectContent>
+                                        <SelectContent className="bg-white text-black border border-black/10">
                                             <SelectItem value="1-20">1-20 students</SelectItem>
                                             <SelectItem value="21-50">21-50 students</SelectItem>
                                             <SelectItem value="51-100">51-100 students</SelectItem>
@@ -149,7 +152,7 @@ export default function TeacherSetupPage() {
                             </div>
 
                             <div className="flex justify-end pt-6">
-                                <Button type="submit" size="lg">
+                                <Button type="submit" size="lg" className="bg-black text-white rounded-xl">
                                     Complete Setup
                                     <ArrowRight className="ml-2 h-4 w-4" />
                                 </Button>

@@ -47,9 +47,9 @@ export default function CoachingSetupPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 py-12">
-            <div className="mx-auto max-w-2xl px-6">
-                <div className="mb-8">
-                    <Button variant="ghost" onClick={() => router.back()} className="mb-4">
+            <div className="mx-auto max-w-4xl px-6">
+                <div className="mb-12">
+                    <Button variant="ghost" onClick={() => router.back()} className="mb-4 bg-black/4 border border-black/5">
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Back
                     </Button>
@@ -60,8 +60,8 @@ export default function CoachingSetupPage() {
                 </div>
 
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Coaching Center Information</CardTitle>
+                    <CardHeader className="gap-0">
+                        <CardTitle className="text-lg m-0">Coaching Center Information</CardTitle>
                         <CardDescription>This helps us set up the right features for your institution</CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -74,6 +74,7 @@ export default function CoachingSetupPage() {
                                     onChange={(e) => setFormData((prev) => ({ ...prev, centerName: e.target.value }))}
                                     placeholder="Enter your coaching center name"
                                     required
+                                    className="border border-black/10"
                                 />
                             </div>
 
@@ -86,6 +87,7 @@ export default function CoachingSetupPage() {
                                         onChange={(e) => setFormData((prev) => ({ ...prev, contactPerson: e.target.value }))}
                                         placeholder="Enter contact person name"
                                         required
+                                        className="border border-black/10"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -96,6 +98,7 @@ export default function CoachingSetupPage() {
                                         onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
                                         placeholder="Enter phone number"
                                         required
+                                        className="border border-black/10"
                                     />
                                 </div>
                             </div>
@@ -110,6 +113,7 @@ export default function CoachingSetupPage() {
                                         onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                                         placeholder="Enter email address"
                                         required
+                                        className="border border-black/10"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -120,6 +124,7 @@ export default function CoachingSetupPage() {
                                         onChange={(e) => setFormData((prev) => ({ ...prev, location: e.target.value }))}
                                         placeholder="City, State"
                                         required
+                                        className="border border-black/10"
                                     />
                                 </div>
                             </div>
@@ -128,10 +133,10 @@ export default function CoachingSetupPage() {
                                 <div className="space-y-2">
                                     <Label htmlFor="teacher-count">Number of Teachers</Label>
                                     <Select onValueChange={(value) => setFormData((prev) => ({ ...prev, teacherCount: value }))}>
-                                        <SelectTrigger>
+                                        <SelectTrigger className="border border-black/10">
                                             <SelectValue placeholder="Select range" />
                                         </SelectTrigger>
-                                        <SelectContent>
+                                        <SelectContent className="bg-white text-black border border-black/10">
                                             <SelectItem value="1-5">1-5 teachers</SelectItem>
                                             <SelectItem value="6-15">6-15 teachers</SelectItem>
                                             <SelectItem value="16-30">16-30 teachers</SelectItem>
@@ -142,10 +147,10 @@ export default function CoachingSetupPage() {
                                 <div className="space-y-2">
                                     <Label htmlFor="student-count">Number of Students</Label>
                                     <Select onValueChange={(value) => setFormData((prev) => ({ ...prev, studentCount: value }))}>
-                                        <SelectTrigger>
+                                        <SelectTrigger className="border border-black/10">
                                             <SelectValue placeholder="Select range" />
                                         </SelectTrigger>
-                                        <SelectContent>
+                                        <SelectContent className="bg-white text-black border border-black/10">
                                             <SelectItem value="1-100">1-100 students</SelectItem>
                                             <SelectItem value="101-500">101-500 students</SelectItem>
                                             <SelectItem value="501-1000">501-1000 students</SelectItem>
@@ -174,7 +179,7 @@ export default function CoachingSetupPage() {
                             </div>
 
                             <div className="flex justify-end pt-6">
-                                <Button type="submit" size="lg">
+                                <Button type="submit" size="lg" className="bg-black text-white rounded-xl">
                                     Complete Setup
                                     <ArrowRight className="ml-2 h-4 w-4" />
                                 </Button>

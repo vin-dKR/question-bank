@@ -31,7 +31,7 @@ export default function UserTypePage() {
             title: "Coaching Center",
             description: "I run a coaching center and need to scale test creation",
             features: ["Bulk operations", "OMR scanning", "Multi-teacher access"],
-            href: "/onboarding/coaching/setup",
+            href: "/onboarding/institute/setup",
             popular: false,
         },
     ]
