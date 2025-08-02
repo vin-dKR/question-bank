@@ -14,6 +14,11 @@ declare global {
         logo?: File | null;
     }
 
+    interface CustomJwtSessionClaims {
+        metadata: {
+            onboardingComplete?: boolean
+        }
+    }
 
     interface Question {
         id: string;
