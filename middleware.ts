@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 // Add your allowed domains here
 const allowedOrigins = [
     'http://localhost:3000',
-    'http://localhost:3001', 
+    'http://localhost:3001',
     'http://localhost:5173',
     'https://question-editor.vercel.app',
     'https://multi-crop.vercel.app'
@@ -21,42 +21,42 @@ export default clerkMiddleware((auth: any, req: NextRequest) => {
 function handleCors(request: NextRequest) {
     const origin = request.headers.get('origin')
     const isAllowedOrigin = origin && allowedOrigins.includes(origin)
-    
-    console.log('CORS Debug:', { 
-        origin, 
-        isAllowedOrigin, 
+
+    console.log('CORS Debug:', {
+        origin,
+        isAllowedOrigin,
         allowedOrigins,
         method: request.method,
-        url: request.url 
+        url: request.url
     })
-    
+
     // Handle preflight requests (OPTIONS)
     if (request.method === 'OPTIONS') {
         const response = new NextResponse(null, { status: 200 })
-        
+
         if (isAllowedOrigin) {
             response.headers.set('Access-Control-Allow-Origin', origin)
         }
-        
+
         response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
         response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Cache-Control, Accept, Accept-Language, Content-Language, Range, Expires')
         response.headers.set('Access-Control-Allow-Credentials', 'true')
         response.headers.set('Access-Control-Max-Age', '86400') // Cache preflight for 24 hours
-        
+
         return response
     }
-    
+
     // For other requests, let them proceed and add CORS headers in the response
     const response = NextResponse.next()
-    
+
     if (isAllowedOrigin) {
         response.headers.set('Access-Control-Allow-Origin', origin)
     }
-    
+
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
     response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Cache-Control, Accept, Accept-Language, Content-Language, Range, Expires')
     response.headers.set('Access-Control-Allow-Credentials', 'true')
-    
+
     return response
 }
 

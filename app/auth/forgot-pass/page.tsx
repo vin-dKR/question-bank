@@ -26,7 +26,7 @@ export default function ResetPasswordPage() {
     if (success) {
         return (
             <div className="min-h-screen flex items-center justify-center p-4">
-                <div className="w-full max-w-md bg-white rounded-lg shadow-xl overflow-hidden p-8 text-center">
+                <div className="w-full max-w-md bg-white rounded-xl shadow-xl overflow-hidden p-8 text-center">
                     <div className="mb-6">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-green-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -43,7 +43,7 @@ export default function ResetPasswordPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4 border border-black/20">
-            <div className="w-full max-w-md bg-white rounded-lg border border-black/10 overflow-hidden">
+            <div className="w-full max-w-md bg-white rounded-xl border border-black/10 overflow-hidden">
                 <div className="p-8">
                     <div className="text-center mb-8">
                         <h1 className="text-2xl font-bold text-gray-800 tracking-3">
@@ -87,7 +87,7 @@ export default function ResetPasswordPage() {
                             <LoadingButton
                                 type="submit"
                                 isLoading={loading}
-                                className="w-full bg-black/80 hover:bg-black text-white font-medium py-3 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition duration-200"
+                                className="w-full bg-black/80 hover:bg-black text-white font-medium py-3 px-4 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition duration-200"
                             >
                                 {loading ? (
                                     <span className="flex items-center justify-center gap-2">
@@ -124,7 +124,7 @@ export default function ResetPasswordPage() {
                             </div>
 
                             <div>
-                                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1 tracking-3">
                                     New Password
                                 </label>
                                 <input
@@ -169,9 +169,9 @@ export default function ResetPasswordPage() {
                                     type="button"
                                     onClick={handleResendOTP}
                                     disabled={loading}
-                                    className="text-black/60 hover:text-black font-medium text-sm disabled:opacity-50"
+                                    className="text-black/60 hover:text-black font-medium text-sm disabled:opacity-50 tracking-3"
                                 >
-                                    Didn&aops;t receive OTP? Resend
+                                    {`Didn't receive OTP? Resend`}
                                 </button>
                             </div>
                         </form>
@@ -180,7 +180,7 @@ export default function ResetPasswordPage() {
                     <div className="mt-6 text-center">
                         <Link
                             href="/auth/signin"
-                            className="text-black/60 hover:underline font-medium text-sm"
+                            className="text-black/60 hover:underline font-medium text-sm tracking-3"
                         >
                             Remember your password? Sign in
                         </Link>
