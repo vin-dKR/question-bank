@@ -1,26 +1,48 @@
-"use client"
+"use client";
 
-import type React from "react"
+import React from "react";
+import { useRouter } from "next/navigation";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
-import { ArrowLeft, ArrowRight } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useOnboardingStore } from "@/store/userInitialSelectedState"
+import { completeOnboarding } from "@/actions/onBoarding/completeOnboarding";
+import { useUser } from "@clerk/nextjs";
+
 
 export default function StudentSetupPage() {
-    const router = useRouter()
-    const [formData, setFormData] = useState({
-        name: "",
-        email: "",
-        grade: "",
-        targetExam: "",
-        subjects: [] as string[],
-    })
+    const router = useRouter();
+    const { user } = useUser()
+
+    // Access the full onboarding object
+    const onboarding = useOnboardingStore((state) => state.onboarding);
+    const setData = useOnboardingStore((state) => state.setData);
+
+    // Make sure this page is only used for "student" role
+    if (!onboarding || onboarding.role !== "student") {
+        // Optionally redirect or show fallback UI here
+        return <div>Please start onboarding as a Student to fill this form.</div>;
+    }
+
+    // Destructure student-specific data
+    const studentData = onboarding.data;
 
     const targetExams = [
         { value: "jee-main", label: "JEE Main" },
@@ -28,46 +50,68 @@ export default function StudentSetupPage() {
         { value: "neet", label: "NEET" },
         { value: "boards", label: "Board Exams" },
         { value: "multiple", label: "Multiple Exams" },
-    ]
+    ];
 
     const subjects = [
         { id: "physics", label: "Physics" },
         { id: "chemistry", label: "Chemistry" },
         { id: "mathematics", label: "Mathematics" },
         { id: "biology", label: "Biology" },
-    ]
+    ];
 
     const handleSubjectChange = (subjectId: string, checked: boolean) => {
-        setFormData((prev) => ({
-            ...prev,
-            subjects: checked ? [...prev.subjects, subjectId] : prev.subjects.filter((s) => s !== subjectId),
-        }))
-    }
+        let newSubjects = checked
+            ? [...studentData.subjects, subjectId]
+            : studentData.subjects.filter((s) => s !== subjectId);
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        // Handle form submission
-        router.push("/dashboard")
-    }
+        setData({ subjects: newSubjects });
+    };
+
+    const handleInputChange = (field: keyof typeof studentData, value: any) => {
+        setData({ [field]: value });
+    };
+
+    const handleSubmit = async (formData: FormData) => {
+        const res = await completeOnboarding(formData)
+
+        if (res?.message) {
+            // Reloads the user's data from the Clerk API
+            console.log("000000", onboarding)
+            await user?.reload()
+            router.push('/')
+        }
+        if (res?.error) {
+            console.log(res?.error)
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 tracking-3">
             <div className="mx-auto max-w-4xl px-6">
                 <div className="mb-12">
-                    <Button variant="ghost" onClick={() => router.back()} className="mb-4 bg-black/4 border border-black/5">
+                    <Button
+                        variant="ghost"
+                        onClick={() => router.back()}
+                        className="mb-4 bg-black/4 border border-black/5"
+                    >
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Back
                     </Button>
-                    <h1 className="text-3xl font-bold text-gray-900">Set up your student profile</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">
+                        Set up your student profile
+                    </h1>
                     <p className="mt-2 text-gray-600">
-                        Help us personalize your learning experience with the right questions and difficulty level.
+                        Help us personalize your learning experience with the right
+                        questions and difficulty level.
                     </p>
                 </div>
 
                 <Card>
                     <CardHeader className="gap-0">
                         <CardTitle className="text-lg m-0">Personal Information</CardTitle>
-                        <CardDescription className="text-sm m-0">This information helps us customize your practice sessions</CardDescription>
+                        <CardDescription className="text-sm m-0">
+                            This information helps us customize your practice sessions
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-6">
@@ -76,8 +120,8 @@ export default function StudentSetupPage() {
                                     <Label htmlFor="name">Full Name</Label>
                                     <Input
                                         id="name"
-                                        value={formData.name}
-                                        onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                                        value={studentData.name}
+                                        onChange={(e) => handleInputChange("name", e.target.value)}
                                         placeholder="Enter your full name"
                                         required
                                         className="border border-black/10"
@@ -86,10 +130,10 @@ export default function StudentSetupPage() {
                                 <div className="space-y-2">
                                     <Label htmlFor="email">Email</Label>
                                     <Input
-                                        id="email"
                                         type="email"
-                                        value={formData.email}
-                                        onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+                                        id="email"
+                                        value={studentData.email}
+                                        onChange={(e) => handleInputChange("email", e.target.value)}
                                         placeholder="Enter your email"
                                         required
                                         className="border border-black/10"
@@ -100,7 +144,10 @@ export default function StudentSetupPage() {
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="space-y-2">
                                     <Label htmlFor="grade">Current Grade/Class</Label>
-                                    <Select onValueChange={(value) => setFormData((prev) => ({ ...prev, grade: value }))}>
+                                    <Select
+                                        value={studentData.grade}
+                                        onValueChange={(value) => handleInputChange("grade", value)}
+                                    >
                                         <SelectTrigger className="border border-black/10">
                                             <SelectValue placeholder="Select your grade" />
                                         </SelectTrigger>
@@ -114,7 +161,10 @@ export default function StudentSetupPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="target-exam">Target Exam</Label>
-                                    <Select onValueChange={(value) => setFormData((prev) => ({ ...prev, targetExam: value }))}>
+                                    <Select
+                                        value={studentData.targetExam}
+                                        onValueChange={(value) => handleInputChange("targetExam", value)}
+                                    >
                                         <SelectTrigger className="border border-black/10">
                                             <SelectValue placeholder="Select target exam" />
                                         </SelectTrigger>
@@ -136,8 +186,10 @@ export default function StudentSetupPage() {
                                         <div key={subject.id} className="flex items-center space-x-2">
                                             <Checkbox
                                                 id={subject.id}
-                                                checked={formData.subjects.includes(subject.id)}
-                                                onCheckedChange={(checked) => handleSubjectChange(subject.id, checked as boolean)}
+                                                checked={studentData.subjects.includes(subject.id)}
+                                                onCheckedChange={(checked) =>
+                                                    handleSubjectChange(subject.id, checked as boolean)
+                                                }
                                             />
                                             <Label htmlFor={subject.id} className="text-sm font-normal">
                                                 {subject.label}
@@ -148,7 +200,11 @@ export default function StudentSetupPage() {
                             </div>
 
                             <div className="flex justify-end pt-6">
-                                <Button type="submit" size="lg" className="bg-black text-white rounded-xl">
+                                <Button
+                                    type="submit"
+                                    size="lg"
+                                    className="bg-black text-white rounded-xl"
+                                >
                                     Complete Setup
                                     <ArrowRight className="ml-2 h-4 w-4" />
                                 </Button>
@@ -158,5 +214,5 @@ export default function StudentSetupPage() {
                 </Card>
             </div>
         </div>
-    )
+    );
 }

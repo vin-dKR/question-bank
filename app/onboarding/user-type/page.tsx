@@ -1,13 +1,20 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { GraduationCap, Users, School, ArrowLeft } from "lucide-react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { useOnboardingStore } from "@/store/userInitialSelectedState";
+import { GraduationCap, Users, School, ArrowLeft } from "lucide-react";
 
 export default function UserTypePage() {
-    const router = useRouter()
+    const router = useRouter();
+    const setRole = useOnboardingStore((state) => state.setRole);
 
     const userTypes = [
         {
@@ -17,6 +24,7 @@ export default function UserTypePage() {
             features: ["Practice tests", "Progress tracking", "Performance insights"],
             href: "/onboarding/student/setup",
             popular: false,
+            roleKey: "student",
         },
         {
             icon: GraduationCap,
@@ -25,6 +33,7 @@ export default function UserTypePage() {
             features: ["Quick test creation", "PDF templates", "Basic analytics"],
             href: "/onboarding/teacher/setup",
             popular: true,
+            roleKey: "teacher",
         },
         {
             icon: School,
@@ -33,14 +42,24 @@ export default function UserTypePage() {
             features: ["Bulk operations", "OMR scanning", "Multi-teacher access"],
             href: "/onboarding/institute/setup",
             popular: false,
+            roleKey: "coaching",
         },
-    ]
+    ] as const;
+
+    const onContinueClick = (role: "student" | "teacher" | "coaching", href: string) => {
+        setRole(role);
+        router.push(href);
+    };
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 tracking-3">
             <div className="mx-auto max-w-4xl px-6">
                 <div className="mb-12">
-                    <Button variant="ghost" onClick={() => router.back()} className="mb-4 bg-black/4 border border-black/5">
+                    <Button
+                        variant="ghost"
+                        onClick={() => router.back()}
+                        className="mb-4 bg-black/4 border border-black/5"
+                    >
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Back
                     </Button>
@@ -52,7 +71,7 @@ export default function UserTypePage() {
 
                 <div className="grid gap-6 sm:grid-cols-2">
                     {userTypes.map((type) => {
-                        const Icon = type.icon
+                        const Icon = type.icon;
                         return (
                             <Card
                                 key={type.title}
@@ -90,18 +109,20 @@ export default function UserTypePage() {
                                     </ul>
 
                                     <div className="mt-auto">
-                                        <Link href={type.href} className="block bg-black rounded-xl text-white">
-                                            <Button className="w-full">Continue as {type.title}</Button>
-                                        </Link>
+                                        <Button
+                                            className="w-full bg-black rounded-xl text-white"
+                                            onClick={() => onContinueClick(type.roleKey, type.href)}
+                                        >
+                                            Continue as {type.title}
+                                        </Button>
                                     </div>
                                 </CardContent>
                             </Card>
-                        )
+                        );
                     })}
                 </div>
-
             </div>
         </div>
-    )
+    );
 }
 

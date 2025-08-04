@@ -5,20 +5,19 @@ declare global {
         // eslint-disable-next-line
         MathJax: any;
     }
-}
-
-declare global {
-    interface PDFGenerationOptions {
-        includeAnswers: boolean;
-        watermarkOpacity: number;
-        logo?: File | null;
-    }
 
     interface CustomJwtSessionClaims {
         metadata: {
             onboardingComplete?: boolean
         }
     }
+
+    interface PDFGenerationOptions {
+        includeAnswers: boolean;
+        watermarkOpacity: number;
+        logo?: File | null;
+    }
+
 
     interface Question {
         id: string;
@@ -160,6 +159,30 @@ declare global {
         lineHeight?: number;
         margin?: number;
         pdfOptions?: HTMLToPDFOptions;
+    }
+
+    interface StudentOnboardingData {
+        name: string;
+        email: string;
+        grade: string;
+        targetExam: string;
+        subjects: string[];
+    }
+
+    interface TeacherOnboardingData {
+        name: string;
+        email: string;
+        school: string;
+        subjects: string[];
+        experience?: number;
+    }
+
+    interface CoachingOnboardingData {
+        name: string;
+        email: string;
+        instituteName: string;
+        numTeachers: number;
+        features: string[];
     }
 }
 

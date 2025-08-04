@@ -1,14 +1,13 @@
-import { clerkMiddleware, createRouteMatcher, getAuth } from '@clerk/nextjs/server'
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { useRouter } from 'next/router';
 import { NextRequest, NextResponse } from 'next/server'
 
-// Add your allowed domains here
 const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:3001',
     'http://localhost:5173',
     'https://question-editor.vercel.app',
     'https://multi-crop.vercel.app'
-    // Add more domains as needed
 ]
 
 const isOnboardingRoute = (req: NextRequest) => req.nextUrl.pathname.startsWith('/onboarding');
@@ -20,26 +19,31 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
         return handleCors(req)
     }
 
-    const { userId, sessionClaims, redirectToSignIn } = await auth()
+    const { userId, sessionClaims } = await auth()
 
-    // For users visiting /onboarding, don't try to redirect
-    if (userId && isOnboardingRoute(req)) {
+    // Always allow public routes and auth/signup/onboarding pages
+    if (
+        req.nextUrl.pathname.startsWith('/onboarding') ||
+        req.nextUrl.pathname.startsWith('/auth') ||
+        isPublicRoute(req)
+    ) {
         return NextResponse.next()
     }
 
-    // If the user isn't signed in and the route is private, redirect to sign-in
-    if (!userId && !isPublicRoute(req)) return redirectToSignIn({ returnBackUrl: req.url })
-
-    // Catch users who do not have `onboardingComplete: true` in their publicMetadata
-    // Redirect them to the /onboarding route to complete onboarding
-    if (userId && !sessionClaims?.metadata?.onboardingComplete) {
-        const onboardingUrl = new URL('/onboarding/user-type', req.url)
-        return NextResponse.redirect(onboardingUrl)
+    // Redirect unsigned users trying to access private routes to sign up
+    if (!userId) {
+        return NextResponse.redirect(new URL('/auth/signup', req.url))
     }
 
-    // If the user is logged in and the route is protected, let them view.
-    if (userId && !isPublicRoute(req)) return NextResponse.next()
+    // Redirect users without onboardingComplete to onboarding flow
+    if (userId && !sessionClaims?.metadata?.onboardingComplete) {
+        return NextResponse.redirect(new URL('/onboarding/user-type', req.url))
+    }
+
+    // Allow signed in users on protected routes
+    return NextResponse.next()
 })
+
 
 function handleCors(request: NextRequest) {
     const origin = request.headers.get('origin')
