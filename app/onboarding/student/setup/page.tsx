@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
     Card,
@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, LoaderCircle } from "lucide-react";
 
 import { useOnboardingStore } from "@/store/userInitialSelectedState"
 import { completeOnboarding } from "@/actions/onBoarding/completeOnboarding";
@@ -31,6 +31,7 @@ export default function StudentSetupPage() {
     const router = useRouter();
     const { user } = useUser()
 
+    const [loading, setLoading] = useState<boolean>(false)
     // Access the full onboarding object
     const onboarding = useOnboardingStore((state) => state.onboarding);
     const setData = useOnboardingStore((state) => state.setData);
@@ -60,18 +61,23 @@ export default function StudentSetupPage() {
     ];
 
     const handleSubjectChange = (subjectId: string, checked: boolean) => {
-        let newSubjects = checked
+        const newSubjects = checked
             ? [...studentData.subjects, subjectId]
             : studentData.subjects.filter((s) => s !== subjectId);
 
         setData({ subjects: newSubjects });
     };
 
-    const handleInputChange = (field: keyof typeof studentData, value: any) => {
+    const handleInputChange = (field: keyof typeof studentData, value: string) => {
         setData({ [field]: value });
     };
 
-    const handleSubmit = async (formData: FormData) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setLoading(true)
+
+        const formData = new FormData(e.currentTarget);
+
         const res = await completeOnboarding(formData)
 
         if (res?.message) {
@@ -81,9 +87,11 @@ export default function StudentSetupPage() {
             router.push('/')
         }
         if (res?.error) {
-            console.log(res?.error)
+            console.log("this is it")
         }
+        setLoading(false)
     };
+
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 tracking-3">
@@ -120,6 +128,7 @@ export default function StudentSetupPage() {
                                     <Label htmlFor="name">Full Name</Label>
                                     <Input
                                         id="name"
+                                        name="applicationName"
                                         value={studentData.name}
                                         onChange={(e) => handleInputChange("name", e.target.value)}
                                         placeholder="Enter your full name"
@@ -131,6 +140,7 @@ export default function StudentSetupPage() {
                                     <Label htmlFor="email">Email</Label>
                                     <Input
                                         type="email"
+                                        name="applicationType"
                                         id="email"
                                         value={studentData.email}
                                         onChange={(e) => handleInputChange("email", e.target.value)}
@@ -203,10 +213,16 @@ export default function StudentSetupPage() {
                                 <Button
                                     type="submit"
                                     size="lg"
-                                    className="bg-black text-white rounded-xl"
+                                    className="bg-black text-white rounded-xl disabled:opacity-50"
+                                    disabled={loading || !loading}
                                 >
                                     Complete Setup
-                                    <ArrowRight className="ml-2 h-4 w-4" />
+                                    {loading ? (
+                                        <LoaderCircle className="ml-2 h-4 w-4" />
+                                    ) : (
+                                        <ArrowRight className="ml-2 h-4 w-4" />
+                                    )}
+
                                 </Button>
                             </div>
                         </form>
