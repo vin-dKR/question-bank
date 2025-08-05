@@ -43,11 +43,14 @@ export const useOnboardingStore = create<OnboardingStore>()(
                     };
                 } else {
                     emptyData = {
-                        name: "",
+                        centerName: "",
+                        contactPerson: "",
                         email: "",
-                        instituteName: "",
-                        numTeachers: 0,
-                        features: [],
+                        phone: "",
+                        location: "",
+                        teacherCount: "",
+                        studentCount: "",
+                        targetExams: []
                     };
                 }
                 set({ onboarding: { role, data: emptyData } });

@@ -179,11 +179,14 @@ declare global {
     }
 
     interface CoachingOnboardingData {
-        name: string;
+        centerName: string;
+        contactPerson: string;
         email: string;
-        instituteName: string;
-        numTeachers: number;
-        features: string[];
+        phone: string;
+        location: string;
+        teacherCount: string | undefined;
+        studentCount: string | undefined;
+        targetExams: string[];
     }
 }
 

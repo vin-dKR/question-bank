@@ -77,6 +77,9 @@ export default function TeacherSetupPage() {
             return;
         }
 
+        // Debug log with fallback
+        //console.log("-------------", onboarding?.data || "onboarding.data is undefined");
+
         // Simulate successful submission for testing
         toast("Success", { description: "Teacher profile submitted successfully!" });
 

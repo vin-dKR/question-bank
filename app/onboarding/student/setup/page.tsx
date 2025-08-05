@@ -96,6 +96,7 @@ export default function StudentSetupPage() {
             return;
         }
 
+        // console.log("-------------", onboarding?.data || "onboarding.data is undefined");
         // Simulate successful submission for testing
         toast("Success", { description: "Student profile submitted successfully!" });
 
