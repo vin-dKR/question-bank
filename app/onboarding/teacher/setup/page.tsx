@@ -1,8 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useOnboardingStore } from "@/store/userInitialSelectedState";
-import { FormInput, FormSelect, SubmitButton, OnboardingLayout } from "@/components/onboarding/FormComponents";
+import {
+    FormInput,
+    FormSelect,
+    SubmitButton,
+    OnboardingLayout,
+} from "@/components/onboarding/FormComponents";
 import { useOnboardingForm } from "@/hooks/onboarding/useOnboardingForm";
 
 export default function TeacherSetupPage() {
@@ -10,18 +16,28 @@ export default function TeacherSetupPage() {
     const onboarding = useOnboardingStore((state) => state.onboarding);
     const setData = useOnboardingStore((state) => state.setData);
 
-    if (!onboarding || onboarding.role !== "teacher") {
-        router.push("/onboarding/user-type");
-        return null;
-    }
+    useEffect(() => {
+        if (!onboarding || onboarding.role !== "teacher") {
+            router.push("/onboarding/user-type");
+        }
+    }, [onboarding, router]);
 
-    const teacherData = onboarding.data as TeacherOnboardingData;
+    const teacherData = (onboarding?.data as TeacherOnboardingData) || {
+        name: "",
+        email: "",
+        school: "",
+        subject: "",
+        experience: "",
+        studentCount: "",
+    };
 
     const subjects = [
         { value: "physics", label: "Physics" },
         { value: "chemistry", label: "Chemistry" },
         { value: "mathematics", label: "Mathematics" },
         { value: "biology", label: "Biology" },
+        { value: "english", label: "English" },
+        { value: "hindi", label: "Hindi" },
     ];
 
     const experienceOptions = [
@@ -59,83 +75,94 @@ export default function TeacherSetupPage() {
         return formData;
     };
 
-    const { loading, handleSubmit } = useOnboardingForm("teacher", teacherData, validateForm, createFormData);
+    const { loading, handleSubmit } = useOnboardingForm(
+        "teacher",
+        teacherData,
+        validateForm,
+        createFormData
+    );
 
     const handleInputChange = (field: keyof TeacherOnboardingData, value: string) => {
         setData({ [field]: value });
     };
+
+    if (!onboarding) {
+        return null;
+    }
 
     return (
         <OnboardingLayout
             title="Set up your teacher profile"
             description="Help us understand your teaching needs so we can provide the best question recommendations."
         >
-            <div className="space-y-6">
-                <div className="grid gap-4 sm:grid-cols-2">
+            <form onSubmit={handleSubmit}>
+                <div className="space-y-6">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <FormInput
+                            id="name"
+                            name="name"
+                            value={teacherData.name}
+                            onChange={(value) => handleInputChange("name", value)}
+                            placeholder="Enter your full name"
+                            label="Full Name"
+                            isRequired
+                        />
+                        <FormInput
+                            id="email"
+                            name="email"
+                            type="email"
+                            value={teacherData.email}
+                            onChange={(value) => handleInputChange("email", value)}
+                            placeholder="Enter your email"
+                            label="Email"
+                            isRequired
+                        />
+                    </div>
                     <FormInput
-                        id="name"
-                        name="name"
-                        value={teacherData.name}
-                        onChange={(value) => handleInputChange("name", value)}
-                        placeholder="Enter your full name"
-                        label="Full Name"
+                        id="school"
+                        name="school"
+                        value={teacherData.school}
+                        onChange={(value) => handleInputChange("school", value)}
+                        placeholder="Enter your school or institution name"
+                        label="School/Institution Name"
                         isRequired
                     />
-                    <FormInput
-                        id="email"
-                        name="email"
-                        type="email"
-                        value={teacherData.email}
-                        onChange={(value) => handleInputChange("email", value)}
-                        placeholder="Enter your email"
-                        label="Email"
-                        isRequired
-                    />
-                </div>
-                <FormInput
-                    id="school"
-                    name="school"
-                    value={teacherData.school}
-                    onChange={(value) => handleInputChange("school", value)}
-                    placeholder="Enter your school or institution name"
-                    label="School/Institution Name"
-                    isRequired
-                />
-                <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <FormSelect
+                            id="experience"
+                            name="experience"
+                            value={teacherData.experience}
+                            onChange={(value) => handleInputChange("experience", value)}
+                            placeholder="Select experience"
+                            label="Teaching Experience"
+                            options={experienceOptions}
+                            isRequired
+                        />
+                        <FormSelect
+                            id="student-count"
+                            name="studentCount"
+                            value={teacherData.studentCount}
+                            onChange={(value) => handleInputChange("studentCount", value)}
+                            placeholder="Select range"
+                            label="Number of Students"
+                            options={studentCountOptions}
+                        />
+                    </div>
                     <FormSelect
-                        id="experience"
-                        name="experience"
-                        value={teacherData.experience}
-                        onChange={(value) => handleInputChange("experience", value)}
-                        placeholder="Select experience"
-                        label="Teaching Experience"
-                        options={experienceOptions}
+                        id="subject"
+                        name="subject"
+                        value={teacherData.subject}
+                        onChange={(value) => handleInputChange("subject", value)}
+                        placeholder="Select subject"
+                        label="Subject you teach"
+                        options={subjects}
                         isRequired
                     />
-                    <FormSelect
-                        id="student-count"
-                        name="studentCount"
-                        value={teacherData.studentCount}
-                        onChange={(value) => handleInputChange("studentCount", value)}
-                        placeholder="Select range"
-                        label="Number of Students"
-                        options={studentCountOptions}
-                    />
+                    <div className="flex justify-end pt-6">
+                        <SubmitButton loading={loading} />
+                    </div>
                 </div>
-                <FormSelect
-                    id="subject"
-                    name="subject"
-                    value={teacherData.subject}
-                    onChange={(value) => handleInputChange("subject", value)}
-                    placeholder="Select subject"
-                    label="Subject you teach"
-                    options={subjects}
-                    isRequired
-                />
-                <div className="flex justify-end pt-6">
-                    <SubmitButton loading={loading} />
-                </div>
-            </div>
+            </form>
         </OnboardingLayout>
-    );
+    )
 }

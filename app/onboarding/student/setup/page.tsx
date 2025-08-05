@@ -1,8 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useOnboardingStore } from "@/store/userInitialSelectedState";
-import { FormInput, FormSelect, FormCheckboxGroup, SubmitButton, OnboardingLayout } from "@/components/onboarding/FormComponents";
+import {
+    FormInput,
+    FormSelect,
+    FormCheckboxGroup,
+    SubmitButton,
+    OnboardingLayout,
+} from "@/components/onboarding/FormComponents";
 import { useOnboardingForm } from "@/hooks/onboarding/useOnboardingForm";
 
 export default function StudentSetupPage() {
@@ -10,12 +17,19 @@ export default function StudentSetupPage() {
     const onboarding = useOnboardingStore((state) => state.onboarding);
     const setData = useOnboardingStore((state) => state.setData);
 
-    if (!onboarding || onboarding.role !== "student") {
-        router.push("/onboarding/user-type");
-        return null;
-    }
+    useEffect(() => {
+        if (!onboarding || onboarding.role !== "student") {
+            router.push("/onboarding/user-type");
+        }
+    }, [onboarding, router]);
 
-    const studentData = onboarding.data as StudentOnboardingData;
+    const studentData = (onboarding?.data as StudentOnboardingData) || {
+        name: "",
+        email: "",
+        grade: "",
+        targetExam: "",
+        subjects: [],
+    };
 
     const targetExams = [
         { value: "jee-main", label: "JEE Main" },
@@ -60,7 +74,12 @@ export default function StudentSetupPage() {
         return formData;
     };
 
-    const { loading, handleSubmit } = useOnboardingForm("student", studentData, validateForm, createFormData);
+    const { loading, handleSubmit } = useOnboardingForm(
+        "student",
+        studentData,
+        validateForm,
+        createFormData
+    );
 
     const handleInputChange = (field: keyof StudentOnboardingData, value: string) => {
         setData({ [field]: value });
@@ -73,67 +92,73 @@ export default function StudentSetupPage() {
         setData({ subjects: newSubjects });
     };
 
+    if (!onboarding) {
+        return null;
+    }
+
     return (
         <OnboardingLayout
             title="Set up your student profile"
             description="Help us personalize your learning experience with the right questions and difficulty level."
         >
-            <div className="space-y-6">
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <FormInput
-                        id="name"
-                        name="name"
-                        value={studentData.name}
-                        onChange={(value) => handleInputChange("name", value)}
-                        placeholder="Enter your full name"
-                        label="Full Name"
+            <form onSubmit={handleSubmit}>
+                <div className="space-y-6">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <FormInput
+                            id="name"
+                            name="name"
+                            value={studentData.name}
+                            onChange={(value) => handleInputChange("name", value)}
+                            placeholder="Enter your full name"
+                            label="Full Name"
+                            isRequired
+                        />
+                        <FormInput
+                            id="email"
+                            name="email"
+                            type="email"
+                            value={studentData.email}
+                            onChange={(value) => handleInputChange("email", value)}
+                            placeholder="Enter your email"
+                            label="Email"
+                            isRequired
+                        />
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <FormSelect
+                            id="grade"
+                            name="grade"
+                            value={studentData.grade}
+                            onChange={(value) => handleInputChange("grade", value)}
+                            placeholder="Select your grade"
+                            label="Current Grade/Class"
+                            options={gradeOptions}
+                            isRequired
+                        />
+                        <FormSelect
+                            id="target-exam"
+                            name="targetExam"
+                            value={studentData.targetExam}
+                            onChange={(value) => handleInputChange("targetExam", value)}
+                            placeholder="Select target exam"
+                            label="Target Exam"
+                            options={targetExams}
+                            isRequired
+                        />
+                    </div>
+                    <FormCheckboxGroup
+                        name="subjects"
+                        label="Subjects you want to practice"
+                        options={subjects}
+                        values={studentData.subjects}
+                        onChange={handleSubjectChange}
                         isRequired
                     />
-                    <FormInput
-                        id="email"
-                        name="email"
-                        type="email"
-                        value={studentData.email}
-                        onChange={(value) => handleInputChange("email", value)}
-                        placeholder="Enter your email"
-                        label="Email"
-                        isRequired
-                    />
+                    <div className="flex justify-end pt-6">
+                        <SubmitButton loading={loading} />
+                    </div>
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <FormSelect
-                        id="grade"
-                        name="grade"
-                        value={studentData.grade}
-                        onChange={(value) => handleInputChange("grade", value)}
-                        placeholder="Select your grade"
-                        label="Current Grade/Class"
-                        options={gradeOptions}
-                        isRequired
-                    />
-                    <FormSelect
-                        id="target-exam"
-                        name="targetExam"
-                        value={studentData.targetExam}
-                        onChange={(value) => handleInputChange("targetExam", value)}
-                        placeholder="Select target exam"
-                        label="Target Exam"
-                        options={targetExams}
-                        isRequired
-                    />
-                </div>
-                <FormCheckboxGroup
-                    name="subjects"
-                    label="Subjects you want to practice"
-                    options={subjects}
-                    values={studentData.subjects}
-                    onChange={handleSubjectChange}
-                    isRequired
-                />
-                <div className="flex justify-end pt-6">
-                    <SubmitButton loading={loading} />
-                </div>
-            </div>
+            </form>
         </OnboardingLayout>
-    );
+    )
 }

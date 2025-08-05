@@ -32,16 +32,14 @@ export function useOnboardingForm<T extends OnboardingData>(
 
         const formData = createFormData(data);
 
-        /*
         const res = await completeOnboarding(formData);
-    
+
         if (res?.message) {
-          await user?.reload();
-          router.push("/");
+            await user?.reload();
+            router.push("/");
         } else if (res?.error) {
-          toast("Sorry, Please try again.", { description: res.error });
+            toast("Sorry, Please try again.", { description: res.error });
         }
-        */
 
         setLoading(false);
     };

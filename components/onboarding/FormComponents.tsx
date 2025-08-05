@@ -191,9 +191,7 @@ export function OnboardingLayout({ title, description, children }: OnboardingLay
                         <CardDescription>{description}</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <form className="space-y-6" noValidate>
-                            {children}
-                        </form>
+                        {children}
                     </CardContent>
                 </Card>
             </div>

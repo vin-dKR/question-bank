@@ -1,8 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useOnboardingStore } from "@/store/userInitialSelectedState";
-import { FormInput, FormSelect, FormCheckboxGroup, SubmitButton, OnboardingLayout } from "@/components/onboarding/FormComponents";
+import {
+    FormInput,
+    FormSelect,
+    FormCheckboxGroup,
+    SubmitButton,
+    OnboardingLayout,
+} from "@/components/onboarding/FormComponents";
 import { useOnboardingForm } from "@/hooks/onboarding/useOnboardingForm";
 
 export default function CoachingSetupPage() {
@@ -10,12 +17,23 @@ export default function CoachingSetupPage() {
     const onboarding = useOnboardingStore((state) => state.onboarding);
     const setData = useOnboardingStore((state) => state.setData);
 
-    if (!onboarding || onboarding.role !== "coaching") {
-        router.push("/onboarding/user-type");
-        return null;
-    }
+    useEffect(() => {
+        if (!onboarding || onboarding.role !== "coaching") {
+            console.log("Redirect check:", { onboarding, role: onboarding?.role });
+            router.push("/onboarding/user-type");
+        }
+    }, [onboarding, router]);
 
-    const coachingData = onboarding.data as CoachingOnboardingData;
+    const coachingData = (onboarding?.data as CoachingOnboardingData) || {
+        centerName: "",
+        contactPerson: "",
+        email: "",
+        phone: "",
+        location: "",
+        teacherCount: "",
+        studentCount: "",
+        targetExams: [],
+    };
 
     const exams = [
         { id: "jee-main", label: "JEE Main" },
@@ -64,7 +82,12 @@ export default function CoachingSetupPage() {
         return formData;
     };
 
-    const { loading, handleSubmit } = useOnboardingForm("coaching", coachingData, validateForm, createFormData);
+    const { loading, handleSubmit } = useOnboardingForm(
+        "coaching",
+        coachingData,
+        validateForm,
+        createFormData
+    );
 
     const handleInputChange = (field: keyof CoachingOnboardingData, value: string) => {
         setData({ [field]: value });
@@ -77,94 +100,100 @@ export default function CoachingSetupPage() {
         setData({ targetExams: newExams });
     };
 
+    if (!onboarding) {
+        return null; // Prevent rendering UI until onboarding is loaded
+    }
+
     return (
         <OnboardingLayout
             title="Set up your coaching center"
             description="Tell us about your coaching center so we can provide enterprise-level features and support."
         >
-            <div className="space-y-6">
-                <FormInput
-                    id="center-name"
-                    name="centerName"
-                    value={coachingData.centerName}
-                    onChange={(value) => handleInputChange("centerName", value)}
-                    placeholder="Enter your coaching center name"
-                    label="Coaching Center Name"
-                    isRequired
-                />
-                <div className="grid gap-4 sm:grid-cols-2">
+            <form onSubmit={handleSubmit}>
+                <div className="space-y-6">
                     <FormInput
-                        id="contact-person"
-                        name="contactPerson"
-                        value={coachingData.contactPerson}
-                        onChange={(value) => handleInputChange("contactPerson", value)}
-                        placeholder="Enter contact person name"
-                        label="Contact Person"
+                        id="center-name"
+                        name="centerName"
+                        value={coachingData.centerName}
+                        onChange={(value) => handleInputChange("centerName", value)}
+                        placeholder="Enter your coaching center name"
+                        label="Coaching Center Name"
                         isRequired
                     />
-                    <FormInput
-                        id="phone"
-                        name="phone"
-                        value={coachingData.phone}
-                        onChange={(value) => handleInputChange("phone", value)}
-                        placeholder="Enter phone number"
-                        label="Phone Number"
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <FormInput
+                            id="contact-person"
+                            name="contactPerson"
+                            value={coachingData.contactPerson}
+                            onChange={(value) => handleInputChange("contactPerson", value)}
+                            placeholder="Enter contact person name"
+                            label="Contact Person"
+                            isRequired
+                        />
+                        <FormInput
+                            id="phone"
+                            name="phone"
+                            value={coachingData.phone}
+                            onChange={(value) => handleInputChange("phone", value)}
+                            placeholder="Enter phone number"
+                            label="Phone Number"
+                            isRequired
+                        />
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <FormInput
+                            id="email"
+                            name="email"
+                            type="email"
+                            value={coachingData.email}
+                            onChange={(value) => handleInputChange("email", value)}
+                            placeholder="Enter email address"
+                            label="Email"
+                            isRequired
+                        />
+                        <FormInput
+                            id="location"
+                            name="location"
+                            value={coachingData.location}
+                            onChange={(value) => handleInputChange("location", value)}
+                            placeholder="City, State"
+                            label="Location"
+                            isRequired
+                        />
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <FormSelect
+                            id="teacher-count"
+                            name="teacherCount"
+                            value={coachingData.teacherCount}
+                            onChange={(value) => handleInputChange("teacherCount", value)}
+                            placeholder="Select range"
+                            label="Number of Teachers"
+                            options={teacherCountOptions}
+                        />
+                        <FormSelect
+                            id="student-count"
+                            name="studentCount"
+                            value={coachingData.studentCount}
+                            onChange={(value) => handleInputChange("studentCount", value)}
+                            placeholder="Select range"
+                            label="Number of Students"
+                            options={studentCountOptions}
+                        />
+                    </div>
+                    <FormCheckboxGroup
+                        name="targetExams"
+                        label="Target Exams"
+                        options={exams}
+                        values={coachingData.targetExams}
+                        onChange={handleExamChange}
                         isRequired
                     />
+                    <div className="flex justify-end pt-6">
+                        <SubmitButton loading={loading} />
+                    </div>
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <FormInput
-                        id="email"
-                        name="email"
-                        type="email"
-                        value={coachingData.email}
-                        onChange={(value) => handleInputChange("email", value)}
-                        placeholder="Enter email address"
-                        label="Email"
-                        isRequired
-                    />
-                    <FormInput
-                        id="location"
-                        name="location"
-                        value={coachingData.location}
-                        onChange={(value) => handleInputChange("location", value)}
-                        placeholder="City, State"
-                        label="Location"
-                        isRequired
-                    />
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <FormSelect
-                        id="teacher-count"
-                        name="teacherCount"
-                        value={coachingData.teacherCount}
-                        onChange={(value) => handleInputChange("teacherCount", value)}
-                        placeholder="Select range"
-                        label="Number of Teachers"
-                        options={teacherCountOptions}
-                    />
-                    <FormSelect
-                        id="student-count"
-                        name="studentCount"
-                        value={coachingData.studentCount}
-                        onChange={(value) => handleInputChange("studentCount", value)}
-                        placeholder="Select range"
-                        label="Number of Students"
-                        options={studentCountOptions}
-                    />
-                </div>
-                <FormCheckboxGroup
-                    name="targetExams"
-                    label="Target Exams"
-                    options={exams}
-                    values={coachingData.targetExams}
-                    onChange={handleExamChange}
-                    isRequired
-                />
-                <div className="flex justify-end pt-6">
-                    <SubmitButton loading={loading} />
-                </div>
-            </div>
+            </form>
         </OnboardingLayout>
     );
 }
