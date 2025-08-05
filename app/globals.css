@@ -13,6 +13,15 @@
   --tracking-4: 0.1em;
 }
 
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
 html {
   font-size: 16px; /* Base font size for rem units */
   scroll-behavior: smooth;
@@ -36,4 +45,9 @@ input, select, textarea, button {
 /* Ensure Tailwind components respect font family */
 .font-inter {
   font-family: var(--font-inter);
+}
+
+.custom-toast [data-sonner-toast] {
+  font-family: var(--font-inter);
+  font-size: 16px;
 }

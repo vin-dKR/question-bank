@@ -173,8 +173,9 @@ declare global {
         name: string;
         email: string;
         school: string;
-        subjects: string[];
-        experience?: number;
+        subject: string
+        experience?: string;
+        studentCount?: string;
     }
 
     interface CoachingOnboardingData {

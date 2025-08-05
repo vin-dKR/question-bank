@@ -38,7 +38,7 @@ export const useOnboardingStore = create<OnboardingStore>()(
                         name: "",
                         email: "",
                         school: "",
-                        subjects: [],
+                        subject: "",
                         experience: undefined,
                     };
                 } else {

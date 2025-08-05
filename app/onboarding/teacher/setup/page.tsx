@@ -1,102 +1,174 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
-import { ArrowLeft, ArrowRight } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, ArrowRight, LoaderCircle } from "lucide-react";
+import { useOnboardingStore } from "@/store/userInitialSelectedState";
+import { useUser } from "@clerk/nextjs";
+import { toast } from "sonner";
+import { completeOnboarding } from "@/actions/onBoarding/completeOnboarding";
 
 export default function TeacherSetupPage() {
-    const router = useRouter()
-    const [formData, setFormData] = useState({
-        name: "",
-        email: "",
-        school: "",
-        subjects: [] as string[],
-        experience: "",
-        studentCount: "",
-    })
+    const router = useRouter();
+    const { user } = useUser();
+    const [loading, setLoading] = useState<boolean>(false);
+
+    // Access Zustand store
+    const onboarding = useOnboardingStore((state) => state.onboarding);
+    const setData = useOnboardingStore((state) => state.setData);
+
+    // Redirect if not a teacher or onboarding is null
+    if (!onboarding || onboarding.role !== "teacher") {
+        router.push("/onboarding/user-type");
+        return null;
+    }
+
+    const teacherData = onboarding.data as TeacherOnboardingData;
 
     const subjects = [
         { id: "physics", label: "Physics" },
         { id: "chemistry", label: "Chemistry" },
         { id: "mathematics", label: "Mathematics" },
         { id: "biology", label: "Biology" },
-        { id: "english", label: "English" },
-        { id: "hindi", label: "Hindi" },
-    ]
+    ];
 
-    const handleSubjectChange = (subjectId: string, checked: boolean) => {
-        setFormData((prev) => ({
-            ...prev,
-            subjects: checked ? [...prev.subjects, subjectId] : prev.subjects.filter((s) => s !== subjectId),
-        }))
-    }
+    const handleInputChange = (
+        field: keyof TeacherOnboardingData,
+        value: string | undefined
+    ) => {
+        setData({ [field]: value });
+    };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        router.push("/dashboard")
-    }
+    const validateForm = () => {
+        if (!teacherData.name.trim()) return "Full name is required.";
+        if (!teacherData.email.trim() || !/\S+@\S+\.\S+/.test(teacherData.email))
+            return "A valid email is required.";
+        if (!teacherData.school.trim()) return "School or institution name is required.";
+        if (!teacherData.subject) return "Please select one subject.";
+        if (!teacherData.experience) return "Please select your teaching experience.";
+        return null;
+    };
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setLoading(true);
+
+        const error = validateForm();
+        if (error) {
+            toast("Sorry there is an Error", { description: error });
+            setLoading(false);
+            return;
+        }
+
+        // Simulate successful submission for testing
+        toast("Success", { description: "Teacher profile submitted successfully!" });
+
+        const formData = new FormData();
+        formData.append("name", teacherData.name);
+        formData.append("email", teacherData.email);
+        formData.append("school", teacherData.school);
+        formData.append("subject", teacherData.subject);
+        if (teacherData.experience) formData.append("experience", teacherData.experience);
+        if (teacherData.studentCount) formData.append("studentCount", teacherData.studentCount);
+
+        const res = await completeOnboarding(formData);
+
+        if (res?.message) {
+            await user?.reload();
+            router.push("/");
+        } else if (res?.error) {
+            toast("Sorry, Please try again.", { description: res.error });
+        }
+
+        setLoading(false);
+    };
 
     return (
         <div className="min-h-screen bg-gray-50 py-12">
             <div className="mx-auto max-w-4xl px-6">
                 <div className="mb-12">
-                    <Button variant="ghost" onClick={() => router.back()} className="mb-4 bg-black/4 border border-black/5">
+                    <Button
+                        variant="ghost"
+                        onClick={() => router.back()}
+                        className="mb-4 bg-black/4 border border-black/5"
+                    >
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Back
                     </Button>
-                    <h1 className="text-3xl font-bold text-gray-900">Set up your teacher profile</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">
+                        Set up your teacher profile
+                    </h1>
                     <p className="mt-2 text-gray-600">
-                        Help us understand your teaching needs so we can provide the best question recommendations.
+                        Help us understand your teaching needs so we can provide the best question
+                        recommendations.
                     </p>
                 </div>
 
                 <Card>
                     <CardHeader className="gap-0">
                         <CardTitle className="text-lg m-0">Teaching Information</CardTitle>
-                        <CardDescription>This helps us customize your question bank and test templates</CardDescription>
+                        <CardDescription>
+                            This helps us customize your question bank and test templates
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <form onSubmit={handleSubmit} className="space-y-6">
+                        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="space-y-2">
-                                    <Label htmlFor="name">Full Name</Label>
+                                    <Label htmlFor="name">
+                                        Full Name <span className="text-red-500">*</span>
+                                    </Label>
                                     <Input
                                         id="name"
-                                        value={formData.name}
-                                        onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                                        name="name"
+                                        value={teacherData.name}
+                                        onChange={(e) => handleInputChange("name", e.target.value)}
                                         placeholder="Enter your full name"
-                                        required
                                         className="border border-black/10"
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="email">Email</Label>
+                                    <Label htmlFor="email">
+                                        Email <span className="text-red-500">*</span>
+                                    </Label>
                                     <Input
                                         id="email"
+                                        name="email"
                                         type="email"
-                                        value={formData.email}
-                                        onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+                                        value={teacherData.email}
+                                        onChange={(e) => handleInputChange("email", e.target.value)}
                                         placeholder="Enter your email"
-                                        required
                                         className="border border-black/10"
                                     />
                                 </div>
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="school">School/Institution Name</Label>
+                                <Label htmlFor="school">
+                                    School/Institution Name <span className="text-red-500">*</span>
+                                </Label>
                                 <Input
                                     id="school"
-                                    value={formData.school}
-                                    onChange={(e) => setFormData((prev) => ({ ...prev, school: e.target.value }))}
+                                    name="school"
+                                    value={teacherData.school}
+                                    onChange={(e) => handleInputChange("school", e.target.value)}
                                     placeholder="Enter your school or institution name"
                                     className="border border-black/10"
                                 />
@@ -104,8 +176,13 @@ export default function TeacherSetupPage() {
 
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="space-y-2">
-                                    <Label htmlFor="experience">Teaching Experience</Label>
-                                    <Select onValueChange={(value) => setFormData((prev) => ({ ...prev, experience: value }))}>
+                                    <Label htmlFor="experience">
+                                        Teaching Experience <span className="text-red-500">*</span>
+                                    </Label>
+                                    <Select
+                                        value={teacherData.experience}
+                                        onValueChange={(value) => handleInputChange("experience", value)}
+                                    >
                                         <SelectTrigger className="border border-black/10">
                                             <SelectValue placeholder="Select experience" />
                                         </SelectTrigger>
@@ -116,10 +193,19 @@ export default function TeacherSetupPage() {
                                             <SelectItem value="10+">10+ years</SelectItem>
                                         </SelectContent>
                                     </Select>
+                                    {/* Hidden input for FormData */}
+                                    <input
+                                        type="hidden"
+                                        name="experience"
+                                        value={teacherData.experience ?? ""}
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="student-count">Number of Students</Label>
-                                    <Select onValueChange={(value) => setFormData((prev) => ({ ...prev, studentCount: value }))}>
+                                    <Select
+                                        value={teacherData.studentCount}
+                                        onValueChange={(value) => handleInputChange("studentCount", value)}
+                                    >
                                         <SelectTrigger className="border border-black/10">
                                             <SelectValue placeholder="Select range" />
                                         </SelectTrigger>
@@ -130,31 +216,55 @@ export default function TeacherSetupPage() {
                                             <SelectItem value="100+">100+ students</SelectItem>
                                         </SelectContent>
                                     </Select>
+                                    {/* Hidden input for FormData */}
+                                    <input
+                                        type="hidden"
+                                        name="studentCount"
+                                        value={teacherData.studentCount ?? ""}
+                                    />
                                 </div>
                             </div>
 
-                            <div className="space-y-3">
-                                <Label>Subjects you teach</Label>
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                    {subjects.map((subject) => (
-                                        <div key={subject.id} className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id={subject.id}
-                                                checked={formData.subjects.includes(subject.id)}
-                                                onCheckedChange={(checked) => handleSubjectChange(subject.id, checked as boolean)}
-                                            />
-                                            <Label htmlFor={subject.id} className="text-sm font-normal">
+                            <div className="space-y-2">
+                                <Label htmlFor="subject">
+                                    Subject you teach <span className="text-red-500">*</span>
+                                </Label>
+                                <Select
+                                    value={teacherData.subject}
+                                    onValueChange={(value) => handleInputChange("subject", value)}
+                                >
+                                    <SelectTrigger className="border border-black/10">
+                                        <SelectValue placeholder="Select subject" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-white text-black border border-black/10">
+                                        {subjects.map((subject) => (
+                                            <SelectItem key={subject.id} value={subject.id}>
                                                 {subject.label}
-                                            </Label>
-                                        </div>
-                                    ))}
-                                </div>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {/* Hidden input for FormData */}
+                                <input
+                                    type="hidden"
+                                    name="subject"
+                                    value={teacherData.subject ?? ""}
+                                />
                             </div>
 
                             <div className="flex justify-end pt-6">
-                                <Button type="submit" size="lg" className="bg-black text-white rounded-xl">
+                                <Button
+                                    type="submit"
+                                    size="lg"
+                                    className="bg-black text-white rounded-xl disabled:opacity-50"
+                                    disabled={loading}
+                                >
                                     Complete Setup
-                                    <ArrowRight className="ml-2 h-4 w-4" />
+                                    {loading ? (
+                                        <LoaderCircle className="ml-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <ArrowRight className="ml-2 h-4 w-4" />
+                                    )}
                                 </Button>
                             </div>
                         </form>

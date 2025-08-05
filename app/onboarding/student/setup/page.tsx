@@ -21,29 +21,29 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, ArrowRight, LoaderCircle } from "lucide-react";
-
-import { useOnboardingStore } from "@/store/userInitialSelectedState"
-import { completeOnboarding } from "@/actions/onBoarding/completeOnboarding";
+import { useOnboardingStore } from "@/store/userInitialSelectedState";
 import { useUser } from "@clerk/nextjs";
+import { toast } from "sonner";
+import { completeOnboarding } from "@/actions/onBoarding/completeOnboarding";
 
 
 export default function StudentSetupPage() {
     const router = useRouter();
-    const { user } = useUser()
+    const { user } = useUser();
+    const [loading, setLoading] = useState<boolean>(false);
 
-    const [loading, setLoading] = useState<boolean>(false)
     // Access the full onboarding object
     const onboarding = useOnboardingStore((state) => state.onboarding);
     const setData = useOnboardingStore((state) => state.setData);
 
     // Make sure this page is only used for "student" role
     if (!onboarding || onboarding.role !== "student") {
-        // Optionally redirect or show fallback UI here
-        return <div>Please start onboarding as a Student to fill this form.</div>;
+        router.push("/onboarding/user-type");
+        return null;
     }
 
     // Destructure student-specific data
-    const studentData = onboarding.data;
+    const studentData = onboarding.data as StudentOnboardingData;
 
     const targetExams = [
         { value: "jee-main", label: "JEE Main" },
@@ -64,34 +64,59 @@ export default function StudentSetupPage() {
         const newSubjects = checked
             ? [...studentData.subjects, subjectId]
             : studentData.subjects.filter((s) => s !== subjectId);
-
         setData({ subjects: newSubjects });
     };
 
-    const handleInputChange = (field: keyof typeof studentData, value: string) => {
+    const handleInputChange = (
+        field: keyof StudentOnboardingData,
+        value: string
+    ) => {
         setData({ [field]: value });
+    };
+
+    const validateForm = () => {
+        if (!studentData.name.trim()) return "Full name is required.";
+        if (!studentData.email.trim() || !/\S+@\S+\.\S+/.test(studentData.email))
+            return "A valid email is required.";
+        if (!studentData.grade) return "Please select your current grade.";
+        if (!studentData.targetExam) return "Please select your target exam.";
+        if (studentData.subjects.length === 0)
+            return "Please select at least one subject.";
+        return null;
     };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setLoading(true)
+        setLoading(true);
 
-        const formData = new FormData(e.currentTarget);
+        const error = validateForm();
+        if (error) {
+            toast("Sorry there is an Error", { description: error });
+            setLoading(false);
+            return;
+        }
 
-        const res = await completeOnboarding(formData)
+        // Simulate successful submission for testing
+        toast("Success", { description: "Student profile submitted successfully!" });
+
+        const formData = new FormData();
+        formData.append("name", studentData.name);
+        formData.append("email", studentData.email);
+        formData.append("grade", studentData.grade);
+        formData.append("targetExam", studentData.targetExam);
+        formData.append("subjects", JSON.stringify(studentData.subjects));
+
+        const res = await completeOnboarding(formData);
 
         if (res?.message) {
-            // Reloads the user's data from the Clerk API
-            console.log("000000", onboarding)
-            await user?.reload()
-            router.push('/')
+            await user?.reload();
+            router.push("/");
+        } else if (res?.error) {
+            toast("Sorry, Please try again.", { description: res.error });
         }
-        if (res?.error) {
-            console.log("this is it")
-        }
-        setLoading(false)
-    };
 
+        setLoading(false);
+    };
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 tracking-3">
@@ -109,8 +134,8 @@ export default function StudentSetupPage() {
                         Set up your student profile
                     </h1>
                     <p className="mt-2 text-gray-600">
-                        Help us personalize your learning experience with the right
-                        questions and difficulty level.
+                        Help us personalize your learning experience with the right questions and
+                        difficulty level.
                     </p>
                 </div>
 
@@ -122,30 +147,32 @@ export default function StudentSetupPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <form onSubmit={handleSubmit} className="space-y-6">
+                        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                             <div className="grid gap-4 sm:grid-cols-3">
                                 <div className="space-y-2">
-                                    <Label htmlFor="name">Full Name</Label>
+                                    <Label htmlFor="name">
+                                        Full Name <span className="text-red-500">*</span>
+                                    </Label>
                                     <Input
                                         id="name"
-                                        name="applicationName"
+                                        name="name"
                                         value={studentData.name}
                                         onChange={(e) => handleInputChange("name", e.target.value)}
                                         placeholder="Enter your full name"
-                                        required
                                         className="border border-black/10"
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="email">Email</Label>
+                                    <Label htmlFor="email">
+                                        Email <span className="text-red-500">*</span>
+                                    </Label>
                                     <Input
-                                        type="email"
-                                        name="applicationType"
                                         id="email"
+                                        name="email"
+                                        type="email"
                                         value={studentData.email}
                                         onChange={(e) => handleInputChange("email", e.target.value)}
                                         placeholder="Enter your email"
-                                        required
                                         className="border border-black/10"
                                     />
                                 </div>
@@ -153,7 +180,9 @@ export default function StudentSetupPage() {
 
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="space-y-2">
-                                    <Label htmlFor="grade">Current Grade/Class</Label>
+                                    <Label htmlFor="grade">
+                                        Current Grade/Class <span className="text-red-500">*</span>
+                                    </Label>
                                     <Select
                                         value={studentData.grade}
                                         onValueChange={(value) => handleInputChange("grade", value)}
@@ -168,9 +197,17 @@ export default function StudentSetupPage() {
                                             <SelectItem value="dropper">Dropper</SelectItem>
                                         </SelectContent>
                                     </Select>
+                                    {/* Hidden input for FormData */}
+                                    <input
+                                        type="hidden"
+                                        name="grade"
+                                        value={studentData.grade ?? ""}
+                                    />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="target-exam">Target Exam</Label>
+                                    <Label htmlFor="target-exam">
+                                        Target Exam <span className="text-red-500">*</span>
+                                    </Label>
                                     <Select
                                         value={studentData.targetExam}
                                         onValueChange={(value) => handleInputChange("targetExam", value)}
@@ -186,11 +223,19 @@ export default function StudentSetupPage() {
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                    {/* Hidden input for FormData */}
+                                    <input
+                                        type="hidden"
+                                        name="targetExam"
+                                        value={studentData.targetExam ?? ""}
+                                    />
                                 </div>
                             </div>
 
                             <div className="space-y-3">
-                                <Label>Subjects you want to practice</Label>
+                                <Label>
+                                    Subjects you want to practice <span className="text-red-500">*</span>
+                                </Label>
                                 <div className="grid gap-3 sm:grid-cols-2">
                                     {subjects.map((subject) => (
                                         <div key={subject.id} className="flex items-center space-x-2">
@@ -207,6 +252,12 @@ export default function StudentSetupPage() {
                                         </div>
                                     ))}
                                 </div>
+                                {/* Hidden input for FormData */}
+                                <input
+                                    type="hidden"
+                                    name="subjects"
+                                    value={JSON.stringify(studentData.subjects) ?? "[]"}
+                                />
                             </div>
 
                             <div className="flex justify-end pt-6">
@@ -214,15 +265,14 @@ export default function StudentSetupPage() {
                                     type="submit"
                                     size="lg"
                                     className="bg-black text-white rounded-xl disabled:opacity-50"
-                                    disabled={loading || !loading}
+                                    disabled={loading}
                                 >
                                     Complete Setup
                                     {loading ? (
-                                        <LoaderCircle className="ml-2 h-4 w-4" />
+                                        <LoaderCircle className="ml-2 h-4 w-4 animate-spin" />
                                     ) : (
                                         <ArrowRight className="ml-2 h-4 w-4" />
                                     )}
-
                                 </Button>
                             </div>
                         </form>
@@ -230,5 +280,5 @@ export default function StudentSetupPage() {
                 </Card>
             </div>
         </div>
-    );
+    )
 }
