@@ -1,89 +1,50 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-type UserRole = "student" | "teacher" | "coaching";
-
-type OnboardingData =
-    | { role: "student"; data: StudentOnboardingData }
-    | { role: "teacher"; data: TeacherOnboardingData }
-    | { role: "coaching"; data: CoachingOnboardingData };
-
-// ==== Zustand Store Interface ====
-interface OnboardingStore {
-    onboarding: OnboardingData | null;
-    setRole: (role: UserRole) => void;
-    setData: (
-        data: Partial<StudentOnboardingData | TeacherOnboardingData | CoachingOnboardingData>
-    ) => void;
-    clearOnboarding: () => void;
-}
-
-// ==== Store Implementation ====
 export const useOnboardingStore = create<OnboardingStore>()(
     persist(
         (set) => ({
             onboarding: null,
-            setRole: (role) => {
-                let emptyData: any;
-                if (role === "student") {
-                    emptyData = {
+            setRole: (role: UserRole) => {
+                const emptyDataMap: Record<UserRole, OnboardingData> = {
+                    student: {
                         name: "",
                         email: "",
                         grade: "",
                         targetExam: "",
                         subjects: [],
-                    };
-                } else if (role === "teacher") {
-                    emptyData = {
+                    } as StudentOnboardingData,
+                    teacher: {
                         name: "",
                         email: "",
                         school: "",
                         subject: "",
                         experience: undefined,
-                    };
-                } else {
-                    emptyData = {
+                        studentCount: undefined,
+                    } as TeacherOnboardingData,
+                    coaching: {
                         centerName: "",
                         contactPerson: "",
                         email: "",
                         phone: "",
                         location: "",
-                        teacherCount: "",
-                        studentCount: "",
-                        targetExams: []
-                    };
-                }
-                set({ onboarding: { role, data: emptyData } });
+                        teacherCount: undefined,
+                        studentCount: undefined,
+                        targetExams: [],
+                    } as CoachingOnboardingData,
+                };
+                set({ onboarding: { role, data: emptyDataMap[role] } });
             },
 
-            setData: (data) =>
+            setData: (data: Partial<OnboardingData>) =>
                 set((state) => {
-                    if (!state.onboarding) return {};
-
-                    // Branch per role; update correct data type using partial merge
-                    if (state.onboarding.role === "student") {
-                        return {
-                            onboarding: {
-                                role: "student",
-                                data: { ...state.onboarding.data, ...data } as StudentOnboardingData,
-                            },
-                        };
-                    } else if (state.onboarding.role === "teacher") {
-                        return {
-                            onboarding: {
-                                role: "teacher",
-                                data: { ...state.onboarding.data, ...data } as TeacherOnboardingData,
-                            },
-                        };
-                    } else if (state.onboarding.role === "coaching") {
-                        return {
-                            onboarding: {
-                                role: "coaching",
-                                data: { ...state.onboarding.data, ...data } as CoachingOnboardingData,
-                            },
-                        };
-                    }
-                    return {};
+                    if (!state.onboarding) return { onboarding: null };
+                    return {
+                        onboarding: {
+                            ...state.onboarding,
+                            data: { ...state.onboarding.data, ...data },
+                        },
+                    };
                 }),
 
             clearOnboarding: () => set({ onboarding: null }),
@@ -93,6 +54,4 @@ export const useOnboardingStore = create<OnboardingStore>()(
             partialize: (state) => ({ onboarding: state.onboarding }),
         }
     )
-);
-
-
+)

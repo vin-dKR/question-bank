@@ -161,21 +161,21 @@ declare global {
         pdfOptions?: HTMLToPDFOptions;
     }
 
+    interface TeacherOnboardingData {
+        name: string;
+        email: string;
+        school: string;
+        subject: string;
+        experience: string | undefined;
+        studentCount?: string;
+    }
+
     interface StudentOnboardingData {
         name: string;
         email: string;
         grade: string;
         targetExam: string;
         subjects: string[];
-    }
-
-    interface TeacherOnboardingData {
-        name: string;
-        email: string;
-        school: string;
-        subject: string
-        experience?: string;
-        studentCount?: string;
     }
 
     interface CoachingOnboardingData {
@@ -187,6 +187,20 @@ declare global {
         teacherCount: string | undefined;
         studentCount: string | undefined;
         targetExams: string[];
+    }
+
+    type OnboardingData =
+        | TeacherOnboardingData
+        | StudentOnboardingData
+        | CoachingOnboardingData;
+
+    type UserRole = "teacher" | "student" | "coaching";
+
+    interface OnboardingStore {
+        onboarding: { role: UserRole; data: OnboardingData } | null;
+        setRole: (role: UserRole) => void;
+        setData: (data: Partial<OnboardingData>) => void;
+        clearOnboarding: () => void;
     }
 }
 
