@@ -124,7 +124,8 @@ exports.Prisma.UserScalarFieldEnum = {
   otpExpiry: 'otpExpiry',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  profileImage: 'profileImage'
+  profileImage: 'profileImage',
+  role: 'role'
 };
 
 exports.Prisma.QuestionScalarFieldEnum = {

@@ -38,7 +38,8 @@ export async function POST(req: NextRequest) {
                         clerkUserId,
                         name,
                         email,
-                        profileImage: image_url
+                        profileImage: image_url,
+                        role: ""
                     }
                 })
             }

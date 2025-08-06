@@ -36,8 +36,6 @@ export default function TeacherSetupPage() {
         { value: "chemistry", label: "Chemistry" },
         { value: "mathematics", label: "Mathematics" },
         { value: "biology", label: "Biology" },
-        { value: "english", label: "English" },
-        { value: "hindi", label: "Hindi" },
     ];
 
     const experienceOptions = [
