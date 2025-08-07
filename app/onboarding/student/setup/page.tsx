@@ -64,13 +64,14 @@ export default function StudentSetupPage() {
         return null;
     };
 
-    const createFormData = (data: StudentOnboardingData) => {
+    const createFormData = (data: StudentOnboardingData, role: UserRole) => {
         const formData = new FormData();
         formData.append("name", data.name);
         formData.append("email", data.email);
         formData.append("grade", data.grade);
         formData.append("targetExam", data.targetExam);
         formData.append("subjects", JSON.stringify(data.subjects));
+        formData.append("role", role)
         return formData;
     };
 
@@ -78,7 +79,7 @@ export default function StudentSetupPage() {
         "student",
         studentData,
         validateForm,
-        createFormData
+        (data) => createFormData(data, "student")
     );
 
     const handleInputChange = (field: keyof StudentOnboardingData, value: string) => {

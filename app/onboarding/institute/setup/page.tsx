@@ -69,7 +69,7 @@ export default function CoachingSetupPage() {
         return null;
     };
 
-    const createFormData = (data: CoachingOnboardingData) => {
+    const createFormData = (data: CoachingOnboardingData, role: UserRole) => {
         const formData = new FormData();
         formData.append("role", "coaching");
         formData.append("centerName", data.centerName);
@@ -80,6 +80,7 @@ export default function CoachingSetupPage() {
         if (data.teacherCount) formData.append("teacherCount", data.teacherCount);
         if (data.studentCount) formData.append("studentCount", data.studentCount);
         formData.append("targetExams", JSON.stringify(data.targetExams));
+        formData.append("role", role)
         return formData;
     };
 
@@ -87,7 +88,7 @@ export default function CoachingSetupPage() {
         "coaching",
         coachingData,
         validateForm,
-        createFormData
+        (data) => createFormData(data, "coaching")
     );
 
     const handleInputChange = (field: keyof CoachingOnboardingData, value: string) => {
