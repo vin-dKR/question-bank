@@ -71,6 +71,7 @@ export default function CoachingSetupPage() {
 
     const createFormData = (data: CoachingOnboardingData) => {
         const formData = new FormData();
+        formData.append("role", "coaching");
         formData.append("centerName", data.centerName);
         formData.append("contactPerson", data.contactPerson);
         formData.append("email", data.email);

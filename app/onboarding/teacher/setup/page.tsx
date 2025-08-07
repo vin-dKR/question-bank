@@ -36,7 +36,7 @@ export default function TeacherSetupPage() {
         { value: "chemistry", label: "Chemistry" },
         { value: "mathematics", label: "Mathematics" },
         { value: "biology", label: "Biology" },
-    ];
+    ]
 
     const experienceOptions = [
         { value: "0-2", label: "0-2 years" },
@@ -62,7 +62,7 @@ export default function TeacherSetupPage() {
         return null;
     };
 
-    const createFormData = (data: TeacherOnboardingData) => {
+    const createFormData = (data: TeacherOnboardingData, role: UserRole) => {
         const formData = new FormData();
         formData.append("name", data.name);
         formData.append("email", data.email);
@@ -70,6 +70,7 @@ export default function TeacherSetupPage() {
         formData.append("subject", data.subject);
         if (data.experience) formData.append("experience", data.experience);
         if (data.studentCount) formData.append("studentCount", data.studentCount);
+        formData.append("role", role)
         return formData;
     };
 
@@ -77,7 +78,7 @@ export default function TeacherSetupPage() {
         "teacher",
         teacherData,
         validateForm,
-        createFormData
+        (data) => createFormData(data, "teacher")
     );
 
     const handleInputChange = (field: keyof TeacherOnboardingData, value: string) => {

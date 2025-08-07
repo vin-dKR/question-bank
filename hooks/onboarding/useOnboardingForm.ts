@@ -25,7 +25,6 @@ export function useOnboardingForm<T extends OnboardingData>(
             return;
         }
 
-        console.log("-------------", data);
 
         // Simulate successful submission for testing
         toast("Success", { description: `${role.charAt(0).toUpperCase() + role.slice(1)} profile submitted successfully!` });
