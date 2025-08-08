@@ -31,7 +31,7 @@ const DraftManager = () => {
         loading,
         err,
     } = useFolderContext();
-    const { selectedQuestions } = useQuestionBankContext();
+    const { questions } = useQuestionBankContext();
     const [selectedFolder, setSelectedFolder] = useState<FetchDraft | null>(null);
     const [editMode, setEditMode] = useState<string | null>(null);
     const [newName, setNewName] = useState('');
@@ -84,14 +84,14 @@ const DraftManager = () => {
     };
 
     const handleAddQuestionsToFolder = async () => {
-        if (!selectedFolder || selectedQuestions.length === 0) {
+        if (!selectedFolder || questions.length === 0) {
             alert('No questions selected or no folder selected');
             return;
         }
         try {
             const success = await updateQuestionsInFolder(
                 selectedFolder.id,
-                selectedQuestions.map((q) => ({
+                questions.map((q) => ({
                     id: q.id,
                 }))
             );
@@ -100,7 +100,7 @@ const DraftManager = () => {
                     ...prev!,
                     questions: [
                         ...prev!.questions,
-                        ...selectedQuestions.map((q) => ({
+                        ...questions.map((q) => ({
                             id: q.id,
                             question_number: q.question_number,
                             question_text: q.question_text,
@@ -208,13 +208,13 @@ const DraftManager = () => {
                                         <DialogTitle>Add Questions to {selectedFolder.name}</DialogTitle>
                                     </DialogHeader>
                                     <div className="text-sm text-slate-600">
-                                        {selectedQuestions.length} question(s) will be added
+                                        {questions.length} question(s) will be added
                                     </div>
                                     <DialogFooter className="sm:justify-start">
                                         <DialogClose asChild>
                                             <Button
                                                 onClick={handleAddQuestionsToFolder}
-                                                disabled={selectedQuestions.length === 0}
+                                                disabled={questions.length === 0}
                                                 className="bg-indigo-600 hover:bg-indigo-700"
                                             >
                                                 Add Questions

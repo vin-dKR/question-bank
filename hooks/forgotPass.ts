@@ -31,9 +31,9 @@ export const useForgotPass = () => {
             });
 
             setOtpSent(true);
-        } catch (err: any) {
-            setError(err.errors?.[0]?.message || 'Failed to send OTP. Please try again.');
-        } finally {
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+            setError(errorMessage);
             setLoading(false);
         }
     };
@@ -57,9 +57,9 @@ export const useForgotPass = () => {
                 setActive({ session: result.createdSessionId });
                 setTimeout(() => router.push('/'), 2000);
             }
-        } catch (err: any) {
-            setError(err.errors?.[0]?.message || 'Invalid or expired OTP. Please try again.');
-        } finally {
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+            setError(errorMessage);
             setLoading(false);
         }
     };
@@ -76,9 +76,9 @@ export const useForgotPass = () => {
                 identifier: email,
             });
             setError('');
-        } catch (err: any) {
-            setError(err.errors?.[0]?.message || 'Failed to resend OTP. Please try again.');
-        } finally {
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+            setError(errorMessage);
             setLoading(false);
         }
     };

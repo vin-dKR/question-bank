@@ -1,4 +1,3 @@
-
 export const exams = [
     { value: '', option: 'All Exams' },
     { value: 'JEE Adv', option: 'JEE Adv' },

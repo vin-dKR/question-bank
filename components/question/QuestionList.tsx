@@ -152,13 +152,11 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
 });
 QuestionItem.displayName = 'QuestionItem';
 
-export default function QuestionList() {
+const QuestionList = memo(() => {
     const { questions, loading, error, selectedQuestionIds, toggleQuestionSelection, toggleQuestionFlag } = useQuestionBankContext();
 
-    console.log(selectedQuestionIds)
     return (
         <div className="min-h-screen bg-gray-100">
-            {/* Search Bar */}
 
             {/* Question List */}
             <div className="w-full max-w-4xl mx-auto">
@@ -196,4 +194,8 @@ export default function QuestionList() {
             </div>
         </div>
     );
-}
+});
+
+QuestionList.displayName = 'QuestionList';
+
+export default QuestionList;

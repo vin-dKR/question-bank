@@ -30,7 +30,7 @@ const nextConfig: NextConfig = {
         if (isServer) {
             // Prevent Prisma Client from being treated as an external module
             // eslint-disable-next-line
-            config.externals = config.externals.map((external: any) => {
+            config.externals = config.externals.map((external: string | RegExp) => {
                 if (typeof external !== 'string') return external;
                 return external === '@prisma/client' ? {} : external;
             });

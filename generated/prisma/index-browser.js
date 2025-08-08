@@ -128,6 +128,46 @@ exports.Prisma.UserScalarFieldEnum = {
   role: 'role'
 };
 
+exports.Prisma.TeacherDataScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  name: 'name',
+  email: 'email',
+  school: 'school',
+  subject: 'subject',
+  experience: 'experience',
+  studentCount: 'studentCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.StudentDataScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  name: 'name',
+  email: 'email',
+  grade: 'grade',
+  targetExam: 'targetExam',
+  subjects: 'subjects',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.CoachingDataScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  centerName: 'centerName',
+  contactPerson: 'contactPerson',
+  email: 'email',
+  phone: 'phone',
+  location: 'location',
+  teacherCount: 'teacherCount',
+  studentCount: 'studentCount',
+  targetExams: 'targetExams',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.QuestionScalarFieldEnum = {
   id: 'id',
   question_number: 'question_number',
@@ -175,6 +215,9 @@ exports.Prisma.QueryMode = {
 
 exports.Prisma.ModelName = {
   User: 'User',
+  TeacherData: 'TeacherData',
+  StudentData: 'StudentData',
+  CoachingData: 'CoachingData',
   Question: 'Question',
   Folder: 'Folder',
   FolderQuestion: 'FolderQuestion'

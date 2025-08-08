@@ -54,7 +54,7 @@ export function DialogCloseButton({ selectedQuestions }: { selectedQuestions: Pi
                     </div>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                    {selectedQuestions.length} question(s) will be saved
+                    {selectedQuestions?.length} question(s) will be saved
                 </div>
                 <DialogFooter className="sm:justify-start">
                     <DialogClose asChild>

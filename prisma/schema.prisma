@@ -30,6 +30,54 @@ model User {
   profileImage String?
   role         String
   drafts    Folder[]
+  
+  // Role-specific data relationships
+  teacherData  TeacherData?
+  studentData  StudentData?
+  coachingData CoachingData?
+}
+
+model TeacherData {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @unique @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id])
+  name        String
+  email       String
+  school      String
+  subject     String
+  experience  String?
+  studentCount String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model StudentData {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @unique @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id])
+  name        String
+  email       String
+  grade       String
+  targetExam  String
+  subjects    String[] // Array of subject strings
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model CoachingData {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String   @unique @db.ObjectId
+  user          User     @relation(fields: [userId], references: [id])
+  centerName    String
+  contactPerson String
+  email         String
+  phone         String
+  location      String
+  teacherCount  String?
+  studentCount  String?
+  targetExams   String[] // Array of exam strings
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Question {

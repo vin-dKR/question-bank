@@ -8,7 +8,7 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
     try {
-        const res = await getQuestions({})
+        const res = await getQuestions({}, "student")
 
         const response = NextResponse.json(
             {

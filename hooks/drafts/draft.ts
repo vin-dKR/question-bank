@@ -10,20 +10,24 @@ interface FetchDraft {
     questions: Question[];
 }
 
+interface Folder {
+    id: string;
+    name: string;
+    questionRelations: Array<{
+        question: Question;
+    }>;
+}
+
+const mapFolderToDraft = (folder: Folder): FetchDraft => ({
+    id: folder.id,
+    name: folder.name,
+    questions: folder.questionRelations.map((relation) => relation.question),
+});
+
 export const useFolders = () => {
     const [drafts, setDrafts] = useState<FetchDraft[]>([]);
     const [loading, setLoading] = useState(false);
     const [err, setErr] = useState<string | null>(null);
-
-    // Map Prisma folder to FetchDraft
-    const mapFolderToDraft = useCallback(
-        (folder: any): FetchDraft => ({
-            id: folder.id,
-            name: folder.name,
-            questions: folder.questionRelations.map((relation: any) => relation.question),
-        }),
-        []
-    );
 
     // Fetch all folders
     const getAllFolders = useCallback(async () => {
@@ -92,14 +96,20 @@ export const useFolders = () => {
             setLoading(true);
             setErr(null);
             const updatedFolder = await renameFolder(id, name);
+            
+            // Create a proper Folder object with questionRelations
+            const folderWithRelations: Folder = {
+                ...updatedFolder,
+                questionRelations: []
+            };
+            
             setDrafts((prev) =>
-                prev.map((draft) => (draft.id === id ? mapFolderToDraft(updatedFolder) : draft))
+                prev.map((draft) => (draft.id === id ? mapFolderToDraft(folderWithRelations) : draft))
             );
             return true;
         } catch (e) {
             const errorMessage = e instanceof Error ? e.message : "Failed to rename folder";
             setErr(errorMessage);
-            // console.error("Error renaming folder:", e);
             return false;
         } finally {
             setLoading(false);

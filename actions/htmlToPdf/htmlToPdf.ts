@@ -40,13 +40,10 @@ export const htmlTopdfBlob = async (html: string): Promise<HtmlTopdfBlobReturn> 
             data: pdfBuffer,
             error: false
         };
-    } catch (e: any) {
-        console.error("Puppeteer error:", e.message || e);
-        return {
-            data: null,
-            error: true,
-            errorMessage: e.message || "Failed to generate PDF"
-        };
+    } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';
+        console.error('Error generating PDF:', errorMessage);
+        throw new Error(`Failed to generate PDF: ${errorMessage}`);
     }
 };
 

@@ -1,19 +1,25 @@
 'use client';
 
-import { useState } from 'react';
 import { useSignIn, useSignUp, useSession } from '@clerk/nextjs';
 import { OAuthStrategy } from "@clerk/types";
 import { useRouter } from 'next/navigation';
 import { useClerk } from '@clerk/nextjs';
+import { useState } from 'react';
 
 type AuthMode = 'signin' | 'signup';
 
-function getClerkError(err: any): string {
-    return (
-        err?.errors?.[0]?.message ||
-        err?.message ||
-        'Something went wrong, please try again'
-    );
+interface ClerkError {
+    message?: string;
+    errors?: Array<{ message?: string; code?: string }>;
+    [key: string]: unknown;
+}
+
+function getClerkError(err: ClerkError): string {
+    if (err.message) return err.message;
+    if (err.errors && err.errors.length > 0) {
+        return err.errors[0].message || 'An error occurred';
+    }
+    return 'An error occurred';
 }
 
 export const useCustomAuth = (mode: AuthMode) => {
@@ -55,9 +61,9 @@ export const useCustomAuth = (mode: AuthMode) => {
             });
             // Should redirect away here
             console.log("AuthenticateWithRedirect awaited successfully (but should redirect away)");
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Error in authenticateWithRedirect:", err);
-            setError(getClerkError(err));
+            setError(getClerkError(err as ClerkError));
             setLoading(false);
         }
     };
@@ -131,14 +137,15 @@ export const useCustomAuth = (mode: AuthMode) => {
                     return;
                 }
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Error in handleEmailPasswordSubmit try catch:", err);
-            if (err?.errors?.[0]?.code === 'single_session_mode') {
+            const clerkErr = err as ClerkError;
+            if (clerkErr?.errors?.[0]?.code === 'single_session_mode') {
                 await signOut();
                 setError('You can only be signed in on one device at a time. Please sign out elsewhere first.');
                 console.log("Single session mode error handled");
             } else {
-                setError(getClerkError(err));
+                setError(getClerkError(clerkErr));
             }
         } finally {
             setLoading(false);
@@ -189,9 +196,9 @@ export const useCustomAuth = (mode: AuthMode) => {
                     return;
                 }
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Error in handleOtpSubmit try catch:", err);
-            setError(getClerkError(err));
+            setError(getClerkError(err as ClerkError));
         } finally {
             setLoading(false);
             console.log("Loading set to false in OTP submit");

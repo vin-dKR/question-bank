@@ -1,8 +1,7 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, memo } from 'react';
 import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
-import InstitutionDetails from './InstitutionDetails';
 import FilterControls from './FilterControls';
 import FoldersControls from './FoldersControls';
 import SelectedQuestionsActions from './SelectedQuestionsActions';
@@ -11,8 +10,8 @@ import PaginationControls from './PaginationControls';
 import EmptyState from './EmptyState';
 import SearchBar from './SearchBar';
 
-function QuestionBankViewerContent() {
-    const { questions, loading, error, count, selectedQuestionIds } = useQuestionBankContext();
+const QuestionBankViewerContent = memo(() => {
+    const { questions, loading, error, totalCount, selectedQuestionIds } = useQuestionBankContext();
 
     return (
         <div className="min-h-screen bg-slate-100">
@@ -24,7 +23,6 @@ function QuestionBankViewerContent() {
                 <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
                     <aside className="lg:w-80 xl:w-96 flex-shrink-0 lg:sticky lg:top-4 lg:self-start lg:h-[calc(100vh-2rem)] ">
                         <div className="space-y-4 sm:space-y-6">
-                            <InstitutionDetails />
                             {/*
                             <PDFOptions />
                             */}
@@ -37,6 +35,9 @@ function QuestionBankViewerContent() {
                         <SearchBar />
                         {selectedQuestionIds.size > 0 && (
                             <SelectedQuestionsActions />
+                            // <div>
+                            //     hii
+                            // </div>
                         )}
                         {error && (
                             <div className="p-3 sm:p-4 bg-rose-50 text-rose-700 rounded-lg shadow-sm text-sm sm:text-base">
@@ -50,14 +51,16 @@ function QuestionBankViewerContent() {
                             </div>
                         )}
                         {!loading && questions.length > 0 && <QuestionList />}
-                        {count > 0 && !loading && <PaginationControls />}
+                        {totalCount > 0 && !loading && <PaginationControls />}
                         {!loading && questions.length === 0 && <EmptyState />}
                     </main>
                 </div>
             </div>
         </div>
     );
-}
+});
+
+QuestionBankViewerContent.displayName = 'QuestionBankViewerContent';
 
 export default function QuestionBankViewer() {
     return (

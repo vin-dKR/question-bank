@@ -7,11 +7,25 @@ import { DialogCloseButton } from '../DialogCloseButton';
 import { Button } from '@/components/ui/button';
 
 export default function SelectedQuestionsActions() {
-    const { selectedQuestionIds, selectAllQuestions, unselectAllQuestions } = useQuestionBankContext();
+    const { selectedQuestionIds, questions, toggleQuestionSelection } = useQuestionBankContext();
     const { institution, options } = usePDFGeneratorContext();
 
     const selectedCount = selectedQuestionIds.size;
-    const selectedQuestions = useQuestionBankContext().selectedQuestions;
+    const selectedQuestions = questions.filter(q => selectedQuestionIds.has(q.id));
+
+    const selectAllQuestions = () => {
+        questions.forEach(q => {
+            if (!selectedQuestionIds.has(q.id)) {
+                toggleQuestionSelection(q.id);
+            }
+        });
+    };
+
+    const unselectAllQuestions = () => {
+        selectedQuestionIds.forEach(id => {
+            toggleQuestionSelection(id);
+        });
+    };
 
     return (
         <div className="flex flex-row flex-wrap justify-between items-center gap-3 bg-white p-3 md:p-4 rounded-lg shadow-md border border-slate-200 items-start">

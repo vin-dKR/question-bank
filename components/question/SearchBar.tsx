@@ -6,14 +6,14 @@ import debounce from 'lodash.debounce';
 
 const SearchBar: React.FC = () => {
     const [keyword, setKeyword] = useState('');
-    const { searchQuestions, clearSearch } = useQuestionBankContext();
+    const { setSearchQuery } = useQuestionBankContext();
 
     const debouncedSearch = debounce((searchTerm: string) => {
         if (searchTerm.trim().length < 2) {
-            clearSearch();
+            setSearchQuery("")
             return;
         }
-        searchQuestions(searchTerm);
+        setSearchQuery(searchTerm);
     }, 300);
 
     useEffect(() => {
@@ -23,7 +23,7 @@ const SearchBar: React.FC = () => {
 
     const handleClear = () => {
         setKeyword('');
-        clearSearch();
+        setSearchQuery("")
     };
 
     return (

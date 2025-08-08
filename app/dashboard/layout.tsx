@@ -69,8 +69,8 @@ export default function DashboardLayout({
                             key={item.name}
                             href={item.href}
                             className={`flex items-center py-2 text-gray-700 hover:bg-gray-200 transition-colors duration-200 my-1 mx-2 rounded rounded-lg 
-                    ${isSidebarOpen ? "px-4" : "justify-center"} 
-                    ${pathname === item.href ? " bg-gray-200 font-bold" : ""}`}
+                        ${isSidebarOpen ? "px-4" : "justify-center"} 
+                        ${pathname === item.href ? " bg-gray-200 font-bold" : ""}`}
                             title={!isSidebarOpen ? item.name : ""}
                         >
                             <div className="flex-shrink-0">{item.icon}</div>
