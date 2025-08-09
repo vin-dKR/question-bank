@@ -21,7 +21,7 @@ model User {
   clerkUserId  String    @unique
   email        String?   @unique
   name         String?
-  phone     String?  @unique
+  phone     String?
   emailOtp  String?
   phoneOtp  String?
   otpExpiry DateTime?
