@@ -5,6 +5,7 @@ import { OAuthStrategy } from "@clerk/types";
 import { useRouter } from 'next/navigation';
 import { useClerk } from '@clerk/nextjs';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 type AuthMode = 'signin' | 'signup';
 
@@ -15,11 +16,54 @@ interface ClerkError {
 }
 
 function getClerkError(err: ClerkError): string {
-    if (err.message) return err.message;
-    if (err.errors && err.errors.length > 0) {
-        return err.errors[0].message || 'An error occurred';
+    // Handle specific OAuth/authentication errors
+    if (err.message) {
+        const message = err.message.toLowerCase();
+        
+        // Common OAuth errors
+        if (message.includes('access_denied')) {
+            return 'Sign in was cancelled. Please try again to continue.';
+        }
+        if (message.includes('invalid_request')) {
+            return 'Invalid sign in request. Please try again.';
+        }
+        if (message.includes('server_error') || message.includes('temporarily_unavailable')) {
+            return 'Server is temporarily unavailable. Please try again later.';
+        }
+        if (message.includes('unauthorized_client')) {
+            return 'This sign in method is not available. Please try a different method.';
+        }
+        if (message.includes('unsupported_response_type')) {
+            return 'Sign in configuration error. Please contact support.';
+        }
+        if (message.includes('invalid_scope')) {
+            return 'Permission error during sign in. Please try again.';
+        }
+        if (message.includes('account not found') || message.includes('user not found')) {
+            return 'No account found with these credentials. Please sign up first.';
+        }
+        if (message.includes('webhook') || message.includes('database')) {
+            return 'Account creation failed. Please try again or contact support.';
+        }
+        
+        return err.message;
     }
-    return 'An error occurred';
+    
+    if (err.errors && err.errors.length > 0) {
+        const firstError = err.errors[0].message || 'An error occurred';
+        
+        // Handle common Clerk error codes
+        if (firstError.toLowerCase().includes('password')) {
+            return 'Invalid password. Please check your password and try again.';
+        }
+        if (firstError.toLowerCase().includes('email')) {
+            return 'Invalid email address. Please check your email and try again.';
+        }
+        
+        return firstError;
+    }
+    
+    return 'An unexpected error occurred. Please try again.';
 }
 
 export const useCustomAuth = (mode: AuthMode) => {
@@ -44,9 +88,12 @@ export const useCustomAuth = (mode: AuthMode) => {
         setError('');
         const authObj = mode === 'signin' ? signIn : signUp;
         if (!authObj) {
-            setError(
-                mode === 'signin' ? 'Sign in service not ready' : 'Sign up service not ready'
-            );
+            const errorMsg = mode === 'signin' ? 'Sign in service not ready' : 'Sign up service not ready';
+            setError(errorMsg);
+            toast.error('Service Error', {
+                description: errorMsg,
+                duration: 4000,
+            });
             setLoading(false);
             console.log("Auth object not ready");
             return;
@@ -63,7 +110,12 @@ export const useCustomAuth = (mode: AuthMode) => {
             console.log("AuthenticateWithRedirect awaited successfully (but should redirect away)");
         } catch (err: unknown) {
             console.error("Error in authenticateWithRedirect:", err);
-            setError(getClerkError(err as ClerkError));
+            const errorMsg = getClerkError(err as ClerkError);
+            setError(errorMsg);
+            toast.error('Authentication Error', {
+                description: errorMsg,
+                duration: 5000,
+            });
             setLoading(false);
         }
     };

@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
         }) as WebhookEvent
 
         // Log the webhook details for debugging
-        console.log(`Clerk Webhook: ${evt.type}`, evt.data)
+        // console.log(`Clerk Webhook: ${evt.type}`, evt.data)
 
 
         // Handle user events
@@ -33,35 +33,15 @@ export async function POST(req: NextRequest) {
                     }
                 })
             } else {
-                try {
-                    await prisma.user.create({
-                        data: {
-                            clerkUserId,
-                            name,
-                            email,
-                            profileImage: image_url,
-                            role: "",
-                        }
-                    })
-                // eslint-disable-next-line
-                } catch (createError: any) {
-                    // Handle unique constraint error on phone field
-                    if (createError.code === 'P2002' && createError.meta?.target?.includes('phone')) {
-                        console.log('Handling phone constraint error by creating user without phone field')
-                        // Try creating without any fields that might have constraints
-                        await prisma.user.create({
-                            data: {
-                                clerkUserId,
-                                name,
-                                email,
-                                profileImage: image_url,
-                                role: "",
-                            }
-                        })
-                    } else {
-                        throw createError
+                await prisma.user.create({
+                    data: {
+                        clerkUserId,
+                        name,
+                        email,
+                        profileImage: image_url,
+                        role: ""
                     }
-                }
+                })
             }
 
             console.log("-------------------------------uploaded user")
@@ -70,15 +50,25 @@ export async function POST(req: NextRequest) {
         // Handle user deletion
         if (evt.type === 'user.deleted') {
             const { id } = evt.data
-            await prisma.user.delete({
-                where: { clerkUserId: id },
-            })
+            try {
+                await prisma.user.delete({
+                    where: { clerkUserId: id },
+                })
+                console.log("User deleted successfully")
+                // eslint-disable-next-line
+            } catch (deleteError: any) {
+                if (deleteError.code === 'P2025') {
+                    console.log("User not found in database (already deleted or never created)")
+                } else {
+                    console.error("User deletion failed:", deleteError)
+                }
+            }
         }
 
         return NextResponse.json({ success: true })
 
     } catch (err) {
-        console.error('Error processing webhook:', err)
+        // console.error('Error processing webhook:', err)
         return NextResponse.json(
             { error: `Webhook verification failed, Specifically: ${err}` },
             { status: 400 }

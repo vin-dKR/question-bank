@@ -10,7 +10,7 @@ const allowedOrigins = [
 ]
 
 const isOnboardingRoute = (req: NextRequest) => req.nextUrl.pathname.startsWith('/onboarding');
-const isPublicRoute = createRouteMatcher(['/auth/signin', '/auth/signup'])
+const isPublicRoute = createRouteMatcher(['/auth/signin', '/auth/signup', '/auth/sso-callback', "/questions"])
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
     // console.log("c-midddleare", req.url)
