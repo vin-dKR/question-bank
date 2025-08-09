@@ -1476,7 +1476,6 @@ export namespace Prisma {
     clerkUserId: string | null
     email: string | null
     name: string | null
-    phone: string | null
     emailOtp: string | null
     phoneOtp: string | null
     otpExpiry: Date | null
@@ -1491,7 +1490,6 @@ export namespace Prisma {
     clerkUserId: string | null
     email: string | null
     name: string | null
-    phone: string | null
     emailOtp: string | null
     phoneOtp: string | null
     otpExpiry: Date | null
@@ -1506,7 +1504,6 @@ export namespace Prisma {
     clerkUserId: number
     email: number
     name: number
-    phone: number
     emailOtp: number
     phoneOtp: number
     otpExpiry: number
@@ -1523,7 +1520,6 @@ export namespace Prisma {
     clerkUserId?: true
     email?: true
     name?: true
-    phone?: true
     emailOtp?: true
     phoneOtp?: true
     otpExpiry?: true
@@ -1538,7 +1534,6 @@ export namespace Prisma {
     clerkUserId?: true
     email?: true
     name?: true
-    phone?: true
     emailOtp?: true
     phoneOtp?: true
     otpExpiry?: true
@@ -1553,7 +1548,6 @@ export namespace Prisma {
     clerkUserId?: true
     email?: true
     name?: true
-    phone?: true
     emailOtp?: true
     phoneOtp?: true
     otpExpiry?: true
@@ -1641,7 +1635,6 @@ export namespace Prisma {
     clerkUserId: string
     email: string | null
     name: string | null
-    phone: string | null
     emailOtp: string | null
     phoneOtp: string | null
     otpExpiry: Date | null
@@ -1673,7 +1666,6 @@ export namespace Prisma {
     clerkUserId?: boolean
     email?: boolean
     name?: boolean
-    phone?: boolean
     emailOtp?: boolean
     phoneOtp?: boolean
     otpExpiry?: boolean
@@ -1695,7 +1687,6 @@ export namespace Prisma {
     clerkUserId?: boolean
     email?: boolean
     name?: boolean
-    phone?: boolean
     emailOtp?: boolean
     phoneOtp?: boolean
     otpExpiry?: boolean
@@ -1705,7 +1696,7 @@ export namespace Prisma {
     role?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clerkUserId" | "email" | "name" | "phone" | "emailOtp" | "phoneOtp" | "otpExpiry" | "createdAt" | "updatedAt" | "profileImage" | "role", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clerkUserId" | "email" | "name" | "emailOtp" | "phoneOtp" | "otpExpiry" | "createdAt" | "updatedAt" | "profileImage" | "role", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     drafts?: boolean | User$draftsArgs<ExtArgs>
     teacherData?: boolean | User$teacherDataArgs<ExtArgs>
@@ -1727,7 +1718,6 @@ export namespace Prisma {
       clerkUserId: string
       email: string | null
       name: string | null
-      phone: string | null
       emailOtp: string | null
       phoneOtp: string | null
       otpExpiry: Date | null
@@ -2135,7 +2125,6 @@ export namespace Prisma {
     readonly clerkUserId: FieldRef<"User", 'String'>
     readonly email: FieldRef<"User", 'String'>
     readonly name: FieldRef<"User", 'String'>
-    readonly phone: FieldRef<"User", 'String'>
     readonly emailOtp: FieldRef<"User", 'String'>
     readonly phoneOtp: FieldRef<"User", 'String'>
     readonly otpExpiry: FieldRef<"User", 'DateTime'>
@@ -8859,7 +8848,6 @@ export namespace Prisma {
     clerkUserId: 'clerkUserId',
     email: 'email',
     name: 'name',
-    phone: 'phone',
     emailOtp: 'emailOtp',
     phoneOtp: 'phoneOtp',
     otpExpiry: 'otpExpiry',
@@ -9059,7 +9047,6 @@ export namespace Prisma {
     clerkUserId?: StringFilter<"User"> | string
     email?: StringNullableFilter<"User"> | string | null
     name?: StringNullableFilter<"User"> | string | null
-    phone?: StringNullableFilter<"User"> | string | null
     emailOtp?: StringNullableFilter<"User"> | string | null
     phoneOtp?: StringNullableFilter<"User"> | string | null
     otpExpiry?: DateTimeNullableFilter<"User"> | Date | string | null
@@ -9078,7 +9065,6 @@ export namespace Prisma {
     clerkUserId?: SortOrder
     email?: SortOrder
     name?: SortOrder
-    phone?: SortOrder
     emailOtp?: SortOrder
     phoneOtp?: SortOrder
     otpExpiry?: SortOrder
@@ -9096,7 +9082,6 @@ export namespace Prisma {
     id?: string
     clerkUserId?: string
     email?: string
-    phone?: string
     AND?: UserWhereInput | UserWhereInput[]
     OR?: UserWhereInput[]
     NOT?: UserWhereInput | UserWhereInput[]
@@ -9112,14 +9097,13 @@ export namespace Prisma {
     teacherData?: XOR<TeacherDataNullableScalarRelationFilter, TeacherDataWhereInput> | null
     studentData?: XOR<StudentDataNullableScalarRelationFilter, StudentDataWhereInput> | null
     coachingData?: XOR<CoachingDataNullableScalarRelationFilter, CoachingDataWhereInput> | null
-  }, "id" | "clerkUserId" | "email" | "phone">
+  }, "id" | "clerkUserId" | "email">
 
   export type UserOrderByWithAggregationInput = {
     id?: SortOrder
     clerkUserId?: SortOrder
     email?: SortOrder
     name?: SortOrder
-    phone?: SortOrder
     emailOtp?: SortOrder
     phoneOtp?: SortOrder
     otpExpiry?: SortOrder
@@ -9140,7 +9124,6 @@ export namespace Prisma {
     clerkUserId?: StringWithAggregatesFilter<"User"> | string
     email?: StringNullableWithAggregatesFilter<"User"> | string | null
     name?: StringNullableWithAggregatesFilter<"User"> | string | null
-    phone?: StringNullableWithAggregatesFilter<"User"> | string | null
     emailOtp?: StringNullableWithAggregatesFilter<"User"> | string | null
     phoneOtp?: StringNullableWithAggregatesFilter<"User"> | string | null
     otpExpiry?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
@@ -9623,7 +9606,6 @@ export namespace Prisma {
     clerkUserId: string
     email?: string | null
     name?: string | null
-    phone?: string | null
     emailOtp?: string | null
     phoneOtp?: string | null
     otpExpiry?: Date | string | null
@@ -9642,7 +9624,6 @@ export namespace Prisma {
     clerkUserId: string
     email?: string | null
     name?: string | null
-    phone?: string | null
     emailOtp?: string | null
     phoneOtp?: string | null
     otpExpiry?: Date | string | null
@@ -9660,7 +9641,6 @@ export namespace Prisma {
     clerkUserId?: StringFieldUpdateOperationsInput | string
     email?: NullableStringFieldUpdateOperationsInput | string | null
     name?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
     emailOtp?: NullableStringFieldUpdateOperationsInput | string | null
     phoneOtp?: NullableStringFieldUpdateOperationsInput | string | null
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -9678,7 +9658,6 @@ export namespace Prisma {
     clerkUserId?: StringFieldUpdateOperationsInput | string
     email?: NullableStringFieldUpdateOperationsInput | string | null
     name?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
     emailOtp?: NullableStringFieldUpdateOperationsInput | string | null
     phoneOtp?: NullableStringFieldUpdateOperationsInput | string | null
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -9697,7 +9676,6 @@ export namespace Prisma {
     clerkUserId: string
     email?: string | null
     name?: string | null
-    phone?: string | null
     emailOtp?: string | null
     phoneOtp?: string | null
     otpExpiry?: Date | string | null
@@ -9711,7 +9689,6 @@ export namespace Prisma {
     clerkUserId?: StringFieldUpdateOperationsInput | string
     email?: NullableStringFieldUpdateOperationsInput | string | null
     name?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
     emailOtp?: NullableStringFieldUpdateOperationsInput | string | null
     phoneOtp?: NullableStringFieldUpdateOperationsInput | string | null
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -9725,7 +9702,6 @@ export namespace Prisma {
     clerkUserId?: StringFieldUpdateOperationsInput | string
     email?: NullableStringFieldUpdateOperationsInput | string | null
     name?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
     emailOtp?: NullableStringFieldUpdateOperationsInput | string | null
     phoneOtp?: NullableStringFieldUpdateOperationsInput | string | null
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -10316,7 +10292,6 @@ export namespace Prisma {
     clerkUserId?: SortOrder
     email?: SortOrder
     name?: SortOrder
-    phone?: SortOrder
     emailOtp?: SortOrder
     phoneOtp?: SortOrder
     otpExpiry?: SortOrder
@@ -10331,7 +10306,6 @@ export namespace Prisma {
     clerkUserId?: SortOrder
     email?: SortOrder
     name?: SortOrder
-    phone?: SortOrder
     emailOtp?: SortOrder
     phoneOtp?: SortOrder
     otpExpiry?: SortOrder
@@ -10346,7 +10320,6 @@ export namespace Prisma {
     clerkUserId?: SortOrder
     email?: SortOrder
     name?: SortOrder
-    phone?: SortOrder
     emailOtp?: SortOrder
     phoneOtp?: SortOrder
     otpExpiry?: SortOrder
@@ -11550,7 +11523,6 @@ export namespace Prisma {
     clerkUserId: string
     email?: string | null
     name?: string | null
-    phone?: string | null
     emailOtp?: string | null
     phoneOtp?: string | null
     otpExpiry?: Date | string | null
@@ -11568,7 +11540,6 @@ export namespace Prisma {
     clerkUserId: string
     email?: string | null
     name?: string | null
-    phone?: string | null
     emailOtp?: string | null
     phoneOtp?: string | null
     otpExpiry?: Date | string | null
@@ -11601,7 +11572,6 @@ export namespace Prisma {
     clerkUserId?: StringFieldUpdateOperationsInput | string
     email?: NullableStringFieldUpdateOperationsInput | string | null
     name?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
     emailOtp?: NullableStringFieldUpdateOperationsInput | string | null
     phoneOtp?: NullableStringFieldUpdateOperationsInput | string | null
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -11618,7 +11588,6 @@ export namespace Prisma {
     clerkUserId?: StringFieldUpdateOperationsInput | string
     email?: NullableStringFieldUpdateOperationsInput | string | null
     name?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
     emailOtp?: NullableStringFieldUpdateOperationsInput | string | null
     phoneOtp?: NullableStringFieldUpdateOperationsInput | string | null
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -11636,7 +11605,6 @@ export namespace Prisma {
     clerkUserId: string
     email?: string | null
     name?: string | null
-    phone?: string | null
     emailOtp?: string | null
     phoneOtp?: string | null
     otpExpiry?: Date | string | null
@@ -11654,7 +11622,6 @@ export namespace Prisma {
     clerkUserId: string
     email?: string | null
     name?: string | null
-    phone?: string | null
     emailOtp?: string | null
     phoneOtp?: string | null
     otpExpiry?: Date | string | null
@@ -11687,7 +11654,6 @@ export namespace Prisma {
     clerkUserId?: StringFieldUpdateOperationsInput | string
     email?: NullableStringFieldUpdateOperationsInput | string | null
     name?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
     emailOtp?: NullableStringFieldUpdateOperationsInput | string | null
     phoneOtp?: NullableStringFieldUpdateOperationsInput | string | null
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -11704,7 +11670,6 @@ export namespace Prisma {
     clerkUserId?: StringFieldUpdateOperationsInput | string
     email?: NullableStringFieldUpdateOperationsInput | string | null
     name?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
     emailOtp?: NullableStringFieldUpdateOperationsInput | string | null
     phoneOtp?: NullableStringFieldUpdateOperationsInput | string | null
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -11722,7 +11687,6 @@ export namespace Prisma {
     clerkUserId: string
     email?: string | null
     name?: string | null
-    phone?: string | null
     emailOtp?: string | null
     phoneOtp?: string | null
     otpExpiry?: Date | string | null
@@ -11740,7 +11704,6 @@ export namespace Prisma {
     clerkUserId: string
     email?: string | null
     name?: string | null
-    phone?: string | null
     emailOtp?: string | null
     phoneOtp?: string | null
     otpExpiry?: Date | string | null
@@ -11773,7 +11736,6 @@ export namespace Prisma {
     clerkUserId?: StringFieldUpdateOperationsInput | string
     email?: NullableStringFieldUpdateOperationsInput | string | null
     name?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
     emailOtp?: NullableStringFieldUpdateOperationsInput | string | null
     phoneOtp?: NullableStringFieldUpdateOperationsInput | string | null
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -11790,7 +11752,6 @@ export namespace Prisma {
     clerkUserId?: StringFieldUpdateOperationsInput | string
     email?: NullableStringFieldUpdateOperationsInput | string | null
     name?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
     emailOtp?: NullableStringFieldUpdateOperationsInput | string | null
     phoneOtp?: NullableStringFieldUpdateOperationsInput | string | null
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -11852,7 +11813,6 @@ export namespace Prisma {
     clerkUserId: string
     email?: string | null
     name?: string | null
-    phone?: string | null
     emailOtp?: string | null
     phoneOtp?: string | null
     otpExpiry?: Date | string | null
@@ -11870,7 +11830,6 @@ export namespace Prisma {
     clerkUserId: string
     email?: string | null
     name?: string | null
-    phone?: string | null
     emailOtp?: string | null
     phoneOtp?: string | null
     otpExpiry?: Date | string | null
@@ -11922,7 +11881,6 @@ export namespace Prisma {
     clerkUserId?: StringFieldUpdateOperationsInput | string
     email?: NullableStringFieldUpdateOperationsInput | string | null
     name?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
     emailOtp?: NullableStringFieldUpdateOperationsInput | string | null
     phoneOtp?: NullableStringFieldUpdateOperationsInput | string | null
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -11939,7 +11897,6 @@ export namespace Prisma {
     clerkUserId?: StringFieldUpdateOperationsInput | string
     email?: NullableStringFieldUpdateOperationsInput | string | null
     name?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
     emailOtp?: NullableStringFieldUpdateOperationsInput | string | null
     phoneOtp?: NullableStringFieldUpdateOperationsInput | string | null
     otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
