@@ -13,8 +13,9 @@ import {
 } from '@/components/ui/dialog';
 import { pdfConfigToAnswerKeyHTML, pdfConfigToHTML } from '@/lib/questionToHtmlUtils';
 import { htmlTopdfBlob } from '@/actions/htmlToPdf/htmlToPdf';
+import clsx from 'clsx';
 
-export default function PDFGenerator({ institution, selectedQuestions, options }: PDFConfig) {
+export default function PDFGenerator({ institution, selectedQuestions, options, className }: PDFConfig) {
     const [isGenerating, setIsGenerating] = useState<"question" | "answer" | null>(null)
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isMobile, setIsMobile] = useState(false);
@@ -163,14 +164,14 @@ export default function PDFGenerator({ institution, selectedQuestions, options }
                     <Button
                         onClick={handlePreviewCompiledHTML}
                         disabled={!selectedQuestions || selectedQuestions.length === 0}
-                        className="bg-indigo-600 hover:bg-indigo-600 text-white px-4 py-2 text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed"
+                        className={clsx("bg-indigo-600 hover:bg-indigo-600 text-white px-4 py-2 text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed", className)}
                     >
                         {isGenerating === "question" ? "Generating..." : "PDF"}
                     </Button>
                     <Button
                         onClick={handlePreviewAnswer}
                         disabled={!selectedQuestions || selectedQuestions.length === 0}
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed"
+                        className={clsx("bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed", className)}
                     >
                         {isGenerating === "answer" ? "Generating..." : "Preview Answers"}
                     </Button>

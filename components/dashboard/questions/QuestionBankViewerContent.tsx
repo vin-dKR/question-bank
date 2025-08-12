@@ -8,8 +8,9 @@ import SelectedQuestionsActions from "@/components/question/SelectedQuestionsAct
 import { useQuestionBankContext } from "@/lib/context/QuestionBankContext";
 
 const QuestionBankViewerContent = () => {
-    const { questions, loading, error, totalCount, selectedQuestionIds } =
-        useQuestionBankContext();
+    const { questions, loading, error, totalCount, selectedQuestionIds } = useQuestionBankContext();
+
+    const vvv = true
 
     return (
         <div className="relative">
@@ -23,7 +24,7 @@ const QuestionBankViewerContent = () => {
                     </aside>
 
                     {/* Main Content */}
-                    <main className="col-span-1 lg:col-span-4 xl:col-span-6 space-y-4 sm:space-y-6 top-3 pt-1">
+                    <main className="col-span-1 lg:col-span-4 xl:col-span-6 space-y-4 pt-1">
                         <FoldersControls />
                         <SearchBar />
                         {selectedQuestionIds.size > 0 && <SelectedQuestionsActions />}
@@ -33,7 +34,7 @@ const QuestionBankViewerContent = () => {
                             </div>
                         )}
                         {loading && (
-                            <div className="p-3 sm:p-4 bg-indigo-50 text-indigo-700 rounded-lg shadow-sm flex items-center justify-center text-sm sm:text-base">
+                            <div className="p-3 sm:p-4 bg-indigo-50 text-indigo-700 rounded-xl shadow-sm flex items-center justify-center text-sm sm:text-base font-semibold border border-black/5">
                                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-700 mr-2"></div>
                                 Loading questions...
                             </div>

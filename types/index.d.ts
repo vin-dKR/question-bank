@@ -64,6 +64,7 @@ declare global {
         institution: string
         selectedQuestions: Question[];
         options: PDFGenerationOptions;
+        className?: string;
     }
 
     interface QuestionDraft {

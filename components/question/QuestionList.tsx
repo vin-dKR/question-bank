@@ -35,7 +35,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
 
     return (
         <div
-            className={`p-3 sm:p-4 bg-white rounded-lg shadow-md border transition-all duration-200 ${isSelected ? 'border-amber-500 bg-amber-50' : 'border-slate-200 hover:shadow-lg'
+            className={`p-3 sm:p-4 bg-white rounded-xl shadow-md border transition-all duration-200 ${isSelected ? 'border-amber-500 bg-amber-50' : 'border-slate-200 hover:shadow-md'
                 }`}
         >
             <div className="flex items-start">
@@ -48,7 +48,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                 <div className="flex-1 w-full text-wrap">
                     <div className="flex flex-wrap gap-2 mb-2 items-center">
                         {question.exam_name && (
-                            <span className="text-xs font-medium px-2 py-1 bg-slate-100 text-slate-700 rounded-full">
+                            <span className="text-xs font-medium px-2 py-1 bg-slate-100 text-slate-700 rounded-full text-center">
                                 {question.exam_name}
                             </span>
                         )}
@@ -179,7 +179,7 @@ const QuestionList = memo(() => {
                 )}
 
                 {!loading && questions.length > 0 && (
-                    <div className="space-y-4 sm:space-y-6">
+                    <div className="space-y-4">
                         {questions.map((question) => (
                             <QuestionItem
                                 key={question.id}

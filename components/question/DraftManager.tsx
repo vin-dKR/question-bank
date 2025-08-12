@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { Trash } from 'lucide-react';
+import { StepBack, Trash } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
     Dialog,
@@ -169,9 +169,10 @@ const DraftManager = () => {
                             variant="ghost"
                             size="sm"
                             onClick={handleBackToList}
-                            className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50"
+                            className="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-black/5"
                         >
-                            ← Back to folders
+                            <StepBack />
+                            Back to folders
                         </Button>
                         <div className="flex flex-wrap gap-1 h-full items-center">
                             <Button
@@ -223,12 +224,14 @@ const DraftManager = () => {
                                     </DialogFooter>
                                 </DialogContent>
                             </Dialog>
+
                             {selectedFolder.questions.length > 0 && (
                                 <div className="flex gap-1">
                                     <PDFGenerator
                                         institution={institution}
                                         selectedQuestions={selectedFolder.questions}
                                         options={options}
+                                        className=""
                                     />
                                 </div>
                             )}
@@ -270,7 +273,7 @@ const DraftManager = () => {
                                 {selectedFolder.questions.map((question) => (
                                     <li
                                         key={question.id}
-                                        className="p-3 bg-slate-50 rounded-md border border-slate-200 shadow-sm flex flex-col gap-2"
+                                        className="p-3 bg-slate-50 rounded-md border border-black/5 flex flex-col gap-2"
                                     >
                                         <div className="flex justify-between items-start">
                                             <p className="text-sm font-medium text-slate-800 sm:text-base">
@@ -286,9 +289,9 @@ const DraftManager = () => {
                                                     <Button
                                                         variant="destructive"
                                                         size="sm"
-                                                        className="bg-red-500 hover:bg-red-600"
+                                                        className="bg-red-500 hover:bg-red-600 rounded-full h-8 w-8"
                                                     >
-                                                        <Trash />
+                                                        <Trash className='h-4 w-4' />
                                                     </Button>
                                                 </DialogTrigger>
                                                 <DialogContent className="sm:max-w-md bg-white max-h-[100vh] !top-[50%] !left-[50%] !transform !-translate-x-1/2 !-translate-y-1/2">
@@ -345,7 +348,7 @@ const DraftManager = () => {
                         drafts.map((draft) => (
                             <div
                                 key={draft.id}
-                                className="bg-white p-3 sm:p-4 rounded-lg shadow-md border border-slate-200 hover:shadow-lg transition-all duration-200 cursor-pointer"
+                                className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200 hover:shadow-md transition-all duration-200 cursor-pointer"
                                 onClick={() => handleFolderClick(draft as FetchDraft)}
                             >
                                 <h3 className="text-sm font-medium text-slate-800 sm:text-base">{draft.name}</h3>
