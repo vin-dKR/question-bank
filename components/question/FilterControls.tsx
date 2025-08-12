@@ -92,12 +92,12 @@ export default function FilterControls() {
 
     const clearFilters = useCallback(() => {
         const clearedFilters = { exam_name: '', subject: '', chapter: '', section_name: '', flagged: '' };
-        
+
         // For teachers, preserve their assigned subject
         if (isTeacher && subject) {
             clearedFilters.subject = subject;
         }
-        
+
         setLocalFilters(clearedFilters);
         setFilters({
             subject: isTeacher && subject ? subject : undefined
@@ -111,7 +111,7 @@ export default function FilterControls() {
 
     const subjectOptions = useMemo(() => {
         let options = filterOptions.subjects.map((subject: string) => ({ value: subject, label: subject }));
-        
+
         // For teachers, ensure their assigned subject is always included
         if (isTeacher && subject) {
             const hasTeacherSubject = options.some((opt: { value: string; label: string }) => opt.value === subject);
@@ -119,7 +119,7 @@ export default function FilterControls() {
                 options = [{ value: subject, label: subject }, ...options];
             }
         }
-        
+
         return options;
     }, [filterOptions.subjects, isTeacher, subject]);
 
@@ -145,6 +145,16 @@ export default function FilterControls() {
             borderColor: '#e2e8f0',
             '&:hover': { borderColor: '#f59e0b' },
             boxShadow: 'none',
+            borderRadius: '10px',
+        }),
+        menu: (base) => ({
+            ...base,
+            borderRadius: "10px",
+            overflow: "hidden",
+        }),
+        menuList: (base) => ({
+            ...base,
+            borderRadius: "10px",
         }),
         option: (base, state) => ({
             ...base,
@@ -156,7 +166,7 @@ export default function FilterControls() {
     // Show loading state while fetching role and subject
     if (roleLoading || subjectLoading) {
         return (
-            <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md border border-slate-200">
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-slate-200">
                 <div className="animate-pulse">
                     <div className="h-6 bg-slate-200 rounded mb-4"></div>
                     <div className="space-y-4">
@@ -170,7 +180,7 @@ export default function FilterControls() {
     }
 
     return (
-        <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md border border-slate-200">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-slate-200 tracking-3">
             <h2 className="text-lg font-semibold mb-3 text-slate-700 sm:text-xl">Filter Questions</h2>
             <div className="space-y-4 mb-4 sm:mb-6">
                 <div>
@@ -180,7 +190,7 @@ export default function FilterControls() {
                         options={examOptions}
                         value={examOptions.find((opt: { value: string; label: string }) => opt.value === localFilters.exam_name) || null}
                         onChange={(selected) => handleFilterChange('exam_name', selected?.value || null)}
-                        placeholder="Select exam..."
+                        placeholder="Select Exam..."
                         isClearable
                         isLoading={optionsLoading}
                         className="text-sm sm:text-base"
@@ -252,13 +262,13 @@ export default function FilterControls() {
             <div className="flex flex-col space-y-2">
                 <button
                     onClick={applyFilters}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition shadow-sm text-sm sm:text-base"
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition shadow-sm text-sm sm:text-base border border-black/20 font-semibold"
                 >
                     Apply Filters
                 </button>
                 <button
                     onClick={clearFilters}
-                    className="px-4 py-2 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200 transition shadow-sm text-sm sm:text-base"
+                    className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition shadow-sm text-sm sm:text-base border border-black/4 font-semibold"
                 >
                     Clear Filters
                 </button>

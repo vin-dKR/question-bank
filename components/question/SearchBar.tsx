@@ -27,8 +27,8 @@ const SearchBar: React.FC = () => {
     };
 
     return (
-        <div className="w-full mx-auto mb-4">
-            <div className="relative bg-white rounded-lg">
+        <div className="bg-white rounded-lg shadow-md border border-slate-200">
+            <div className="relative">
                 <input
                     type="text"
                     value={keyword}
