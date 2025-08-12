@@ -26,7 +26,7 @@ const QuestionBankViewerContent = memo(() => {
                         </div>
                     </aside>
 
-                    <main className="flex-1 space-y-4 sm:space-y-6">
+                    <main className="flex-1 space-y-4 sm:space-y-6 pt-4">
                         <FoldersControls />
                         <SearchBar />
                         {selectedQuestionIds.size > 0 && (
@@ -59,7 +59,7 @@ export default function QuestionBankViewer() {
     return (
         <Suspense
             fallback={
-                <div className="min-h-screen bg-slate-100 flex items-center justify-center">
+                <div className="min-h-screen flex items-center justify-center">
                     <div className="p-3 sm:p-4 bg-indigo-50 text-indigo-700 rounded-lg shadow-sm flex items-center justify-center text-sm sm:text-base">
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-700 mr-2"></div>
                         Loading questions...

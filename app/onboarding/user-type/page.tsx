@@ -11,10 +11,13 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useOnboardingStore } from "@/store/userInitialSelectedState";
 import { GraduationCap, Users, School, ArrowLeft } from "lucide-react";
+import { useCallback, useState, useTransition } from "react";
 
 export default function UserTypePage() {
     const router = useRouter();
     const setRole = useOnboardingStore((state) => state.setRole);
+    const [isPending, startTransition] = useTransition();
+    const [loadingRole, setLoadingRole] = useState<string | null>(null);
 
     const userTypes = [
         {
@@ -46,10 +49,30 @@ export default function UserTypePage() {
         },
     ] as const;
 
-    const onContinueClick = (role: "student" | "teacher" | "coaching", href: string) => {
+    // Optimized navigation with prefetching and immediate navigation
+    const onContinueClick = useCallback((role: "student" | "teacher" | "coaching", href: string) => {
+        // Set loading state for this specific role
+        setLoadingRole(role);
+
+        // Set role immediately in store
         setRole(role);
-        router.push(href);
-    };
+
+        // Navigate immediately without waiting for state updates
+        startTransition(() => {
+            router.push(href);
+        });
+    }, [setRole, router]);
+
+    // Prefetch routes on hover for instant navigation
+    const handleCardHover = useCallback((href: string) => {
+        router.prefetch(href);
+    }, [router]);
+
+    const handleBackClick = useCallback(() => {
+        startTransition(() => {
+            router.back();
+        });
+    }, [router]);
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 tracking-3">
@@ -57,8 +80,9 @@ export default function UserTypePage() {
                 <div className="mb-12">
                     <Button
                         variant="ghost"
-                        onClick={() => router.back()}
+                        onClick={handleBackClick}
                         className="mb-4 bg-black/4 border border-black/5"
+                        disabled={isPending}
                     >
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Back
@@ -77,6 +101,8 @@ export default function UserTypePage() {
                                 key={type.title}
                                 className={`relative flex flex-col h-full cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-black/20 rounded-2xl ${type.popular ? "ring-2 ring-black border-black" : "border-black/5"
                                     }`}
+                                onMouseEnter={() => handleCardHover(type.href)}
+                                onClick={() => onContinueClick(type.roleKey, type.href)}
                             >
                                 {type.popular && (
                                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
@@ -111,9 +137,13 @@ export default function UserTypePage() {
                                     <div className="mt-auto">
                                         <Button
                                             className="w-full bg-black rounded-xl text-white"
-                                            onClick={() => onContinueClick(type.roleKey, type.href)}
+                                            onClick={(e) => {
+                                                e.stopPropagation(); // Prevent card click
+                                                onContinueClick(type.roleKey, type.href);
+                                            }}
+                                            disabled={loadingRole === type.roleKey}
                                         >
-                                            Continue as {type.title}
+                                            {loadingRole === type.roleKey ? "Loading..." : `Continue as ${type.title}`}
                                         </Button>
                                     </div>
                                 </CardContent>
@@ -125,4 +155,3 @@ export default function UserTypePage() {
         </div>
     );
 }
-

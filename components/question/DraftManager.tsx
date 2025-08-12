@@ -174,7 +174,8 @@ const DraftManager = () => {
                             <StepBack />
                             Back to folders
                         </Button>
-                        <div className="flex flex-wrap gap-1 h-full items-center">
+
+                        <div className="flex flex-wrap gap-2 h-full items-center">
                             <Button
                                 variant="outline"
                                 size="sm"

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
 import debounce from 'lodash.debounce';
+import { Search } from 'lucide-react';
 
 const SearchBar: React.FC = () => {
     const [keyword, setKeyword] = useState('');
@@ -27,14 +28,18 @@ const SearchBar: React.FC = () => {
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-md border border-slate-200">
+        <div className="bg-white rounded-xl shadow-md border border-black/5">
             <div className="relative">
+                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                    <Search className='text-black/50' />
+                    <span className='ml-1 text-black/40 text-sm text-center'>|</span>
+                </div>
                 <input
                     type="text"
                     value={keyword}
                     onChange={(e) => setKeyword(e.target.value)}
                     placeholder="Search questions by keyword..."
-                    className="w-full p-3 pr-10 border border-black/20 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full p-3 pl-14 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                     aria-label="Search questions"
                 />
                 {keyword && (

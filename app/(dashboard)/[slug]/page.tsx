@@ -3,8 +3,13 @@ import PaperHistory from "@/components/dashboard/history/PaperHistoryPage";
 import QuesitonsPage from "@/components/dashboard/questions/QuestionsPage";
 import QuestionTemplate from "@/components/dashboard/templates/QuestionTemplatePage";
 
-export default function SlugPage({ params }: { params: { slug: string } }) {
-    const { slug } = params
+export default async function SlugPage({
+    params,
+}: {
+    params: Promise<{ slug: string }>
+}) {
+
+    const { slug } = await params
 
     switch (slug) {
         case "questions":

@@ -28,20 +28,28 @@ export default function SelectedQuestionsActions() {
     };
 
     return (
-        <div className="flex flex-row flex-wrap justify-between items-center gap-3 bg-white p-3 md:p-4 rounded-lg shadow-md border border-slate-200 items-start">
-            <div className='flex items-center gap-3'>
+        <div className="flex flex-wrap justify-between items-center gap-3 bg-white p-3 md:p-4 rounded-xl shadow-md border border-slate-200">
+
+            {/* Left side: Selected count */}
+            <div className="flex items-center">
                 <span className="text-md font-medium text-slate-700">
                     {selectedCount} Question{selectedCount !== 1 ? 's' : ''} Selected
                 </span>
+            </div>
+
+            {/* Right side: Buttons */}
+            <div className="flex flex-wrap items-center gap-2">
                 <Button
+                    size="sm"
                     onClick={selectAllQuestions}
-                    className="px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition shadow-md text-md"
+                    className="bg-indigo-600 text-white hover:bg-indigo-700 transition text-md border border-black/20"
                 >
                     Select All
                 </Button>
                 <Button
+                    size="sm"
                     onClick={unselectAllQuestions}
-                    className="px-3 py-1 bg-slate-200 text-slate-700 rounded-md hover:bg-slate-300 transition shadow-md text-md"
+                    className="px-3 py-1 bg-slate-200 text-slate-700 hover:bg-slate-300 transition text-md border border-black/5"
                 >
                     Unselect All
                 </Button>
@@ -53,9 +61,7 @@ export default function SelectedQuestionsActions() {
                 <DialogCloseButton selectedQuestions={selectedQuestions} />
             </div>
 
-            <div className='flex gap-2 items-center'>
-            </div>
-
         </div>
     );
+
 }

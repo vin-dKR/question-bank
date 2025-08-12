@@ -10,14 +10,12 @@ import { useQuestionBankContext } from "@/lib/context/QuestionBankContext";
 const QuestionBankViewerContent = () => {
     const { questions, loading, error, totalCount, selectedQuestionIds } = useQuestionBankContext();
 
-    const vvv = true
-
     return (
         <div className="relative">
             <div className="w-full mx-auto pb-6">
                 <div className="grid grid-cols-1 lg:grid-cols-6 xl:grid-cols-8 gap-4 sm:gap-6">
                     {/* Sidebar */}
-                    <aside className="col-span-2 xl:col-span-2 lg:sticky lg:top-1 self-start h-fit">
+                    <aside className="col-span-1 lg:col-span-2 xl:col-span-2 lg:sticky lg:top-1 self-start h-fit">
                         <div className="space-y-4 sm:space-y-6">
                             <FilterControls />
                         </div>

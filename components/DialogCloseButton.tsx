@@ -36,9 +36,9 @@ export function DialogCloseButton({ selectedQuestions }: { selectedQuestions: Pi
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button className="px-2" variant="outline">Save to Folder</Button>
+                <Button className="px-2 hover:bg-black/20 border border-black/20" size="sm">Save to Folder</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md bg-white max-h-[100vh] !top-[50%] !left-[50%] !transform !-translate-x-1/2 !-translate-y-1/2">
+            <DialogContent className="sm:max-w-md bg-white max-h-[100vh] rounded rounded-xl border border-black/20 !top-[50%] !left-[50%] !transform !-translate-x-1/2 !-translate-y-1/2">
                 <DialogHeader>
                     <DialogTitle>Create New Folder</DialogTitle>
                 </DialogHeader>
@@ -50,6 +50,7 @@ export function DialogCloseButton({ selectedQuestions }: { selectedQuestions: Pi
                             value={folderName}
                             onChange={(e) => setFolderName(e.target.value)}
                             placeholder="Enter folder name"
+                            className="rounded-lg border border-black/20"
                         />
                     </div>
                 </div>
@@ -62,7 +63,7 @@ export function DialogCloseButton({ selectedQuestions }: { selectedQuestions: Pi
                             onClick={createFolder}
                             type="button"
                             disabled={!folderName.trim() || selectedQuestions.length === 0}
-                            className="bg-indigo-600 text-white"
+                            className="bg-indigo-600 text-white border border-black/20"
                         >
                             Create Folder
                         </Button>
