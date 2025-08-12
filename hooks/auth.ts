@@ -19,7 +19,7 @@ function getClerkError(err: ClerkError): string {
     // Handle specific OAuth/authentication errors
     if (err.message) {
         const message = err.message.toLowerCase();
-        
+
         // Common OAuth errors
         if (message.includes('access_denied')) {
             return 'Sign in was cancelled. Please try again to continue.';
@@ -45,13 +45,13 @@ function getClerkError(err: ClerkError): string {
         if (message.includes('webhook') || message.includes('database')) {
             return 'Account creation failed. Please try again or contact support.';
         }
-        
+
         return err.message;
     }
-    
+
     if (err.errors && err.errors.length > 0) {
         const firstError = err.errors[0].message || 'An error occurred';
-        
+
         // Handle common Clerk error codes
         if (firstError.toLowerCase().includes('password')) {
             return 'Invalid password. Please check your password and try again.';
@@ -59,10 +59,10 @@ function getClerkError(err: ClerkError): string {
         if (firstError.toLowerCase().includes('email')) {
             return 'Invalid email address. Please check your email and try again.';
         }
-        
+
         return firstError;
     }
-    
+
     return 'An unexpected error occurred. Please try again.';
 }
 

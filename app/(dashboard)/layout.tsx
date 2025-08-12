@@ -1,4 +1,3 @@
-
 "use client";
 
 import { BarChart, Book, Home, Layers, LogOut, Menu, Settings } from "lucide-react";
@@ -11,8 +10,8 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useRouter, usePathname } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
+import { usePathname } from "next/navigation";
+import { useAuth, useUser } from "@clerk/nextjs";
 
 interface SidebarItem {
     name: string;
@@ -23,10 +22,10 @@ interface SidebarItem {
 
 const sidebarItems: SidebarItem[] = [
     { name: "Dashboard", description: "View overview and metrics", href: "/dashboard", icon: <Home className="h-5 w-5" /> },
-    { name: "Questions", description: "Manage question bank", href: "/dashboard/questions", icon: <Book className="h-5 w-5" /> },
-    { name: "Categories", description: "Organize question categories", href: "/dashboard/categories", icon: <Layers className="h-5 w-5" /> },
-    { name: "Reports", description: "Analyze performance data", href: "/dashboard/reports", icon: <BarChart className="h-5 w-5" /> },
-    { name: "Settings", description: "Configure account settings", href: "/dashboard/settings", icon: <Settings className="h-5 w-5" /> },
+    { name: "Questions", description: "Manage question bank", href: "/questions", icon: <Book className="h-5 w-5" /> },
+    { name: "Paper History", description: "Organize question categories", href: "/history", icon: <Layers className="h-5 w-5" /> },
+    { name: "Drats Questions", description: "Analyze performance data", href: "/drafts", icon: <BarChart className="h-5 w-5" /> },
+    { name: "Question Templates", description: "Configure account settings", href: "/templates", icon: <Settings className="h-5 w-5" /> },
 ];
 
 export default function DashboardLayout({
@@ -34,13 +33,14 @@ export default function DashboardLayout({
 }: {
     children: React.ReactNode;
 }) {
-    const router = useRouter();
     const pathname = usePathname();
     const { user } = useUser();
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-    const handleLogout = () => {
-        router.push("/sign-in");
+    const { signOut } = useAuth()
+
+    const handleLogout = async () => {
+        await signOut({ redirectUrl: '/auth/signup' })
     };
 
     // Determine the active item based on the current pathname
@@ -105,7 +105,7 @@ export default function DashboardLayout({
                         <DropdownMenuContent>
                             <DropdownMenuItem onClick={handleLogout}>
                                 <LogOut className="mr-2 h-4 w-4" />
-                                Logout
+                                LogOut
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>

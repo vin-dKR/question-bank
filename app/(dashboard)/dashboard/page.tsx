@@ -1,16 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useQuestionsData } from "@/hooks/dashboard/questionsData";
 
 export default function Dashboard() {
-    const [totalQuestions, setTotalQuestions] = useState(0);
-    const [activeUsers, setActiveUsers] = useState(0);
+    const [activeUsers] = useState(0);
 
-    useEffect(() => {
-        setTotalQuestions(150);
-        setActiveUsers(45);
-    }, []);
+    const totalQuestions = useQuestionsData()
+    console.log(totalQuestions)
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

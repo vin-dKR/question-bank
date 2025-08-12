@@ -15,10 +15,6 @@ const QuestionBankViewerContent = memo(() => {
 
     return (
         <div className="min-h-screen bg-slate-100">
-            <h1 className="text-3xl font-bold py-6 text-center text-slate-800 tracking-tight md:text-4xl">
-                Educator&apos;s Question Bank
-            </h1>
-
             <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-6">
                 <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
                     <aside className="lg:w-80 xl:w-96 flex-shrink-0 lg:sticky lg:top-4 lg:self-start lg:h-[calc(100vh-2rem)] ">
@@ -35,9 +31,6 @@ const QuestionBankViewerContent = memo(() => {
                         <SearchBar />
                         {selectedQuestionIds.size > 0 && (
                             <SelectedQuestionsActions />
-                            // <div>
-                            //     hii
-                            // </div>
                         )}
                         {error && (
                             <div className="p-3 sm:p-4 bg-rose-50 text-rose-700 rounded-lg shadow-sm text-sm sm:text-base">

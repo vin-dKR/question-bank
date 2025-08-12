@@ -159,7 +159,7 @@ const QuestionList = memo(() => {
         <div className="min-h-screen bg-gray-100">
 
             {/* Question List */}
-            <div className="w-full max-w-4xl mx-auto">
+            <div className="w-full mx-auto">
                 {loading && (
                     <div className="text-center py-6">
                         <p className="text-slate-600">Loading questions...</p>

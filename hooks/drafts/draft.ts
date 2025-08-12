@@ -96,13 +96,13 @@ export const useFolders = () => {
             setLoading(true);
             setErr(null);
             const updatedFolder = await renameFolder(id, name);
-            
+
             // Create a proper Folder object with questionRelations
             const folderWithRelations: Folder = {
                 ...updatedFolder,
                 questionRelations: []
             };
-            
+
             setDrafts((prev) =>
                 prev.map((draft) => (draft.id === id ? mapFolderToDraft(folderWithRelations) : draft))
             );

@@ -27,7 +27,7 @@ const SearchBar: React.FC = () => {
     };
 
     return (
-        <div className="w-full max-w-4xl mx-auto mb-4">
+        <div className="w-full mx-auto mb-4">
             <div className="relative bg-white rounded-lg">
                 <input
                     type="text"
