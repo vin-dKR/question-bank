@@ -65,6 +65,11 @@ declare global {
         selectedQuestions: Question[];
         options: PDFGenerationOptions;
         className?: string;
+        marks?: number;
+        time?: string;
+        exam?: string;
+        subject?: string;
+        logo?: string;
     }
 
     interface QuestionDraft {
@@ -203,6 +208,19 @@ declare global {
         setData: (data: Partial<OnboardingData>) => void;
         clearOnboarding: () => void;
     }
+
+    interface FormFieldProps {
+        id: string;
+        label: string;
+        type: string;
+        name?: string;
+        value?: string;
+        onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+        placeholder?: string;
+        accept?: string;
+        required?: boolean;
+    }
+
 }
 
 

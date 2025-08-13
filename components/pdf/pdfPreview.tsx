@@ -14,14 +14,25 @@ import {
 import { pdfConfigToAnswerKeyHTML, pdfConfigToHTML } from '@/lib/questionToHtmlUtils';
 import { htmlTopdfBlob } from '@/actions/htmlToPdf/htmlToPdf';
 import clsx from 'clsx';
+import PDFDetailsForm from './PDFDetailsForm';
+
 
 export default function PDFGenerator({ institution, selectedQuestions, options, className }: PDFConfig) {
-    const [isGenerating, setIsGenerating] = useState<"question" | "answer" | null>(null)
+    const [isGenerating, setIsGenerating] = useState<"question" | "answer" | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isMobile, setIsMobile] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [step, setStep] = useState<'form' | 'preview'>('form');
+    const [formData, setFormData] = useState({
+        templateName: '',
+        institution: institution || '',
+        marks: '',
+        time: '',
+        exam: '',
+        subject: '',
+        logo: '',
+    });
 
-    console.log("selectedQuestion", selectedQuestions)
     useEffect(() => {
         // Detect mobile device
         const userAgent = navigator.userAgent;
@@ -34,95 +45,81 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
         };
     }, [previewUrl]);
 
-    {/**
-    const handlePreview = async () => {
-        if (selectedQuestions.length === 0) {
-            alert('Please select at least one question');
-            return;
-        }
-
-        // Clear any existing preview
-        if (previewUrl) {
-            URL.revokeObjectURL(previewUrl);
-            setPreviewUrl(null);
-        }
-
-        // setIsGenerating(true); // Removed unused state
-        setError(null);
-
-        try {
-            let pdfBlob: Blob;
-
-            // Try with MathJax first with longer timeout
-            try {
-                pdfBlob = await generatePDF({ institution, selectedQuestions, options });
-            } catch (mathJaxError) {
-                console.warn('MathJax PDF generation failed, trying without MathJax:', mathJaxError);
-
-                // Fallback to PDF without MathJax
-                try {
-                    console.log('Attempting PDF generation without MathJax...');
-                    pdfBlob = await generatePDFWithoutMathJax({ institution, selectedQuestions, options });
-                    console.log('PDF generated successfully without MathJax');
-                } catch (fallbackError) {
-                    console.error('Both MathJax and fallback PDF generation failed:', fallbackError);
-                    throw new Error('Failed to generate PDF. Please try again.');
-                }
-            }
-
-            const url = URL.createObjectURL(pdfBlob);
-            // window.open(url, '_blank');
-            setPreviewUrl(url);
-        } catch (error) {
-            console.error('Error generating PDF preview:', error);
-            setError(error instanceof Error ? error.message : 'Failed to generate PDF preview');
-        } finally {
-            // setIsGenerating(false); // Removed unused state
-        }
+    const handleFormSubmit = (data: typeof formData) => {
+        setFormData(data);
+        handlePreviewCompiledHTML(data);
     };
-        */}
 
-    const handlePreviewCompiledHTML = async () => {
+    const handlePreviewCompiledHTML = async (data: typeof formData) => {
         if (selectedQuestions.length === 0) {
             alert('Please select at least one question');
             return;
         }
 
-        setIsGenerating("question")
-        const html = pdfConfigToHTML({ institution, selectedQuestions, options });
-        // console.log("-------HTML------", html)
+        setIsGenerating("question");
+        const html = pdfConfigToHTML({
+            institution: data.institution,
+            selectedQuestions,
+            options,
+            marks: parseInt(data.marks),
+            time: data.time,
+            exam: data.exam,
+            subject: data.subject,
+            logo: data.logo,
+        });
 
-        const blob = await htmlTopdfBlob(html)
+        const blob = await htmlTopdfBlob(html);
         if (!blob.data) {
-            alert(blob.errorMessage)
-        } else {
-            // Create a Blob from the Uint8Array
-            const pdfBlob = new Blob([blob.data], { type: 'application/pdf' });
-            const pdfUrl = URL.createObjectURL(pdfBlob);
-            // console.log(pdfUrl)
-            setPreviewUrl(pdfUrl)
+            setError("Error generating PDF: " + blob.errorMessage);
+            setIsGenerating(null);
+            return;
         }
-        {/*
-        const blob = new Blob([html], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        console.log(url)
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-        setPreviewUrl(url)
-        */}
 
-        // Clean up the URL after a delay
-        setIsGenerating(null)
+        const pdfBlob = new Blob([blob.data], { type: 'application/pdf' });
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+        setPreviewUrl(pdfUrl);
+        setStep('preview');
+        setIsGenerating(null);
+    };
+
+    const handlePreviewAnswer = async () => {
+        if (selectedQuestions.length === 0) {
+            alert('Please select at least one question');
+            return;
+        }
+
+        setIsGenerating("answer");
+        const html = pdfConfigToAnswerKeyHTML({
+            institution: formData.institution,
+            selectedQuestions,
+            options,
+            marks: parseInt(formData.marks),
+            time: formData.time,
+            exam: formData.exam,
+            subject: formData.subject,
+            logo: formData.logo,
+        });
+
+        const blob = await htmlTopdfBlob(html);
+        if (!blob.data) {
+            setError("Error generating answer key: " + blob.errorMessage);
+            setIsGenerating(null);
+            return;
+        }
+
+        const pdfBlob = new Blob([blob.data], { type: 'application/pdf' });
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+        setPreviewUrl(pdfUrl);
+        setStep('preview');
+        setIsGenerating(null);
     };
 
     const handleDownload = () => {
         if (previewUrl) {
-            console.log("previewUrl")
             const link = document.createElement('a');
             link.href = previewUrl;
             link.download = 'mcq_question_paper.pdf';
             link.click();
-        } else {
-            console.log("!previewUrl")
         }
     };
 
@@ -132,30 +129,8 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
             setPreviewUrl(null);
         }
         setError(null);
-        // setIsGenerating(false); // Removed unused state
+        setStep('form');
     };
-
-    const handlePreviewAnswer = async () => {
-        if (selectedQuestions.length === 0) {
-            alert('Please select at least one question');
-            return;
-        }
-
-        setIsGenerating("answer")
-        const html = pdfConfigToAnswerKeyHTML({ institution, selectedQuestions, options });
-        console.log("-------HTML------", html)
-
-        const blob = await htmlTopdfBlob(html)
-        if (!blob.data) {
-            alert(blob.errorMessage)
-        } else {
-            const pdfBlob = new Blob([blob.data], { type: 'application/pdf' });
-            const pdfUrl = URL.createObjectURL(pdfBlob);
-            console.log(pdfUrl)
-            setPreviewUrl(pdfUrl)
-        }
-        setIsGenerating(null)
-    }
 
     return (
         <Dialog>
@@ -163,7 +138,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
                 <div className="flex gap-2">
                     <Button
                         size="sm"
-                        onClick={handlePreviewCompiledHTML}
+                        onClick={() => setStep('form')}
                         disabled={!selectedQuestions || selectedQuestions.length === 0}
                         className={clsx("bg-indigo-600 hover:bg-indigo-600 text-white px-4 py-1 text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed border border-black/20", className)}
                     >
@@ -179,44 +154,47 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
                     </Button>
                 </div>
             </DialogTrigger>
-            {previewUrl && (
-                <DialogContent className="sm:max-w-4xl bg-white max-h-[100vh] !top-[50%] !left-[50%] !transform !-translate-x-1/2 !-translate-y-1/2">
-                    <DialogHeader>
-                        <DialogTitle className="text-center">PDF Preview</DialogTitle>
-                    </DialogHeader>
-                    <div className="mt-4">
-                        {error ? (
-                            <div className="text-red-600 text-center p-4">
-                                <p className="mb-2">{error}</p>
-                                <Button
-                                    onClick={handlePreviewCompiledHTML}
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                                >
-                                    Try Again
-                                </Button>
-                            </div>
-                        ) : isMobile ? (
-                            <div className="text-center p-4">
-                                <p className="mb-4">PDF preview is not supported on mobile devices. Please download the PDF.</p>
-                                <Button
-                                    onClick={handleDownload}
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                                >
-                                    Download PDF
-                                </Button>
-                            </div>
-                        ) : (
-                            <div className="w-full h-[70vh] lg:h-[80vh] border border-gray-200 rounded-md overflow-hidden">
-                                <iframe src={previewUrl} className="w-full h-full" />
-                            </div>
-                        )}
+            <DialogContent className="sm:max-w-4xl bg-white max-h-[100vh] !top-[50%] !left-[50%] !transform !-translate-x-1/2 !-translate-y-1/2 border border-black/20 rounded-xl">
+                <DialogHeader>
+                    <DialogTitle className="text-center text-2xl tracking-3">
+                        {step === 'form' ? 'Enter PDF Details' : 'PDF Preview'}
+                    </DialogTitle>
+                </DialogHeader>
+                {step === 'form' ? (
+                    <PDFDetailsForm
+                        initialData={formData}
+                        onSubmit={handleFormSubmit}
+                        onCancel={handleClose}
+                    />
+                ) : error ? (
+                    <div className="text-red-600 text-center p-4">
+                        <p className="mb-2">{error}</p>
+                        <Button
+                            onClick={() => handlePreviewCompiledHTML(formData)}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                        >
+                            Try Again
+                        </Button>
                     </div>
+                ) : isMobile ? (
+                    <div className="text-center p-4">
+                        <p className="mb-4">PDF preview is not supported on mobile devices. Please download the PDF.</p>
+                        <Button
+                            onClick={handleDownload}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                        >
+                            Download PDF
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="w-full h-[70vh] lg:h-[80vh] border border-gray-200 rounded-md overflow-hidden">
+                        {previewUrl && <iframe src={previewUrl} className="w-full h-full" />}
+                    </div>
+                )}
+                {step === 'preview' && (
                     <DialogFooter className="sm:justify-between mt-4">
                         <DialogClose asChild>
-                            <Button
-                                variant="outline"
-                                onClick={handleClose}
-                            >
+                            <Button variant="outline" onClick={handleClose}>
                                 Cancel
                             </Button>
                         </DialogClose>
@@ -229,8 +207,8 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
                             </Button>
                         )}
                     </DialogFooter>
-                </DialogContent>
-            )}
+                )}
+            </DialogContent>
         </Dialog>
     );
 }

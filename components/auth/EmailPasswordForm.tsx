@@ -3,6 +3,7 @@
 import { PasswordInput } from './PasswordInput';
 import { ErrorMessage } from './ErrorMessage';
 import { Mail } from 'lucide-react';
+import Link from 'next/link';
 
 interface EmailPasswordFormProps {
     email: string;
@@ -80,9 +81,9 @@ export function EmailPasswordForm({
                         </label>
                     </div>
                     <div className="text-sm">
-                        <a href="/auth/forgot-pass" className="font-medium text-indigo-600 hover:text-indigo-500">
+                        <Link href="/auth/forgot-pass" className="font-medium text-indigo-600 hover:text-indigo-500">
                             Forgot password?
-                        </a>
+                        </Link>
                     </div>
                 </div>
             )}
