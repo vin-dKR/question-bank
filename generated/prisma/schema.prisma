@@ -34,6 +34,8 @@ model User {
   teacherData  TeacherData?
   studentData  StudentData?
   coachingData CoachingData?
+
+  templateForm TemplateForm[]
 }
 
 model TeacherData {
@@ -130,4 +132,20 @@ model FolderQuestion {
 
   @@index([folderId])
   @@index([questionId])
+}
+
+model TemplateForm {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  templateName String
+  institution  String?
+  marks        String?
+  time         String?
+  exam         String?
+  subject      String?
+  logo         String?
+  saveTemplate Boolean
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

@@ -201,6 +201,21 @@ exports.Prisma.FolderQuestionScalarFieldEnum = {
   questionId: 'questionId'
 };
 
+exports.Prisma.TemplateFormScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  templateName: 'templateName',
+  institution: 'institution',
+  marks: 'marks',
+  time: 'time',
+  exam: 'exam',
+  subject: 'subject',
+  logo: 'logo',
+  saveTemplate: 'saveTemplate',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -219,7 +234,8 @@ exports.Prisma.ModelName = {
   CoachingData: 'CoachingData',
   Question: 'Question',
   Folder: 'Folder',
-  FolderQuestion: 'FolderQuestion'
+  FolderQuestion: 'FolderQuestion',
+  TemplateForm: 'TemplateForm'
 };
 
 /**

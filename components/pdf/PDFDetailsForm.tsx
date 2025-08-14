@@ -5,30 +5,12 @@ import { Button } from '@/components/ui/button';
 import FormField from './FormField';
 import { Label } from '../ui/label';
 import { CirclePlus } from 'lucide-react';
+import { useTemplate } from '@/hooks/templates/usePdfTemplateForm';
 
-interface FormData {
-    templateName: string;
-    institution: string;
-    marks: string;
-    time: string;
-    exam: string;
-    subject: string;
-    logo: string;
-}
-
-interface Template extends FormData {
-    id: string;
-}
-
-interface PDFDetailsFormProps {
-    initialData: FormData;
-    onSubmit: (data: FormData) => void;
-    onCancel: () => void;
-}
 
 export default function PDFDetailsForm({ initialData, onSubmit, onCancel }: PDFDetailsFormProps) {
     const [formStep, setFormStep] = useState<'templates' | 'form'>('templates');
-    const [formData, setFormData] = useState<FormData>({
+    const [formData, setFormData] = useState<TemplateFormData>({
         templateName: '',
         institution: initialData.institution,
         marks: initialData.marks,
@@ -38,16 +20,10 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel }: PDFD
         logo: initialData.logo,
     });
     const [saveTemplate, setSaveTemplate] = useState(true);
-    const [savedTemplates, setSavedTemplates] = useState<Template[]>([]);
 
-    useEffect(() => {
-        // Load saved templates from local storage
-        const templates = localStorage.getItem('pdfTemplates');
-        if (templates) {
-            setSavedTemplates(JSON.parse(templates));
-        }
-    }, []);
+    const { templates, loading, error, addTemplate, setTemplates } = useTemplate()
 
+    console.log("template Error", error)
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
@@ -79,16 +55,10 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel }: PDFD
         return true;
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (validateForm()) {
             if (saveTemplate) {
-                const newTemplate: Template = {
-                    id: crypto.randomUUID(),
-                    ...formData,
-                };
-                const updatedTemplates = [...savedTemplates, newTemplate];
-                setSavedTemplates(updatedTemplates);
-                localStorage.setItem('pdfTemplates', JSON.stringify(updatedTemplates));
+                await addTemplate(formData)
             }
             onSubmit(formData);
         }
@@ -102,7 +72,7 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel }: PDFD
     const handleCreateTemplate = () => {
         setFormData({
             templateName: '',
-            institution: initialData.institution,
+            institution: '',
             marks: '',
             time: '',
             exam: '',
@@ -130,8 +100,8 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel }: PDFD
                         </Button>
 
                         {/* Saved templates or "no templates" message */}
-                        {savedTemplates.length > 0 ? (
-                            savedTemplates.map((template) => (
+                        {templates.length > 0 ? (
+                            templates.map((template) => (
                                 <Button
                                     key={template.id}
                                     className="flex flex-col items-center justify-center bg-gray-200 min-h-[8rem] w-full hover:bg-gray-300 text-black border border-black/10 p-2 text-center break-words"

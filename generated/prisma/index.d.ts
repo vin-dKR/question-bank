@@ -48,6 +48,11 @@ export type Folder = $Result.DefaultSelection<Prisma.$FolderPayload>
  * 
  */
 export type FolderQuestion = $Result.DefaultSelection<Prisma.$FolderQuestionPayload>
+/**
+ * Model TemplateForm
+ * 
+ */
+export type TemplateForm = $Result.DefaultSelection<Prisma.$TemplateFormPayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -210,6 +215,16 @@ export class PrismaClient<
     * ```
     */
   get folderQuestion(): Prisma.FolderQuestionDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.templateForm`: Exposes CRUD operations for the **TemplateForm** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more TemplateForms
+    * const templateForms = await prisma.templateForm.findMany()
+    * ```
+    */
+  get templateForm(): Prisma.TemplateFormDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -656,7 +671,8 @@ export namespace Prisma {
     CoachingData: 'CoachingData',
     Question: 'Question',
     Folder: 'Folder',
-    FolderQuestion: 'FolderQuestion'
+    FolderQuestion: 'FolderQuestion',
+    TemplateForm: 'TemplateForm'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -675,7 +691,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "teacherData" | "studentData" | "coachingData" | "question" | "folder" | "folderQuestion"
+      modelProps: "user" | "teacherData" | "studentData" | "coachingData" | "question" | "folder" | "folderQuestion" | "templateForm"
       txIsolationLevel: never
     }
     model: {
@@ -1197,6 +1213,80 @@ export namespace Prisma {
           }
         }
       }
+      TemplateForm: {
+        payload: Prisma.$TemplateFormPayload<ExtArgs>
+        fields: Prisma.TemplateFormFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.TemplateFormFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateFormPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.TemplateFormFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateFormPayload>
+          }
+          findFirst: {
+            args: Prisma.TemplateFormFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateFormPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.TemplateFormFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateFormPayload>
+          }
+          findMany: {
+            args: Prisma.TemplateFormFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateFormPayload>[]
+          }
+          create: {
+            args: Prisma.TemplateFormCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateFormPayload>
+          }
+          createMany: {
+            args: Prisma.TemplateFormCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          delete: {
+            args: Prisma.TemplateFormDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateFormPayload>
+          }
+          update: {
+            args: Prisma.TemplateFormUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateFormPayload>
+          }
+          deleteMany: {
+            args: Prisma.TemplateFormDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.TemplateFormUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.TemplateFormUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TemplateFormPayload>
+          }
+          aggregate: {
+            args: Prisma.TemplateFormAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTemplateForm>
+          }
+          groupBy: {
+            args: Prisma.TemplateFormGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TemplateFormGroupByOutputType>[]
+          }
+          findRaw: {
+            args: Prisma.TemplateFormFindRawArgs<ExtArgs>
+            result: JsonObject
+          }
+          aggregateRaw: {
+            args: Prisma.TemplateFormAggregateRawArgs<ExtArgs>
+            result: JsonObject
+          }
+          count: {
+            args: Prisma.TemplateFormCountArgs<ExtArgs>
+            result: $Utils.Optional<TemplateFormCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1275,6 +1365,7 @@ export namespace Prisma {
     question?: QuestionOmit
     folder?: FolderOmit
     folderQuestion?: FolderQuestionOmit
+    templateForm?: TemplateFormOmit
   }
 
   /* Types for Logging */
@@ -1370,10 +1461,12 @@ export namespace Prisma {
 
   export type UserCountOutputType = {
     drafts: number
+    templateForm: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     drafts?: boolean | UserCountOutputTypeCountDraftsArgs
+    templateForm?: boolean | UserCountOutputTypeCountTemplateFormArgs
   }
 
   // Custom InputTypes
@@ -1392,6 +1485,13 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountDraftsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: FolderWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountTemplateFormArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TemplateFormWhereInput
   }
 
 
@@ -1677,6 +1777,7 @@ export namespace Prisma {
     teacherData?: boolean | User$teacherDataArgs<ExtArgs>
     studentData?: boolean | User$studentDataArgs<ExtArgs>
     coachingData?: boolean | User$coachingDataArgs<ExtArgs>
+    templateForm?: boolean | User$templateFormArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -1702,6 +1803,7 @@ export namespace Prisma {
     teacherData?: boolean | User$teacherDataArgs<ExtArgs>
     studentData?: boolean | User$studentDataArgs<ExtArgs>
     coachingData?: boolean | User$coachingDataArgs<ExtArgs>
+    templateForm?: boolean | User$templateFormArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
 
@@ -1712,6 +1814,7 @@ export namespace Prisma {
       teacherData: Prisma.$TeacherDataPayload<ExtArgs> | null
       studentData: Prisma.$StudentDataPayload<ExtArgs> | null
       coachingData: Prisma.$CoachingDataPayload<ExtArgs> | null
+      templateForm: Prisma.$TemplateFormPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -2092,6 +2195,7 @@ export namespace Prisma {
     teacherData<T extends User$teacherDataArgs<ExtArgs> = {}>(args?: Subset<T, User$teacherDataArgs<ExtArgs>>): Prisma__TeacherDataClient<$Result.GetResult<Prisma.$TeacherDataPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     studentData<T extends User$studentDataArgs<ExtArgs> = {}>(args?: Subset<T, User$studentDataArgs<ExtArgs>>): Prisma__StudentDataClient<$Result.GetResult<Prisma.$StudentDataPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     coachingData<T extends User$coachingDataArgs<ExtArgs> = {}>(args?: Subset<T, User$coachingDataArgs<ExtArgs>>): Prisma__CoachingDataClient<$Result.GetResult<Prisma.$CoachingDataPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    templateForm<T extends User$templateFormArgs<ExtArgs> = {}>(args?: Subset<T, User$templateFormArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TemplateFormPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2580,6 +2684,30 @@ export namespace Prisma {
      */
     include?: CoachingDataInclude<ExtArgs> | null
     where?: CoachingDataWhereInput
+  }
+
+  /**
+   * User.templateForm
+   */
+  export type User$templateFormArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateForm
+     */
+    select?: TemplateFormSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateForm
+     */
+    omit?: TemplateFormOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateFormInclude<ExtArgs> | null
+    where?: TemplateFormWhereInput
+    orderBy?: TemplateFormOrderByWithRelationInput | TemplateFormOrderByWithRelationInput[]
+    cursor?: TemplateFormWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TemplateFormScalarFieldEnum | TemplateFormScalarFieldEnum[]
   }
 
   /**
@@ -8840,6 +8968,1062 @@ export namespace Prisma {
 
 
   /**
+   * Model TemplateForm
+   */
+
+  export type AggregateTemplateForm = {
+    _count: TemplateFormCountAggregateOutputType | null
+    _min: TemplateFormMinAggregateOutputType | null
+    _max: TemplateFormMaxAggregateOutputType | null
+  }
+
+  export type TemplateFormMinAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    templateName: string | null
+    institution: string | null
+    marks: string | null
+    time: string | null
+    exam: string | null
+    subject: string | null
+    logo: string | null
+    saveTemplate: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TemplateFormMaxAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    templateName: string | null
+    institution: string | null
+    marks: string | null
+    time: string | null
+    exam: string | null
+    subject: string | null
+    logo: string | null
+    saveTemplate: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TemplateFormCountAggregateOutputType = {
+    id: number
+    userId: number
+    templateName: number
+    institution: number
+    marks: number
+    time: number
+    exam: number
+    subject: number
+    logo: number
+    saveTemplate: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type TemplateFormMinAggregateInputType = {
+    id?: true
+    userId?: true
+    templateName?: true
+    institution?: true
+    marks?: true
+    time?: true
+    exam?: true
+    subject?: true
+    logo?: true
+    saveTemplate?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TemplateFormMaxAggregateInputType = {
+    id?: true
+    userId?: true
+    templateName?: true
+    institution?: true
+    marks?: true
+    time?: true
+    exam?: true
+    subject?: true
+    logo?: true
+    saveTemplate?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TemplateFormCountAggregateInputType = {
+    id?: true
+    userId?: true
+    templateName?: true
+    institution?: true
+    marks?: true
+    time?: true
+    exam?: true
+    subject?: true
+    logo?: true
+    saveTemplate?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type TemplateFormAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TemplateForm to aggregate.
+     */
+    where?: TemplateFormWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TemplateForms to fetch.
+     */
+    orderBy?: TemplateFormOrderByWithRelationInput | TemplateFormOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TemplateFormWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TemplateForms from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TemplateForms.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned TemplateForms
+    **/
+    _count?: true | TemplateFormCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TemplateFormMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TemplateFormMaxAggregateInputType
+  }
+
+  export type GetTemplateFormAggregateType<T extends TemplateFormAggregateArgs> = {
+        [P in keyof T & keyof AggregateTemplateForm]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTemplateForm[P]>
+      : GetScalarType<T[P], AggregateTemplateForm[P]>
+  }
+
+
+
+
+  export type TemplateFormGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TemplateFormWhereInput
+    orderBy?: TemplateFormOrderByWithAggregationInput | TemplateFormOrderByWithAggregationInput[]
+    by: TemplateFormScalarFieldEnum[] | TemplateFormScalarFieldEnum
+    having?: TemplateFormScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TemplateFormCountAggregateInputType | true
+    _min?: TemplateFormMinAggregateInputType
+    _max?: TemplateFormMaxAggregateInputType
+  }
+
+  export type TemplateFormGroupByOutputType = {
+    id: string
+    userId: string
+    templateName: string
+    institution: string | null
+    marks: string | null
+    time: string | null
+    exam: string | null
+    subject: string | null
+    logo: string | null
+    saveTemplate: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: TemplateFormCountAggregateOutputType | null
+    _min: TemplateFormMinAggregateOutputType | null
+    _max: TemplateFormMaxAggregateOutputType | null
+  }
+
+  type GetTemplateFormGroupByPayload<T extends TemplateFormGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TemplateFormGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TemplateFormGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TemplateFormGroupByOutputType[P]>
+            : GetScalarType<T[P], TemplateFormGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TemplateFormSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    templateName?: boolean
+    institution?: boolean
+    marks?: boolean
+    time?: boolean
+    exam?: boolean
+    subject?: boolean
+    logo?: boolean
+    saveTemplate?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["templateForm"]>
+
+
+
+  export type TemplateFormSelectScalar = {
+    id?: boolean
+    userId?: boolean
+    templateName?: boolean
+    institution?: boolean
+    marks?: boolean
+    time?: boolean
+    exam?: boolean
+    subject?: boolean
+    logo?: boolean
+    saveTemplate?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type TemplateFormOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "templateName" | "institution" | "marks" | "time" | "exam" | "subject" | "logo" | "saveTemplate" | "createdAt" | "updatedAt", ExtArgs["result"]["templateForm"]>
+  export type TemplateFormInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $TemplateFormPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "TemplateForm"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      userId: string
+      templateName: string
+      institution: string | null
+      marks: string | null
+      time: string | null
+      exam: string | null
+      subject: string | null
+      logo: string | null
+      saveTemplate: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["templateForm"]>
+    composites: {}
+  }
+
+  type TemplateFormGetPayload<S extends boolean | null | undefined | TemplateFormDefaultArgs> = $Result.GetResult<Prisma.$TemplateFormPayload, S>
+
+  type TemplateFormCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<TemplateFormFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: TemplateFormCountAggregateInputType | true
+    }
+
+  export interface TemplateFormDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['TemplateForm'], meta: { name: 'TemplateForm' } }
+    /**
+     * Find zero or one TemplateForm that matches the filter.
+     * @param {TemplateFormFindUniqueArgs} args - Arguments to find a TemplateForm
+     * @example
+     * // Get one TemplateForm
+     * const templateForm = await prisma.templateForm.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TemplateFormFindUniqueArgs>(args: SelectSubset<T, TemplateFormFindUniqueArgs<ExtArgs>>): Prisma__TemplateFormClient<$Result.GetResult<Prisma.$TemplateFormPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one TemplateForm that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {TemplateFormFindUniqueOrThrowArgs} args - Arguments to find a TemplateForm
+     * @example
+     * // Get one TemplateForm
+     * const templateForm = await prisma.templateForm.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TemplateFormFindUniqueOrThrowArgs>(args: SelectSubset<T, TemplateFormFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TemplateFormClient<$Result.GetResult<Prisma.$TemplateFormPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TemplateForm that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateFormFindFirstArgs} args - Arguments to find a TemplateForm
+     * @example
+     * // Get one TemplateForm
+     * const templateForm = await prisma.templateForm.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TemplateFormFindFirstArgs>(args?: SelectSubset<T, TemplateFormFindFirstArgs<ExtArgs>>): Prisma__TemplateFormClient<$Result.GetResult<Prisma.$TemplateFormPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TemplateForm that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateFormFindFirstOrThrowArgs} args - Arguments to find a TemplateForm
+     * @example
+     * // Get one TemplateForm
+     * const templateForm = await prisma.templateForm.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TemplateFormFindFirstOrThrowArgs>(args?: SelectSubset<T, TemplateFormFindFirstOrThrowArgs<ExtArgs>>): Prisma__TemplateFormClient<$Result.GetResult<Prisma.$TemplateFormPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more TemplateForms that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateFormFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all TemplateForms
+     * const templateForms = await prisma.templateForm.findMany()
+     * 
+     * // Get first 10 TemplateForms
+     * const templateForms = await prisma.templateForm.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const templateFormWithIdOnly = await prisma.templateForm.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends TemplateFormFindManyArgs>(args?: SelectSubset<T, TemplateFormFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TemplateFormPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a TemplateForm.
+     * @param {TemplateFormCreateArgs} args - Arguments to create a TemplateForm.
+     * @example
+     * // Create one TemplateForm
+     * const TemplateForm = await prisma.templateForm.create({
+     *   data: {
+     *     // ... data to create a TemplateForm
+     *   }
+     * })
+     * 
+     */
+    create<T extends TemplateFormCreateArgs>(args: SelectSubset<T, TemplateFormCreateArgs<ExtArgs>>): Prisma__TemplateFormClient<$Result.GetResult<Prisma.$TemplateFormPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many TemplateForms.
+     * @param {TemplateFormCreateManyArgs} args - Arguments to create many TemplateForms.
+     * @example
+     * // Create many TemplateForms
+     * const templateForm = await prisma.templateForm.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TemplateFormCreateManyArgs>(args?: SelectSubset<T, TemplateFormCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a TemplateForm.
+     * @param {TemplateFormDeleteArgs} args - Arguments to delete one TemplateForm.
+     * @example
+     * // Delete one TemplateForm
+     * const TemplateForm = await prisma.templateForm.delete({
+     *   where: {
+     *     // ... filter to delete one TemplateForm
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TemplateFormDeleteArgs>(args: SelectSubset<T, TemplateFormDeleteArgs<ExtArgs>>): Prisma__TemplateFormClient<$Result.GetResult<Prisma.$TemplateFormPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one TemplateForm.
+     * @param {TemplateFormUpdateArgs} args - Arguments to update one TemplateForm.
+     * @example
+     * // Update one TemplateForm
+     * const templateForm = await prisma.templateForm.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TemplateFormUpdateArgs>(args: SelectSubset<T, TemplateFormUpdateArgs<ExtArgs>>): Prisma__TemplateFormClient<$Result.GetResult<Prisma.$TemplateFormPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more TemplateForms.
+     * @param {TemplateFormDeleteManyArgs} args - Arguments to filter TemplateForms to delete.
+     * @example
+     * // Delete a few TemplateForms
+     * const { count } = await prisma.templateForm.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TemplateFormDeleteManyArgs>(args?: SelectSubset<T, TemplateFormDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TemplateForms.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateFormUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many TemplateForms
+     * const templateForm = await prisma.templateForm.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TemplateFormUpdateManyArgs>(args: SelectSubset<T, TemplateFormUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one TemplateForm.
+     * @param {TemplateFormUpsertArgs} args - Arguments to update or create a TemplateForm.
+     * @example
+     * // Update or create a TemplateForm
+     * const templateForm = await prisma.templateForm.upsert({
+     *   create: {
+     *     // ... data to create a TemplateForm
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the TemplateForm we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TemplateFormUpsertArgs>(args: SelectSubset<T, TemplateFormUpsertArgs<ExtArgs>>): Prisma__TemplateFormClient<$Result.GetResult<Prisma.$TemplateFormPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more TemplateForms that matches the filter.
+     * @param {TemplateFormFindRawArgs} args - Select which filters you would like to apply.
+     * @example
+     * const templateForm = await prisma.templateForm.findRaw({
+     *   filter: { age: { $gt: 25 } }
+     * })
+     */
+    findRaw(args?: TemplateFormFindRawArgs): Prisma.PrismaPromise<JsonObject>
+
+    /**
+     * Perform aggregation operations on a TemplateForm.
+     * @param {TemplateFormAggregateRawArgs} args - Select which aggregations you would like to apply.
+     * @example
+     * const templateForm = await prisma.templateForm.aggregateRaw({
+     *   pipeline: [
+     *     { $match: { status: "registered" } },
+     *     { $group: { _id: "$country", total: { $sum: 1 } } }
+     *   ]
+     * })
+     */
+    aggregateRaw(args?: TemplateFormAggregateRawArgs): Prisma.PrismaPromise<JsonObject>
+
+
+    /**
+     * Count the number of TemplateForms.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateFormCountArgs} args - Arguments to filter TemplateForms to count.
+     * @example
+     * // Count the number of TemplateForms
+     * const count = await prisma.templateForm.count({
+     *   where: {
+     *     // ... the filter for the TemplateForms we want to count
+     *   }
+     * })
+    **/
+    count<T extends TemplateFormCountArgs>(
+      args?: Subset<T, TemplateFormCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TemplateFormCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a TemplateForm.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateFormAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TemplateFormAggregateArgs>(args: Subset<T, TemplateFormAggregateArgs>): Prisma.PrismaPromise<GetTemplateFormAggregateType<T>>
+
+    /**
+     * Group by TemplateForm.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TemplateFormGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TemplateFormGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TemplateFormGroupByArgs['orderBy'] }
+        : { orderBy?: TemplateFormGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TemplateFormGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTemplateFormGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the TemplateForm model
+   */
+  readonly fields: TemplateFormFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for TemplateForm.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TemplateFormClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the TemplateForm model
+   */
+  interface TemplateFormFieldRefs {
+    readonly id: FieldRef<"TemplateForm", 'String'>
+    readonly userId: FieldRef<"TemplateForm", 'String'>
+    readonly templateName: FieldRef<"TemplateForm", 'String'>
+    readonly institution: FieldRef<"TemplateForm", 'String'>
+    readonly marks: FieldRef<"TemplateForm", 'String'>
+    readonly time: FieldRef<"TemplateForm", 'String'>
+    readonly exam: FieldRef<"TemplateForm", 'String'>
+    readonly subject: FieldRef<"TemplateForm", 'String'>
+    readonly logo: FieldRef<"TemplateForm", 'String'>
+    readonly saveTemplate: FieldRef<"TemplateForm", 'Boolean'>
+    readonly createdAt: FieldRef<"TemplateForm", 'DateTime'>
+    readonly updatedAt: FieldRef<"TemplateForm", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * TemplateForm findUnique
+   */
+  export type TemplateFormFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateForm
+     */
+    select?: TemplateFormSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateForm
+     */
+    omit?: TemplateFormOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateFormInclude<ExtArgs> | null
+    /**
+     * Filter, which TemplateForm to fetch.
+     */
+    where: TemplateFormWhereUniqueInput
+  }
+
+  /**
+   * TemplateForm findUniqueOrThrow
+   */
+  export type TemplateFormFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateForm
+     */
+    select?: TemplateFormSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateForm
+     */
+    omit?: TemplateFormOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateFormInclude<ExtArgs> | null
+    /**
+     * Filter, which TemplateForm to fetch.
+     */
+    where: TemplateFormWhereUniqueInput
+  }
+
+  /**
+   * TemplateForm findFirst
+   */
+  export type TemplateFormFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateForm
+     */
+    select?: TemplateFormSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateForm
+     */
+    omit?: TemplateFormOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateFormInclude<ExtArgs> | null
+    /**
+     * Filter, which TemplateForm to fetch.
+     */
+    where?: TemplateFormWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TemplateForms to fetch.
+     */
+    orderBy?: TemplateFormOrderByWithRelationInput | TemplateFormOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TemplateForms.
+     */
+    cursor?: TemplateFormWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TemplateForms from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TemplateForms.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TemplateForms.
+     */
+    distinct?: TemplateFormScalarFieldEnum | TemplateFormScalarFieldEnum[]
+  }
+
+  /**
+   * TemplateForm findFirstOrThrow
+   */
+  export type TemplateFormFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateForm
+     */
+    select?: TemplateFormSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateForm
+     */
+    omit?: TemplateFormOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateFormInclude<ExtArgs> | null
+    /**
+     * Filter, which TemplateForm to fetch.
+     */
+    where?: TemplateFormWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TemplateForms to fetch.
+     */
+    orderBy?: TemplateFormOrderByWithRelationInput | TemplateFormOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TemplateForms.
+     */
+    cursor?: TemplateFormWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TemplateForms from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TemplateForms.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TemplateForms.
+     */
+    distinct?: TemplateFormScalarFieldEnum | TemplateFormScalarFieldEnum[]
+  }
+
+  /**
+   * TemplateForm findMany
+   */
+  export type TemplateFormFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateForm
+     */
+    select?: TemplateFormSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateForm
+     */
+    omit?: TemplateFormOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateFormInclude<ExtArgs> | null
+    /**
+     * Filter, which TemplateForms to fetch.
+     */
+    where?: TemplateFormWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TemplateForms to fetch.
+     */
+    orderBy?: TemplateFormOrderByWithRelationInput | TemplateFormOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing TemplateForms.
+     */
+    cursor?: TemplateFormWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TemplateForms from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TemplateForms.
+     */
+    skip?: number
+    distinct?: TemplateFormScalarFieldEnum | TemplateFormScalarFieldEnum[]
+  }
+
+  /**
+   * TemplateForm create
+   */
+  export type TemplateFormCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateForm
+     */
+    select?: TemplateFormSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateForm
+     */
+    omit?: TemplateFormOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateFormInclude<ExtArgs> | null
+    /**
+     * The data needed to create a TemplateForm.
+     */
+    data: XOR<TemplateFormCreateInput, TemplateFormUncheckedCreateInput>
+  }
+
+  /**
+   * TemplateForm createMany
+   */
+  export type TemplateFormCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many TemplateForms.
+     */
+    data: TemplateFormCreateManyInput | TemplateFormCreateManyInput[]
+  }
+
+  /**
+   * TemplateForm update
+   */
+  export type TemplateFormUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateForm
+     */
+    select?: TemplateFormSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateForm
+     */
+    omit?: TemplateFormOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateFormInclude<ExtArgs> | null
+    /**
+     * The data needed to update a TemplateForm.
+     */
+    data: XOR<TemplateFormUpdateInput, TemplateFormUncheckedUpdateInput>
+    /**
+     * Choose, which TemplateForm to update.
+     */
+    where: TemplateFormWhereUniqueInput
+  }
+
+  /**
+   * TemplateForm updateMany
+   */
+  export type TemplateFormUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update TemplateForms.
+     */
+    data: XOR<TemplateFormUpdateManyMutationInput, TemplateFormUncheckedUpdateManyInput>
+    /**
+     * Filter which TemplateForms to update
+     */
+    where?: TemplateFormWhereInput
+    /**
+     * Limit how many TemplateForms to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * TemplateForm upsert
+   */
+  export type TemplateFormUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateForm
+     */
+    select?: TemplateFormSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateForm
+     */
+    omit?: TemplateFormOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateFormInclude<ExtArgs> | null
+    /**
+     * The filter to search for the TemplateForm to update in case it exists.
+     */
+    where: TemplateFormWhereUniqueInput
+    /**
+     * In case the TemplateForm found by the `where` argument doesn't exist, create a new TemplateForm with this data.
+     */
+    create: XOR<TemplateFormCreateInput, TemplateFormUncheckedCreateInput>
+    /**
+     * In case the TemplateForm was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TemplateFormUpdateInput, TemplateFormUncheckedUpdateInput>
+  }
+
+  /**
+   * TemplateForm delete
+   */
+  export type TemplateFormDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateForm
+     */
+    select?: TemplateFormSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateForm
+     */
+    omit?: TemplateFormOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateFormInclude<ExtArgs> | null
+    /**
+     * Filter which TemplateForm to delete.
+     */
+    where: TemplateFormWhereUniqueInput
+  }
+
+  /**
+   * TemplateForm deleteMany
+   */
+  export type TemplateFormDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TemplateForms to delete
+     */
+    where?: TemplateFormWhereInput
+    /**
+     * Limit how many TemplateForms to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * TemplateForm findRaw
+   */
+  export type TemplateFormFindRawArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The query predicate filter. If unspecified, then all documents in the collection will match the predicate. ${@link https://docs.mongodb.com/manual/reference/operator/query MongoDB Docs}.
+     */
+    filter?: InputJsonValue
+    /**
+     * Additional options to pass to the `find` command ${@link https://docs.mongodb.com/manual/reference/command/find/#command-fields MongoDB Docs}.
+     */
+    options?: InputJsonValue
+  }
+
+  /**
+   * TemplateForm aggregateRaw
+   */
+  export type TemplateFormAggregateRawArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * An array of aggregation stages to process and transform the document stream via the aggregation pipeline. ${@link https://docs.mongodb.com/manual/reference/operator/aggregation-pipeline MongoDB Docs}.
+     */
+    pipeline?: InputJsonValue[]
+    /**
+     * Additional options to pass to the `aggregate` command ${@link https://docs.mongodb.com/manual/reference/command/aggregate/#command-fields MongoDB Docs}.
+     */
+    options?: InputJsonValue
+  }
+
+  /**
+   * TemplateForm without action
+   */
+  export type TemplateFormDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TemplateForm
+     */
+    select?: TemplateFormSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TemplateForm
+     */
+    omit?: TemplateFormOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TemplateFormInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -8952,6 +10136,24 @@ export namespace Prisma {
   export type FolderQuestionScalarFieldEnum = (typeof FolderQuestionScalarFieldEnum)[keyof typeof FolderQuestionScalarFieldEnum]
 
 
+  export const TemplateFormScalarFieldEnum: {
+    id: 'id',
+    userId: 'userId',
+    templateName: 'templateName',
+    institution: 'institution',
+    marks: 'marks',
+    time: 'time',
+    exam: 'exam',
+    subject: 'subject',
+    logo: 'logo',
+    saveTemplate: 'saveTemplate',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type TemplateFormScalarFieldEnum = (typeof TemplateFormScalarFieldEnum)[keyof typeof TemplateFormScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
@@ -9058,6 +10260,7 @@ export namespace Prisma {
     teacherData?: XOR<TeacherDataNullableScalarRelationFilter, TeacherDataWhereInput> | null
     studentData?: XOR<StudentDataNullableScalarRelationFilter, StudentDataWhereInput> | null
     coachingData?: XOR<CoachingDataNullableScalarRelationFilter, CoachingDataWhereInput> | null
+    templateForm?: TemplateFormListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -9076,6 +10279,7 @@ export namespace Prisma {
     teacherData?: TeacherDataOrderByWithRelationInput
     studentData?: StudentDataOrderByWithRelationInput
     coachingData?: CoachingDataOrderByWithRelationInput
+    templateForm?: TemplateFormOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -9097,6 +10301,7 @@ export namespace Prisma {
     teacherData?: XOR<TeacherDataNullableScalarRelationFilter, TeacherDataWhereInput> | null
     studentData?: XOR<StudentDataNullableScalarRelationFilter, StudentDataWhereInput> | null
     coachingData?: XOR<CoachingDataNullableScalarRelationFilter, CoachingDataWhereInput> | null
+    templateForm?: TemplateFormListRelationFilter
   }, "id" | "clerkUserId" | "email">
 
   export type UserOrderByWithAggregationInput = {
@@ -9601,6 +10806,96 @@ export namespace Prisma {
     questionId?: StringWithAggregatesFilter<"FolderQuestion"> | string
   }
 
+  export type TemplateFormWhereInput = {
+    AND?: TemplateFormWhereInput | TemplateFormWhereInput[]
+    OR?: TemplateFormWhereInput[]
+    NOT?: TemplateFormWhereInput | TemplateFormWhereInput[]
+    id?: StringFilter<"TemplateForm"> | string
+    userId?: StringFilter<"TemplateForm"> | string
+    templateName?: StringFilter<"TemplateForm"> | string
+    institution?: StringNullableFilter<"TemplateForm"> | string | null
+    marks?: StringNullableFilter<"TemplateForm"> | string | null
+    time?: StringNullableFilter<"TemplateForm"> | string | null
+    exam?: StringNullableFilter<"TemplateForm"> | string | null
+    subject?: StringNullableFilter<"TemplateForm"> | string | null
+    logo?: StringNullableFilter<"TemplateForm"> | string | null
+    saveTemplate?: BoolFilter<"TemplateForm"> | boolean
+    createdAt?: DateTimeFilter<"TemplateForm"> | Date | string
+    updatedAt?: DateTimeFilter<"TemplateForm"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type TemplateFormOrderByWithRelationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    templateName?: SortOrder
+    institution?: SortOrder
+    marks?: SortOrder
+    time?: SortOrder
+    exam?: SortOrder
+    subject?: SortOrder
+    logo?: SortOrder
+    saveTemplate?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type TemplateFormWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: TemplateFormWhereInput | TemplateFormWhereInput[]
+    OR?: TemplateFormWhereInput[]
+    NOT?: TemplateFormWhereInput | TemplateFormWhereInput[]
+    userId?: StringFilter<"TemplateForm"> | string
+    templateName?: StringFilter<"TemplateForm"> | string
+    institution?: StringNullableFilter<"TemplateForm"> | string | null
+    marks?: StringNullableFilter<"TemplateForm"> | string | null
+    time?: StringNullableFilter<"TemplateForm"> | string | null
+    exam?: StringNullableFilter<"TemplateForm"> | string | null
+    subject?: StringNullableFilter<"TemplateForm"> | string | null
+    logo?: StringNullableFilter<"TemplateForm"> | string | null
+    saveTemplate?: BoolFilter<"TemplateForm"> | boolean
+    createdAt?: DateTimeFilter<"TemplateForm"> | Date | string
+    updatedAt?: DateTimeFilter<"TemplateForm"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id">
+
+  export type TemplateFormOrderByWithAggregationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    templateName?: SortOrder
+    institution?: SortOrder
+    marks?: SortOrder
+    time?: SortOrder
+    exam?: SortOrder
+    subject?: SortOrder
+    logo?: SortOrder
+    saveTemplate?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: TemplateFormCountOrderByAggregateInput
+    _max?: TemplateFormMaxOrderByAggregateInput
+    _min?: TemplateFormMinOrderByAggregateInput
+  }
+
+  export type TemplateFormScalarWhereWithAggregatesInput = {
+    AND?: TemplateFormScalarWhereWithAggregatesInput | TemplateFormScalarWhereWithAggregatesInput[]
+    OR?: TemplateFormScalarWhereWithAggregatesInput[]
+    NOT?: TemplateFormScalarWhereWithAggregatesInput | TemplateFormScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"TemplateForm"> | string
+    userId?: StringWithAggregatesFilter<"TemplateForm"> | string
+    templateName?: StringWithAggregatesFilter<"TemplateForm"> | string
+    institution?: StringNullableWithAggregatesFilter<"TemplateForm"> | string | null
+    marks?: StringNullableWithAggregatesFilter<"TemplateForm"> | string | null
+    time?: StringNullableWithAggregatesFilter<"TemplateForm"> | string | null
+    exam?: StringNullableWithAggregatesFilter<"TemplateForm"> | string | null
+    subject?: StringNullableWithAggregatesFilter<"TemplateForm"> | string | null
+    logo?: StringNullableWithAggregatesFilter<"TemplateForm"> | string | null
+    saveTemplate?: BoolWithAggregatesFilter<"TemplateForm"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"TemplateForm"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"TemplateForm"> | Date | string
+  }
+
   export type UserCreateInput = {
     id?: string
     clerkUserId: string
@@ -9617,6 +10912,7 @@ export namespace Prisma {
     teacherData?: TeacherDataCreateNestedOneWithoutUserInput
     studentData?: StudentDataCreateNestedOneWithoutUserInput
     coachingData?: CoachingDataCreateNestedOneWithoutUserInput
+    templateForm?: TemplateFormCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -9635,6 +10931,7 @@ export namespace Prisma {
     teacherData?: TeacherDataUncheckedCreateNestedOneWithoutUserInput
     studentData?: StudentDataUncheckedCreateNestedOneWithoutUserInput
     coachingData?: CoachingDataUncheckedCreateNestedOneWithoutUserInput
+    templateForm?: TemplateFormUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserUpdateInput = {
@@ -9652,6 +10949,7 @@ export namespace Prisma {
     teacherData?: TeacherDataUpdateOneWithoutUserNestedInput
     studentData?: StudentDataUpdateOneWithoutUserNestedInput
     coachingData?: CoachingDataUpdateOneWithoutUserNestedInput
+    templateForm?: TemplateFormUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -9669,6 +10967,7 @@ export namespace Prisma {
     teacherData?: TeacherDataUncheckedUpdateOneWithoutUserNestedInput
     studentData?: StudentDataUncheckedUpdateOneWithoutUserNestedInput
     coachingData?: CoachingDataUncheckedUpdateOneWithoutUserNestedInput
+    templateForm?: TemplateFormUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -10208,6 +11507,106 @@ export namespace Prisma {
     questionId?: StringFieldUpdateOperationsInput | string
   }
 
+  export type TemplateFormCreateInput = {
+    id?: string
+    templateName: string
+    institution?: string | null
+    marks?: string | null
+    time?: string | null
+    exam?: string | null
+    subject?: string | null
+    logo?: string | null
+    saveTemplate: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutTemplateFormInput
+  }
+
+  export type TemplateFormUncheckedCreateInput = {
+    id?: string
+    userId: string
+    templateName: string
+    institution?: string | null
+    marks?: string | null
+    time?: string | null
+    exam?: string | null
+    subject?: string | null
+    logo?: string | null
+    saveTemplate: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TemplateFormUpdateInput = {
+    templateName?: StringFieldUpdateOperationsInput | string
+    institution?: NullableStringFieldUpdateOperationsInput | string | null
+    marks?: NullableStringFieldUpdateOperationsInput | string | null
+    time?: NullableStringFieldUpdateOperationsInput | string | null
+    exam?: NullableStringFieldUpdateOperationsInput | string | null
+    subject?: NullableStringFieldUpdateOperationsInput | string | null
+    logo?: NullableStringFieldUpdateOperationsInput | string | null
+    saveTemplate?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutTemplateFormNestedInput
+  }
+
+  export type TemplateFormUncheckedUpdateInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    templateName?: StringFieldUpdateOperationsInput | string
+    institution?: NullableStringFieldUpdateOperationsInput | string | null
+    marks?: NullableStringFieldUpdateOperationsInput | string | null
+    time?: NullableStringFieldUpdateOperationsInput | string | null
+    exam?: NullableStringFieldUpdateOperationsInput | string | null
+    subject?: NullableStringFieldUpdateOperationsInput | string | null
+    logo?: NullableStringFieldUpdateOperationsInput | string | null
+    saveTemplate?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TemplateFormCreateManyInput = {
+    id?: string
+    userId: string
+    templateName: string
+    institution?: string | null
+    marks?: string | null
+    time?: string | null
+    exam?: string | null
+    subject?: string | null
+    logo?: string | null
+    saveTemplate: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TemplateFormUpdateManyMutationInput = {
+    templateName?: StringFieldUpdateOperationsInput | string
+    institution?: NullableStringFieldUpdateOperationsInput | string | null
+    marks?: NullableStringFieldUpdateOperationsInput | string | null
+    time?: NullableStringFieldUpdateOperationsInput | string | null
+    exam?: NullableStringFieldUpdateOperationsInput | string | null
+    subject?: NullableStringFieldUpdateOperationsInput | string | null
+    logo?: NullableStringFieldUpdateOperationsInput | string | null
+    saveTemplate?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TemplateFormUncheckedUpdateManyInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    templateName?: StringFieldUpdateOperationsInput | string
+    institution?: NullableStringFieldUpdateOperationsInput | string | null
+    marks?: NullableStringFieldUpdateOperationsInput | string | null
+    time?: NullableStringFieldUpdateOperationsInput | string | null
+    exam?: NullableStringFieldUpdateOperationsInput | string | null
+    subject?: NullableStringFieldUpdateOperationsInput | string | null
+    logo?: NullableStringFieldUpdateOperationsInput | string | null
+    saveTemplate?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -10283,7 +11682,17 @@ export namespace Prisma {
     isNot?: CoachingDataWhereInput | null
   }
 
+  export type TemplateFormListRelationFilter = {
+    every?: TemplateFormWhereInput
+    some?: TemplateFormWhereInput
+    none?: TemplateFormWhereInput
+  }
+
   export type FolderOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type TemplateFormOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -10705,6 +12114,51 @@ export namespace Prisma {
     questionId?: SortOrder
   }
 
+  export type TemplateFormCountOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    templateName?: SortOrder
+    institution?: SortOrder
+    marks?: SortOrder
+    time?: SortOrder
+    exam?: SortOrder
+    subject?: SortOrder
+    logo?: SortOrder
+    saveTemplate?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TemplateFormMaxOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    templateName?: SortOrder
+    institution?: SortOrder
+    marks?: SortOrder
+    time?: SortOrder
+    exam?: SortOrder
+    subject?: SortOrder
+    logo?: SortOrder
+    saveTemplate?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TemplateFormMinOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    templateName?: SortOrder
+    institution?: SortOrder
+    marks?: SortOrder
+    time?: SortOrder
+    exam?: SortOrder
+    subject?: SortOrder
+    logo?: SortOrder
+    saveTemplate?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
   export type FolderCreateNestedManyWithoutUserInput = {
     create?: XOR<FolderCreateWithoutUserInput, FolderUncheckedCreateWithoutUserInput> | FolderCreateWithoutUserInput[] | FolderUncheckedCreateWithoutUserInput[]
     connectOrCreate?: FolderCreateOrConnectWithoutUserInput | FolderCreateOrConnectWithoutUserInput[]
@@ -10730,6 +12184,13 @@ export namespace Prisma {
     connect?: CoachingDataWhereUniqueInput
   }
 
+  export type TemplateFormCreateNestedManyWithoutUserInput = {
+    create?: XOR<TemplateFormCreateWithoutUserInput, TemplateFormUncheckedCreateWithoutUserInput> | TemplateFormCreateWithoutUserInput[] | TemplateFormUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: TemplateFormCreateOrConnectWithoutUserInput | TemplateFormCreateOrConnectWithoutUserInput[]
+    createMany?: TemplateFormCreateManyUserInputEnvelope
+    connect?: TemplateFormWhereUniqueInput | TemplateFormWhereUniqueInput[]
+  }
+
   export type FolderUncheckedCreateNestedManyWithoutUserInput = {
     create?: XOR<FolderCreateWithoutUserInput, FolderUncheckedCreateWithoutUserInput> | FolderCreateWithoutUserInput[] | FolderUncheckedCreateWithoutUserInput[]
     connectOrCreate?: FolderCreateOrConnectWithoutUserInput | FolderCreateOrConnectWithoutUserInput[]
@@ -10753,6 +12214,13 @@ export namespace Prisma {
     create?: XOR<CoachingDataCreateWithoutUserInput, CoachingDataUncheckedCreateWithoutUserInput>
     connectOrCreate?: CoachingDataCreateOrConnectWithoutUserInput
     connect?: CoachingDataWhereUniqueInput
+  }
+
+  export type TemplateFormUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<TemplateFormCreateWithoutUserInput, TemplateFormUncheckedCreateWithoutUserInput> | TemplateFormCreateWithoutUserInput[] | TemplateFormUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: TemplateFormCreateOrConnectWithoutUserInput | TemplateFormCreateOrConnectWithoutUserInput[]
+    createMany?: TemplateFormCreateManyUserInputEnvelope
+    connect?: TemplateFormWhereUniqueInput | TemplateFormWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -10817,6 +12285,20 @@ export namespace Prisma {
     update?: XOR<XOR<CoachingDataUpdateToOneWithWhereWithoutUserInput, CoachingDataUpdateWithoutUserInput>, CoachingDataUncheckedUpdateWithoutUserInput>
   }
 
+  export type TemplateFormUpdateManyWithoutUserNestedInput = {
+    create?: XOR<TemplateFormCreateWithoutUserInput, TemplateFormUncheckedCreateWithoutUserInput> | TemplateFormCreateWithoutUserInput[] | TemplateFormUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: TemplateFormCreateOrConnectWithoutUserInput | TemplateFormCreateOrConnectWithoutUserInput[]
+    upsert?: TemplateFormUpsertWithWhereUniqueWithoutUserInput | TemplateFormUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: TemplateFormCreateManyUserInputEnvelope
+    set?: TemplateFormWhereUniqueInput | TemplateFormWhereUniqueInput[]
+    disconnect?: TemplateFormWhereUniqueInput | TemplateFormWhereUniqueInput[]
+    delete?: TemplateFormWhereUniqueInput | TemplateFormWhereUniqueInput[]
+    connect?: TemplateFormWhereUniqueInput | TemplateFormWhereUniqueInput[]
+    update?: TemplateFormUpdateWithWhereUniqueWithoutUserInput | TemplateFormUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: TemplateFormUpdateManyWithWhereWithoutUserInput | TemplateFormUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: TemplateFormScalarWhereInput | TemplateFormScalarWhereInput[]
+  }
+
   export type FolderUncheckedUpdateManyWithoutUserNestedInput = {
     create?: XOR<FolderCreateWithoutUserInput, FolderUncheckedCreateWithoutUserInput> | FolderCreateWithoutUserInput[] | FolderUncheckedCreateWithoutUserInput[]
     connectOrCreate?: FolderCreateOrConnectWithoutUserInput | FolderCreateOrConnectWithoutUserInput[]
@@ -10859,6 +12341,20 @@ export namespace Prisma {
     delete?: CoachingDataWhereInput | boolean
     connect?: CoachingDataWhereUniqueInput
     update?: XOR<XOR<CoachingDataUpdateToOneWithWhereWithoutUserInput, CoachingDataUpdateWithoutUserInput>, CoachingDataUncheckedUpdateWithoutUserInput>
+  }
+
+  export type TemplateFormUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<TemplateFormCreateWithoutUserInput, TemplateFormUncheckedCreateWithoutUserInput> | TemplateFormCreateWithoutUserInput[] | TemplateFormUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: TemplateFormCreateOrConnectWithoutUserInput | TemplateFormCreateOrConnectWithoutUserInput[]
+    upsert?: TemplateFormUpsertWithWhereUniqueWithoutUserInput | TemplateFormUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: TemplateFormCreateManyUserInputEnvelope
+    set?: TemplateFormWhereUniqueInput | TemplateFormWhereUniqueInput[]
+    disconnect?: TemplateFormWhereUniqueInput | TemplateFormWhereUniqueInput[]
+    delete?: TemplateFormWhereUniqueInput | TemplateFormWhereUniqueInput[]
+    connect?: TemplateFormWhereUniqueInput | TemplateFormWhereUniqueInput[]
+    update?: TemplateFormUpdateWithWhereUniqueWithoutUserInput | TemplateFormUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: TemplateFormUpdateManyWithWhereWithoutUserInput | TemplateFormUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: TemplateFormScalarWhereInput | TemplateFormScalarWhereInput[]
   }
 
   export type UserCreateNestedOneWithoutTeacherDataInput = {
@@ -11080,6 +12576,20 @@ export namespace Prisma {
     upsert?: QuestionUpsertWithoutFolderRelationsInput
     connect?: QuestionWhereUniqueInput
     update?: XOR<XOR<QuestionUpdateToOneWithWhereWithoutFolderRelationsInput, QuestionUpdateWithoutFolderRelationsInput>, QuestionUncheckedUpdateWithoutFolderRelationsInput>
+  }
+
+  export type UserCreateNestedOneWithoutTemplateFormInput = {
+    create?: XOR<UserCreateWithoutTemplateFormInput, UserUncheckedCreateWithoutTemplateFormInput>
+    connectOrCreate?: UserCreateOrConnectWithoutTemplateFormInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserUpdateOneRequiredWithoutTemplateFormNestedInput = {
+    create?: XOR<UserCreateWithoutTemplateFormInput, UserUncheckedCreateWithoutTemplateFormInput>
+    connectOrCreate?: UserCreateOrConnectWithoutTemplateFormInput
+    upsert?: UserUpsertWithoutTemplateFormInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutTemplateFormInput, UserUpdateWithoutTemplateFormInput>, UserUncheckedUpdateWithoutTemplateFormInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -11390,6 +12900,43 @@ export namespace Prisma {
     create: XOR<CoachingDataCreateWithoutUserInput, CoachingDataUncheckedCreateWithoutUserInput>
   }
 
+  export type TemplateFormCreateWithoutUserInput = {
+    id?: string
+    templateName: string
+    institution?: string | null
+    marks?: string | null
+    time?: string | null
+    exam?: string | null
+    subject?: string | null
+    logo?: string | null
+    saveTemplate: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TemplateFormUncheckedCreateWithoutUserInput = {
+    id?: string
+    templateName: string
+    institution?: string | null
+    marks?: string | null
+    time?: string | null
+    exam?: string | null
+    subject?: string | null
+    logo?: string | null
+    saveTemplate: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TemplateFormCreateOrConnectWithoutUserInput = {
+    where: TemplateFormWhereUniqueInput
+    create: XOR<TemplateFormCreateWithoutUserInput, TemplateFormUncheckedCreateWithoutUserInput>
+  }
+
+  export type TemplateFormCreateManyUserInputEnvelope = {
+    data: TemplateFormCreateManyUserInput | TemplateFormCreateManyUserInput[]
+  }
+
   export type FolderUpsertWithWhereUniqueWithoutUserInput = {
     where: FolderWhereUniqueInput
     update: XOR<FolderUpdateWithoutUserInput, FolderUncheckedUpdateWithoutUserInput>
@@ -11518,6 +13065,40 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type TemplateFormUpsertWithWhereUniqueWithoutUserInput = {
+    where: TemplateFormWhereUniqueInput
+    update: XOR<TemplateFormUpdateWithoutUserInput, TemplateFormUncheckedUpdateWithoutUserInput>
+    create: XOR<TemplateFormCreateWithoutUserInput, TemplateFormUncheckedCreateWithoutUserInput>
+  }
+
+  export type TemplateFormUpdateWithWhereUniqueWithoutUserInput = {
+    where: TemplateFormWhereUniqueInput
+    data: XOR<TemplateFormUpdateWithoutUserInput, TemplateFormUncheckedUpdateWithoutUserInput>
+  }
+
+  export type TemplateFormUpdateManyWithWhereWithoutUserInput = {
+    where: TemplateFormScalarWhereInput
+    data: XOR<TemplateFormUpdateManyMutationInput, TemplateFormUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type TemplateFormScalarWhereInput = {
+    AND?: TemplateFormScalarWhereInput | TemplateFormScalarWhereInput[]
+    OR?: TemplateFormScalarWhereInput[]
+    NOT?: TemplateFormScalarWhereInput | TemplateFormScalarWhereInput[]
+    id?: StringFilter<"TemplateForm"> | string
+    userId?: StringFilter<"TemplateForm"> | string
+    templateName?: StringFilter<"TemplateForm"> | string
+    institution?: StringNullableFilter<"TemplateForm"> | string | null
+    marks?: StringNullableFilter<"TemplateForm"> | string | null
+    time?: StringNullableFilter<"TemplateForm"> | string | null
+    exam?: StringNullableFilter<"TemplateForm"> | string | null
+    subject?: StringNullableFilter<"TemplateForm"> | string | null
+    logo?: StringNullableFilter<"TemplateForm"> | string | null
+    saveTemplate?: BoolFilter<"TemplateForm"> | boolean
+    createdAt?: DateTimeFilter<"TemplateForm"> | Date | string
+    updatedAt?: DateTimeFilter<"TemplateForm"> | Date | string
+  }
+
   export type UserCreateWithoutTeacherDataInput = {
     id?: string
     clerkUserId: string
@@ -11533,6 +13114,7 @@ export namespace Prisma {
     drafts?: FolderCreateNestedManyWithoutUserInput
     studentData?: StudentDataCreateNestedOneWithoutUserInput
     coachingData?: CoachingDataCreateNestedOneWithoutUserInput
+    templateForm?: TemplateFormCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutTeacherDataInput = {
@@ -11550,6 +13132,7 @@ export namespace Prisma {
     drafts?: FolderUncheckedCreateNestedManyWithoutUserInput
     studentData?: StudentDataUncheckedCreateNestedOneWithoutUserInput
     coachingData?: CoachingDataUncheckedCreateNestedOneWithoutUserInput
+    templateForm?: TemplateFormUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutTeacherDataInput = {
@@ -11582,6 +13165,7 @@ export namespace Prisma {
     drafts?: FolderUpdateManyWithoutUserNestedInput
     studentData?: StudentDataUpdateOneWithoutUserNestedInput
     coachingData?: CoachingDataUpdateOneWithoutUserNestedInput
+    templateForm?: TemplateFormUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutTeacherDataInput = {
@@ -11598,6 +13182,7 @@ export namespace Prisma {
     drafts?: FolderUncheckedUpdateManyWithoutUserNestedInput
     studentData?: StudentDataUncheckedUpdateOneWithoutUserNestedInput
     coachingData?: CoachingDataUncheckedUpdateOneWithoutUserNestedInput
+    templateForm?: TemplateFormUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutStudentDataInput = {
@@ -11615,6 +13200,7 @@ export namespace Prisma {
     drafts?: FolderCreateNestedManyWithoutUserInput
     teacherData?: TeacherDataCreateNestedOneWithoutUserInput
     coachingData?: CoachingDataCreateNestedOneWithoutUserInput
+    templateForm?: TemplateFormCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutStudentDataInput = {
@@ -11632,6 +13218,7 @@ export namespace Prisma {
     drafts?: FolderUncheckedCreateNestedManyWithoutUserInput
     teacherData?: TeacherDataUncheckedCreateNestedOneWithoutUserInput
     coachingData?: CoachingDataUncheckedCreateNestedOneWithoutUserInput
+    templateForm?: TemplateFormUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutStudentDataInput = {
@@ -11664,6 +13251,7 @@ export namespace Prisma {
     drafts?: FolderUpdateManyWithoutUserNestedInput
     teacherData?: TeacherDataUpdateOneWithoutUserNestedInput
     coachingData?: CoachingDataUpdateOneWithoutUserNestedInput
+    templateForm?: TemplateFormUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutStudentDataInput = {
@@ -11680,6 +13268,7 @@ export namespace Prisma {
     drafts?: FolderUncheckedUpdateManyWithoutUserNestedInput
     teacherData?: TeacherDataUncheckedUpdateOneWithoutUserNestedInput
     coachingData?: CoachingDataUncheckedUpdateOneWithoutUserNestedInput
+    templateForm?: TemplateFormUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutCoachingDataInput = {
@@ -11697,6 +13286,7 @@ export namespace Prisma {
     drafts?: FolderCreateNestedManyWithoutUserInput
     teacherData?: TeacherDataCreateNestedOneWithoutUserInput
     studentData?: StudentDataCreateNestedOneWithoutUserInput
+    templateForm?: TemplateFormCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCoachingDataInput = {
@@ -11714,6 +13304,7 @@ export namespace Prisma {
     drafts?: FolderUncheckedCreateNestedManyWithoutUserInput
     teacherData?: TeacherDataUncheckedCreateNestedOneWithoutUserInput
     studentData?: StudentDataUncheckedCreateNestedOneWithoutUserInput
+    templateForm?: TemplateFormUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCoachingDataInput = {
@@ -11746,6 +13337,7 @@ export namespace Prisma {
     drafts?: FolderUpdateManyWithoutUserNestedInput
     teacherData?: TeacherDataUpdateOneWithoutUserNestedInput
     studentData?: StudentDataUpdateOneWithoutUserNestedInput
+    templateForm?: TemplateFormUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCoachingDataInput = {
@@ -11762,6 +13354,7 @@ export namespace Prisma {
     drafts?: FolderUncheckedUpdateManyWithoutUserNestedInput
     teacherData?: TeacherDataUncheckedUpdateOneWithoutUserNestedInput
     studentData?: StudentDataUncheckedUpdateOneWithoutUserNestedInput
+    templateForm?: TemplateFormUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type FolderQuestionCreateWithoutQuestionInput = {
@@ -11823,6 +13416,7 @@ export namespace Prisma {
     teacherData?: TeacherDataCreateNestedOneWithoutUserInput
     studentData?: StudentDataCreateNestedOneWithoutUserInput
     coachingData?: CoachingDataCreateNestedOneWithoutUserInput
+    templateForm?: TemplateFormCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutDraftsInput = {
@@ -11840,6 +13434,7 @@ export namespace Prisma {
     teacherData?: TeacherDataUncheckedCreateNestedOneWithoutUserInput
     studentData?: StudentDataUncheckedCreateNestedOneWithoutUserInput
     coachingData?: CoachingDataUncheckedCreateNestedOneWithoutUserInput
+    templateForm?: TemplateFormUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutDraftsInput = {
@@ -11891,6 +13486,7 @@ export namespace Prisma {
     teacherData?: TeacherDataUpdateOneWithoutUserNestedInput
     studentData?: StudentDataUpdateOneWithoutUserNestedInput
     coachingData?: CoachingDataUpdateOneWithoutUserNestedInput
+    templateForm?: TemplateFormUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutDraftsInput = {
@@ -11907,6 +13503,7 @@ export namespace Prisma {
     teacherData?: TeacherDataUncheckedUpdateOneWithoutUserNestedInput
     studentData?: StudentDataUncheckedUpdateOneWithoutUserNestedInput
     coachingData?: CoachingDataUncheckedUpdateOneWithoutUserNestedInput
+    templateForm?: TemplateFormUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type FolderQuestionUpsertWithWhereUniqueWithoutFolderInput = {
@@ -12065,9 +13662,109 @@ export namespace Prisma {
     flagged?: NullableBoolFieldUpdateOperationsInput | boolean | null
   }
 
+  export type UserCreateWithoutTemplateFormInput = {
+    id?: string
+    clerkUserId: string
+    email?: string | null
+    name?: string | null
+    emailOtp?: string | null
+    phoneOtp?: string | null
+    otpExpiry?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    profileImage?: string | null
+    role: string
+    drafts?: FolderCreateNestedManyWithoutUserInput
+    teacherData?: TeacherDataCreateNestedOneWithoutUserInput
+    studentData?: StudentDataCreateNestedOneWithoutUserInput
+    coachingData?: CoachingDataCreateNestedOneWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutTemplateFormInput = {
+    id?: string
+    clerkUserId: string
+    email?: string | null
+    name?: string | null
+    emailOtp?: string | null
+    phoneOtp?: string | null
+    otpExpiry?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    profileImage?: string | null
+    role: string
+    drafts?: FolderUncheckedCreateNestedManyWithoutUserInput
+    teacherData?: TeacherDataUncheckedCreateNestedOneWithoutUserInput
+    studentData?: StudentDataUncheckedCreateNestedOneWithoutUserInput
+    coachingData?: CoachingDataUncheckedCreateNestedOneWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutTemplateFormInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutTemplateFormInput, UserUncheckedCreateWithoutTemplateFormInput>
+  }
+
+  export type UserUpsertWithoutTemplateFormInput = {
+    update: XOR<UserUpdateWithoutTemplateFormInput, UserUncheckedUpdateWithoutTemplateFormInput>
+    create: XOR<UserCreateWithoutTemplateFormInput, UserUncheckedCreateWithoutTemplateFormInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutTemplateFormInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutTemplateFormInput, UserUncheckedUpdateWithoutTemplateFormInput>
+  }
+
+  export type UserUpdateWithoutTemplateFormInput = {
+    clerkUserId?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    emailOtp?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneOtp?: NullableStringFieldUpdateOperationsInput | string | null
+    otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    profileImage?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: StringFieldUpdateOperationsInput | string
+    drafts?: FolderUpdateManyWithoutUserNestedInput
+    teacherData?: TeacherDataUpdateOneWithoutUserNestedInput
+    studentData?: StudentDataUpdateOneWithoutUserNestedInput
+    coachingData?: CoachingDataUpdateOneWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutTemplateFormInput = {
+    clerkUserId?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    emailOtp?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneOtp?: NullableStringFieldUpdateOperationsInput | string | null
+    otpExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    profileImage?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: StringFieldUpdateOperationsInput | string
+    drafts?: FolderUncheckedUpdateManyWithoutUserNestedInput
+    teacherData?: TeacherDataUncheckedUpdateOneWithoutUserNestedInput
+    studentData?: StudentDataUncheckedUpdateOneWithoutUserNestedInput
+    coachingData?: CoachingDataUncheckedUpdateOneWithoutUserNestedInput
+  }
+
   export type FolderCreateManyUserInput = {
     id?: string
     name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TemplateFormCreateManyUserInput = {
+    id?: string
+    templateName: string
+    institution?: string | null
+    marks?: string | null
+    time?: string | null
+    exam?: string | null
+    subject?: string | null
+    logo?: string | null
+    saveTemplate: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -12088,6 +13785,45 @@ export namespace Prisma {
 
   export type FolderUncheckedUpdateManyWithoutUserInput = {
     name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TemplateFormUpdateWithoutUserInput = {
+    templateName?: StringFieldUpdateOperationsInput | string
+    institution?: NullableStringFieldUpdateOperationsInput | string | null
+    marks?: NullableStringFieldUpdateOperationsInput | string | null
+    time?: NullableStringFieldUpdateOperationsInput | string | null
+    exam?: NullableStringFieldUpdateOperationsInput | string | null
+    subject?: NullableStringFieldUpdateOperationsInput | string | null
+    logo?: NullableStringFieldUpdateOperationsInput | string | null
+    saveTemplate?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TemplateFormUncheckedUpdateWithoutUserInput = {
+    templateName?: StringFieldUpdateOperationsInput | string
+    institution?: NullableStringFieldUpdateOperationsInput | string | null
+    marks?: NullableStringFieldUpdateOperationsInput | string | null
+    time?: NullableStringFieldUpdateOperationsInput | string | null
+    exam?: NullableStringFieldUpdateOperationsInput | string | null
+    subject?: NullableStringFieldUpdateOperationsInput | string | null
+    logo?: NullableStringFieldUpdateOperationsInput | string | null
+    saveTemplate?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TemplateFormUncheckedUpdateManyWithoutUserInput = {
+    templateName?: StringFieldUpdateOperationsInput | string
+    institution?: NullableStringFieldUpdateOperationsInput | string | null
+    marks?: NullableStringFieldUpdateOperationsInput | string | null
+    time?: NullableStringFieldUpdateOperationsInput | string | null
+    exam?: NullableStringFieldUpdateOperationsInput | string | null
+    subject?: NullableStringFieldUpdateOperationsInput | string | null
+    logo?: NullableStringFieldUpdateOperationsInput | string | null
+    saveTemplate?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

@@ -221,6 +221,28 @@ declare global {
         required?: boolean;
     }
 
+    interface TemplateFormData {
+        templateName: string;
+        institution?: string;
+        marks?: string
+        time?: string
+        exam?: string
+        subject?: string
+        logo?: string
+        saveTemplate?: boolean
+    }
+
+    interface Template extends TemplateFormData {
+        id: string;
+        createdAt: Date
+        updatedAt: Date
+    }
+
+    interface PDFDetailsFormProps {
+        initialData: TemplateFormData;
+        onSubmit: (data: TemplateFormData) => void;
+        onCancel: () => void;
+    }
 }
 
 
