@@ -23,7 +23,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
     const [isMobile, setIsMobile] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [step, setStep] = useState<'form' | 'preview'>('form');
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<TemplateFormData>({
         templateName: '',
         institution: institution || '',
         marks: '',
@@ -45,7 +45,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
         };
     }, [previewUrl]);
 
-    const handleFormSubmit = (data: typeof formData) => {
+    const handleFormSubmit = (data: TemplateFormData) => {
         setFormData(data);
         handlePreviewCompiledHTML(data);
     };
@@ -58,10 +58,10 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
 
         setIsGenerating("question");
         const html = pdfConfigToHTML({
-            institution: data.institution,
+            institution: data?.institution || "",
             selectedQuestions,
             options,
-            marks: parseInt(data.marks),
+            marks: data.marks,
             time: data.time,
             exam: data.exam,
             subject: data.subject,
@@ -90,10 +90,10 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
 
         setIsGenerating("answer");
         const html = pdfConfigToAnswerKeyHTML({
-            institution: formData.institution,
+            institution: formData?.institution || "",
             selectedQuestions,
             options,
-            marks: parseInt(formData.marks),
+            marks: formData.marks,
             time: formData.time,
             exam: formData.exam,
             subject: formData.subject,

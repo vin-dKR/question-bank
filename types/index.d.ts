@@ -65,7 +65,7 @@ declare global {
         selectedQuestions: Question[];
         options: PDFGenerationOptions;
         className?: string;
-        marks?: number;
+        marks?: string;
         time?: string;
         exam?: string;
         subject?: string;
@@ -131,17 +131,11 @@ declare global {
     interface QuestionToHTMLOptions {
         includeAnswers?: boolean;
         includeMetadata?: boolean;
-        institution?: string;
-        logo?: string;
-        watermarkOpacity?: number;
         pageSize?: 'a4' | 'letter' | 'legal';
         orientation?: 'portrait' | 'landscape';
         fontSize?: number;
         lineHeight?: number;
         margin?: number;
-        testName?: string;
-        subject?: string;
-        fullMarks?: string;
     }
 
     interface HTMLToPDFOptions {

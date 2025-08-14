@@ -1,8 +1,10 @@
 "use server"
 import prisma from "@/lib/prisma"
 import { auth } from "@clerk/nextjs/server"
+import { ObjectId } from "mongodb";
 
-export const createTemplate = async (formData: TemplateFormData): Promise<{
+
+export const createTemplate = async (formData: Template): Promise<{
     data: Template | null
     error: string | null
 }> => {
@@ -12,9 +14,23 @@ export const createTemplate = async (formData: TemplateFormData): Promise<{
         throw new Error("Unauthorized");
     }
 
+    const id = formData.id ?? new ObjectId().toString();
+
     try {
-        const newTemplate = await prisma.templateForm.create({
-            data: {
+        const newTemplate = await prisma.templateForm.upsert({
+            where: { id },
+            update: {
+                userId,
+                templateName: formData.templateName,
+                institution: formData.institution,
+                marks: formData.marks,
+                time: formData.time,
+                exam: formData.exam,
+                subject: formData.subject,
+                logo: formData.logo,
+                saveTemplate: formData.saveTemplate || false
+            },
+            create: {
                 userId,
                 templateName: formData.templateName,
                 institution: formData.institution,
@@ -25,6 +41,7 @@ export const createTemplate = async (formData: TemplateFormData): Promise<{
                 logo: formData.logo,
                 saveTemplate: formData.saveTemplate || false
             }
+
         })
 
         return {

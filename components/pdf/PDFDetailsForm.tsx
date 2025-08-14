@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import FormField from './FormField';
 import { Label } from '../ui/label';
@@ -23,7 +23,7 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel }: PDFD
 
     const { templates, loading, error, addTemplate, setTemplates } = useTemplate()
 
-    console.log("template Error", error)
+    console.log("template Error", templates)
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
@@ -100,17 +100,27 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel }: PDFD
                         </Button>
 
                         {/* Saved templates or "no templates" message */}
-                        {templates.length > 0 ? (
+                        {loading && (
+                            <div className='absolute top-1/2 left-1/2 trasform-x-[50%] trasform-y-[50%]'>
+                                <div className=" animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4" />
+                                loading saved templates
+                            </div>
+                        )}
+
+                        {templates.length > 0 && (
                             templates.map((template) => (
                                 <Button
                                     key={template.id}
                                     className="flex flex-col items-center justify-center bg-gray-200 min-h-[8rem] w-full hover:bg-gray-300 text-black border border-black/10 p-2 text-center break-words"
+                                    // WIP: remove the SA when click on exsiting button fetched from DB
                                     onClick={() => handleSelectTemplate(template)}
                                 >
                                     {template.templateName} ({template.exam} - {template.subject})
                                 </Button>
                             ))
-                        ) : (
+                        )}
+
+                        {!loading && templates.length === 0 && (
                             <p className="col-span-full flex items-center justify-center text-gray-500">
                                 No saved templates. Create a new one!
                             </p>

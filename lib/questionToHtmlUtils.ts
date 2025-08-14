@@ -161,20 +161,24 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
     const {
         includeAnswers = true,
         includeMetadata = true,
-        institution = 'XYZ Institution',
-        logo,
-        watermarkOpacity = 0.1,
         pageSize = 'a4',
         orientation = 'portrait',
         fontSize = 14,
         lineHeight = 1.6,
         margin = 10,
-        testName = "Periodic Test - I",
-        subject = "Physics",
-        fullMarks = "100"
     } = options;
 
-    const { selectedQuestions } = config;
+    // WIP: add the config elements to the html
+    const {
+        selectedQuestions,
+        logo,
+        institution,
+        marks,
+        time,
+        subject,
+        exam
+    } = config;
+
 
     // Generate questions HTML
     const questionsHTML = selectedQuestions.map((question, index) =>
@@ -357,9 +361,6 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
 
 export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToHTMLOptions = {}): string {
     const {
-        institution = 'Institution',
-        logo,
-        watermarkOpacity = 0.1,
         pageSize = 'a4',
         orientation = 'portrait',
         fontSize = 14,
@@ -367,7 +368,16 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
         margin = 10
     } = options;
 
-    const { selectedQuestions } = config;
+    // WIP: add the config elements to the html
+    const {
+        selectedQuestions,
+        logo,
+        institution,
+        marks,
+        time,
+        subject,
+        exam
+    } = config;
 
     // Generate answers HTML
     const answersHTML = selectedQuestions.map((question, index) => {
