@@ -70,6 +70,7 @@ declare global {
         exam?: string;
         subject?: string;
         logo?: string;
+        watermarkOpacity?: number;
     }
 
     interface QuestionDraft {

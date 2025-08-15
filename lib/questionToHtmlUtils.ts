@@ -176,7 +176,8 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
         marks,
         time,
         subject,
-        exam
+        exam,
+        watermarkOpacity = 0
     } = config;
 
 
@@ -216,9 +217,9 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
           display: flex;
           flex-direction: row;
           justify-content: space-between;
-        ">${testName}
+        ">${exam}
             <div> Subject: ${subject}</div>
-            <div>Full Marks: ${fullMarks}</div>
+            <div>Full Marks: ${marks}</div>
         </div>
       </div>
     </div>
@@ -241,7 +242,7 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
         margin: 8px 0 0 0;
         font-size: 16px;
         color: #6b7280;
-      ">${testName}</p>
+      ">${exam}</p>
         <div style="
           margin: 4px 0 0 0;
           font-size: 16px;
@@ -251,7 +252,7 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
           justify-content: space-between;
         ">
             <div> Subject: ${subject}</div>
-            <div>Full Marks: ${fullMarks}</div>
+            <div>Full Marks: ${marks}</div>
         </div>
     </div>
   `;
@@ -376,7 +377,8 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
         marks,
         time,
         subject,
-        exam
+        exam,
+        watermarkOpacity
     } = config;
 
     // Generate answers HTML
