@@ -10,7 +10,7 @@ import { useState, useEffect } from 'react';
 export default function SelectedQuestionsActions() {
     const { selectedQuestionIds, questions, toggleQuestionSelection, getAllSelectedQuestions } = useQuestionBankContext();
     const { institution, options } = usePDFGeneratorContext();
-    const [allSelectedQuestions, setAllSelectedQuestions] = useState<any[]>([]);
+    const [allSelectedQuestions, setAllSelectedQuestions] = useState<Question[]>([]);
 
     console.log('Selected Question IDs:', Array.from(selectedQuestionIds));
     console.log('Current Questions Count:', questions.length);
@@ -21,8 +21,8 @@ export default function SelectedQuestionsActions() {
     
     // Get all selected questions by fetching them from the database or context
     // For now, we'll show a message if some selected questions are not in current view
-    const visibleSelectedQuestions = questions.filter(q => selectedQuestionIds.has(q.id));
-    const hiddenSelectedCount = selectedCount - visibleSelectedQuestions.length;
+    // const visibleSelectedQuestions = questions.filter(q => selectedQuestionIds.has(q.id));
+    // const hiddenSelectedCount = selectedCount - visibleSelectedQuestions.length;
     
     // Fetch all selected questions when selection changes
     useEffect(() => {

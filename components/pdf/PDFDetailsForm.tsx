@@ -1,15 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import FormField from './FormField';
 import { Label } from '../ui/label';
-import { CirclePlus } from 'lucide-react';
-import { useTemplate } from '@/hooks/templates/usePdfTemplateForm';
+import { CirclePlus, Trash2, AlertTriangle } from 'lucide-react';
+import { usePdfTemplateForm } from '@/hooks/templates/usePdfTemplateForm';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 
 
 export default function PDFDetailsForm({ initialData, onSubmit, onCancel }: PDFDetailsFormProps) {
     const [formStep, setFormStep] = useState<'templates' | 'form'>('templates');
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [templateToDelete, setTemplateToDelete] = useState<Template | null>(null);
+    const [isEditingTemplate, setIsEditingTemplate] = useState(false);
     const [formData, setFormData] = useState<TemplateFormData>({
         templateName: '',
         institution: initialData.institution,
@@ -21,9 +33,13 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel }: PDFD
     });
     const [saveTemplate, setSaveTemplate] = useState(true);
 
-    const { templates, loading, error, addTemplate, setTemplates } = useTemplate()
+    const { templates, templatesLoading, saveTemplate: saveTemplateAction, fetchTemplates, removeTemplate } = usePdfTemplateForm()
 
-    console.log("template Error", templates)
+    // Fetch templates on component mount
+    useEffect(() => {
+        fetchTemplates();
+    }, [fetchTemplates]);
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
@@ -34,7 +50,40 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel }: PDFD
         if (file) {
             const reader = new FileReader();
             reader.onload = () => {
-                setFormData((prev) => ({ ...prev, logo: reader.result as string }));
+                // Compress the image to reduce size
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Set maximum dimensions
+                    const maxWidth = 400;
+                    const maxHeight = 400;
+                    
+                    let { width, height } = img;
+                    if (width > height) {
+                        if (width > maxWidth) {
+                            height = (height * maxWidth) / width;
+                            width = maxWidth;
+                        }
+                    } else {
+                        if (height > maxHeight) {
+                            width = (width * maxHeight) / height;
+                            height = maxHeight;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    if (ctx) {
+                        ctx.drawImage(img, 0, 0, width, height);
+                        // Convert to base64 with reduced quality
+                        const compressedLogo = canvas.toDataURL('image/jpeg', 0.7);
+                        setFormData((prev) => ({ ...prev, logo: compressedLogo }));
+                    }
+                };
+                img.src = reader.result as string;
             };
             reader.readAsDataURL(file);
         }
@@ -55,17 +104,10 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel }: PDFD
         return true;
     };
 
-    const handleSubmit = async () => {
-        if (validateForm()) {
-            if (saveTemplate) {
-                await addTemplate(formData)
-            }
-            onSubmit(formData);
-        }
-    };
-
     const handleSelectTemplate = (template: Template) => {
         setFormData(template);
+        setIsEditingTemplate(true);
+        setSaveTemplate(false); 
         setFormStep('form');
     };
 
@@ -79,8 +121,75 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel }: PDFD
             subject: '',
             logo: '',
         });
+        setIsEditingTemplate(false);
         setSaveTemplate(true);
         setFormStep('form');
+    };
+
+    const handleDeleteTemplate = async (e: React.MouseEvent, template: Template) => {
+        e.stopPropagation(); // Prevent template selection when clicking delete
+        setTemplateToDelete(template);
+        setDeleteModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (templateToDelete) {
+            await removeTemplate(templateToDelete.id);
+            setDeleteModalOpen(false);
+            setTemplateToDelete(null);
+        }
+    };
+
+    const cancelDelete = () => {
+        setDeleteModalOpen(false);
+        setTemplateToDelete(null);
+    };
+
+    const handleSubmit = async () => {
+        if (validateForm()) {
+            setIsGenerating(true);
+            try {
+                console.log('Form submission - isEditingTemplate:', isEditingTemplate, 'saveTemplate:', saveTemplate);
+                
+                // Only save as template if it's a new template and user wants to save
+                if (saveTemplate && !isEditingTemplate) {
+                    console.log('Creating new template...');
+                    const templateData: Template = {
+                        id: '', // Will be generated by the server
+                        templateName: formData.templateName,
+                        institution: formData.institution,
+                        marks: formData.marks,
+                        time: formData.time,
+                        exam: formData.exam,
+                        subject: formData.subject,
+                        logo: formData.logo,
+                        saveTemplate: true,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    };
+                    console.log('Template data being sent:', templateData);
+                    const result = await saveTemplateAction(templateData);
+                    console.log('Template creation result:', result);
+                    
+                    if (!result.success) {
+                        console.error('Template creation failed:', result.error);
+                        alert(`Failed to save template: ${result.error}`);
+                        setIsGenerating(false);
+                        return;
+                    }
+                } else {
+                    console.log('Skipping template creation - editing existing template or user chose not to save');
+                }
+                
+                console.log('Submitting form data:', formData);
+                onSubmit(formData);
+            } catch (error) {
+                console.error('Error in form submission:', error);
+                alert(`An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            } finally {
+                setIsGenerating(false);
+            }
+        }
     };
 
     return (
@@ -100,7 +209,7 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel }: PDFD
                         </Button>
 
                         {/* Saved templates or "no templates" message */}
-                        {loading && (
+                        {templatesLoading && (
                             <div className='absolute top-1/2 left-1/2 trasform-x-[50%] trasform-y-[50%]'>
                                 <div className=" animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4" />
                                 loading saved templates
@@ -109,22 +218,27 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel }: PDFD
 
                         {templates.length > 0 && (
                             templates.map((template) => (
-                                <Button
+                                <div
                                     key={template.id}
-                                    className="flex flex-col items-center justify-center bg-gray-200 min-h-[8rem] w-full hover:bg-gray-300 text-black border border-black/10 p-2 text-center break-words"
-                                    // WIP: remove the SA when click on exsiting button fetched from DB
+                                    className="relative flex flex-col items-center justify-center bg-gray-200 min-h-[8rem] w-full hover:bg-gray-300 text-black border border-black/10 p-2 text-center break-words rounded-lg cursor-pointer"
                                     onClick={() => handleSelectTemplate(template)}
                                 >
-                                    {template.templateName} ({template.exam} - {template.subject})
-                                </Button>
+                                    {/* Delete button in top corner */}
+                                    <button
+                                        onClick={(e) => handleDeleteTemplate(e, template)}
+                                        className="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors duration-200 z-10"
+                                        title="Delete template"
+                                    >
+                                        <Trash2 size={12} />
+                                    </button>
+                                    
+                                    <div className="mt-2">
+                                        {template.templateName} ({template.exam} - {template.subject})
+                                    </div>
+                                </div>
                             ))
                         )}
-
-                        {!loading && templates.length === 0 && (
-                            <p className="col-span-full flex items-center justify-center text-gray-500">
-                                No saved templates. Create a new one!
-                            </p>
-                        )}
+                        
                     </div>
 
                     <div className="flex justify-end mt-4">
@@ -207,13 +321,22 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel }: PDFD
                     </div>
 
                     <div className="flex items-center gap-2 mt-2">
-                        <input
-                            type="checkbox"
-                            id="saveTemplate"
-                            checked={saveTemplate}
-                            onChange={(e) => setSaveTemplate(e.target.checked)}
-                        />
-                        <Label htmlFor="saveTemplate">Save as template</Label>
+                        {!isEditingTemplate && (
+                            <>
+                                <input
+                                    type="checkbox"
+                                    id="saveTemplate"
+                                    checked={saveTemplate}
+                                    onChange={(e) => setSaveTemplate(e.target.checked)}
+                                />
+                                <Label htmlFor="saveTemplate">Save as template</Label>
+                            </>
+                        )}
+                        {isEditingTemplate && (
+                            <span className="text-sm text-gray-600 italic">
+                                Editing existing template: {formData.templateName}
+                            </span>
+                        )}
                     </div>
                     <div className="flex justify-between mt-4">
                         <Button
@@ -231,14 +354,53 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel }: PDFD
                             </Button>
                             <Button
                                 onClick={handleSubmit}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white border-black/70"
+                                disabled={isGenerating}
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white border-black/70 disabled:bg-indigo-400 disabled:cursor-not-allowed"
                             >
-                                Next
+                                {isGenerating ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                        Generating...
+                                    </>
+                                ) : (
+                                    'Next'
+                                )}
                             </Button>
                         </div>
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+                <DialogContent className="sm:max-w-md bg-white rounded-xl border border-black/20">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-red-600">
+                            <AlertTriangle className="h-5 w-5" />
+                            Delete Template
+                        </DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete &quot;{templateToDelete?.templateName}&quot;? 
+                            This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={cancelDelete}
+                            className="border-gray-300 hover:bg-gray-50"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={confirmDelete}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                        >
+                            Delete Template
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

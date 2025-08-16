@@ -146,10 +146,15 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
         }
         setError(null);
         setStep('form');
+        // Force the dialog to close by updating the key
+        setDialogKey(prev => prev + 1);
     };
 
+    // Add a key to force dialog re-render when closing
+    const [dialogKey, setDialogKey] = useState(0);
+
     return (
-        <Dialog>
+        <Dialog key={dialogKey}>
             <DialogTrigger asChild>
                 <div className="flex gap-2">
                     <Button

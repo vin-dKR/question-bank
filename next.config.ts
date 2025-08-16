@@ -7,6 +7,11 @@ const queryEnginePath = path.resolve('generated/prisma/query-engine-rhel-openssl
 const hasQueryEngine = fs.existsSync(queryEnginePath);
 
 const nextConfig: NextConfig = {
+    experimental: {
+        serverActions: {
+            bodySizeLimit: '10mb'
+        }
+    },
     images: {
         remotePatterns: [
             {

@@ -37,7 +37,6 @@ function textToHtmlWithLatex(text: string): string {
 
 export function questionToHTML(question: Question, index: number, options: QuestionToHTMLOptions = {}): string {
     const {
-        includeAnswers = true,
         includeMetadata = true,
     } = options;
 
@@ -86,21 +85,21 @@ export function questionToHTML(question: Question, index: number, options: Quest
     }).join('');
 
     // Render answer with LaTeX
-    const answerHTML = includeAnswers ? `
-    <div class="answer" style="
-      margin-top: 12px;
-      padding: 8px 12px;
-      background-color: #f0fdf4;
-      border: 1px solid #10b981;
-      border-radius: 6px;
-      color: #065f46;
-      display: flex;
-      align-items: flex-start;
-    ">
-      <strong style="font-weight: 600; margin-right: 8px; flex-shrink: 0;">Answer:</strong>
-      <div style="flex: 1; display: inline;">${textToHtmlWithLatex(question.answer)}</div>
-    </div>
-  ` : '';
+  //   const answerHTML = includeAnswers ? `
+  //   <div class="answer" style="
+  //     margin-top: 12px;
+  //     padding: 8px 12px;
+  //     background-color: #f0fdf4;
+  //     border: 1px solid #10b981;
+  //     border-radius: 6px;
+  //     color: #065f46;
+  //     display: flex;
+  //     align-items: flex-start;
+  //   ">
+  //     <strong style="font-weight: 600; margin-right: 8px; flex-shrink: 0;">Answer:</strong>
+  //     <div style="flex: 1; display: inline;">${textToHtmlWithLatex(question.answer)}</div>
+  //   </div>
+  // ` : '';
 
     // Render metadata
     const metadataHTML = includeMetadata ? `
@@ -474,7 +473,6 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
         flex-direction: row;
         align-items: flex-start;
         gap: 12px;
-        padding: 12px;
         margin: 8px 0;
       ">
         <span class="question-number" style="

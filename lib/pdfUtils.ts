@@ -14,9 +14,6 @@ export async function generatePDF(config: PDFConfig, options: PDFGenerationOptio
     const {
         includeAnswers = config.options.includeAnswers,
         includeMetadata = true,
-        institution = config.institution,
-        logo,
-        watermarkOpacity = config.options.watermarkOpacity,
         pageSize = 'a4',
         orientation = 'portrait',
         fontSize = 14,
@@ -24,30 +21,10 @@ export async function generatePDF(config: PDFConfig, options: PDFGenerationOptio
         margin = 20
     } = options;
 
-    // Convert logo File to data URL if provided
-    let logoBase64: string | undefined;
-    if (logo) {
-        logoBase64 = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.readAsDataURL(logo);
-        });
-    } else if (config.options.logo) {
-        logoBase64 = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.readAsDataURL(config.options.logo!);
-        });
-    }
-
-    // Skip LaTeX test for now to focus on basic PDF generation
     // Generate HTML
     const html = pdfConfigToHTML(config, {
         includeAnswers,
         includeMetadata,
-        institution,
-        logo: logoBase64,
-        watermarkOpacity,
         pageSize,
         orientation,
         fontSize,
@@ -194,9 +171,6 @@ export async function generatePDFWithoutMathJax(config: PDFConfig, options: PDFG
     const {
         includeAnswers = config.options.includeAnswers,
         includeMetadata = true,
-        institution = config.institution,
-        logo,
-        watermarkOpacity = config.options.watermarkOpacity,
         pageSize = 'a4',
         orientation = 'portrait',
         fontSize = 14,
@@ -204,29 +178,10 @@ export async function generatePDFWithoutMathJax(config: PDFConfig, options: PDFG
         margin = 20
     } = options;
 
-    // Convert logo File to data URL if provided
-    let logoBase64: string | undefined;
-    if (logo) {
-        logoBase64 = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.readAsDataURL(logo);
-        });
-    } else if (config.options.logo) {
-        logoBase64 = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.readAsDataURL(config.options.logo!);
-        });
-    }
-
     // Generate HTML without MathJax
     const html = pdfConfigToHTML(config, {
         includeAnswers,
         includeMetadata,
-        institution,
-        logo: logoBase64,
-        watermarkOpacity,
         pageSize,
         orientation,
         fontSize,
@@ -275,9 +230,6 @@ export async function generateAnswersPDF(config: PDFConfig, options: PDFGenerati
     }
     const {
         includeMetadata = true,
-        institution = config.institution,
-        logo,
-        watermarkOpacity = config.options.watermarkOpacity,
         pageSize = 'a4',
         orientation = 'portrait',
         fontSize = 14,
@@ -285,28 +237,9 @@ export async function generateAnswersPDF(config: PDFConfig, options: PDFGenerati
         margin = 20
     } = options;
 
-    // Convert logo File to data URL if provided
-    let logoBase64: string | undefined;
-    if (logo) {
-        logoBase64 = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.readAsDataURL(logo);
-        });
-    } else if (config.options.logo) {
-        logoBase64 = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.readAsDataURL(config.options.logo!);
-        });
-    }
-
     // Generate Answer Key HTML
     const html = pdfConfigToAnswerKeyHTML(config, {
         includeMetadata,
-        institution,
-        logo: logoBase64,
-        watermarkOpacity,
         pageSize,
         orientation,
         fontSize,
@@ -407,9 +340,6 @@ export async function generateAnswersPDFWithoutMathJax(config: PDFConfig, option
     }
     const {
         includeMetadata = true,
-        institution = config.institution,
-        logo,
-        watermarkOpacity = config.options.watermarkOpacity,
         pageSize = 'a4',
         orientation = 'portrait',
         fontSize = 14,
@@ -417,28 +347,9 @@ export async function generateAnswersPDFWithoutMathJax(config: PDFConfig, option
         margin = 20
     } = options;
 
-    // Convert logo File to data URL if provided
-    let logoBase64: string | undefined;
-    if (logo) {
-        logoBase64 = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.readAsDataURL(logo);
-        });
-    } else if (config.options.logo) {
-        logoBase64 = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.readAsDataURL(config.options.logo!);
-        });
-    }
-
     // Generate Answer Key HTML without MathJax
     const html = pdfConfigToAnswerKeyHTML(config, {
         includeMetadata,
-        institution,
-        logo: logoBase64,
-        watermarkOpacity,
         pageSize,
         orientation,
         fontSize,
@@ -490,6 +401,3 @@ export function generateHTMLPreview(config: PDFConfig, options: QuestionToHTMLOp
 export function generateAnswerKeyHTMLPreview(config: PDFConfig, options: QuestionToHTMLOptions = {}): string {
     return pdfConfigToAnswerKeyHTML(config, options);
 }
-
-
-
