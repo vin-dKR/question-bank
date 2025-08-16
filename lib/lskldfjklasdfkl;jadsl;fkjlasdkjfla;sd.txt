@@ -1,0 +1,81 @@
+
+    return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${institution} - Question Paper</title>
+
+      <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+      <style>
+        * {
+          box-sizing: border-box;
+        }
+        
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          line-height: ${lineHeight};
+          background-color: #ffffff;
+          margin: 0;
+          padding: ${margin}mm;
+          font-size: ${fontSize}px;
+        }
+        
+        @page {
+          size: ${pageSize} ${orientation};
+          margin: ${margin}mm;
+        }
+
+        /* MathJax styles for LaTeX rendering */
+        .math-inline {
+          display: inline;
+          font-weight: normal;
+        }
+        .math-display {
+          display: block;
+          text-align: center;
+          margin: 10px 0;
+          font-weight: normal;
+        }
+
+        /* Ensure MathJax-rendered elements are not bold in HTML and PDF */
+        mjx-container, mjx-math, mjx-mrow, mjx-mi, mjx-mn, mjx-mo {
+          font-weight: normal !important;
+        }
+
+        /* Print-specific styles to ensure consistent PDF rendering */
+        @media print {
+          body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          mjx-container, mjx-math, mjx-mrow, mjx-mi, mjx-mn, mjx-mo {
+            font-weight: normal !important;
+          }
+        }
+        
+        ${watermarkCSS}
+      </style>
+    </head>
+    <body>
+      ${headerHTML}
+      <div class="questions-container">
+        ${questionsHTML}
+      </div>
+      
+      <div class="footer" style="
+        margin-top: 32px;
+        padding-top: 16px;
+        border-top: 1px solid #e5e7eb;
+        text-align: center;
+        font-size: 12px;
+        color: #6b7280;
+      ">
+        <p>Generated on: ${new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' })}</p>
+      </div>
+      
+    </body>
+    </html>
+  `;

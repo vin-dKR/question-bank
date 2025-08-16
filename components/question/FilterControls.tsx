@@ -16,6 +16,7 @@ interface FilterUpdate {
 
 export default function FilterControls() {
     const { setFilters, filterOptions, optionsLoading } = useQuestionBankContext();
+    console.log("filterOptions ---------", filterOptions)
     const [localFilters, setLocalFilters] = useState({
         exam_name: '',
         subject: '',

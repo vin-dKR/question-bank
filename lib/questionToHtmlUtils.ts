@@ -74,6 +74,11 @@ export function questionToHTML(question: Question, index: number, options: Quest
         const optionText = textToHtmlWithLatex(option);
 
         return `
+      <div class="option" style="background-color: #ffffff; border-radius: 0 6px 6px 0; display: flex; align-items: flex-start;">
+        <strong style="font-weight: 500; margin-right: 8px; flex-shrink: 0;">${optionLetter}.</strong>
+        <div style="flex: 1; display: inline;">${optionText}</div>
+      </div>`;
+        return `
       <div class="option ${isCorrect ? 'correct' : ''}" style="padding: 4px 12px; margin: 4px 0; border-left: 4px solid ${isCorrect ? '#10b981' : '#e5e7eb'}; background-color: ${isCorrect ? '#f0fdf4' : '#ffffff'}; border-radius: 0 6px 6px 0; display: flex; align-items: flex-start;">
         <strong style="font-weight: 500; margin-right: 8px; flex-shrink: 0;">${optionLetter}.</strong>
         <div style="flex: 1; display: inline;">${optionText}</div>
@@ -115,8 +120,6 @@ export function questionToHTML(question: Question, index: number, options: Quest
     <div class="question" style="
       margin-bottom: 24px;
       padding: 16px;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
       background-color: #ffffff;
       page-break-inside: avoid;
     ">
@@ -124,11 +127,9 @@ export function questionToHTML(question: Question, index: number, options: Quest
         margin-bottom: 12px;
         display: flex;
         align-items: flex-start;
-        gap: 8px;
       ">
         <span class="question-number" style="
-          background-color: #3b82f6;
-          color: white;
+          color: black;
           border-radius: 4px;
           font-weight: 600;
           font-size: 14px;
@@ -136,19 +137,18 @@ export function questionToHTML(question: Question, index: number, options: Quest
           height: 24px;
           text-align: center;
           line-height: 1;
-        ">${questionNumber}</span>
+        ">${questionNumber}.</span>
         <span class="question-text" style="
           margin: -5px 0 0 0;
-          color: #1f2937;
+          color: #000000;
           flex: 1;
         ">${questionText}</span>
       </div>
       ${questionImageHTML}
-      <div class="options" style="margin: 16px 0;">
+      <div class="options" style="margin: 4px 0 8px 20px;">
         ${optionsHTML}
       </div>
       
-      ${answerHTML}
       ${metadataHTML}
     </div>
   `;
@@ -187,6 +187,7 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
     ).join('');
 
     // Generate header with logo if provided
+    {/*
     const headerHTML = logo ? `
     <div class="header" style="
       display: flex;
@@ -276,6 +277,146 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
       z-index: -1;
     }
   ` : '';
+  */}
+
+    const headerHTML = `
+  <div class="header-container" style="
+    border: 2px solid #000;
+    margin-bottom: 0;
+  ">
+    <div class="header-row" style="
+      display: flex;
+      align-items: center;
+      justify-content: center;        /* center the middle block */
+      position: relative;              /* anchor absolute logo */
+      padding: 8px 12px;
+      border-bottom: 1px solid #000;
+      background-color: #fff;
+      min-height: 80px;                /* ensures room for logo */
+    ">
+      ${logo ? `
+        <div class="logo-section" style="
+          position: absolute;
+          left: 12px;
+          top: 50%;
+          transform: translateY(-50%); /* vertically center logo */
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        ">
+          <img src="${logo}" alt="Logo" style="
+            height: 80px;
+            width: 80px;
+            object-fit: contain;
+            border-radius: 50%;
+          " />
+        </div>
+      ` : ''}
+
+      <div class="institution-info" style="
+        display: flex;
+        flex-direction: column;
+        align-items: center;    /* center content */
+        text-align: center;     /* center text */
+        gap: 6px;
+      ">
+        <h1 style="
+          margin: 0;
+          font-size: 20px;
+          font-weight: bold;
+          letter-spacing: 2px;
+          text-transform: uppercase;
+        ">${institution}</h1>
+
+        <div style="
+          display: flex;
+          align-items: center;
+          justify-content: center;  /* keeps exam tag centered */
+        ">
+          <div style="
+            border: 1px solid #000;
+            padding: 2px 20px;
+            background-color: #f0f0f0;
+          ">${exam}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="class-details" style="
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 12px;
+      font-size: 11px;
+      font-weight: bold;
+      background-color: #fff;
+    ">
+      <div>Time: ${time}</div>
+      <div class="exam-details" style="
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        font-size: 10px;
+        font-weight: bold;
+      ">
+        <div>Sub: ${subject}</div>
+        <div>Marks: ${marks}</div>
+      </div>
+    </div>
+  </div>
+`;
+
+
+    // Section header for question type
+    const sectionHeaderHTML = `
+    <div class="section-header" style="
+      background-color: #000;
+      color: #fff;
+      text-align: center;
+      padding: 8px;
+      margin: 0;
+      font-weight: bold;
+      font-size: 14px;
+      letter-spacing: 1px;
+    ">
+      Multiple Choice Questions
+    </div>
+  `;
+
+    // Subject header
+    const subjectHeaderHTML = `
+    <div class="subject-header" style="
+      text-align: center;
+      margin: 20px 0 15px 0;
+      font-size: 16px;
+      font-weight: bold;
+      text-decoration: underline;
+      letter-spacing: 1px;
+    ">
+      ${subject?.toUpperCase()}
+    </div>
+  `;
+
+    // Generate watermark if logo provided
+    const watermarkCSS = logo ? `
+    body::before {
+      content: '';
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 200px;
+      height: 200px;
+      background-image: url('${logo}');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      opacity: ${watermarkOpacity};
+      pointer-events: none;
+      z-index: -1;
+    }
+  ` : '';
+
 
     // Complete HTML document
     return `
@@ -284,7 +425,7 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>${institution} - Question Paper</title>
+      <title>${institution} - ${exam}</title>
 
       <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
@@ -294,17 +435,50 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
         }
         
         body {
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          font-family: 'Times New Roman', serif;
           line-height: ${lineHeight};
           background-color: #ffffff;
           margin: 0;
           padding: ${margin}mm;
           font-size: ${fontSize}px;
+          color: #000;
         }
         
         @page {
           size: ${pageSize} ${orientation};
           margin: ${margin}mm;
+        }
+
+        /* Question styles */
+        .question-block {
+          margin-bottom: 15px;
+          page-break-inside: avoid;
+        }
+
+        .question-number {
+          font-weight: bold;
+          margin-right: 8px;
+        }
+
+        .question-content {
+          margin-left: 20px;
+          margin-bottom: 8px;
+        }
+
+        .options {
+          margin-left: 20px;
+        }
+
+        .option {
+          margin: 2px 0;
+          display: flex;
+          align-items: flex-start;
+        }
+
+        .option-letter {
+          margin-right: 8px;
+          font-weight: bold;
+          min-width: 20px;
         }
 
         /* MathJax styles for LaTeX rendering */
@@ -319,12 +493,12 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
           font-weight: normal;
         }
 
-        /* Ensure MathJax-rendered elements are not bold in HTML and PDF */
+        /* Ensure MathJax-rendered elements are not bold */
         mjx-container, mjx-math, mjx-mrow, mjx-mi, mjx-mn, mjx-mo {
           font-weight: normal !important;
         }
 
-        /* Print-specific styles to ensure consistent PDF rendering */
+        /* Print-specific styles */
         @media print {
           body {
             -webkit-print-color-adjust: exact;
@@ -340,6 +514,9 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
     </head>
     <body>
       ${headerHTML}
+      ${sectionHeaderHTML}
+      ${subjectHeaderHTML}
+      
       <div class="questions-container">
         ${questionsHTML}
       </div>
@@ -347,17 +524,18 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
       <div class="footer" style="
         margin-top: 32px;
         padding-top: 16px;
-        border-top: 1px solid #e5e7eb;
+        border-top: 1px solid #000;
         text-align: center;
-        font-size: 12px;
-        color: #6b7280;
+        font-size: 10px;
+        color: #666;
       ">
-        <p>Generated on: ${new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' })}</p>
+        <p>Page | 1</p>
       </div>
       
     </body>
     </html>
   `;
+
 }
 
 export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToHTMLOptions = {}): string {

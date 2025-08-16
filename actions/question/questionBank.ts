@@ -307,3 +307,44 @@ export async function getAvailableSubjects() {
         return { success: false, data: [], error: "Failed to fetch subjects" };
     }
 }
+
+export async function getQuestionsByIds(ids: string[], userRole: UserRole, userSubject?: string) {
+    if (!ids || ids.length === 0) {
+        return { success: false, data: [], error: "No question IDs provided" };
+    }
+
+    try {
+        let whereClause: QuestionWhereClause = {
+            id: { in: ids },
+        };
+
+        // Enforce teacher subject restriction
+        if (userRole === "teacher" && userSubject) {
+            whereClause.subject = { equals: userSubject, mode: "insensitive" };
+        }
+
+        const questions = await prisma.question.findMany({
+            where: whereClause,
+            select: {
+                id: true,
+                question_text: true,
+                question_image: true,
+                options: true,
+                option_images: true,
+                answer: true,
+                isOptionImage: true,
+                exam_name: true,
+                subject: true,
+                chapter: true,
+                section_name: true,
+                flagged: true,
+            },
+            orderBy: { question_number: "asc" },
+        });
+
+        return { success: true, data: questions };
+    } catch (error) {
+        console.error("Error fetching questions by IDs:", error);
+        return { success: false, data: [], error: "Failed to fetch questions by IDs" };
+    }
+}

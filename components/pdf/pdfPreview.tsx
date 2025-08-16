@@ -33,6 +33,21 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
         logo: '',
     });
 
+    console.log('Selected Questions for PDF:', selectedQuestions);
+    console.log('Selected Questions Count:', selectedQuestions.length);
+    console.log('Selected Questions Details:', selectedQuestions.map(q => ({ 
+        id: q.id, 
+        question_number: q.question_number, 
+        subject: q.subject,
+        chapter: q.chapter 
+    })));
+    
+    // Show summary of selected questions
+    if (selectedQuestions.length > 0) {
+        const subjects = [...new Set(selectedQuestions.map(q => q.subject).filter(Boolean))];
+        const chapters = [...new Set(selectedQuestions.map(q => q.chapter).filter(Boolean))];
+        console.log('PDF Summary - Subjects:', subjects, 'Chapters:', chapters);
+    }
     useEffect(() => {
         // Detect mobile device
         const userAgent = navigator.userAgent;
@@ -67,6 +82,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
             subject: data.subject,
             logo: data.logo,
         });
+        console.log("--------------------------", html)
 
         const blob = await htmlTopdfBlob(html);
         if (!blob.data) {
@@ -142,7 +158,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
                         disabled={!selectedQuestions || selectedQuestions.length === 0}
                         className={clsx("bg-indigo-600 hover:bg-indigo-600 text-white px-4 py-1 text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed border border-black/20", className)}
                     >
-                        {isGenerating === "question" ? "Generating..." : "PDF"}
+                        {isGenerating === "question" ? "Generating..." : selectedQuestions.length === 0 ? "No Questions" : "PDF"}
                     </Button>
                     <Button
                         size="sm"
@@ -150,7 +166,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
                         disabled={!selectedQuestions || selectedQuestions.length === 0}
                         className={clsx("bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed border border-black/20", className)}
                     >
-                        {isGenerating === "answer" ? "Generating..." : "Preview Answers"}
+                        {isGenerating === "answer" ? "Generating..." : selectedQuestions.length === 0 ? "No Questions" : "Preview Answers"}
                     </Button>
                 </div>
             </DialogTrigger>
@@ -161,11 +177,20 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
                     </DialogTitle>
                 </DialogHeader>
                 {step === 'form' ? (
-                    <PDFDetailsForm
-                        initialData={formData}
-                        onSubmit={handleFormSubmit}
-                        onCancel={handleClose}
-                    />
+                    <>
+                        {selectedQuestions.length === 0 ? (
+                            <div className="text-amber-600 text-center p-4 bg-amber-50 rounded-lg">
+                                <p className="mb-2">⚠️ No questions are currently selected in this view.</p>
+                                <p className="text-sm">Please select questions or check if some selected questions are hidden by current filters.</p>
+                            </div>
+                        ) : (
+                            <PDFDetailsForm
+                                initialData={formData}
+                                onSubmit={handleFormSubmit}
+                                onCancel={handleClose}
+                            />
+                        )}
+                    </>
                 ) : error ? (
                     <div className="text-red-600 text-center p-4">
                         <p className="mb-2">{error}</p>

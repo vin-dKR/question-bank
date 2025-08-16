@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { getQuestions, getQuestionCount, toggleFlag, getFilterOptions, searchQuestions } from "@/actions/question/questionBank";
+import { getQuestions, getQuestionCount, toggleFlag, getFilterOptions, searchQuestions, getQuestionsByIds } from "@/actions/question/questionBank";
 import { useUserRole } from '@/hooks/auth/useUserRole';
 import { useUserSubject } from '@/hooks/auth/useUserSubject';
 
@@ -42,6 +42,7 @@ interface QuestionBankContextType {
     toggleQuestionFlag: (id: string) => Promise<void>;
     selectedQuestionIds: Set<string>;
     toggleQuestionSelection: (id: string) => void;
+    getAllSelectedQuestions: () => Promise<Question[]>;
 }
 
 const QuestionBankContext = createContext<QuestionBankContextType | undefined>(undefined);
@@ -183,6 +184,30 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
         });
     }, []);
 
+    const getAllSelectedQuestions = useCallback(async (): Promise<Question[]> => {
+        if (selectedQuestionIds.size === 0) {
+            return [];
+        }
+
+        try {
+            const response = await getQuestionsByIds(
+                Array.from(selectedQuestionIds),
+                (role || "student") as UserRole,
+                isTeacher ? subject || undefined : undefined
+            );
+
+            if (response && response.success) {
+                return response.data as Question[];
+            } else {
+                console.error('Failed to fetch selected questions:', response?.error);
+                return [];
+            }
+        } catch (error) {
+            console.error('Error fetching selected questions:', error);
+            return [];
+        }
+    }, [selectedQuestionIds, role, isTeacher, subject]);
+
     const loadMore = useCallback(() => {
         setPagination(prev => ({ ...prev, limit: prev.limit + 20 }));
     }, []);
@@ -214,6 +239,7 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
         toggleQuestionFlag,
         selectedQuestionIds,
         toggleQuestionSelection,
+        getAllSelectedQuestions,
     }), [
         questions,
         loading,
@@ -230,6 +256,7 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
         toggleQuestionFlag,
         selectedQuestionIds,
         toggleQuestionSelection,
+        getAllSelectedQuestions,
     ]);
 
     useEffect(() => {
