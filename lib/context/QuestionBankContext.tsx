@@ -83,16 +83,21 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
                     setTotalCount(0);
                 }
             } else {
+                const queryFilters = {
+                    exam_name: filters.exam_name,
+                    subject: isTeacher ? subject || undefined : filters.subject,
+                    chapter: filters.chapter,
+                    section_name: filters.section_name,
+                    flagged: filters.flagged,
+                    limit: pagination.limit,
+                    skip: (pagination.page - 1) * pagination.limit,
+                };
+                
+                console.log('Fetching questions with filters:', queryFilters);
+                console.log('User role:', role, 'isTeacher:', isTeacher, 'userSubject:', subject);
+                
                 const [questionsRes, countRes] = await Promise.all([
-                    getQuestions({
-                        exam_name: filters.exam_name,
-                        subject: isTeacher ? subject || undefined : filters.subject,
-                        chapter: filters.chapter,
-                        section_name: filters.section_name,
-                        flagged: filters.flagged,
-                        limit: pagination.limit,
-                        skip: (pagination.page - 1) * pagination.limit,
-                    }, (role || "student") as UserRole, isTeacher ? subject || undefined : undefined),
+                    getQuestions(queryFilters, (role || "student") as UserRole, isTeacher ? subject || undefined : undefined),
                     getQuestionCount({
                         exam_name: filters.exam_name,
                         subject: isTeacher ? subject || undefined : filters.subject,
@@ -103,9 +108,12 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
                 ]);
 
                 if (questionsRes && questionsRes.success && countRes && countRes.success) {
+                    console.log('Questions fetched successfully:', questionsRes.data.length);
+                    console.log('Total count:', countRes.data);
                     setQuestions(questionsRes.data as Question[]);
                     setTotalCount(countRes.data);
                 } else {
+                    console.error('Failed to fetch questions:', questionsRes?.error, countRes?.error);
                     setError(questionsRes?.error || countRes?.error || 'Failed to fetch data');
                     setQuestions([]);
                     setTotalCount(0);

@@ -47,6 +47,10 @@ export async function getQuestions(
             whereClause.subject = { equals: userSubject, mode: "insensitive" };
         }
 
+        console.log('getQuestions - Filters received:', filters);
+        console.log('getQuestions - User role:', userRole, 'userSubject:', userSubject);
+        console.log('getQuestions - Final whereClause:', JSON.stringify(whereClause, null, 2));
+
         const questions = await prisma.question.findMany({
             where: whereClause,
             select: {
@@ -67,6 +71,11 @@ export async function getQuestions(
             skip: filters.skip || 0,
             orderBy: { question_number: "asc" },
         });
+
+        console.log('getQuestions - Query result count:', questions.length);
+        if (questions.length > 0) {
+            console.log('getQuestions - Sample question section_name:', questions[0].section_name);
+        }
 
         return { success: true, data: questions };
     } catch (error) {
@@ -307,6 +316,7 @@ export async function getAvailableSubjects() {
         return { success: false, data: [], error: "Failed to fetch subjects" };
     }
 }
+
 
 export async function getQuestionsByIds(ids: string[], userRole: UserRole, userSubject?: string) {
     if (!ids || ids.length === 0) {

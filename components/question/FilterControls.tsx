@@ -8,15 +8,15 @@ import { useUserSubject } from '@/hooks/auth/useUserSubject';
 
 // Define a type for filterUpdate
 interface FilterUpdate {
-    [key: string]: string | undefined;
+    [key: string]: string | boolean | undefined;
     subject?: string;
     chapter?: string;
     section_name?: string;
+    flagged?: boolean;
 }
 
 export default function FilterControls() {
     const { setFilters, filterOptions, optionsLoading } = useQuestionBankContext();
-    console.log("filterOptions ---------", filterOptions)
     const [localFilters, setLocalFilters] = useState({
         exam_name: '',
         subject: '',
@@ -78,6 +78,26 @@ export default function FilterControls() {
                 setLocalFilters(newLocalFilters);
             }
             setFilters(filterUpdate);
+        } else if (name === "section_name" || name === "flagged") {
+            // Apply section and flagged filters immediately
+            const filterUpdate: FilterUpdate = {};
+            if (name === "section_name") {
+                filterUpdate.section_name = value || undefined;
+            }
+            if (name === "flagged") {
+                filterUpdate.flagged = value ? value === 'true' : undefined;
+            }
+            // Include current parent filters
+            if (localFilters.exam_name) filterUpdate.exam_name = localFilters.exam_name;
+            if (isTeacher && subject) {
+                filterUpdate.subject = subject;
+            } else if (localFilters.subject) {
+                filterUpdate.subject = localFilters.subject;
+            }
+            if (localFilters.chapter) filterUpdate.chapter = localFilters.chapter;
+            
+            console.log('Applying section/flagged filter:', filterUpdate);
+            setFilters(filterUpdate);
         }
     }, [localFilters, setFilters, isTeacher, subject]);
 
@@ -104,6 +124,7 @@ export default function FilterControls() {
             subject: isTeacher && subject ? subject : undefined
         });
     }, [setFilters, isTeacher, subject]);
+
 
     const examOptions = useMemo(
         () => filterOptions.exams.map((exam: string) => ({ value: exam, label: exam })),

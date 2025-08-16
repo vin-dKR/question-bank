@@ -130,22 +130,21 @@ export function questionToHTML(question: Question, index: number, options: Quest
       ">
         <span class="question-number" style="
           color: black;
-          border-radius: 4px;
           font-weight: 600;
           font-size: 14px;
           width: 24px;
           height: 24px;
           text-align: center;
-          line-height: 1;
+          flex-shrink: 0;
         ">${questionNumber}.</span>
         <span class="question-text" style="
-          margin: -5px 0 0 0;
+          margin: 0;
           color: #000000;
           flex: 1;
         ">${questionText}</span>
       </div>
       ${questionImageHTML}
-      <div class="options" style="margin: 4px 0 8px 20px;">
+      <div class="options" style="margin: 4px 0 8px 24px;">
         ${optionsHTML}
       </div>
       
@@ -186,98 +185,6 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
         questionToHTML(question, index, { includeAnswers, includeMetadata, fontSize, lineHeight })
     ).join('');
 
-    // Generate header with logo if provided
-    {/*
-    const headerHTML = logo ? `
-    <div class="header" style="
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 24px;
-      padding: 16px;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      background-color: #f9fafb;
-    ">
-      <img src="${logo}" alt="Institution Logo" style="
-        height: 60px;
-        width: auto;
-        object-fit: contain;
-      " />
-      <div style="flex: 1;">
-        <h1 style="
-          margin: 0;
-          font-size: 24px;
-          font-weight: 700;
-          color: #1f2937;
-        ">${institution}</h1>
-        <div style="
-          margin: 4px 0 0 0;
-          font-size: 16px;
-          color: #6b7280;
-          display: flex;
-          flex-direction: row;
-          justify-content: space-between;
-        ">${exam}
-            <div> Subject: ${subject}</div>
-            <div>Full Marks: ${marks}</div>
-        </div>
-      </div>
-    </div>
-  ` : `
-    <div class="header" style="
-      text-align: center;
-      margin-bottom: 24px;
-      padding: 16px;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      background-color: #f9fafb;
-    ">
-      <h1 style="
-        margin: 0;
-        font-size: 28px;
-        font-weight: 700;
-        color: #1f2937;
-      ">${institution}</h1>
-      <p style="
-        margin: 8px 0 0 0;
-        font-size: 16px;
-        color: #6b7280;
-      ">${exam}</p>
-        <div style="
-          margin: 4px 0 0 0;
-          font-size: 16px;
-          color: #6b7280;
-          display: flex;
-          flex-direction: row;
-          justify-content: space-between;
-        ">
-            <div> Subject: ${subject}</div>
-            <div>Full Marks: ${marks}</div>
-        </div>
-    </div>
-  `;
-
-    // Generate watermark if logo provided
-    const watermarkCSS = logo ? `
-    body::before {
-      content: '';
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 200px;
-      height: 200px;
-      background-image: url('${logo}');
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: center;
-      opacity: ${watermarkOpacity};
-      pointer-events: none;
-      z-index: -1;
-    }
-  ` : '';
-  */}
 
     const headerHTML = `
   <div class="header-container" style="
@@ -552,11 +459,8 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
         selectedQuestions,
         logo,
         institution,
-        marks,
-        time,
-        subject,
         exam,
-        watermarkOpacity
+        watermarkOpacity = 0.1
     } = config;
 
     // Generate answers HTML
@@ -574,19 +478,18 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
         margin: 8px 0;
       ">
         <span class="question-number" style="
-          background-color: #10b981;
-          color: white;
+          color: black;
           padding: 2px 6px;
           border-radius: 4px;
           font-weight: 600;
           font-size: 14px;
           text-align: center;
-        ">${questionNumber}</span>
+        ">${questionNumber}.</span>
         <div class="answer-content">
           <div class="answer-text" style="
             font-size: ${fontSize}px;
             font-weight: 600;
-            color: #065f46;
+            color: black;
           ">${answerText}</div>
         </div>
       </div>
@@ -594,45 +497,84 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
     }).join('');
 
     // Generate header with logo if provided
-    const headerHTML = logo ? `
-    <div class="header" style="
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 24px;
-      padding-bottom: 16px;
-      border-bottom: 2px solid #e5e7eb;
+    const headerHTML = `
+    <div class="header-container" style="
+      border: 2px solid #000;
+      margin-bottom: 0;
     ">
-      <img src="${logo}" alt="Logo" style="
-        height: 60px;
-        width: auto;
-        object-fit: contain;
-      " />
-      <h1 style="
-        margin: 0;
-        font-size: 24px;
-        font-weight: 700;
-        color: #1f2937;
-      ">${institution} - Answer Key</h1>
+      <div class="header-row" style="
+        display: flex;
+        align-items: center;
+        justify-content: center;        /* center the middle block */
+        position: relative;              /* anchor absolute logo */
+        padding: 8px 12px;
+        border-bottom: 1px solid #000;
+        background-color: #fff;
+        min-height: 80px;                /* ensures room for logo */
+      ">
+        ${logo ? `
+          <div class="logo-section" style="
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%); /* vertically center logo */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+          ">
+            <img src="${logo}" alt="Logo" style="
+              height: 80px;
+              width: 80px;
+              object-fit: contain;
+              border-radius: 50%;
+            " />
+          </div>
+        ` : ''}
+  
+        <div class="institution-info" style="
+          display: flex;
+          flex-direction: column;
+          align-items: center;    /* center content */
+          text-align: center;     /* center text */
+          gap: 6px;
+        ">
+          <h1 style="
+            margin: 0;
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+          ">${institution}</h1>
+  
+          <div style="
+            display: flex;
+            align-items: center;
+            justify-content: center;  /* keeps exam tag centered */
+          ">
+            <div style="
+              border: 1px solid #000;
+              padding: 2px 20px;
+              background-color: #f0f0f0;
+            ">${exam}</div>
+          </div>
+        </div>
+      </div>
+  
     </div>
-  ` : `
-    <div class="header" style="
+  `;
+
+  const sectionHeaderHTML = `
+    <div class="section-header" style="
+      background-color: #000;
+      color: #fff;
       text-align: center;
-      margin-bottom: 32px;
-      padding-bottom: 16px;
-      border-bottom: 2px solid #e5e7eb;
+      padding: 8px;
+      margin: 0;
+      font-weight: bold;
+      font-size: 14px;
+      letter-spacing: 1px;
     ">
-      <h1 style="
-        margin: 0;
-        font-size: 28px;
-        font-weight: 700;
-        color: #1f2937;
-      ">${institution} - Answer Key</h1>
-      <p style="
-        margin: 8px 0 0 0;
-        font-size: 16px;
-        color: #6b7280;
-      ">Complete Answer Key</p>
+      Answer Key
     </div>
   `;
 
@@ -721,22 +663,10 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
     </head>
     <body>
       ${headerHTML}
+      ${sectionHeaderHTML}
       <div class="answers-container">
         ${answersHTML}
       </div>
-      
-      <div class="footer" style="
-        margin-top: 32px;
-        padding-top: 16px;
-        border-top: 1px solid #e5e7eb;
-        text-align: center;
-        font-size: 12px;
-        color: #6b7280;
-      ">
-        <p>Generated on: ${new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' })}</p>
-        <p>Total Questions: ${selectedQuestions.length}</p>
-      </div>
-      
     </body>
     </html>
   `;
