@@ -16,9 +16,8 @@ import {
 } from '@/components/ui/dialog';
 
 
-export default function PDFDetailsForm({ initialData, onSubmit, onCancel }: PDFDetailsFormProps) {
+export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGenerating }: PDFDetailsFormProps) {
     const [formStep, setFormStep] = useState<'templates' | 'form'>('templates');
-    const [isGenerating, setIsGenerating] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [templateToDelete, setTemplateToDelete] = useState<Template | null>(null);
     const [isEditingTemplate, setIsEditingTemplate] = useState(false);
@@ -147,7 +146,6 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel }: PDFD
 
     const handleSubmit = async () => {
         if (validateForm()) {
-            setIsGenerating(true);
             try {
                 console.log('Form submission - isEditingTemplate:', isEditingTemplate, 'saveTemplate:', saveTemplate);
                 
@@ -174,7 +172,6 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel }: PDFD
                     if (!result.success) {
                         console.error('Template creation failed:', result.error);
                         alert(`Failed to save template: ${result.error}`);
-                        setIsGenerating(false);
                         return;
                     }
                 } else {
@@ -186,8 +183,6 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel }: PDFD
             } catch (error) {
                 console.error('Error in form submission:', error);
                 alert(`An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`);
-            } finally {
-                setIsGenerating(false);
             }
         }
     };

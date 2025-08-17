@@ -52,6 +52,7 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [filters, setFilters] = useState<Filters>({});
+    console.log('Filters:----------------------------', filters);
     const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 20 });
     const [filterOptions, setFilterOptions] = useState<FilterOptions>({
         exams: [],
@@ -113,8 +114,27 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
                     setQuestions(questionsRes.data as Question[]);
                     setTotalCount(countRes.data);
                 } else {
-                    console.error('Failed to fetch questions:', questionsRes?.error, countRes?.error);
-                    setError(questionsRes?.error || countRes?.error || 'Failed to fetch data');
+                    console.error('Failed to fetch questions:', {
+                        questionsRes: {
+                            success: questionsRes?.success,
+                            error: questionsRes?.error,
+                            dataLength: questionsRes?.data?.length
+                        },
+                        countRes: {
+                            success: countRes?.success,
+                            error: countRes?.error,
+                            data: countRes?.data
+                        },
+                        filters,
+                        pagination,
+                        searchQuery,
+                        role,
+                        isTeacher,
+                        subject
+                    });
+                    
+                    const errorMessage = questionsRes?.error || countRes?.error || 'Failed to fetch data';
+                    setError(errorMessage);
                     setQuestions([]);
                     setTotalCount(0);
                 }

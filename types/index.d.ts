@@ -237,6 +237,7 @@ declare global {
         initialData: TemplateFormData;
         onSubmit: (data: TemplateFormData) => void;
         onCancel: () => void;
+        isGenerating?: boolean;
     }
 }
 

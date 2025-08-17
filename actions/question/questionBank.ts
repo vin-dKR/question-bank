@@ -23,19 +23,19 @@ export async function getQuestions(
         let whereClause: QuestionWhereClause = {};
 
         if (filters.exam_name) {
-            whereClause.exam_name = { equals: filters.exam_name, mode: "insensitive" };
+            whereClause.exam_name = { contains: filters.exam_name, mode: "insensitive" };
         }
 
         if (filters.subject) {
-            whereClause.subject = { equals: filters.subject, mode: "insensitive" };
+            whereClause.subject = { contains: filters.subject, mode: "insensitive" };
         }
 
         if (filters.chapter) {
-            whereClause.chapter = { equals: filters.chapter, mode: "insensitive" };
+            whereClause.chapter = { contains: filters.chapter, mode: "insensitive" };
         }
 
         if (filters.section_name) {
-            whereClause.section_name = { equals: filters.section_name, mode: "insensitive" };
+            whereClause.section_name = { contains: filters.section_name, mode: "insensitive" };
         }
 
         if (filters.flagged !== undefined) {
@@ -44,7 +44,7 @@ export async function getQuestions(
 
         // Enforce teacher subject restriction
         if (userRole === "teacher" && userSubject) {
-            whereClause.subject = { equals: userSubject, mode: "insensitive" };
+            whereClause.subject = { contains: userSubject, mode: "insensitive" };
         }
 
         console.log('getQuestions - Filters received:', filters);
@@ -80,7 +80,27 @@ export async function getQuestions(
         return { success: true, data: questions };
     } catch (error) {
         console.error("Error fetching questions:", error);
-        return { success: false, data: [], error: "Failed to fetch questions" };
+        
+        // Provide more detailed error information
+        let errorMessage = "Failed to fetch questions";
+        if (error instanceof Error) {
+            errorMessage = `Failed to fetch questions: ${error.message}`;
+        } else if (typeof error === 'string') {
+            errorMessage = `Failed to fetch questions: ${error}`;
+        } else if (error && typeof error === 'object' && 'message' in error) {
+            errorMessage = `Failed to fetch questions: ${(error as any).message}`;
+        }
+        
+        console.error("Detailed error info:", {
+            error,
+            errorType: typeof error,
+            errorMessage,
+            filters,
+            userRole,
+            userSubject
+        });
+        
+        return { success: false, data: [], error: errorMessage };
     }
 }
 
@@ -99,19 +119,19 @@ export async function getQuestionCount(
         let whereClause: QuestionWhereClause = {};
 
         if (filters.exam_name) {
-            whereClause.exam_name = { equals: filters.exam_name, mode: "insensitive" };
+            whereClause.exam_name = { contains: filters.exam_name, mode: "insensitive" };
         }
 
         if (filters.subject) {
-            whereClause.subject = { equals: filters.subject, mode: "insensitive" };
+            whereClause.subject = { contains: filters.subject, mode: "insensitive" };
         }
 
         if (filters.chapter) {
-            whereClause.chapter = { equals: filters.chapter, mode: "insensitive" };
+            whereClause.chapter = { contains: filters.chapter, mode: "insensitive" };
         }
 
         if (filters.section_name) {
-            whereClause.section_name = { equals: filters.section_name, mode: "insensitive" };
+            whereClause.section_name = { contains: filters.section_name, mode: "insensitive" };
         }
 
         if (filters.flagged !== undefined) {
@@ -120,17 +140,43 @@ export async function getQuestionCount(
 
         // Enforce teacher subject restriction
         if (userRole === "teacher" && userSubject) {
-            whereClause.subject = { equals: userSubject, mode: "insensitive" };
+            whereClause.subject = { contains: userSubject, mode: "insensitive" };
         }
+
+        console.log('getQuestionCount - Filters received:', filters);
+        console.log('getQuestionCount - User role:', userRole, 'userSubject:', userSubject);
+        console.log('getQuestionCount - Final whereClause:', JSON.stringify(whereClause, null, 2));
 
         const count = await prisma.question.count({
             where: whereClause,
         });
 
+        console.log('getQuestionCount - Count result:', count);
+
         return { success: true, data: count };
     } catch (error) {
         console.error("Error fetching question count:", error);
-        return { success: false, data: 0, error: "Failed to fetch question count" };
+        
+        // Provide more detailed error information
+        let errorMessage = "Failed to fetch question count";
+        if (error instanceof Error) {
+            errorMessage = `Failed to fetch question count: ${error.message}`;
+        } else if (typeof error === 'string') {
+            errorMessage = `Failed to fetch question count: ${error}`;
+        } else if (error && typeof error === 'object' && 'message' in error) {
+            errorMessage = `Failed to fetch question count: ${(error as any).message}`;
+        }
+        
+        console.error("Detailed error info for count:", {
+            error,
+            errorType: typeof error,
+            errorMessage,
+            filters,
+            userRole,
+            userSubject
+        });
+        
+        return { success: false, data: 0, error: errorMessage };
     }
 }
 
@@ -147,20 +193,20 @@ export async function getFilterOptions(
         let whereClause: QuestionWhereClause = {};
 
         if (filters.exam_name) {
-            whereClause.exam_name = { equals: filters.exam_name, mode: "insensitive" };
+            whereClause.exam_name = { contains: filters.exam_name, mode: "insensitive" };
         }
 
         if (filters.subject) {
-            whereClause.subject = { equals: filters.subject, mode: "insensitive" };
+            whereClause.subject = { contains: filters.subject, mode: "insensitive" };
         }
 
         if (filters.chapter) {
-            whereClause.chapter = { equals: filters.chapter, mode: "insensitive" };
+            whereClause.chapter = { contains: filters.chapter, mode: "insensitive" };
         }
 
         // Enforce teacher subject restriction
         if (userRole === "teacher" && userSubject) {
-            whereClause.subject = { equals: userSubject, mode: "insensitive" };
+            whereClause.subject = { contains: userSubject, mode: "insensitive" };
         }
 
         const [exams, subjects, chapters, sections] = await Promise.all([
@@ -270,7 +316,7 @@ export async function searchQuestions(keyword: string, userRole: UserRole, userS
         };
 
         if (userRole === "teacher" && userSubject) {
-            whereClause.subject = { equals: userSubject, mode: "insensitive" };
+            whereClause.subject = { contains: userSubject, mode: "insensitive" };
         }
 
         const questions = await prisma.question.findMany({
@@ -330,7 +376,7 @@ export async function getQuestionsByIds(ids: string[], userRole: UserRole, userS
 
         // Enforce teacher subject restriction
         if (userRole === "teacher" && userSubject) {
-            whereClause.subject = { equals: userSubject, mode: "insensitive" };
+            whereClause.subject = { contains: userSubject, mode: "insensitive" };
         }
 
         const questions = await prisma.question.findMany({

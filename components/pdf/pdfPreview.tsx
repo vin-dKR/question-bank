@@ -62,16 +62,17 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
 
     const handleFormSubmit = (data: TemplateFormData) => {
         setFormData(data);
+        setIsGenerating("question");
         handlePreviewCompiledHTML(data);
     };
 
     const handlePreviewCompiledHTML = async (data: typeof formData) => {
         if (selectedQuestions.length === 0) {
             alert('Please select at least one question');
+            setIsGenerating(null);
             return;
         }
 
-        setIsGenerating("question");
         const html = pdfConfigToHTML({
             institution: data?.institution || "",
             selectedQuestions,
@@ -193,6 +194,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
                                 initialData={formData}
                                 onSubmit={handleFormSubmit}
                                 onCancel={handleClose}
+                                isGenerating={isGenerating === "question"}
                             />
                         )}
                     </>
