@@ -68,10 +68,8 @@ export const getUserTemplates = async (): Promise<{
         }
     }
 
-    console.log('Fetching templates for userId:', userId);
-
     try {
-        // Use select to only fetch needed fields and add orderBy for consistent results
+        // Optimized query with minimal logging and efficient field selection
         const templates = await prisma.templateForm.findMany({
             where: { userId },
             select: {
@@ -92,7 +90,6 @@ export const getUserTemplates = async (): Promise<{
             }
         })
 
-        console.log("Templates found:", templates.length);
         return {
             data: templates as Template[],
             error: null

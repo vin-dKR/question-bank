@@ -30,7 +30,7 @@ export default function SelectedQuestionsActions() {
             if (selectedQuestionIds.size > 0) {
                 const allQuestions = await getAllSelectedQuestions();
                 setAllSelectedQuestions(allQuestions);
-                console.log('All selected questions fetched:', allQuestions);
+                // console.log('All selected questions fetched:', allQuestions);
             } else {
                 setAllSelectedQuestions([]);
             }

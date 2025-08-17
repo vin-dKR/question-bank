@@ -39,12 +39,12 @@ const DraftManager = () => {
     const [questionToRemove, setQuestionToRemove] = useState<string | null>(null);
 
     const refreshFolders = async () => {
-        console.log('Refreshing folders');
+        // console.log('Refreshing folders');
         await getAllFolders();
     };
 
     useEffect(() => {
-        console.log("refresing")
+        console.log("refresing folders")
         refreshFolders();
     }, []);
 

@@ -52,7 +52,7 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [filters, setFilters] = useState<Filters>({});
-    console.log('Filters:----------------------------', filters);
+    // console.log('Filters:----------------------------', filters);
     const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 20 });
     const [filterOptions, setFilterOptions] = useState<FilterOptions>({
         exams: [],
@@ -94,8 +94,8 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
                     skip: (pagination.page - 1) * pagination.limit,
                 };
                 
-                console.log('Fetching questions with filters:', queryFilters);
-                console.log('User role:', role, 'isTeacher:', isTeacher, 'userSubject:', subject);
+                // console.log('Fetching questions with filters:', queryFilters);
+                // console.log('User role:', role, 'isTeacher:', isTeacher, 'userSubject:', subject);
                 
                 const [questionsRes, countRes] = await Promise.all([
                     getQuestions(queryFilters, (role || "student") as UserRole, isTeacher ? subject || undefined : undefined),
@@ -110,7 +110,7 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
 
                 if (questionsRes && questionsRes.success && countRes && countRes.success) {
                     console.log('Questions fetched successfully:', questionsRes.data.length);
-                    console.log('Total count:', countRes.data);
+                    // console.log('Total count:', countRes.data);
                     setQuestions(questionsRes.data as Question[]);
                     setTotalCount(countRes.data);
                 } else {

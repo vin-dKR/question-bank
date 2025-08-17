@@ -10,6 +10,7 @@ export const usePdfTemplateForm = () => {
     const [templatesLoading, setTemplatesLoading] = useState(false);
     const [lastFetchTime, setLastFetchTime] = useState<number>(0);
     const fetchingRef = useRef(false);
+    const hasInitializedRef = useRef(false);
 
     const saveTemplate = useCallback(async (templateData: Template) => {
         setLoading(true);
@@ -17,8 +18,8 @@ export const usePdfTemplateForm = () => {
             const result = await createTemplate(templateData);
             if (result.data) {
                 toast.success('Template saved successfully!');
-                // Refresh templates list
-                await fetchTemplates();
+                // Force refresh templates list immediately
+                await fetchTemplates(true);
                 return { success: true, data: result.data };
             } else {
                 toast.error(result.error || 'Failed to save template');
@@ -34,19 +35,49 @@ export const usePdfTemplateForm = () => {
     }, []);
 
     const fetchTemplates = useCallback(async (forceRefresh = false) => {
-        // Prevent multiple simultaneous fetches
+        // If already fetching and not forcing refresh, return cached data
         if (fetchingRef.current && !forceRefresh) {
-            return { success: false, error: 'Already fetching templates' };
-        }
-
-        // Cache for 30 seconds to prevent unnecessary API calls
-        const now = Date.now();
-        const cacheTime = 30 * 1000; // 30 seconds
-        if (!forceRefresh && now - lastFetchTime < cacheTime && templates.length > 0) {
-            console.log('Using cached templates');
+            console.log('Already fetching templates, returning cached data');
             return { success: true, data: templates };
         }
 
+        // For first load or force refresh, fetch immediately
+        if (!hasInitializedRef.current || forceRefresh) {
+            console.log('Fetching templates immediately (first load or force refresh)');
+            fetchingRef.current = true;
+            setTemplatesLoading(true);
+            
+            try {
+                const result = await getUserTemplates();
+                if (result.data) {
+                    setTemplates(result.data);
+                    setLastFetchTime(Date.now());
+                    hasInitializedRef.current = true;
+                    return { success: true, data: result.data };
+                } else {
+                    console.error('Failed to fetch templates:', result.error);
+                    return { success: false, error: result.error };
+                }
+            } catch (error) {
+                console.error('Error fetching templates:', error);
+                return { success: false, error: 'An unexpected error occurred' };
+            } finally {
+                setTemplatesLoading(false);
+                fetchingRef.current = false;
+            }
+        }
+
+        // For subsequent calls, use shorter cache (5 seconds)
+        const now = Date.now();
+        const cacheTime = 5 * 1000; // 5 seconds instead of 30
+        
+        if (!forceRefresh && now - lastFetchTime < cacheTime && templates.length > 0) {
+            console.log('Using cached templates (cache valid)');
+            return { success: true, data: templates };
+        }
+
+        // Cache expired, fetch fresh data
+        console.log('Cache expired, fetching fresh templates');
         fetchingRef.current = true;
         setTemplatesLoading(true);
         
@@ -74,7 +105,7 @@ export const usePdfTemplateForm = () => {
             const result = await deleteTemplate(templateId);
             if (result.success) {
                 toast.success('Template deleted successfully!');
-                // Remove from local state
+                // Remove from local state immediately
                 setTemplates(prev => prev.filter(t => t.id !== templateId));
                 return { success: true };
             } else {

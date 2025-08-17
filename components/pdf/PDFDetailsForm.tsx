@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import FormField from './FormField';
 import { Label } from '../ui/label';
-import { CirclePlus, Trash2, AlertTriangle } from 'lucide-react';
+import { CirclePlus, Trash2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { usePdfTemplateForm } from '@/hooks/templates/usePdfTemplateForm';
 import {
     Dialog,
@@ -39,7 +39,8 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGene
     useEffect(() => {
         const loadTemplates = async () => {
             console.log('Loading templates...');
-            await fetchTemplates();
+            // Force fetch on first load to ensure we get fresh data
+            await fetchTemplates(true);
         };
         loadTemplates();
     }, [fetchTemplates]);
@@ -149,6 +150,11 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGene
         setTemplateToDelete(null);
     };
 
+    const handleRefreshTemplates = async () => {
+        console.log('Manually refreshing templates...');
+        await fetchTemplates(true);
+    };
+
     const handleSubmit = async () => {
         if (validateForm()) {
             setIsCreatingTemplate(true);
@@ -199,6 +205,19 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGene
         <div className="mt-4">
             {formStep === 'templates' ? (
                 <div>
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-semibold">Select Template</h3>
+                        <Button
+                            onClick={handleRefreshTemplates}
+                            disabled={templatesLoading}
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center gap-2"
+                        >
+                            <RefreshCw className={`h-4 w-4 ${templatesLoading ? 'animate-spin' : ''}`} />
+                            Refresh
+                        </Button>
+                    </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {/* Create new template button */}
                         <Button
@@ -215,7 +234,9 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGene
                         {templatesLoading && (
                             <div className='flex flex-col items-center justify-center min-h-[8rem] w-full'>
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-2" />
-                                <span className="text-sm text-gray-600">Loading templates...</span>
+                                <span className="text-sm text-gray-600">
+                                    {templates.length > 0 ? 'Refreshing templates...' : 'Loading templates...'}
+                                </span>
                             </div>
                         )}
 

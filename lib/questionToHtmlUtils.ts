@@ -37,12 +37,11 @@ function textToHtmlWithLatex(text: string): string {
 
 export function questionToHTML(question: Question, index: number, options: QuestionToHTMLOptions = {}): string {
   const {
-    includeMetadata = true,
+    // includeMetadata = true,
   } = options;
 
   const questionNumber = index + 1;
   const questionText = textToHtmlWithLatex(question.question_text);
-  console.log("Question text", questionText)
 
   // Render question image if present
   const questionImageHTML = question.question_image ? `
@@ -74,27 +73,21 @@ export function questionToHTML(question: Question, index: number, options: Quest
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 16px;
-        max-width: 300px;
         margin-left: auto;
         margin-right: auto;
       ">
         ${question.option_images!.map((image, imgIndex) => {
           if (!image) return '';
           const optionLetter = String.fromCharCode(65 + imgIndex);
-          const optionText = question.options[imgIndex] ? textToHtmlWithLatex(question.options[imgIndex]) : '';
+          // const optionText = question.options[imgIndex] ? textToHtmlWithLatex(question.options[imgIndex]) : '';
           return `
             <div class="grid-image-item" style="
               display: flex;
               flex-direction: column;
               align-items: center;
               text-align: center;
-              padding: 8px;
-              border: 1px solid #e5e7eb;
-              border-radius: 8px;
-              background-color: #f9fafb;
             ">
               <img src="${image}" alt="Option ${optionLetter} Image" style="
-                width: 100px;
                 height: 100px;
                 border-radius: 6px;
                 object-fit: cover;
@@ -106,15 +99,6 @@ export function questionToHTML(question: Question, index: number, options: Quest
                 margin-bottom: 4px;
                 color: #374151;
               ">${optionLetter}</span>
-              ${optionText ? `
-                <div style="
-                  font-size: 12px;
-                  color: #6b7280;
-                  line-height: 1.4;
-                  max-width: 120px;
-                  word-wrap: break-word;
-                ">${optionText}</div>
-              ` : ''}
             </div>
           `;
         }).join('')}
@@ -137,18 +121,18 @@ export function questionToHTML(question: Question, index: number, options: Quest
   }
 
   // Render metadata
-  const metadataHTML = includeMetadata ? `
-    <div class="metadata" style="
-      margin-top: 8px;
-      font-size: 12px;
-      color: #6b7280;
-      font-style: italic;
-    ">
-      Source: (${question.exam_name || 'Unknown'}, ${question.subject || 'Unknown'})
-      ${question.chapter ? ` • Chapter: ${question.chapter}` : ''}
-      ${question.section_name ? ` • Section: ${question.section_name}` : ''}
-    </div>
-  ` : '';
+  // const metadataHTML = includeMetadata ? `
+  //   <div class="metadata" style="
+  //     margin-top: 8px;
+  //     font-size: 12px;
+  //     color: #6b7280;
+  //     font-style: italic;
+  //   ">
+  //     Source: (${question.exam_name || 'Unknown'}, ${question.subject || 'Unknown'})
+  //     ${question.chapter ? ` • Chapter: ${question.chapter}` : ''}
+  //     ${question.section_name ? ` • Section: ${question.section_name}` : ''}
+  //   </div>
+  // ` : '';
 
   return `
     <div class="question" style="
@@ -181,8 +165,6 @@ export function questionToHTML(question: Question, index: number, options: Quest
       <div class="options" style="margin: 4px 0 8px 24px;">
         ${optionsHTML}
       </div>
-      
-      ${metadataHTML}
     </div>
   `;
 }

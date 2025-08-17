@@ -33,20 +33,20 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
         logo: '',
     });
 
-    console.log('Selected Questions for PDF:', selectedQuestions);
+    // console.log('Selected Questions for PDF:', selectedQuestions);
     console.log('Selected Questions Count:', selectedQuestions.length);
-    console.log('Selected Questions Details:', selectedQuestions.map(q => ({ 
-        id: q.id, 
-        question_number: q.question_number, 
-        subject: q.subject,
-        chapter: q.chapter 
-    })));
+    // console.log('Selected Questions Details:', selectedQuestions.map(q => ({ 
+    //     id: q.id, 
+    //     question_number: q.question_number, 
+    //     subject: q.subject,
+    //     chapter: q.chapter 
+    // })));
     
     // Show summary of selected questions
     if (selectedQuestions.length > 0) {
-        const subjects = [...new Set(selectedQuestions.map(q => q.subject).filter(Boolean))];
-        const chapters = [...new Set(selectedQuestions.map(q => q.chapter).filter(Boolean))];
-        console.log('PDF Summary - Subjects:', subjects, 'Chapters:', chapters);
+        // const subjects = [...new Set(selectedQuestions.map(q => q.subject).filter(Boolean))];
+        // const chapters = [...new Set(selectedQuestions.map(q => q.chapter).filter(Boolean))];
+        // console.log('PDF Summary - Subjects:', subjects, 'Chapters:', chapters);
     }
     useEffect(() => {
         // Detect mobile device
@@ -83,7 +83,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
             subject: data.subject,
             logo: data.logo,
         });
-        console.log("--------------------------", html)
+        // console.log("--------------------------", html)
 
         const blob = await htmlTopdfBlob(html);
         if (!blob.data) {
