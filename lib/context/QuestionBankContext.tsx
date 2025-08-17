@@ -159,6 +159,7 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
             );
             if (response && response.success) {
                 setFilterOptions(response.data);
+                console.log('Filter options fetched successfully:', response.data);
             } else {
                 setFilterOptions({
                     exams: [],

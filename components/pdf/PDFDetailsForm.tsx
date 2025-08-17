@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import FormField from './FormField';
 import { Label } from '../ui/label';
-import { CirclePlus, Trash2, AlertTriangle, RefreshCw } from 'lucide-react';
+import { CirclePlus, Trash2, AlertTriangle } from 'lucide-react';
 import { usePdfTemplateForm } from '@/hooks/templates/usePdfTemplateForm';
 import {
     Dialog,
@@ -148,11 +148,6 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGene
     const cancelDelete = () => {
         setDeleteModalOpen(false);
         setTemplateToDelete(null);
-    };
-
-    const handleRefreshTemplates = async () => {
-        console.log('Manually refreshing templates...');
-        await fetchTemplates(true);
     };
 
     const handleSubmit = async () => {

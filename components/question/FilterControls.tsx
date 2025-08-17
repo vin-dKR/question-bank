@@ -6,7 +6,6 @@ import Select, { StylesConfig } from 'react-select';
 import { useUserRole } from '@/hooks/auth/useUserRole';
 import { useUserSubject } from '@/hooks/auth/useUserSubject';
 
-// Define a type for filterUpdate
 interface FilterUpdate {
     [key: string]: string | boolean | undefined;
     subject?: string;

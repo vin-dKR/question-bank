@@ -8,7 +8,7 @@ export default function EmptyState() {
     return (
         <div className="p-6 sm:p-8 text-center bg-white rounded-xl shadow-md border border-slate-200">
             <p className="text-slate-500 text-base sm:text-lg font-medium">
-                No questions found matching your criteria
+                No questions found matching your criteria.
             </p>
             <button
                 onClick={() => setFilters({})}

@@ -106,8 +106,8 @@ export function questionToHTML(question: Question, index: number, options: Quest
     `;
   } else {
     // Show regular text options
-    optionsHTML = question.options.map((option, optIndex) => {
-      const optionLetter = String.fromCharCode(65 + optIndex);
+    optionsHTML = question.options.map((option) => {
+      // const optionLetter = String.fromCharCode(65 + optIndex);
       const optionText = textToHtmlWithLatex(option);
 
       return `

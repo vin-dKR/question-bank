@@ -27,7 +27,7 @@ export async function getQuestions(
         }
 
         if (filters.subject) {
-            whereClause.subject = { contains: filters.subject, mode: "insensitive" };
+            whereClause.subject = { equals: filters.subject, mode: "insensitive" };
         }
 
         if (filters.chapter) {
@@ -35,7 +35,7 @@ export async function getQuestions(
         }
 
         if (filters.section_name) {
-            whereClause.section_name = { contains: filters.section_name, mode: "insensitive" };
+            whereClause.section_name = { equals: filters.section_name };
         }
 
         if (filters.flagged !== undefined) {
@@ -131,7 +131,7 @@ export async function getQuestionCount(
         }
 
         if (filters.section_name) {
-            whereClause.section_name = { contains: filters.section_name, mode: "insensitive" };
+            whereClause.section_name = { equals: filters.section_name};
         }
 
         if (filters.flagged !== undefined) {
