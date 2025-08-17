@@ -112,7 +112,6 @@ export function questionToHTML(question: Question, index: number, options: Quest
 
       return `
         <div class="option" style="padding: 4px 12px; margin: 4px 0; background-color: #ffffff; border-radius: 0 6px 6px 0; display: flex; align-items: flex-start;">
-          <strong style="font-weight: 500; margin-right: 8px; flex-shrink: 0;">${optionLetter}.</strong>
           <div style="flex: 1; display: inline; color: #000000;">
             ${optionText}
           </div>
