@@ -35,7 +35,7 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGene
 
     const { templates, templatesLoading, saveTemplate: saveTemplateAction, fetchTemplates, removeTemplate } = usePdfTemplateForm()
 
-    // Fetch templates on component mount
+    // Fetch templates on component mount - only run once
     useEffect(() => {
         const loadTemplates = async () => {
             console.log('Loading templates...');
@@ -43,7 +43,7 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGene
             await fetchTemplates(true);
         };
         loadTemplates();
-    }, [fetchTemplates]);
+    }, []); // Remove fetchTemplates from dependencies to prevent multiple calls
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -207,16 +207,6 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGene
                 <div>
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-lg font-semibold">Select Template</h3>
-                        <Button
-                            onClick={handleRefreshTemplates}
-                            disabled={templatesLoading}
-                            variant="outline"
-                            size="sm"
-                            className="flex items-center gap-2"
-                        >
-                            <RefreshCw className={`h-4 w-4 ${templatesLoading ? 'animate-spin' : ''}`} />
-                            Refresh
-                        </Button>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {/* Create new template button */}
@@ -230,16 +220,17 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGene
                             </span>
                         </Button>
 
-                        {/* Saved templates or "no templates" message */}
+                        {/* Loading state */}
                         {templatesLoading && (
-                            <div className='flex flex-col items-center justify-center min-h-[8rem] w-full'>
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-2" />
-                                <span className="text-sm text-gray-600">
-                                    Loading templates...
-                                </span>
+                            <div className="col-span-full text-center py-8 text-gray-500">
+                                <div className="flex items-center justify-center space-x-2">
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600 mr-2"></div>
+                                <span>Loading templates...</span>
+                                </div>
                             </div>
                         )}
 
+                        {/* No templates state */}
                         {!templatesLoading && templates.length === 0 && (
                             <div className="col-span-full text-center py-8 text-gray-500">
                                 <p>No saved templates found.</p>
@@ -247,7 +238,8 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGene
                             </div>
                         )}
 
-                        {templates.length > 0 && (
+                        {/* Templates list */}
+                        {!templatesLoading && templates.length > 0 && (
                             templates.map((template) => (
                                 <div
                                     key={template.id}

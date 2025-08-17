@@ -6,8 +6,8 @@ import { toast } from 'sonner';
 
 export const usePdfTemplateForm = () => {
     const [loading, setLoading] = useState(false);
-    const [templates, setTemplates] = useState<Template[]>([]);
     const [templatesLoading, setTemplatesLoading] = useState(false);
+    const [templates, setTemplates] = useState<Template[]>([]);
     const [lastFetchTime, setLastFetchTime] = useState<number>(0);
     const fetchingRef = useRef(false);
     const hasInitializedRef = useRef(false);
@@ -62,8 +62,8 @@ export const usePdfTemplateForm = () => {
                 console.error('Error fetching templates:', error);
                 return { success: false, error: 'An unexpected error occurred' };
             } finally {
-                setTemplatesLoading(false);
                 fetchingRef.current = false;
+                setTemplatesLoading(false);
             }
         }
 
@@ -95,10 +95,10 @@ export const usePdfTemplateForm = () => {
             console.error('Error fetching templates:', error);
             return { success: false, error: 'An unexpected error occurred' };
         } finally {
-            setTemplatesLoading(false);
             fetchingRef.current = false;
+            setTemplatesLoading(false);
         }
-    }, [templates, lastFetchTime]);
+    }, []); // Remove dependencies to prevent re-creation
 
     const removeTemplate = useCallback(async (templateId: string) => {
         try {
@@ -121,8 +121,8 @@ export const usePdfTemplateForm = () => {
 
     return {
         loading,
-        templates,
         templatesLoading,
+        templates,
         saveTemplate,
         fetchTemplates,
         removeTemplate,
