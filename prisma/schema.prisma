@@ -148,4 +148,6 @@ model TemplateForm {
     saveTemplate        Boolean
     createdAt DateTime  @default(now())
     updatedAt DateTime  @updatedAt
+
+    @@index([userId])
 }

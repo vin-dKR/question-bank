@@ -2,7 +2,6 @@
 import prisma from "@/lib/prisma"
 import { auth } from "@clerk/nextjs/server"
 
-
 export const createTemplate = async (formData: Template): Promise<{
     data: Template | null
     error: string | null
@@ -14,7 +13,7 @@ export const createTemplate = async (formData: Template): Promise<{
 
     if (!userId) {
         console.error('No userId found in auth');
-        throw new Error("Unauthorized");
+        return { data: null, error: "Unauthorized" };
     }
 
     // Validate required fields
@@ -23,15 +22,6 @@ export const createTemplate = async (formData: Template): Promise<{
     }
 
     console.log('Creating template with data:', { ...formData, userId });
-
-    // Test database connection
-    try {
-        await prisma.$connect();
-        console.log('Database connection successful');
-    } catch (connectionError) {
-        console.error('Database connection failed:', connectionError);
-        return { data: null, error: 'Database connection failed' };
-    }
 
     try {
         const newTemplate = await prisma.templateForm.create({
@@ -62,8 +52,6 @@ export const createTemplate = async (formData: Template): Promise<{
             stack: e instanceof Error ? e.stack : 'No stack trace'
         });
         return { data: null, error: `Error in creating Template Form: ${e instanceof Error ? e.message : 'Unknown error'}` }
-    } finally {
-        await prisma.$disconnect();
     }
 }
 
@@ -83,11 +71,28 @@ export const getUserTemplates = async (): Promise<{
     console.log('Fetching templates for userId:', userId);
 
     try {
+        // Use select to only fetch needed fields and add orderBy for consistent results
         const templates = await prisma.templateForm.findMany({
-            where: { userId }
+            where: { userId },
+            select: {
+                id: true,
+                templateName: true,
+                institution: true,
+                marks: true,
+                time: true,
+                exam: true,
+                subject: true,
+                logo: true,
+                saveTemplate: true,
+                createdAt: true,
+                updatedAt: true
+            },
+            orderBy: {
+                updatedAt: 'desc'
+            }
         })
 
-        console.log("Templates found:", templates.length, templates)
+        console.log("Templates found:", templates.length);
         return {
             data: templates as Template[],
             error: null
@@ -115,25 +120,20 @@ export const deleteTemplate = async (templateId: string): Promise<{
     }
 
     try {
-        // First verify the template belongs to the user
-        const template = await prisma.templateForm.findFirst({
+        // Delete the template and verify it belonged to the user in one operation
+        const deletedTemplate = await prisma.templateForm.deleteMany({
             where: { 
                 id: templateId,
                 userId 
             }
         })
 
-        if (!template) {
+        if (deletedTemplate.count === 0) {
             return {
                 success: false,
                 error: "Template not found or access denied"
             }
         }
-
-        // Delete the template
-        await prisma.templateForm.delete({
-            where: { id: templateId }
-        })
 
         return {
             success: true,

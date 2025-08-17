@@ -21,6 +21,7 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGene
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [templateToDelete, setTemplateToDelete] = useState<Template | null>(null);
     const [isEditingTemplate, setIsEditingTemplate] = useState(false);
+    const [isCreatingTemplate, setIsCreatingTemplate] = useState(false);
     const [formData, setFormData] = useState<TemplateFormData>({
         templateName: '',
         institution: initialData.institution,
@@ -36,7 +37,11 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGene
 
     // Fetch templates on component mount
     useEffect(() => {
-        fetchTemplates();
+        const loadTemplates = async () => {
+            console.log('Loading templates...');
+            await fetchTemplates();
+        };
+        loadTemplates();
     }, [fetchTemplates]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -146,6 +151,7 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGene
 
     const handleSubmit = async () => {
         if (validateForm()) {
+            setIsCreatingTemplate(true);
             try {
                 console.log('Form submission - isEditingTemplate:', isEditingTemplate, 'saveTemplate:', saveTemplate);
                 
@@ -172,6 +178,7 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGene
                     if (!result.success) {
                         console.error('Template creation failed:', result.error);
                         alert(`Failed to save template: ${result.error}`);
+                        setIsCreatingTemplate(false);
                         return;
                     }
                 } else {
@@ -183,6 +190,7 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGene
             } catch (error) {
                 console.error('Error in form submission:', error);
                 alert(`An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                setIsCreatingTemplate(false);
             }
         }
     };
@@ -205,9 +213,16 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGene
 
                         {/* Saved templates or "no templates" message */}
                         {templatesLoading && (
-                            <div className='absolute top-1/2 left-1/2 trasform-x-[50%] trasform-y-[50%]'>
-                                <div className=" animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4" />
-                                loading saved templates
+                            <div className='flex flex-col items-center justify-center min-h-[8rem] w-full'>
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-2" />
+                                <span className="text-sm text-gray-600">Loading templates...</span>
+                            </div>
+                        )}
+
+                        {!templatesLoading && templates.length === 0 && (
+                            <div className="col-span-full text-center py-8 text-gray-500">
+                                <p>No saved templates found.</p>
+                                <p className="text-sm">Create your first template to get started.</p>
                             </div>
                         )}
 
@@ -349,10 +364,15 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGene
                             </Button>
                             <Button
                                 onClick={handleSubmit}
-                                disabled={isGenerating}
+                                disabled={isGenerating || isCreatingTemplate}
                                 className="bg-indigo-600 hover:bg-indigo-700 text-white border-black/70 disabled:bg-indigo-400 disabled:cursor-not-allowed"
                             >
-                                {isGenerating ? (
+                                {isCreatingTemplate ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                        Saving Template...
+                                    </>
+                                ) : isGenerating ? (
                                     <>
                                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                                         Generating...

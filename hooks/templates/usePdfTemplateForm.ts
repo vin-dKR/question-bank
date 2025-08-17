@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { createTemplate, getUserTemplates, deleteTemplate } from '@/actions/templates/pdfTemplateForm';
 import { toast } from 'sonner';
 
@@ -8,6 +8,8 @@ export const usePdfTemplateForm = () => {
     const [loading, setLoading] = useState(false);
     const [templates, setTemplates] = useState<Template[]>([]);
     const [templatesLoading, setTemplatesLoading] = useState(false);
+    const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+    const fetchingRef = useRef(false);
 
     const saveTemplate = useCallback(async (templateData: Template) => {
         setLoading(true);
@@ -31,12 +33,28 @@ export const usePdfTemplateForm = () => {
         }
     }, []);
 
-    const fetchTemplates = useCallback(async () => {
+    const fetchTemplates = useCallback(async (forceRefresh = false) => {
+        // Prevent multiple simultaneous fetches
+        if (fetchingRef.current && !forceRefresh) {
+            return { success: false, error: 'Already fetching templates' };
+        }
+
+        // Cache for 30 seconds to prevent unnecessary API calls
+        const now = Date.now();
+        const cacheTime = 30 * 1000; // 30 seconds
+        if (!forceRefresh && now - lastFetchTime < cacheTime && templates.length > 0) {
+            console.log('Using cached templates');
+            return { success: true, data: templates };
+        }
+
+        fetchingRef.current = true;
         setTemplatesLoading(true);
+        
         try {
             const result = await getUserTemplates();
             if (result.data) {
                 setTemplates(result.data);
+                setLastFetchTime(now);
                 return { success: true, data: result.data };
             } else {
                 console.error('Failed to fetch templates:', result.error);
@@ -47,8 +65,9 @@ export const usePdfTemplateForm = () => {
             return { success: false, error: 'An unexpected error occurred' };
         } finally {
             setTemplatesLoading(false);
+            fetchingRef.current = false;
         }
-    }, []);
+    }, [templates, lastFetchTime]);
 
     const removeTemplate = useCallback(async (templateId: string) => {
         try {
