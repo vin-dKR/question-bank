@@ -235,7 +235,7 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGene
                             <div className='flex flex-col items-center justify-center min-h-[8rem] w-full'>
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-2" />
                                 <span className="text-sm text-gray-600">
-                                    {templates.length > 0 ? 'Refreshing templates...' : 'Loading templates...'}
+                                    Loading templates...
                                 </span>
                             </div>
                         )}
