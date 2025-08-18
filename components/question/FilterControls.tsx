@@ -44,7 +44,15 @@ export default function FilterControls() {
 
         // Immediately update filters for cascading, but only for parent filters
         if (["exam_name", "subject", "chapter"].includes(name)) {
-            const filterUpdate: FilterUpdate = { [name]: value || undefined };
+            const filterUpdate: FilterUpdate = {
+                exam_name: localFilters.exam_name || undefined, // Always include current exam_name
+                subject: isTeacher && subject ? subject : (localFilters.subject || undefined), // Include subject (teacher or selected)
+                chapter: localFilters.chapter || undefined, // Include chapter if selected
+            };
+
+            // Update the changed filter
+            filterUpdate[name] = value || undefined;
+
             // Reset dependent filters
             if (name === "exam_name") {
                 // For teachers, preserve their assigned subject
@@ -59,42 +67,34 @@ export default function FilterControls() {
                 filterUpdate.section_name = undefined;
                 newLocalFilters.chapter = '';
                 newLocalFilters.section_name = '';
-                setLocalFilters(newLocalFilters); // Update local state to reflect reset
             } else if (name === "subject") {
-                // For teachers, ensure subject is always preserved
-                if (isTeacher && subject) {
-                    filterUpdate.subject = subject;
-                    newLocalFilters.subject = subject;
-                }
                 filterUpdate.chapter = undefined;
                 filterUpdate.section_name = undefined;
                 newLocalFilters.chapter = '';
                 newLocalFilters.section_name = '';
-                setLocalFilters(newLocalFilters);
             } else if (name === "chapter") {
                 filterUpdate.section_name = undefined;
                 newLocalFilters.section_name = '';
-                setLocalFilters(newLocalFilters);
             }
+
+            console.log('Applying filter update:', filterUpdate);
             setFilters(filterUpdate);
+            setLocalFilters(newLocalFilters); // Update local state to reflect reset
         } else if (name === "section_name" || name === "flagged") {
             // Apply section and flagged filters immediately
-            const filterUpdate: FilterUpdate = {};
+            const filterUpdate: FilterUpdate = {
+                exam_name: localFilters.exam_name || undefined, // Include current exam_name
+                subject: isTeacher && subject ? subject : (localFilters.subject || undefined), // Include subject
+                chapter: localFilters.chapter || undefined, // Include chapter
+            };
+
             if (name === "section_name") {
                 filterUpdate.section_name = value || undefined;
             }
             if (name === "flagged") {
                 filterUpdate.flagged = value ? value === 'true' : undefined;
             }
-            // Include current parent filters
-            if (localFilters.exam_name) filterUpdate.exam_name = localFilters.exam_name;
-            if (isTeacher && subject) {
-                filterUpdate.subject = subject;
-            } else if (localFilters.subject) {
-                filterUpdate.subject = localFilters.subject;
-            }
-            if (localFilters.chapter) filterUpdate.chapter = localFilters.chapter;
-            
+
             console.log('Applying section/flagged filter:', filterUpdate);
             setFilters(filterUpdate);
         }

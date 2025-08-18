@@ -47,9 +47,12 @@ export async function getQuestions(
             whereClause.subject = { contains: userSubject, mode: "insensitive" };
         }
 
-        console.log('getQuestions - Filters received:', filters);
-        console.log('getQuestions - User role:', userRole, 'userSubject:', userSubject);
-        console.log('getQuestions - Final whereClause:', JSON.stringify(whereClause, null, 2));
+        {/*
+            console.log('getQuestions - Filters received:', filters);
+            console.log('getQuestions - User role:', userRole, 'userSubject:', userSubject);
+            console.log('getQuestions - Final whereClause:', JSON.stringify(whereClause, null, 2));
+        */}
+
 
         const questions = await prisma.question.findMany({
             where: whereClause,
@@ -80,7 +83,7 @@ export async function getQuestions(
         return { success: true, data: questions };
     } catch (error) {
         console.error("Error fetching questions:", error);
-        
+
         // Provide more detailed error information
         let errorMessage = "Failed to fetch questions";
         if (error instanceof Error) {
@@ -90,7 +93,7 @@ export async function getQuestions(
         } else if (error && typeof error === 'object' && 'message' in error) {
             errorMessage = `Failed to fetch questions: ${(error as any).message}`;
         }
-        
+
         console.error("Detailed error info:", {
             error,
             errorType: typeof error,
@@ -99,7 +102,7 @@ export async function getQuestions(
             userRole,
             userSubject
         });
-        
+
         return { success: false, data: [], error: errorMessage };
     }
 }
@@ -131,7 +134,7 @@ export async function getQuestionCount(
         }
 
         if (filters.section_name) {
-            whereClause.section_name = { equals: filters.section_name};
+            whereClause.section_name = { equals: filters.section_name };
         }
 
         if (filters.flagged !== undefined) {
@@ -143,9 +146,11 @@ export async function getQuestionCount(
             whereClause.subject = { contains: userSubject, mode: "insensitive" };
         }
 
+        {/*
         console.log('getQuestionCount - Filters received:', filters);
         console.log('getQuestionCount - User role:', userRole, 'userSubject:', userSubject);
         console.log('getQuestionCount - Final whereClause:', JSON.stringify(whereClause, null, 2));
+        */}
 
         const count = await prisma.question.count({
             where: whereClause,
@@ -156,7 +161,7 @@ export async function getQuestionCount(
         return { success: true, data: count };
     } catch (error) {
         console.error("Error fetching question count:", error);
-        
+
         // Provide more detailed error information
         let errorMessage = "Failed to fetch question count";
         if (error instanceof Error) {
@@ -166,7 +171,7 @@ export async function getQuestionCount(
         } else if (error && typeof error === 'object' && 'message' in error) {
             errorMessage = `Failed to fetch question count: ${(error as any).message}`;
         }
-        
+
         console.error("Detailed error info for count:", {
             error,
             errorType: typeof error,
@@ -175,7 +180,7 @@ export async function getQuestionCount(
             userRole,
             userSubject
         });
-        
+
         return { success: false, data: 0, error: errorMessage };
     }
 }
@@ -238,6 +243,8 @@ export async function getFilterOptions(
             chapters: chapters.map((c) => c.chapter).filter(Boolean) as string[],
             section_names: sections.map((s) => s.section_name).filter(Boolean) as string[],
         };
+
+        console.log("filterOptions----------------", filterOptions)
 
         return { success: true, data: filterOptions };
     } catch (error) {
@@ -353,7 +360,7 @@ export async function getAvailableSubjects() {
                 subject: { not: null },
             },
         });
-        
+
         const subjectList = subjects.map(s => s.subject).filter(s => s !== null);
         console.log('Debug - Available subjects in database:', subjectList);
         return { success: true, data: subjectList };
