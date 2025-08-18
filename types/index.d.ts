@@ -62,6 +62,7 @@ declare global {
 
     interface PDFConfig {
         institution: string
+        institutionAddress?: string
         selectedQuestions: Question[];
         options: PDFGenerationOptions;
         className?: string;
@@ -219,6 +220,7 @@ declare global {
     interface TemplateFormData {
         templateName: string;
         institution?: string;
+        institutionAddress?: string;
         marks?: string
         time?: string
         exam?: string

@@ -1,50 +1,50 @@
 function textToHtmlWithLatex(text: string): string {
-  if (!text) return '';
+    if (!text) return '';
 
-  // First, escape HTML entities
-  let processed = text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    // First, escape HTML entities
+    let processed = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 
-  // Replace all newlines and carriage returns with a single space
-  processed = processed.replace(/[\n\r]+/g, ' ');
+    // Replace all newlines and carriage returns with a single space
+    processed = processed.replace(/[\n\r]+/g, ' ');
 
-  // Now process LaTeX
-  processed = processed.replace(/\\\(([^)]+)\\\)/g, (match, latex) => {
-    return `<span class="math-inline">\\(${latex.trim()}\\)</span>`;
-  });
-  processed = processed.replace(/\\\[([^\]]+)\\\]/g, (match, latex) => {
-    return `<div class="math-display">\\[${latex.trim()}\\]</div>`;
-  });
-  processed = processed.replace(/\$([^$]+)\$/g, (match, latex) => {
-    return `<span class="math-inline">\\(${latex.trim()}\\)</span>`;
-  });
-  processed = processed.replace(/\$\$([^$]+)\$\$/g, (match, latex) => {
-    return `<div class="math-display">\\[${latex.trim()}\\]</div>`;
-  });
+    // Now process LaTeX
+    processed = processed.replace(/\\\(([^)]+)\\\)/g, (match, latex) => {
+        return `<span class="math-inline">\\(${latex.trim()}\\)</span>`;
+    });
+    processed = processed.replace(/\\\[([^\]]+)\\\]/g, (match, latex) => {
+        return `<div class="math-display">\\[${latex.trim()}\\]</div>`;
+    });
+    processed = processed.replace(/\$([^$]+)\$/g, (match, latex) => {
+        return `<span class="math-inline">\\(${latex.trim()}\\)</span>`;
+    });
+    processed = processed.replace(/\$\$([^$]+)\$\$/g, (match, latex) => {
+        return `<div class="math-display">\\[${latex.trim()}\\]</div>`;
+    });
 
-  // Handle special case where LaTeX is embedded in option text like "(A)\\(Q = 2E1 - E2\\)"
-  processed = processed.replace(/(\([A-D]\))\\\(([^)]+)\\\)/g, (match, optionLetter, latex) => {
-    return `${optionLetter}<span class="math-inline">\\(${latex.trim()}\\)</span>`;
-  });
+    // Handle special case where LaTeX is embedded in option text like "(A)\\(Q = 2E1 - E2\\)"
+    processed = processed.replace(/(\([A-D]\))\\\(([^)]+)\\\)/g, (match, optionLetter, latex) => {
+        return `${optionLetter}<span class="math-inline">\\(${latex.trim()}\\)</span>`;
+    });
 
-  // Do NOT collapse spaces globally!
-  return processed.trim();
+    // Do NOT collapse spaces globally!
+    return processed.trim();
 }
 
 export function questionToHTML(question: Question, index: number, options: QuestionToHTMLOptions = {}): string {
-  const {
-    // includeMetadata = true,
-  } = options;
+    const {
+        // includeMetadata = true,
+    } = options;
 
-  const questionNumber = index + 1;
-  const questionText = textToHtmlWithLatex(question.question_text);
+    const questionNumber = index + 1;
+    const questionText = textToHtmlWithLatex(question.question_text);
 
-  // Render question image if present
-  const questionImageHTML = question.question_image ? `
+    // Render question image if present
+    const questionImageHTML = question.question_image ? `
         <div class="question-image" style="
             margin-top: 12px;
             max-width: 100%;
@@ -59,15 +59,15 @@ export function questionToHTML(question: Question, index: number, options: Quest
         </div>
     ` : '';
 
-  // Check if any options have images
-  const hasOptionImages = question.option_images && question.option_images.some(img => img);
+    // Check if any options have images
+    const hasOptionImages = question.option_images && question.option_images.some(img => img);
 
-  // Render options - either as text or as image grid
-  let optionsHTML = '';
-  
-  if (hasOptionImages) {
-    // Show image grid with text
-    optionsHTML = `
+    // Render options - either as text or as image grid
+    let optionsHTML = '';
+
+    if (hasOptionImages) {
+        // Show image grid with text
+        optionsHTML = `
       <div class="option-images-grid" style="
         margin-top: 16px;
         display: grid;
@@ -77,10 +77,10 @@ export function questionToHTML(question: Question, index: number, options: Quest
         margin-right: auto;
       ">
         ${question.option_images!.map((image, imgIndex) => {
-          if (!image) return '';
-          const optionLetter = String.fromCharCode(65 + imgIndex);
-          // const optionText = question.options[imgIndex] ? textToHtmlWithLatex(question.options[imgIndex]) : '';
-          return `
+            if (!image) return '';
+            const optionLetter = String.fromCharCode(65 + imgIndex);
+            // const optionText = question.options[imgIndex] ? textToHtmlWithLatex(question.options[imgIndex]) : '';
+            return `
             <div class="grid-image-item" style="
               display: flex;
               flex-direction: column;
@@ -104,36 +104,36 @@ export function questionToHTML(question: Question, index: number, options: Quest
         }).join('')}
       </div>
     `;
-  } else {
-    // Show regular text options
-    optionsHTML = question.options.map((option) => {
-      // const optionLetter = String.fromCharCode(65 + optIndex);
-      const optionText = textToHtmlWithLatex(option);
+    } else {
+        // Show regular text options
+        optionsHTML = question.options.map((option) => {
+            // const optionLetter = String.fromCharCode(65 + optIndex);
+            const optionText = textToHtmlWithLatex(option);
 
-      return `
+            return `
         <div class="option" style="padding: 4px 12px; margin: 4px 0; background-color: #ffffff; border-radius: 0 6px 6px 0; display: flex; align-items: flex-start;">
           <div style="flex: 1; display: inline; color: #000000;">
             ${optionText}
           </div>
         </div>`;
-    }).join('');
-  }
+        }).join('');
+    }
 
-  // Render metadata
-  // const metadataHTML = includeMetadata ? `
-  //   <div class="metadata" style="
-  //     margin-top: 8px;
-  //     font-size: 12px;
-  //     color: #6b7280;
-  //     font-style: italic;
-  //   ">
-  //     Source: (${question.exam_name || 'Unknown'}, ${question.subject || 'Unknown'})
-  //     ${question.chapter ? ` • Chapter: ${question.chapter}` : ''}
-  //     ${question.section_name ? ` • Section: ${question.section_name}` : ''}
-  //   </div>
-  // ` : '';
+    // Render metadata
+    // const metadataHTML = includeMetadata ? `
+    //   <div class="metadata" style="
+    //     margin-top: 8px;
+    //     font-size: 12px;
+    //     color: #6b7280;
+    //     font-style: italic;
+    //   ">
+    //     Source: (${question.exam_name || 'Unknown'}, ${question.subject || 'Unknown'})
+    //     ${question.chapter ? ` • Chapter: ${question.chapter}` : ''}
+    //     ${question.section_name ? ` • Section: ${question.section_name}` : ''}
+    //   </div>
+    // ` : '';
 
-  return `
+    return `
     <div class="question" style="
       margin-bottom: 24px;
       padding: 16px;
@@ -172,36 +172,37 @@ export function questionToHTML(question: Question, index: number, options: Quest
  * Convert PDFConfig to complete HTML document
  */
 export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOptions = {}): string {
-  const {
-    includeAnswers = true,
-    includeMetadata = true,
-    pageSize = 'a4',
-    orientation = 'portrait',
-    fontSize = 14,
-    lineHeight = 1.6,
-    margin = 10,
-  } = options;
+    const {
+        includeAnswers = true,
+        includeMetadata = true,
+        pageSize = 'a4',
+        orientation = 'portrait',
+        fontSize = 14,
+        lineHeight = 1.6,
+        margin = 10,
+    } = options;
 
-  // WIP: add the config elements to the html
-  const {
-    selectedQuestions,
-    logo,
-    institution,
-    marks,
-    time,
-    subject,
-    exam,
-    watermarkOpacity = 0
-  } = config;
-
-
-  // Generate questions HTML
-  const questionsHTML = selectedQuestions.map((question, index) =>
-    questionToHTML(question, index, { includeAnswers, includeMetadata, fontSize, lineHeight })
-  ).join('');
+    // WIP: add the config elements to the html
+    const {
+        selectedQuestions,
+        logo,
+        institution,
+        institutionAddress,
+        marks,
+        time,
+        subject,
+        exam,
+        watermarkOpacity = 0
+    } = config;
 
 
-  const headerHTML = `
+    // Generate questions HTML
+    const questionsHTML = selectedQuestions.map((question, index) =>
+        questionToHTML(question, index, { includeAnswers, includeMetadata, fontSize, lineHeight })
+    ).join('');
+
+
+    const headerHTML = `
   <div class="header-container" style="
     border: 2px solid #000;
     margin-bottom: 0;
@@ -246,9 +247,15 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
           margin: 0;
           font-size: 20px;
           font-weight: bold;
-          letter-spacing: 2px;
+          letter-spacing: 1px;
           text-transform: uppercase;
         ">${institution}</h1>
+        <h2 style="
+          margin: 0;
+          font-size: 10px;
+          font-weight: bold;
+          letter-spacing: 1px;
+        ">${institutionAddress}</h2>
 
         <div style="
           display: flex;
@@ -289,8 +296,8 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
 `;
 
 
-  // Section header for question type
-  const sectionHeaderHTML = `
+    // Section header for question type
+    const sectionHeaderHTML = `
     <div class="section-header" style="
       background-color: #000;
       color: #fff;
@@ -305,8 +312,8 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
     </div>
   `;
 
-  // Subject header
-  const subjectHeaderHTML = `
+    // Subject header
+    const subjectHeaderHTML = `
     <div class="subject-header" style="
       text-align: center;
       margin: 20px 0 15px 0;
@@ -319,8 +326,8 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
     </div>
   `;
 
-  // Generate watermark if logo provided
-  const watermarkCSS = logo ? `
+    // Generate watermark if logo provided
+    const watermarkCSS = logo ? `
     body::before {
       content: '';
       position: fixed;
@@ -340,8 +347,8 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
   ` : '';
 
 
-  // Complete HTML document
-  return `
+    // Complete HTML document
+    return `
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -461,29 +468,29 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
 }
 
 export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToHTMLOptions = {}): string {
-  const {
-    pageSize = 'a4',
-    orientation = 'portrait',
-    fontSize = 14,
-    lineHeight = 1.6,
-    margin = 10
-  } = options;
+    const {
+        pageSize = 'a4',
+        orientation = 'portrait',
+        fontSize = 14,
+        lineHeight = 1.6,
+        margin = 10
+    } = options;
 
-  // WIP: add the config elements to the html
-  const {
-    selectedQuestions,
-    logo,
-    institution,
-    exam,
-    watermarkOpacity = 0.1
-  } = config;
+    // WIP: add the config elements to the html
+    const {
+        selectedQuestions,
+        logo,
+        institution,
+        exam,
+        watermarkOpacity = 0.1
+    } = config;
 
-  // Generate answers HTML
-  const answersHTML = selectedQuestions.map((question, index) => {
-    const questionNumber = index + 1;
-    const answerText = textToHtmlWithLatex(question.answer);
+    // Generate answers HTML
+    const answersHTML = selectedQuestions.map((question, index) => {
+        const questionNumber = index + 1;
+        const answerText = textToHtmlWithLatex(question.answer);
 
-    return `
+        return `
       <div class="answer-item" style="
         display: flex;
         flex-direction: row;
@@ -508,10 +515,10 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
         </div>
       </div>
     `;
-  }).join('');
+    }).join('');
 
-  // Generate header with logo if provided
-  const headerHTML = `
+    // Generate header with logo if provided
+    const headerHTML = `
     <div class="header-container" style="
       border: 2px solid #000;
       margin-bottom: 0;
@@ -577,7 +584,7 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
     </div>
   `;
 
-  const sectionHeaderHTML = `
+    const sectionHeaderHTML = `
     <div class="section-header" style="
       background-color: #000;
       color: #fff;
@@ -592,8 +599,8 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
     </div>
   `;
 
-  // Generate watermark if logo provided
-  const watermarkCSS = logo ? `
+    // Generate watermark if logo provided
+    const watermarkCSS = logo ? `
     body::before {
       content: '';
       position: fixed;
@@ -612,7 +619,7 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
     }
   ` : '';
 
-  return `
+    return `
     <!DOCTYPE html>
     <html lang="en">
     <head>

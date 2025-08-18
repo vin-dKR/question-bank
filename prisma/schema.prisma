@@ -139,6 +139,7 @@ model TemplateForm {
     userId              String
     user                User      @relation(fields: [userId], references: [id])
     templateName        String
+    institutionAddress  String?
     institution         String?
     marks               String?
     time                String?

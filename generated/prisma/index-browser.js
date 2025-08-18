@@ -205,6 +205,7 @@ exports.Prisma.TemplateFormScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   templateName: 'templateName',
+  institutionAddress: 'institutionAddress',
   institution: 'institution',
   marks: 'marks',
   time: 'time',

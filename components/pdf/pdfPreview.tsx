@@ -26,6 +26,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
     const [formData, setFormData] = useState<TemplateFormData>({
         templateName: '',
         institution: institution || '',
+        institutionAddress: '',
         marks: '',
         time: '',
         exam: '',
@@ -41,7 +42,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
     //     subject: q.subject,
     //     chapter: q.chapter 
     // })));
-    
+
     // Show summary of selected questions
     if (selectedQuestions.length > 0) {
         // const subjects = [...new Set(selectedQuestions.map(q => q.subject).filter(Boolean))];
@@ -75,6 +76,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
 
         const html = pdfConfigToHTML({
             institution: data?.institution || "",
+            institutionAddress: data?.institutionAddress,
             selectedQuestions,
             options,
             marks: data.marks,

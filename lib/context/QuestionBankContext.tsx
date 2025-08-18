@@ -93,10 +93,10 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
                     limit: pagination.limit,
                     skip: (pagination.page - 1) * pagination.limit,
                 };
-                
+
                 // console.log('Fetching questions with filters:', queryFilters);
                 // console.log('User role:', role, 'isTeacher:', isTeacher, 'userSubject:', subject);
-                
+
                 const [questionsRes, countRes] = await Promise.all([
                     getQuestions(queryFilters, (role || "student") as UserRole, isTeacher ? subject || undefined : undefined),
                     getQuestionCount({
@@ -132,7 +132,7 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
                         isTeacher,
                         subject
                     });
-                    
+
                     const errorMessage = questionsRes?.error || countRes?.error || 'Failed to fetch data';
                     setError(errorMessage);
                     setQuestions([]);

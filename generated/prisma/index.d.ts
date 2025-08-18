@@ -8981,6 +8981,7 @@ export namespace Prisma {
     id: string | null
     userId: string | null
     templateName: string | null
+    institutionAddress: string | null
     institution: string | null
     marks: string | null
     time: string | null
@@ -8996,6 +8997,7 @@ export namespace Prisma {
     id: string | null
     userId: string | null
     templateName: string | null
+    institutionAddress: string | null
     institution: string | null
     marks: string | null
     time: string | null
@@ -9011,6 +9013,7 @@ export namespace Prisma {
     id: number
     userId: number
     templateName: number
+    institutionAddress: number
     institution: number
     marks: number
     time: number
@@ -9028,6 +9031,7 @@ export namespace Prisma {
     id?: true
     userId?: true
     templateName?: true
+    institutionAddress?: true
     institution?: true
     marks?: true
     time?: true
@@ -9043,6 +9047,7 @@ export namespace Prisma {
     id?: true
     userId?: true
     templateName?: true
+    institutionAddress?: true
     institution?: true
     marks?: true
     time?: true
@@ -9058,6 +9063,7 @@ export namespace Prisma {
     id?: true
     userId?: true
     templateName?: true
+    institutionAddress?: true
     institution?: true
     marks?: true
     time?: true
@@ -9146,6 +9152,7 @@ export namespace Prisma {
     id: string
     userId: string
     templateName: string
+    institutionAddress: string | null
     institution: string | null
     marks: string | null
     time: string | null
@@ -9178,6 +9185,7 @@ export namespace Prisma {
     id?: boolean
     userId?: boolean
     templateName?: boolean
+    institutionAddress?: boolean
     institution?: boolean
     marks?: boolean
     time?: boolean
@@ -9196,6 +9204,7 @@ export namespace Prisma {
     id?: boolean
     userId?: boolean
     templateName?: boolean
+    institutionAddress?: boolean
     institution?: boolean
     marks?: boolean
     time?: boolean
@@ -9207,7 +9216,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type TemplateFormOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "templateName" | "institution" | "marks" | "time" | "exam" | "subject" | "logo" | "saveTemplate" | "createdAt" | "updatedAt", ExtArgs["result"]["templateForm"]>
+  export type TemplateFormOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "templateName" | "institutionAddress" | "institution" | "marks" | "time" | "exam" | "subject" | "logo" | "saveTemplate" | "createdAt" | "updatedAt", ExtArgs["result"]["templateForm"]>
   export type TemplateFormInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
   }
@@ -9221,6 +9230,7 @@ export namespace Prisma {
       id: string
       userId: string
       templateName: string
+      institutionAddress: string | null
       institution: string | null
       marks: string | null
       time: string | null
@@ -9626,6 +9636,7 @@ export namespace Prisma {
     readonly id: FieldRef<"TemplateForm", 'String'>
     readonly userId: FieldRef<"TemplateForm", 'String'>
     readonly templateName: FieldRef<"TemplateForm", 'String'>
+    readonly institutionAddress: FieldRef<"TemplateForm", 'String'>
     readonly institution: FieldRef<"TemplateForm", 'String'>
     readonly marks: FieldRef<"TemplateForm", 'String'>
     readonly time: FieldRef<"TemplateForm", 'String'>
@@ -10140,6 +10151,7 @@ export namespace Prisma {
     id: 'id',
     userId: 'userId',
     templateName: 'templateName',
+    institutionAddress: 'institutionAddress',
     institution: 'institution',
     marks: 'marks',
     time: 'time',
@@ -10813,6 +10825,7 @@ export namespace Prisma {
     id?: StringFilter<"TemplateForm"> | string
     userId?: StringFilter<"TemplateForm"> | string
     templateName?: StringFilter<"TemplateForm"> | string
+    institutionAddress?: StringNullableFilter<"TemplateForm"> | string | null
     institution?: StringNullableFilter<"TemplateForm"> | string | null
     marks?: StringNullableFilter<"TemplateForm"> | string | null
     time?: StringNullableFilter<"TemplateForm"> | string | null
@@ -10829,6 +10842,7 @@ export namespace Prisma {
     id?: SortOrder
     userId?: SortOrder
     templateName?: SortOrder
+    institutionAddress?: SortOrder
     institution?: SortOrder
     marks?: SortOrder
     time?: SortOrder
@@ -10848,6 +10862,7 @@ export namespace Prisma {
     NOT?: TemplateFormWhereInput | TemplateFormWhereInput[]
     userId?: StringFilter<"TemplateForm"> | string
     templateName?: StringFilter<"TemplateForm"> | string
+    institutionAddress?: StringNullableFilter<"TemplateForm"> | string | null
     institution?: StringNullableFilter<"TemplateForm"> | string | null
     marks?: StringNullableFilter<"TemplateForm"> | string | null
     time?: StringNullableFilter<"TemplateForm"> | string | null
@@ -10864,6 +10879,7 @@ export namespace Prisma {
     id?: SortOrder
     userId?: SortOrder
     templateName?: SortOrder
+    institutionAddress?: SortOrder
     institution?: SortOrder
     marks?: SortOrder
     time?: SortOrder
@@ -10885,6 +10901,7 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"TemplateForm"> | string
     userId?: StringWithAggregatesFilter<"TemplateForm"> | string
     templateName?: StringWithAggregatesFilter<"TemplateForm"> | string
+    institutionAddress?: StringNullableWithAggregatesFilter<"TemplateForm"> | string | null
     institution?: StringNullableWithAggregatesFilter<"TemplateForm"> | string | null
     marks?: StringNullableWithAggregatesFilter<"TemplateForm"> | string | null
     time?: StringNullableWithAggregatesFilter<"TemplateForm"> | string | null
@@ -11510,6 +11527,7 @@ export namespace Prisma {
   export type TemplateFormCreateInput = {
     id?: string
     templateName: string
+    institutionAddress?: string | null
     institution?: string | null
     marks?: string | null
     time?: string | null
@@ -11526,6 +11544,7 @@ export namespace Prisma {
     id?: string
     userId: string
     templateName: string
+    institutionAddress?: string | null
     institution?: string | null
     marks?: string | null
     time?: string | null
@@ -11539,6 +11558,7 @@ export namespace Prisma {
 
   export type TemplateFormUpdateInput = {
     templateName?: StringFieldUpdateOperationsInput | string
+    institutionAddress?: NullableStringFieldUpdateOperationsInput | string | null
     institution?: NullableStringFieldUpdateOperationsInput | string | null
     marks?: NullableStringFieldUpdateOperationsInput | string | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
@@ -11554,6 +11574,7 @@ export namespace Prisma {
   export type TemplateFormUncheckedUpdateInput = {
     userId?: StringFieldUpdateOperationsInput | string
     templateName?: StringFieldUpdateOperationsInput | string
+    institutionAddress?: NullableStringFieldUpdateOperationsInput | string | null
     institution?: NullableStringFieldUpdateOperationsInput | string | null
     marks?: NullableStringFieldUpdateOperationsInput | string | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
@@ -11569,6 +11590,7 @@ export namespace Prisma {
     id?: string
     userId: string
     templateName: string
+    institutionAddress?: string | null
     institution?: string | null
     marks?: string | null
     time?: string | null
@@ -11582,6 +11604,7 @@ export namespace Prisma {
 
   export type TemplateFormUpdateManyMutationInput = {
     templateName?: StringFieldUpdateOperationsInput | string
+    institutionAddress?: NullableStringFieldUpdateOperationsInput | string | null
     institution?: NullableStringFieldUpdateOperationsInput | string | null
     marks?: NullableStringFieldUpdateOperationsInput | string | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
@@ -11596,6 +11619,7 @@ export namespace Prisma {
   export type TemplateFormUncheckedUpdateManyInput = {
     userId?: StringFieldUpdateOperationsInput | string
     templateName?: StringFieldUpdateOperationsInput | string
+    institutionAddress?: NullableStringFieldUpdateOperationsInput | string | null
     institution?: NullableStringFieldUpdateOperationsInput | string | null
     marks?: NullableStringFieldUpdateOperationsInput | string | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
@@ -12118,6 +12142,7 @@ export namespace Prisma {
     id?: SortOrder
     userId?: SortOrder
     templateName?: SortOrder
+    institutionAddress?: SortOrder
     institution?: SortOrder
     marks?: SortOrder
     time?: SortOrder
@@ -12133,6 +12158,7 @@ export namespace Prisma {
     id?: SortOrder
     userId?: SortOrder
     templateName?: SortOrder
+    institutionAddress?: SortOrder
     institution?: SortOrder
     marks?: SortOrder
     time?: SortOrder
@@ -12148,6 +12174,7 @@ export namespace Prisma {
     id?: SortOrder
     userId?: SortOrder
     templateName?: SortOrder
+    institutionAddress?: SortOrder
     institution?: SortOrder
     marks?: SortOrder
     time?: SortOrder
@@ -12903,6 +12930,7 @@ export namespace Prisma {
   export type TemplateFormCreateWithoutUserInput = {
     id?: string
     templateName: string
+    institutionAddress?: string | null
     institution?: string | null
     marks?: string | null
     time?: string | null
@@ -12917,6 +12945,7 @@ export namespace Prisma {
   export type TemplateFormUncheckedCreateWithoutUserInput = {
     id?: string
     templateName: string
+    institutionAddress?: string | null
     institution?: string | null
     marks?: string | null
     time?: string | null
@@ -13088,6 +13117,7 @@ export namespace Prisma {
     id?: StringFilter<"TemplateForm"> | string
     userId?: StringFilter<"TemplateForm"> | string
     templateName?: StringFilter<"TemplateForm"> | string
+    institutionAddress?: StringNullableFilter<"TemplateForm"> | string | null
     institution?: StringNullableFilter<"TemplateForm"> | string | null
     marks?: StringNullableFilter<"TemplateForm"> | string | null
     time?: StringNullableFilter<"TemplateForm"> | string | null
@@ -13758,6 +13788,7 @@ export namespace Prisma {
   export type TemplateFormCreateManyUserInput = {
     id?: string
     templateName: string
+    institutionAddress?: string | null
     institution?: string | null
     marks?: string | null
     time?: string | null
@@ -13791,6 +13822,7 @@ export namespace Prisma {
 
   export type TemplateFormUpdateWithoutUserInput = {
     templateName?: StringFieldUpdateOperationsInput | string
+    institutionAddress?: NullableStringFieldUpdateOperationsInput | string | null
     institution?: NullableStringFieldUpdateOperationsInput | string | null
     marks?: NullableStringFieldUpdateOperationsInput | string | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
@@ -13804,6 +13836,7 @@ export namespace Prisma {
 
   export type TemplateFormUncheckedUpdateWithoutUserInput = {
     templateName?: StringFieldUpdateOperationsInput | string
+    institutionAddress?: NullableStringFieldUpdateOperationsInput | string | null
     institution?: NullableStringFieldUpdateOperationsInput | string | null
     marks?: NullableStringFieldUpdateOperationsInput | string | null
     time?: NullableStringFieldUpdateOperationsInput | string | null
@@ -13817,6 +13850,7 @@ export namespace Prisma {
 
   export type TemplateFormUncheckedUpdateManyWithoutUserInput = {
     templateName?: StringFieldUpdateOperationsInput | string
+    institutionAddress?: NullableStringFieldUpdateOperationsInput | string | null
     institution?: NullableStringFieldUpdateOperationsInput | string | null
     marks?: NullableStringFieldUpdateOperationsInput | string | null
     time?: NullableStringFieldUpdateOperationsInput | string | null

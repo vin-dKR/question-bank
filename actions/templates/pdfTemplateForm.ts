@@ -6,8 +6,8 @@ export const createTemplate = async (formData: Template): Promise<{
     data: Template | null
     error: string | null
 }> => {
-    console.log('Starting createTemplate function');
-    
+    console.log('this is formData from actions template pdfTemp', formData);
+
     const { userId } = await auth()
     console.log('Auth result - userId:', userId);
 
@@ -29,6 +29,7 @@ export const createTemplate = async (formData: Template): Promise<{
                 userId,
                 templateName: formData.templateName.trim(),
                 institution: formData.institution || '',
+                institutionAddress: formData.institutionAddress || '',
                 marks: formData.marks || '',
                 time: formData.time || '',
                 exam: formData.exam || '',
@@ -75,6 +76,7 @@ export const getUserTemplates = async (): Promise<{
             select: {
                 id: true,
                 templateName: true,
+                institutionAddress: true,
                 institution: true,
                 marks: true,
                 time: true,
@@ -119,9 +121,9 @@ export const deleteTemplate = async (templateId: string): Promise<{
     try {
         // Delete the template and verify it belonged to the user in one operation
         const deletedTemplate = await prisma.templateForm.deleteMany({
-            where: { 
+            where: {
                 id: templateId,
-                userId 
+                userId
             }
         })
 

@@ -46,7 +46,7 @@ export const usePdfTemplateForm = () => {
             console.log('Fetching templates immediately (first load or force refresh)');
             fetchingRef.current = true;
             setTemplatesLoading(true);
-            
+
             try {
                 const result = await getUserTemplates();
                 if (result.data) {
@@ -70,7 +70,7 @@ export const usePdfTemplateForm = () => {
         // For subsequent calls, use shorter cache (5 seconds)
         const now = Date.now();
         const cacheTime = 5 * 1000; // 5 seconds instead of 30
-        
+
         if (!forceRefresh && now - lastFetchTime < cacheTime && templates.length > 0) {
             console.log('Using cached templates (cache valid)');
             return { success: true, data: templates };
@@ -80,7 +80,7 @@ export const usePdfTemplateForm = () => {
         console.log('Cache expired, fetching fresh templates');
         fetchingRef.current = true;
         setTemplatesLoading(true);
-        
+
         try {
             const result = await getUserTemplates();
             if (result.data) {
