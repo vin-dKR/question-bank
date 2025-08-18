@@ -2,26 +2,8 @@ import { createContext, useContext, useState, useEffect, useCallback, useMemo } 
 import { getQuestions, getQuestionCount, toggleFlag, getFilterOptions, searchQuestions, getQuestionsByIds } from "@/actions/question/questionBank";
 import { useUserRole } from '@/hooks/auth/useUserRole';
 import { useUserSubject } from '@/hooks/auth/useUserSubject';
-
-interface Filters {
-    exam_name?: string;
-    subject?: string;
-    chapter?: string;
-    section_name?: string;
-    flagged?: boolean;
-}
-
-interface Pagination {
-    page: number;
-    limit: number;
-}
-
-interface FilterOptions {
-    exams: string[];
-    subjects: string[];
-    chapters: string[];
-    section_names: string[];
-}
+import { updateQuestionInDB } from '@/actions/question/questionUpdate';
+import { toast } from 'sonner';
 
 interface QuestionBankContextType {
     questions: Question[];
@@ -43,6 +25,7 @@ interface QuestionBankContextType {
     selectedQuestionIds: Set<string>;
     toggleQuestionSelection: (id: string) => void;
     getAllSelectedQuestions: () => Promise<Question[]>;
+    updateQuestion: (updatedQuestion: Question) => void;
 }
 
 const QuestionBankContext = createContext<QuestionBankContextType | undefined>(undefined);
@@ -52,7 +35,6 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [filters, setFilters] = useState<Filters>({});
-    // console.log('Filters:----------------------------', filters);
     const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 20 });
     const [filterOptions, setFilterOptions] = useState<FilterOptions>({
         exams: [],
@@ -67,6 +49,35 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
 
     const { role, isTeacher } = useUserRole();
     const { subject } = useUserSubject();
+
+    const updateQuestion = async (
+        updatedQuestion: Pick<Question, 'id' | 'question_text' | 'options'>,
+    ) => {
+        try {
+            setQuestions((prev) =>
+                prev.map((q) =>
+                    q.id === updatedQuestion.id
+                        ? {
+                            ...q,
+                            question_text: updatedQuestion.question_text ?? q.question_text,
+                            options: updatedQuestion.options ?? q.options,
+                        }
+                        : q
+                )
+            );
+
+            const result = await updateQuestionInDB(updatedQuestion);
+            if (!result.success || !result.data) {
+                throw new Error(result.error || 'Failed to update question in database');
+            }
+
+            toast.success('Question updated successfully!');
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to update question';
+            toast.error(errorMessage);
+            throw error;
+        }
+    };
 
     const fetchQuestions = useCallback(async () => {
         setLoading(true);
@@ -269,6 +280,7 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
         selectedQuestionIds,
         toggleQuestionSelection,
         getAllSelectedQuestions,
+        updateQuestion
     }), [
         questions,
         loading,

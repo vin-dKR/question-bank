@@ -163,6 +163,26 @@ declare global {
         pdfOptions?: HTMLToPDFOptions;
     }
 
+    interface Filters {
+        exam_name?: string;
+        subject?: string;
+        chapter?: string;
+        section_name?: string;
+        flagged?: boolean;
+    }
+
+    interface Pagination {
+        page: number;
+        limit: number;
+    }
+
+    interface FilterOptions {
+        exams: string[];
+        subjects: string[];
+        chapters: string[];
+        section_names: string[];
+    }
+
     interface TeacherOnboardingData {
         name: string;
         email: string;
