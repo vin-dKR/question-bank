@@ -46,47 +46,63 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
         setRefiningField(fieldIdentifier);
 
         try {
-            let textToRefine = '';
-            if (property === 'options' && index !== null) {
+            let textsToRefine: string[] = [];
+            if (property === 'options' && index === null) {
+                textsToRefine = question.options;
+                if (textsToRefine.length === 0) {
+                    toast.error('No options to refine.');
+                    return;
+                }
+            } else if (property === 'question_text') {
+                textsToRefine = [question.question_text];
+                if (!textsToRefine[0]) {
+                    toast.error('There is no text to refine.');
+                    return;
+                }
+            } else if (property === 'options' && index !== null) {
                 if (!question.options[index]) {
                     toast.error('Invalid option index');
                     return;
                 }
-                textToRefine = question.options[index];
-            } else if (property === 'question_text') {
-                textToRefine = question.question_text;
+                textsToRefine = [question.options[index]];
             } else {
                 toast.error('Invalid property to refine');
                 return;
             }
 
-            if (!textToRefine) {
-                toast.error('There is no text to refine.');
-                return;
+            const refinePromises = textsToRefine.map((text) => refineTextWithAI(text));
+            const results = await Promise.all(refinePromises);
+
+            const updatedQuestion = { ...question };
+            if (property === 'options' && index === null) {
+                // Update all options
+                updatedQuestion.options = results.map((result) => {
+                    if (!result.success || !result.refined_text) {
+                        throw new Error(result.error || 'Failed to refine one or more options');
+                    }
+                    return result.refined_text;
+                });
+            } else {
+                // Update single field (question_text or single option)
+                const result = results[0];
+                if (!result.success || !result.refined_text) {
+                    throw new Error(result.error || 'Failed to refine text');
+                }
+                if (property === 'options' && index !== null) {
+                    updatedQuestion.options = [...question.options];
+                    updatedQuestion.options[index] = result.refined_text;
+                } else {
+                    updatedQuestion.question_text = result.refined_text;
+                }
             }
 
-            const refinePromise = refineTextWithAI(textToRefine);
-
-            toast.promise(refinePromise, {
-                loading: 'Refining content with AI...',
-                success: (result) => {
-                    if (!result.success || !result.refined_text) {
-                        throw new Error(result.error || 'Failed to refine text');
-                    }
-                    const updatedQuestion = { ...question };
-                    if (property === 'options' && index !== null) {
-                        updatedQuestion.options = [...question.options];
-                        updatedQuestion.options[index] = result.refined_text;
-                    } else {
-                        updatedQuestion.question_text = result.refined_text;
-                    }
-                    updateQuestion(updatedQuestion);
-                    return 'Question updated successfully!'; // Consistent with context toast
-                },
-                error: (err: Error) => {
-                    return `Refinement failed: ${err.message}`;
-                },
-            });
+            updateQuestion(updatedQuestion);
+            toast.success('All options updated successfully!'); // Specific message for all options
+        } catch (err) {
+            if (err instanceof Error) {
+                toast.error(`Refinement failed: ${err.message}`);
+            }
+            toast.error(`hhhhhhhhhhhhhhhhhhhhhhhh`);
         } finally {
             setRefiningField(null);
         }
@@ -201,6 +217,32 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
 
                     {!question.isOptionImage && (
                         <div className="space-y-2 mb-2">
+                            <Button
+                                onClick={() => handleRefineField('options', null)} // Refine all options
+                                disabled={refiningField === 'options'}
+                                className="p-1 text-blue-500 hover:text-blue-700 transition-colors disabled:text-gray-400 disabled:cursor-not-allowed"
+                                title="Refine All Options with AI"
+                            >
+                                {refiningField === 'options' ? (
+                                    <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-4 w-4"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="2"
+                                            d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                                        />
+                                    </svg>
+                                )}
+                            </Button>
+
                             {question.options.map((_option, index) => {
                                 const optionLetter = String.fromCharCode(65 + index);
                                 const optionNumber = String(index + 1);
@@ -214,8 +256,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                                 return (
                                     <div
                                         key={index}
-                                        className={`pl-3 border-l-4 py-1 rounded-r-md ${isCorrect ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200'
-                                            }`}
+                                        className={`pl-3 border-l-4 py-1 rounded-r-md ${isCorrect ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200'}`}
                                     >
                                         <span className="text-sm sm:text-base">{renderedOptions[index]}</span>
                                     </div>

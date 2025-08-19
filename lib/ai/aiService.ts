@@ -33,12 +33,13 @@ export async function refineTextWithAI(text: string): Promise<RefineTextResponse
 Your task is to format LaTeX expressions in the provided text. Use inline math delimiters only: \\\\(...\\\\)
 
 ✅ Rules:
-1. Detect all LaTeX or math expressions — such as fractions, square roots, Greek letters, subscripts, superscripts, equations, symbols, etc.
+1. Detect all LaTeX or math expressions — such as fractions, square roots, Greek letters, subscripts, superscripts, equations, symbols, trigonometric equations, etc.
 2. Wrap ONLY the math expressions using inline math delimiters: \\\\(...\\\\)
 3. DO NOT wrap full sentences — only the math parts.
 4. Replace any other math delimiters like \`$\`, \`$.....$\`, \`\\\\[....\\\\]\`, \`[....]\`, etc. with \\\\(...\\\\)
 5. Do NOT alter or add/remove any text or content — only wrap the math where necessary.
 6. Preserve spacing, punctuation, and formatting outside math expressions.
+7. do not start with ext when you are updating the trigonometric words.
 
 🧪 Input:
 text: "${text}"
