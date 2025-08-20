@@ -14,20 +14,19 @@ interface QuestionProps {
     isSelected: boolean;
     toggleQuestionSelection: (id: string) => void;
     toggleQuestionFlag: (id: string) => void;
+    userRole?: 'coaching' | 'teacher' | 'student';
 }
 
-const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, toggleQuestionFlag }: QuestionProps) => {
+const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, toggleQuestionFlag, userRole }: QuestionProps) => {
     const { updateQuestion } = useQuestionBankContext();
     const [isFlagging, setIsFlagging] = useState(false);
     const [refiningField, setRefiningField] = useState<string | null>(null);
+    const [originalQuestionText, setOriginalQuestionText] = useState<string | null>(null);
+    const [originalOptions, setOriginalOptions] = useState<string[] | null>(null);
 
     const questionText = useMemo(() => renderMixedLatex(question.question_text), [question.question_text]);
     const answerText = useMemo(() => renderMixedLatex(question.answer), [question.answer]);
-
-    const renderedOptions = useMemo(
-        () => question.options.map((option) => renderMixedLatex(option)),
-        [question.options]
-    );
+    const renderedOptions = useMemo(() => question.options.map((option) => renderMixedLatex(option)), [question.options]);
 
     const handleFlagToggle = () => {
         setIsFlagging(true);
@@ -48,17 +47,22 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
         try {
             let textsToRefine: string[] = [];
             if (property === 'options' && index === null) {
+                // Refine all options
                 textsToRefine = question.options;
                 if (textsToRefine.length === 0) {
                     toast.error('No options to refine.');
                     return;
                 }
+                // Store original options before update
+                setOriginalOptions([...question.options]);
             } else if (property === 'question_text') {
                 textsToRefine = [question.question_text];
                 if (!textsToRefine[0]) {
                     toast.error('There is no text to refine.');
                     return;
                 }
+                // Store original question_text before update
+                setOriginalQuestionText(question.question_text);
             } else if (property === 'options' && index !== null) {
                 if (!question.options[index]) {
                     toast.error('Invalid option index');
@@ -96,22 +100,54 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                 }
             }
 
-            updateQuestion(updatedQuestion);
-            toast.success('All options updated successfully!'); // Specific message for all options
+            updateQuestion(updatedQuestion)
+            toast.success(property === 'question_text' ? 'Question updated successfully!' : 'All options updated successfully!');
         } catch (err) {
             if (err instanceof Error) {
                 toast.error(`Refinement failed: ${err.message}`);
             }
-            toast.error(`hhhhhhhhhhhhhhhhhhhhhhhh`);
         } finally {
             setRefiningField(null);
         }
     };
 
+    const handleUndoQuestionText = async () => {
+        if (!originalQuestionText) {
+            toast.error('No previous question text to undo.');
+            return;
+        }
+        const updatedQuestion = { ...question, question_text: originalQuestionText };
+        try {
+            updateQuestion(updatedQuestion)
+            toast.success('Question text undone successfully!');
+            setOriginalQuestionText(null);
+        } catch (err) {
+            if (err instanceof Error) {
+                toast.error(`Undo failed: ${err.message}`);
+            }
+        }
+    };
+
+    const handleUndoOptions = async () => {
+        if (!originalOptions) {
+            toast.error('No previous options to undo.');
+            return;
+        }
+        const updatedQuestion = { ...question, options: originalOptions };
+        try {
+            updateQuestion(updatedQuestion); // Pass userRole
+            toast.success('Options undone successfully!');
+            setOriginalOptions(null);
+        } catch (err) {
+            if (err instanceof Error) {
+                toast.error(`Undo failed: ${err.message}`);
+            }
+        }
+    };
+
     return (
         <div
-            className={`p-3 sm:p-4 bg-white rounded-xl shadow-md border transition-all duration-200 ${isSelected ? 'border-amber-500 bg-amber-50' : 'border-slate-200 hover:shadow-md'
-                }`}
+            className={`p-3 sm:p-4 bg-white rounded-xl shadow-md border transition-all duration-200 ${isSelected ? 'border-amber-500 bg-amber-50' : 'border-slate-200 hover:shadow-md'}`}
         >
             <div className="flex items-start">
                 <input
@@ -141,8 +177,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                             <button
                                 onClick={handleFlagToggle}
                                 disabled={isFlagging}
-                                className={`ml-2 p-1 text-slate-600 hover:text-amber-600 transition ${isFlagging ? 'opacity-50 cursor-not-allowed' : ''
-                                    }`}
+                                className={`ml-2 p-1 text-slate-600 hover:text-amber-600 transition ${isFlagging ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 title={question.flagged ? 'Unflag question' : 'Flag question'}
                             >
                                 {question.flagged ? (
@@ -153,12 +188,12 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                             </button>
                         </div>
 
-                        <div>
+                        <div className="flex items-center gap-2">
                             <Button
-                                onClick={() => handleRefineField('question_text')}
+                                onClick={() => handleRefineField('question_text', null)}
                                 disabled={refiningField === 'question_text'}
                                 className="p-1 text-blue-500 hover:text-blue-700 transition-colors disabled:text-gray-400 disabled:cursor-not-allowed"
-                                title="Refine with AI"
+                                title="Refine Question with AI"
                             >
                                 {refiningField === 'question_text' ? (
                                     <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
@@ -179,6 +214,28 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                                     </svg>
                                 )}
                             </Button>
+                            {originalQuestionText && (
+                                <Button
+                                    onClick={handleUndoQuestionText}
+                                    className="p-1 text-red-500 hover:text-red-700 transition-colors"
+                                    title="Undo Question Update"
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-4 w-4"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="2"
+                                            d="M12 14l-4-4m0 0l4-4m-4 4h12"
+                                        />
+                                    </svg>
+                                </Button>
+                            )}
                         </div>
                     </div>
 
@@ -217,31 +274,55 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
 
                     {!question.isOptionImage && (
                         <div className="space-y-2 mb-2">
-                            <Button
-                                onClick={() => handleRefineField('options', null)} // Refine all options
-                                disabled={refiningField === 'options'}
-                                className="p-1 text-blue-500 hover:text-blue-700 transition-colors disabled:text-gray-400 disabled:cursor-not-allowed"
-                                title="Refine All Options with AI"
-                            >
-                                {refiningField === 'options' ? (
-                                    <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-                                ) : (
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        className="h-4 w-4"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    onClick={() => handleRefineField('options', null)}
+                                    disabled={refiningField === 'options'}
+                                    className="p-1 text-blue-500 hover:text-blue-700 transition-colors disabled:text-gray-400 disabled:cursor-not-allowed"
+                                    title="Refine All Options with AI"
+                                >
+                                    {refiningField === 'options' ? (
+                                        <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                                    ) : (
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            className="h-4 w-4"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth="2"
+                                                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                                            />
+                                        </svg>
+                                    )}
+                                </Button>
+                                {originalOptions && (
+                                    <Button
+                                        onClick={handleUndoOptions}
+                                        className="p-1 text-red-500 hover:text-red-700 transition-colors"
+                                        title="Undo Options Update"
                                     >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth="2"
-                                            d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-                                        />
-                                    </svg>
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            className="h-4 w-4"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth="2"
+                                                d="M12 14l-4-4m0 0l4-4m-4 4h12"
+                                            />
+                                        </svg>
+                                    </Button>
                                 )}
-                            </Button>
+                            </div>
 
                             {question.options.map((_option, index) => {
                                 const optionLetter = String.fromCharCode(65 + index);
@@ -277,13 +358,12 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
 });
 QuestionItem.displayName = 'QuestionItem';
 
-const QuestionList = memo(() => {
+const QuestionList = memo(({ userRole }: { userRole: 'coaching' | 'teacher' | 'student' }) => {
     const { questions, loading, error, selectedQuestionIds, toggleQuestionSelection, toggleQuestionFlag } =
         useQuestionBankContext();
 
     return (
         <div className="min-h-screen bg-gray-100">
-            {/* Question List */}
             <div className="w-full mx-auto">
                 {loading && (
                     <div className="text-center py-6">
@@ -312,6 +392,7 @@ const QuestionList = memo(() => {
                                 isSelected={selectedQuestionIds.has(question.id)}
                                 toggleQuestionSelection={toggleQuestionSelection}
                                 toggleQuestionFlag={toggleQuestionFlag}
+                                userRole={userRole} // Pass userRole to QuestionItem
                             />
                         ))}
                     </div>
