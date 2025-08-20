@@ -15,6 +15,7 @@ import { pdfConfigToAnswerKeyHTML, pdfConfigToHTML } from '@/lib/questionToHtmlU
 import { htmlTopdfBlob } from '@/actions/htmlToPdf/htmlToPdf';
 import clsx from 'clsx';
 import PDFDetailsForm from './PDFDetailsForm';
+import { preRenderHtml } from '@/lib/preRenderHtml';
 
 
 export default function PDFGenerator({ institution, selectedQuestions, options, className }: PDFConfig) {
@@ -34,23 +35,9 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
         logo: '',
     });
 
-    // console.log('Selected Questions for PDF:', selectedQuestions);
-    console.log('Selected Questions Count:', selectedQuestions.length);
-    // console.log('Selected Questions Details:', selectedQuestions.map(q => ({ 
-    //     id: q.id, 
-    //     question_number: q.question_number, 
-    //     subject: q.subject,
-    //     chapter: q.chapter 
-    // })));
+    // console.log('Selected Questions Count:', selectedQuestions.length);
 
-    // Show summary of selected questions
-    if (selectedQuestions.length > 0) {
-        // const subjects = [...new Set(selectedQuestions.map(q => q.subject).filter(Boolean))];
-        // const chapters = [...new Set(selectedQuestions.map(q => q.chapter).filter(Boolean))];
-        // console.log('PDF Summary - Subjects:', subjects, 'Chapters:', chapters);
-    }
     useEffect(() => {
-        // Detect mobile device
         const userAgent = navigator.userAgent;
         setIsMobile(/android|iPad|iPhone|iPod/i.test(userAgent));
 
@@ -74,6 +61,8 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
             return;
         }
 
+        await preRenderHtml()
+
         const html = pdfConfigToHTML({
             institution: data?.institution || "",
             institutionAddress: data?.institutionAddress,
@@ -85,7 +74,6 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
             subject: data.subject,
             logo: data.logo,
         });
-        // console.log("--------------------------", html)
 
         const blob = await htmlTopdfBlob(html);
         if (!blob.data) {
@@ -149,11 +137,9 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
         }
         setError(null);
         setStep('form');
-        // Force the dialog to close by updating the key
         setDialogKey(prev => prev + 1);
     };
 
-    // Add a key to force dialog re-render when closing
     const [dialogKey, setDialogKey] = useState(0);
 
     return (

@@ -17,7 +17,7 @@ interface QuestionProps {
     userRole?: 'coaching' | 'teacher' | 'student';
 }
 
-const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, toggleQuestionFlag, userRole }: QuestionProps) => {
+const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, toggleQuestionFlag }: QuestionProps) => {
     const { updateQuestion } = useQuestionBankContext();
     const [isFlagging, setIsFlagging] = useState(false);
     const [refiningField, setRefiningField] = useState<string | null>(null);
@@ -135,7 +135,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
         }
         const updatedQuestion = { ...question, options: originalOptions };
         try {
-            updateQuestion(updatedQuestion); // Pass userRole
+            updateQuestion(updatedQuestion);
             toast.success('Options undone successfully!');
             setOriginalOptions(null);
         } catch (err) {
@@ -358,7 +358,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
 });
 QuestionItem.displayName = 'QuestionItem';
 
-const QuestionList = memo(({ userRole }: { userRole: 'coaching' | 'teacher' | 'student' }) => {
+const QuestionList = memo(() => {
     const { questions, loading, error, selectedQuestionIds, toggleQuestionSelection, toggleQuestionFlag } =
         useQuestionBankContext();
 
@@ -392,7 +392,6 @@ const QuestionList = memo(({ userRole }: { userRole: 'coaching' | 'teacher' | 's
                                 isSelected={selectedQuestionIds.has(question.id)}
                                 toggleQuestionSelection={toggleQuestionSelection}
                                 toggleQuestionFlag={toggleQuestionFlag}
-                                userRole={userRole} // Pass userRole to QuestionItem
                             />
                         ))}
                     </div>

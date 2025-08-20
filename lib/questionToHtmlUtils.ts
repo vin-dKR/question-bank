@@ -13,21 +13,21 @@ function textToHtmlWithLatex(text: string): string {
     processed = processed.replace(/[\n\r]+/g, ' ');
 
     // Now process LaTeX
-    processed = processed.replace(/\\\(([^)]+)\\\)/g, (match, latex) => {
+    processed = processed.replace(/\\\(([^)]+)\\\)/g, (_match, latex) => {
         return `<span class="math-inline">\\(${latex.trim()}\\)</span>`;
     });
-    processed = processed.replace(/\\\[([^\]]+)\\\]/g, (match, latex) => {
+    processed = processed.replace(/\\\[([^\]]+)\\\]/g, (_match, latex) => {
         return `<div class="math-display">\\[${latex.trim()}\\]</div>`;
     });
-    processed = processed.replace(/\$([^$]+)\$/g, (match, latex) => {
+    processed = processed.replace(/\$([^$]+)\$/g, (_match, latex) => {
         return `<span class="math-inline">\\(${latex.trim()}\\)</span>`;
     });
-    processed = processed.replace(/\$\$([^$]+)\$\$/g, (match, latex) => {
+    processed = processed.replace(/\$\$([^$]+)\$\$/g, (_match, latex) => {
         return `<div class="math-display">\\[${latex.trim()}\\]</div>`;
     });
 
     // Handle special case where LaTeX is embedded in option text like "(A)\\(Q = 2E1 - E2\\)"
-    processed = processed.replace(/(\([A-D]\))\\\(([^)]+)\\\)/g, (match, optionLetter, latex) => {
+    processed = processed.replace(/(\([A-D]\))\\\(([^)]+)\\\)/g, (_match, optionLetter, latex) => {
         return `${optionLetter}<span class="math-inline">\\(${latex.trim()}\\)</span>`;
     });
 
@@ -37,7 +37,6 @@ function textToHtmlWithLatex(text: string): string {
 
 export function questionToHTML(question: Question, index: number, options: QuestionToHTMLOptions = {}): string {
     const {
-        // includeMetadata = true,
     } = options;
 
     const questionNumber = index + 1;
