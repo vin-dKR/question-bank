@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { usePathname } from "next/navigation";
 import { useAuth, useUser } from "@clerk/nextjs";
+import { CollaborationProvider } from "@/lib/context/CollaborationContext";
 
 interface SidebarItem {
     name: string;
@@ -112,7 +113,11 @@ export default function DashboardLayout({
                 </header>
 
                 {/* Content Area */}
-                <main className="flex-1 overflow-y-auto p-6">{children}</main>
+                <main className="flex-1 overflow-y-auto p-6">
+                    <CollaborationProvider>
+                        {children}
+                    </CollaborationProvider>
+                </main>
             </div>
         </div>
     );

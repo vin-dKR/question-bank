@@ -17,25 +17,20 @@ datasource db {
 }
 
 model User {
-  id           String    @id @default(auto()) @map("_id") @db.ObjectId
-  clerkUserId  String    @unique
-  email        String?   @unique
-  name         String?
-  emailOtp  String?
-  phoneOtp  String?
-  otpExpiry DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  profileImage String?
-  role         String
-  drafts    Folder[]
-  
-  // Role-specific data relationships
-  teacherData  TeacherData?
-  studentData  StudentData?
-  coachingData CoachingData?
-
-  templateForm  TemplateForm[]
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  clerkUserId       String   @unique
+  email             String   @unique
+  name              String?
+  role              String   @default("student")
+  folders           Folder[]
+  collaborations    FolderCollaborator[]
+  changeLogs        FolderChangeLog[]
+  teacherData       TeacherData?
+  coachingData      CoachingData?
+  studentData       StudentData?
+  templateForms     TemplateForm[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model TeacherData {
@@ -117,6 +112,8 @@ model Folder {
   userId      String    @db.ObjectId
   user        User      @relation(fields: [userId], references: [id])
   questionRelations FolderQuestion[] @relation("FolderToFolderQuestion")
+  collaborators FolderCollaborator[]
+  changeLogs   FolderChangeLog[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -128,10 +125,42 @@ model FolderQuestion {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   folderId   String   @db.ObjectId
   questionId String   @db.ObjectId
-  folder     Folder   @relation(fields: [folderId], references: [id], name: "FolderToFolderQuestion")
-  question   Question @relation(fields: [questionId], references: [id], name: "QuestionToFolderQuestion")
+  position  Float    @default(0) // For ordering questions
+  folder     Folder   @relation("FolderToFolderQuestion", fields: [folderId], references: [id])
+  question   Question @relation("QuestionToFolderQuestion", fields: [questionId], references: [id])
   @@index([folderId])
   @@index([questionId])
+  @@unique([folderId, questionId]) // Prevent duplicates
+}
+
+model FolderCollaborator {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  folderId   String   @db.ObjectId
+  userId     String   @db.ObjectId
+  role       String   // 'owner', 'editor', 'viewer'
+  folder     Folder   @relation(fields: [folderId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([folderId, userId])
+  @@index([folderId])
+  @@index([userId])
+}
+
+model FolderChangeLog {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  folderId   String   @db.ObjectId
+  userId     String   @db.ObjectId
+  action     String   // 'rename', 'add_question', 'remove_question', 'reorder', 'add_collaborator', 'remove_collaborator'
+  details    String   // JSON string with action-specific details
+  folder     Folder   @relation(fields: [folderId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@index([folderId])
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model TemplateForm {
