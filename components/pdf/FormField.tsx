@@ -14,6 +14,9 @@ export default function FormField({
     accept,
     required,
 }: FormFieldProps) {
+    const isFile = type === 'file';
+    const safeValue = value == null ? '' : value;
+
     return (
         <div className='tracking-3'>
             <Label htmlFor={id} className='tracking-3 text-md mb-1'>{label}</Label>
@@ -21,7 +24,7 @@ export default function FormField({
                 id={id}
                 type={type}
                 name={name}
-                value={value}
+                {...(!isFile ? { value: safeValue } : {})}
                 onChange={onChange}
                 placeholder={placeholder}
                 accept={accept}

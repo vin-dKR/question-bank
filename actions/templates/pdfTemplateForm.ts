@@ -35,11 +35,11 @@ export const createTemplate = async (formData: Template): Promise<{
                 exam: formData.exam || '',
                 subject: formData.subject || '',
                 logo: formData.logo || '',
-                saveTemplate: formData.saveTemplate || false
+                saveTemplate: formData.saveTemplate || false,
+                standard: formData.standard || '',
+                session: formData.session || ''
             }
         })
-
-        console.log('Template created successfully:', newTemplate);
 
         return {
             data: newTemplate as Template,
@@ -84,6 +84,8 @@ export const getUserTemplates = async (): Promise<{
                 subject: true,
                 logo: true,
                 saveTemplate: true,
+                standard: true,
+                session: true,
                 createdAt: true,
                 updatedAt: true
             },
@@ -144,6 +146,54 @@ export const deleteTemplate = async (templateId: string): Promise<{
             success: false,
             error: "Error deleting template from database"
         }
+    }
+}
+
+export const updateTemplate = async (
+    templateId: string,
+    updates: Partial<Template>
+): Promise<{
+    success: boolean
+    data?: Template
+    error?: string
+}> => {
+    const { userId } = await auth()
+
+    if (!userId) {
+        return { success: false, error: "Unauthorized" }
+    }
+
+    try {
+        // Ensure the template belongs to the user
+        const existing = await prisma.templateForm.findFirst({
+            where: { id: templateId, userId },
+        })
+
+        if (!existing) {
+            return { success: false, error: "Template not found or access denied" }
+        }
+
+        const updated = await prisma.templateForm.update({
+            where: { id: templateId },
+            data: {
+                templateName: updates.templateName ?? existing.templateName,
+                institution: updates.institution ?? existing.institution,
+                institutionAddress: updates.institutionAddress ?? existing.institutionAddress,
+                marks: updates.marks ?? existing.marks,
+                time: updates.time ?? existing.time,
+                exam: updates.exam ?? existing.exam,
+                subject: updates.subject ?? existing.subject,
+                logo: updates.logo ?? existing.logo,
+                saveTemplate: updates.saveTemplate ?? existing.saveTemplate,
+                standard: updates.standard ?? (existing as any).standard,
+                session: updates.session ?? (existing as any).session,
+            }
+        })
+
+        return { success: true, data: updated as Template }
+    } catch (e) {
+        console.error('Error updating template:', e)
+        return { success: false, error: "Error updating template in database" }
     }
 }
 

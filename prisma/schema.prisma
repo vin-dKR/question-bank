@@ -146,6 +146,8 @@ model TemplateForm {
     exam                String?
     subject             String?
     logo                String?
+    standard            String?
+    session             String?
     saveTemplate        Boolean
     createdAt DateTime  @default(now())
     updatedAt DateTime  @updatedAt

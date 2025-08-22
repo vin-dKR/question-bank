@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef } from 'react';
-import { createTemplate, getUserTemplates, deleteTemplate } from '@/actions/templates/pdfTemplateForm';
+import { createTemplate, getUserTemplates, deleteTemplate, updateTemplate as updateTemplateAction } from '@/actions/templates/pdfTemplateForm';
 import { toast } from 'sonner';
 
 export const usePdfTemplateForm = () => {
@@ -119,6 +119,24 @@ export const usePdfTemplateForm = () => {
         }
     }, []);
 
+    const updateTemplate = useCallback(async (templateId: string, updates: Partial<Template>) => {
+        try {
+            const result = await updateTemplateAction(templateId, updates);
+            if (!result.success) {
+                toast.error(result.error || 'Failed to update template');
+                return { success: false, error: result.error };
+            }
+            toast.success('Template updated');
+            // Update local state to reflect changes
+            setTemplates(prev => prev.map(t => t.id === templateId ? { ...t, ...updates, updatedAt: new Date() } as Template : t));
+            return { success: true, data: result.data };
+        } catch (error) {
+            console.error('Error updating template:', error);
+            toast.error('An error occurred while updating template');
+            return { success: false, error: 'An unexpected error occurred' };
+        }
+    }, []);
+
     return {
         loading,
         templatesLoading,
@@ -126,5 +144,6 @@ export const usePdfTemplateForm = () => {
         saveTemplate,
         fetchTemplates,
         removeTemplate,
+        updateTemplate,
     };
 };
