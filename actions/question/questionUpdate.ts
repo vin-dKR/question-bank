@@ -1,7 +1,7 @@
 'use server';
 
-import prisma from '@/lib/prisma';
 import { z } from 'zod';
+import prisma from '@/lib/prisma';
 
 const UpdateQuestionInputSchema = z.object({
     id: z.string().min(1, 'Question ID is required'),
@@ -9,15 +9,6 @@ const UpdateQuestionInputSchema = z.object({
     options: z.array(z.string()).optional(),
 });
 
-interface UpdateQuestionResponse {
-    success: boolean;
-    data?: {
-        id: string;
-        question_text: string;
-        options: string[];
-    };
-    error?: string;
-}
 
 export async function updateQuestionInDB(
     question: z.infer<typeof UpdateQuestionInputSchema>,
@@ -52,7 +43,7 @@ export async function updateQuestionInDB(
             },
         });
 
-        console.log('updateQuestionInDB - Updated question:', updatedQuestion);
+        // console.log('updateQuestionInDB - Updated question:', updatedQuestion);
 
         return {
             success: true,

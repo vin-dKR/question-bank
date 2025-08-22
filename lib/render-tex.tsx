@@ -2,16 +2,6 @@ import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import { JSX } from 'react';
 
-interface TextPart {
-    type: 'text';
-    value: string;
-}
-
-interface LatexPart {
-    type: 'latex';
-    value: string;
-}
-
 type StringPart = TextPart | LatexPart;
 
 const toMixedLatex = (text: string | null | undefined): StringPart[] => {

@@ -71,6 +71,8 @@ declare global {
         exam?: string;
         subject?: string;
         logo?: string;
+        session?: string;
+        standard?: string;
         watermarkOpacity?: number;
     }
 
@@ -247,6 +249,8 @@ declare global {
         subject?: string
         logo?: string
         saveTemplate?: boolean
+        standard?: string
+        session?: string
     }
 
     interface Template extends TemplateFormData {
@@ -261,6 +265,80 @@ declare global {
         onCancel: () => void;
         isGenerating?: boolean;
     }
+
+    // Onboarding/FormComponents ----------------------------------------------
+    interface FormInputProps {
+        id: string;
+        name: string;
+        value: string;
+        onChange: (value: string) => void;
+        placeholder: string;
+        label: string;
+        type?: string;
+        isRequired?: boolean;
+    }
+
+    interface FormSelectProps {
+        id: string;
+        name: string;
+        value: string | undefined;
+        onChange: (value: string) => void;
+        placeholder: string;
+        label: string;
+        options: { value: string; label: string }[];
+        isRequired?: boolean;
+    }
+
+    interface FormCheckboxGroupProps {
+        name: string;
+        label: string;
+        options: { id: string; label: string }[];
+        values: string[];
+        onChange: (id: string, checked: boolean) => void;
+        isRequired?: boolean;
+    }
+
+    interface SubmitButtonProps {
+        loading: boolean;
+    }
+
+    interface OnboardingLayoutProps {
+        title: string;
+        description: string;
+        children: React.ReactNode;
+    }
+
+
+    // question-update --------------------------------------------------------
+    interface UpdateQuestionResponse {
+        success: boolean;
+        data?: {
+            id: string;
+            question_text: string;
+            options: string[];
+        };
+        error?: string;
+    }
+
+
+    //tex-render --------------------------------------------------------------
+    interface TextPart {
+        type: 'text';
+        value: string;
+    }
+
+    interface LatexPart {
+        type: 'latex';
+        value: string;
+    }
+
+    // ai-refine --------------------------------------------------------------
+    interface RefineTextResponse {
+        success: boolean;
+        refined_text?: string;
+        error?: string;
+    }
+
 }
 
 

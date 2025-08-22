@@ -1,17 +1,12 @@
 'use server';
 
-import OpenAI from 'openai';
 import { z } from 'zod';
+import OpenAI from 'openai';
 
 const RefineTextInputSchema = z.object({
     text: z.string().min(1, 'Text is required'),
 });
 
-interface RefineTextResponse {
-    success: boolean;
-    refined_text?: string;
-    error?: string;
-}
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,

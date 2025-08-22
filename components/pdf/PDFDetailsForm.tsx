@@ -1,11 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import FormField from './FormField';
-import { Label } from '../ui/label';
-import { CirclePlus, Trash2, AlertTriangle } from 'lucide-react';
-import { usePdfTemplateForm } from '@/hooks/templates/usePdfTemplateForm';
 import {
     Dialog,
     DialogContent,
@@ -14,6 +8,12 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import FormField from './FormField';
+import { Label } from '../ui/label';
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { CirclePlus, Trash2, AlertTriangle } from 'lucide-react';
+import { usePdfTemplateForm } from '@/hooks/templates/usePdfTemplateForm';
 
 
 export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGenerating }: PDFDetailsFormProps) {
@@ -31,6 +31,8 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGene
         exam: initialData.exam,
         subject: initialData.subject,
         logo: initialData.logo,
+        standard: initialData.standard,
+        session: initialData.session
     });
     const [saveTemplate, setSaveTemplate] = useState(true);
 
@@ -300,6 +302,24 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGene
                             placeholder="Enter institution Address name"
                         />
                         <FormField
+                            id="session"
+                            label="Session"
+                            type="string"
+                            name="session"
+                            value={formData.session}
+                            onChange={handleInputChange}
+                            placeholder="Enter the Session"
+                        />
+                        <FormField
+                            id="standard"
+                            label="Standard"
+                            type="string"
+                            name="standard"
+                            value={formData.standard}
+                            onChange={handleInputChange}
+                            placeholder="Enter the class"
+                        />
+                        <FormField
                             id="marks"
                             label="Total Marks *"
                             type="number"
@@ -331,13 +351,12 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGene
                         />
                         <FormField
                             id="subject"
-                            label="Subject *"
+                            label="Subject"
                             type="text"
                             name="subject"
                             value={formData.subject}
                             onChange={handleInputChange}
                             placeholder="Enter subject"
-                            required
                         />
                         <FormField
                             id="logo"
@@ -389,7 +408,7 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGene
                                 {isCreatingTemplate ? (
                                     <>
                                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                        Saving Template...
+                                        Generating...
                                     </>
                                 ) : isGenerating ? (
                                     <>

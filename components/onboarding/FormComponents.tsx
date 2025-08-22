@@ -15,16 +15,6 @@ import { ArrowLeft, ArrowRight, LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 
-interface FormInputProps {
-    id: string;
-    name: string;
-    value: string;
-    onChange: (value: string) => void;
-    placeholder: string;
-    label: string;
-    type?: string;
-    isRequired?: boolean;
-}
 
 export function FormInput({
     id,
@@ -54,16 +44,6 @@ export function FormInput({
     );
 }
 
-interface FormSelectProps {
-    id: string;
-    name: string;
-    value: string | undefined;
-    onChange: (value: string) => void;
-    placeholder: string;
-    label: string;
-    options: { value: string; label: string }[];
-    isRequired?: boolean;
-}
 
 export function FormSelect({
     id,
@@ -97,14 +77,6 @@ export function FormSelect({
     );
 }
 
-interface FormCheckboxGroupProps {
-    name: string;
-    label: string;
-    options: { id: string; label: string }[];
-    values: string[];
-    onChange: (id: string, checked: boolean) => void;
-    isRequired?: boolean;
-}
 
 export function FormCheckboxGroup({
     name,
@@ -138,9 +110,6 @@ export function FormCheckboxGroup({
     );
 }
 
-interface SubmitButtonProps {
-    loading: boolean;
-}
 
 export function SubmitButton({ loading }: SubmitButtonProps) {
     return (
@@ -160,11 +129,6 @@ export function SubmitButton({ loading }: SubmitButtonProps) {
     );
 }
 
-interface OnboardingLayoutProps {
-    title: string;
-    description: string;
-    children: React.ReactNode;
-}
 
 export function OnboardingLayout({ title, description, children }: OnboardingLayoutProps) {
     const router = useRouter();

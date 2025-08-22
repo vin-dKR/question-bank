@@ -120,8 +120,8 @@ export function questionToHTML(question: Question, index: number, options: Quest
 
     return `
     <div class="question" style="
-      margin-bottom: 24px;
-      padding: 16px;
+      margin-bottom: 0px;
+      padding: 5px 16px;
       background-color: #ffffff;
       page-break-inside: avoid;
     ">
@@ -176,6 +176,8 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
         time,
         subject,
         exam,
+        session,
+        standard,
         watermarkOpacity = 0
     } = config;
 
@@ -234,23 +236,21 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
 
                     <h2 style="
                         margin: 0;
-                        font-size: 14px;
-                        font-weight: bold;
-                        letter-spacing: 1px;
+                        font-size: 12px;
+                        letter-spacing: 0px;
                         font-style: italic;
+                        font-weight: 600;
                     ">${institutionAddress}</h2>
 
                     <div style="
                         display: flex;
                         align-items: center;
-                        justify-content: center;
-                        margin-top: 10px;
+                        justify-content: space-between;
+                        margin-top: 6px;
+                        font-weight: bold;
                     ">
-                        <div style="
-                            border: 1px solid #000;
-                            padding: 2px 20px;
-                            background-color: #f0f0f0;
-                            ">${exam}</div>
+                        <div style=" padding: 0px 40px; "> ${exam} </div>
+                        <div style=" padding: 0px 40px; "> Session: ${session} </div>
                     </div>
                 </div>
             </div>
@@ -263,9 +263,18 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
                 font-size: 11px;
                 font-weight: bold;
                 background-color: #fff;
-                border-bottom: 1px solid #000;
             ">
-                <div>Time: ${time} hr</div>
+                <div class="exam-details" style="
+                    display: flex;
+                    flex-direction: column;
+                    align-items: flex-start;
+                    font-size: 10px;
+                    font-weight: bold;
+                ">
+                    <div>Class: ${standard}</div>
+                    <div>Time: ${time} hr</div>
+                </div>
+
                 <div class="exam-details" style="
                     display: flex;
                     flex-direction: column;
@@ -277,6 +286,21 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
                     <div>Marks: ${marks}</div>
                 </div>
             </div>
+
+            <div class="class-details" style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 6px 12px;
+                font-size: 11px;
+                background-color: #fff;
+                border-bottom: 1px solid #000;
+            ">
+                <div>Name: _________________________ </div>
+                <div>Father's Name: _________________________ </div>
+                <div>Roll: _________ </div>
+            </div>
+
         </div>
     `;
 
@@ -436,16 +460,6 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
                 ${questionsHTML}
             </div>
 
-            <div class="footer" style="
-                margin-top: 32px;
-                padding-top: 16px;
-                border-top: 1px solid #000;
-                text-align: center;
-                font-size: 10px;
-                color: #666;
-            ">
-                <p>Page | 1</p>
-            </div>
         </body>
     </html>
   `;

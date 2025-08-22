@@ -1,8 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useOnboardingStore } from "@/store/userInitialSelectedState";
+import { useRouter } from "next/navigation";
 import {
     FormInput,
     FormSelect,
@@ -10,7 +9,9 @@ import {
     SubmitButton,
     OnboardingLayout,
 } from "@/components/onboarding/FormComponents";
+import { useOnboardingStore } from "@/store/userInitialSelectedState";
 import { useOnboardingForm } from "@/hooks/onboarding/useOnboardingForm";
+import { subjects, targetExams, gradeOptions } from "@/constant/on-boarding/student";
 
 export default function StudentSetupPage() {
     const router = useRouter();
@@ -30,28 +31,6 @@ export default function StudentSetupPage() {
         targetExam: "",
         subjects: [],
     };
-
-    const targetExams = [
-        { value: "jee-main", label: "JEE Main" },
-        { value: "jee-advanced", label: "JEE Advanced" },
-        { value: "neet", label: "NEET" },
-        { value: "boards", label: "Board Exams" },
-        { value: "multiple", label: "Multiple Exams" },
-    ];
-
-    const subjects = [
-        { id: "physics", label: "Physics" },
-        { id: "chemistry", label: "Chemistry" },
-        { id: "mathematics", label: "Mathematics" },
-        { id: "biology", label: "Biology" },
-    ];
-
-    const gradeOptions = [
-        { value: "11", label: "Class 11" },
-        { value: "12", label: "Class 12" },
-        { value: "12-pass", label: "12th Pass" },
-        { value: "dropper", label: "Dropper" },
-    ];
 
     const validateForm = () => {
         if (!studentData.name.trim()) return "Full name is required.";

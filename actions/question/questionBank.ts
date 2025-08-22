@@ -156,7 +156,7 @@ export async function getQuestionCount(
             where: whereClause,
         });
 
-        console.log('getQuestionCount - Count result:', count);
+        // console.log('getQuestionCount - Count result:', count);
 
         return { success: true, data: count };
     } catch (error) {
@@ -244,7 +244,7 @@ export async function getFilterOptions(
             section_names: sections.map((s) => s.section_name).filter(Boolean) as string[],
         };
 
-        console.log("filterOptions----------------", filterOptions)
+        // console.log("filterOptions----------------", filterOptions)
 
         return { success: true, data: filterOptions };
     } catch (error) {

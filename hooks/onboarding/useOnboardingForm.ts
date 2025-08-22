@@ -36,7 +36,7 @@ export function useOnboardingForm<T extends OnboardingData>(
         if (res?.message) {
             console.log("passed")
             await user?.reload();
-            router.push("/");
+            router.push("/dashboard");
         } else if (res?.error) {
             toast("Sorry, Please try again...", { description: res.error });
         }

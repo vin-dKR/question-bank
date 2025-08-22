@@ -7,11 +7,12 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { useOnboardingStore } from "@/store/userInitialSelectedState";
-import { GraduationCap, Users, School, ArrowLeft } from "lucide-react";
+import { userTypes } from "@/constant/on-boarding/user-type";
 import { useCallback, useState, useTransition } from "react";
+import { useOnboardingStore } from "@/store/userInitialSelectedState";
 
 export default function UserTypePage() {
     const router = useRouter();
@@ -19,51 +20,18 @@ export default function UserTypePage() {
     const [isPending, startTransition] = useTransition();
     const [loadingRole, setLoadingRole] = useState<string | null>(null);
 
-    const userTypes = [
-        {
-            icon: Users,
-            title: "Student",
-            description: "I want to practice with authentic exam questions",
-            features: ["Practice tests", "Progress tracking", "Performance insights"],
-            href: "/onboarding/student/setup",
-            popular: false,
-            roleKey: "student",
-        },
-        {
-            icon: GraduationCap,
-            title: "Individual Teacher",
-            description: "I'm a teacher looking to create better tests for my students",
-            features: ["Quick test creation", "PDF templates", "Basic analytics"],
-            href: "/onboarding/teacher/setup",
-            popular: true,
-            roleKey: "teacher",
-        },
-        {
-            icon: School,
-            title: "Coaching Center",
-            description: "I run a coaching center and need to scale test creation",
-            features: ["Bulk operations", "OMR scanning", "Multi-teacher access"],
-            href: "/onboarding/institute/setup",
-            popular: false,
-            roleKey: "coaching",
-        },
-    ] as const;
 
     // Optimized navigation with prefetching and immediate navigation
     const onContinueClick = useCallback((role: "student" | "teacher" | "coaching", href: string) => {
-        // Set loading state for this specific role
         setLoadingRole(role);
 
-        // Set role immediately in store
         setRole(role);
 
-        // Navigate immediately without waiting for state updates
         startTransition(() => {
             router.push(href);
         });
     }, [setRole, router]);
 
-    // Prefetch routes on hover for instant navigation
     const handleCardHover = useCallback((href: string) => {
         router.prefetch(href);
     }, [router]);
@@ -138,7 +106,7 @@ export default function UserTypePage() {
                                         <Button
                                             className="w-full bg-black rounded-xl text-white"
                                             onClick={(e) => {
-                                                e.stopPropagation(); // Prevent card click
+                                                e.stopPropagation();
                                                 onContinueClick(type.roleKey, type.href);
                                             }}
                                             disabled={loadingRole === type.roleKey}

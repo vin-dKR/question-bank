@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import clsx from 'clsx';
 import {
     Dialog,
     DialogContent,
@@ -11,11 +10,12 @@ import {
     DialogTrigger,
     DialogClose,
 } from '@/components/ui/dialog';
-import { pdfConfigToAnswerKeyHTML, pdfConfigToHTML } from '@/lib/questionToHtmlUtils';
-import { htmlTopdfBlob } from '@/actions/htmlToPdf/htmlToPdf';
-import clsx from 'clsx';
+import { useState, useEffect } from 'react';
 import PDFDetailsForm from './PDFDetailsForm';
+import { Button } from '@/components/ui/button';
 import { preRenderHtml } from '@/lib/preRenderHtml';
+import { htmlTopdfBlob } from '@/actions/htmlToPdf/htmlToPdf';
+import { pdfConfigToAnswerKeyHTML, pdfConfigToHTML } from '@/lib/questionToHtmlUtils';
 
 
 export default function PDFGenerator({ institution, selectedQuestions, options, className }: PDFConfig) {
@@ -33,6 +33,8 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
         exam: '',
         subject: '',
         logo: '',
+        standard: '',
+        session: ''
     });
 
     // console.log('Selected Questions Count:', selectedQuestions.length);
@@ -73,6 +75,8 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
             exam: data.exam,
             subject: data.subject,
             logo: data.logo,
+            standard: data.standard,
+            session: data.session
         });
 
         const blob = await htmlTopdfBlob(html);
@@ -125,7 +129,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
         if (previewUrl) {
             const link = document.createElement('a');
             link.href = previewUrl;
-            link.download = 'mcq_question_paper.pdf';
+            link.download = `${formData.institution}_${formData.exam}.pdf`
             link.click();
         }
     };
