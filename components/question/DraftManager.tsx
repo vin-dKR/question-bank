@@ -195,36 +195,6 @@ const DraftManager = () => {
                             >
                                 Delete
                             </Button>
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="border-indigo-500 text-indigo-600 hover:bg-indigo-50"
-                                    >
-                                        Add Questions
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent className="sm:max-w-md bg-white max-h-[100vh] !top-[50%] !left-[50%] !transform !-translate-x-1/2 !-translate-y-1/2">
-                                    <DialogHeader>
-                                        <DialogTitle>Add Questions to {selectedFolder.name}</DialogTitle>
-                                    </DialogHeader>
-                                    <div className="text-sm text-slate-600">
-                                        {questions.length} question(s) will be added
-                                    </div>
-                                    <DialogFooter className="sm:justify-start">
-                                        <DialogClose asChild>
-                                            <Button
-                                                onClick={handleAddQuestionsToFolder}
-                                                disabled={questions.length === 0}
-                                                className="bg-indigo-600 hover:bg-indigo-700"
-                                            >
-                                                Add Questions
-                                            </Button>
-                                        </DialogClose>
-                                    </DialogFooter>
-                                </DialogContent>
-                            </Dialog>
 
                             {selectedFolder.questions.length > 0 && (
                                 <div className="flex gap-1">
