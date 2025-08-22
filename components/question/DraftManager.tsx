@@ -1,3 +1,4 @@
+"use client"
 import Image from 'next/image';
 import { StepBack, Trash } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -16,11 +17,14 @@ import { Button } from '@/components/ui/button';
 import PDFGenerator from '../pdf/pdfPreview';
 import { renderMixedLatex } from '@/lib/render-tex';
 import { useFolderContext } from '@/lib/context/FolderContext';
-import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
 import { usePDFGeneratorContext } from '@/lib/context/PDFGeneratorContext';
+import Link from 'next/link';
 
+interface DraftManagerProps {
+    previewLimit?: number;
+}
 
-const DraftManager = () => {
+const DraftManager = ({ previewLimit }: DraftManagerProps) => {
     const {
         getAllFolders,
         delFolder,
@@ -31,12 +35,12 @@ const DraftManager = () => {
         loading,
         err,
     } = useFolderContext();
-    const { questions } = useQuestionBankContext();
     const [selectedFolder, setSelectedFolder] = useState<FetchDraft | null>(null);
     const [editMode, setEditMode] = useState<string | null>(null);
     const [newName, setNewName] = useState('');
     const { options, institution } = usePDFGeneratorContext();
     const [questionToRemove, setQuestionToRemove] = useState<string | null>(null);
+    const [dragIndex, setDragIndex] = useState<number | null>(null);
 
     const refreshFolders = async () => {
         // console.log('Refreshing folders');
@@ -83,51 +87,7 @@ const DraftManager = () => {
         }
     };
 
-    const handleAddQuestionsToFolder = async () => {
-        if (!selectedFolder || questions.length === 0) {
-            alert('No questions selected or no folder selected');
-            return;
-        }
-        try {
-            const success = await updateQuestionsInFolder(
-                selectedFolder.id,
-                questions.map((q) => ({
-                    id: q.id,
-                }))
-            );
-            if (success) {
-                setSelectedFolder((prev) => ({
-                    ...prev!,
-                    questions: [
-                        ...prev!.questions,
-                        ...questions.map((q) => ({
-                            id: q.id,
-                            question_number: q.question_number,
-                            question_text: q.question_text,
-                            options: q.options,
-                            answer: q.answer,
-                            subject: q.subject,
-                            exam_name: q.exam_name,
-                            chapter: q.chapter,
-                            file_name: q.file_name || null,
-                            isQuestionImage: q.isQuestionImage || false,
-                            question_image: q.question_image || null,
-                            isOptionImage: q.isOptionImage || false,
-                            option_images: q.option_images || null,
-                            section_name: q.section_name || null,
-                            question_type: q.question_type || null,
-                            topic: q.topic || null,
-                            folderId: selectedFolder.id,
-                            folder: null,
-                        })),
-                    ],
-                }));
-                await refreshFolders();
-            }
-        } catch (error) {
-            console.error('Failed to add questions:', error);
-        }
-    };
+    // Removed unused add-questions handler to satisfy lint
 
     const handleRemoveQuestion = async (questionId: string) => {
         if (!selectedFolder) return;
@@ -240,74 +200,110 @@ const DraftManager = () => {
 
                     <div className="mt-4">
                         {selectedFolder.questions.length > 0 ? (
-                            <ul className="space-y-3">
-                                {selectedFolder.questions.map((question) => (
-                                    <li
-                                        key={question.id}
-                                        className="p-3 bg-slate-50 rounded-md border border-black/5 flex flex-col gap-2"
+                            <>
+                                <div className="flex justify-end mb-2">
+                                    <Button
+                                        size="sm"
+                                        className="bg-emerald-500 hover:bg-emerald-600"
+                                        onClick={async () => {
+                                            if (!selectedFolder) return;
+                                            const success = await updateQuestionsInFolder(
+                                                selectedFolder.id,
+                                                selectedFolder.questions.map((q) => ({ id: q.id }))
+                                            );
+                                            if (!success) {
+                                                console.error('Failed to save order');
+                                            } else {
+                                                await refreshFolders();
+                                            }
+                                        }}
                                     >
-                                        <div className="flex justify-between items-start">
-                                            <p className="text-sm font-medium text-slate-800 sm:text-base">
-                                                Q: {renderMixedLatex(question.question_text)}
-                                            </p>
-                                            <Dialog
-                                                open={questionToRemove === question.id}
-                                                onOpenChange={(open) =>
-                                                    setQuestionToRemove(open ? question.id : null)
-                                                }
-                                            >
-                                                <DialogTrigger asChild>
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="sm"
-                                                        className="bg-red-500 hover:bg-red-600 rounded-full h-8 w-8"
-                                                    >
-                                                        <Trash className='h-4 w-4' />
-                                                    </Button>
-                                                </DialogTrigger>
-                                                <DialogContent className="sm:max-w-md bg-white max-h-[100vh] !top-[50%] !left-[50%] !transform !-translate-x-1/2 !-translate-y-1/2">
-                                                    <DialogHeader>
-                                                        <DialogTitle>Remove Question</DialogTitle>
-                                                    </DialogHeader>
-                                                    <div className="text-sm text-slate-600">
-                                                        Are you sure you want to remove this question from{' '}
-                                                        {selectedFolder.name}?
-                                                    </div>
-                                                    <DialogFooter className="sm:justify-start">
-                                                        <DialogClose asChild>
-                                                            <Button
-                                                                variant="outline"
-                                                                className="border-slate-500 text-slate-600 hover:bg-slate-100"
-                                                            >
-                                                                Cancel
-                                                            </Button>
-                                                        </DialogClose>
+                                        Save Order
+                                    </Button>
+                                </div>
+                                <ul className="space-y-3">
+                                    {selectedFolder.questions.map((question, index) => (
+                                        <li
+                                            key={question.id}
+                                            className="p-3 bg-slate-50 rounded-md border border-black/5 flex flex-col gap-2"
+                                            draggable
+                                            onDragStart={() => setDragIndex(index)}
+                                            onDragOver={(e) => e.preventDefault()}
+                                            onDrop={() => {
+                                                if (dragIndex === null || dragIndex === index) return;
+                                                setSelectedFolder((prev) => {
+                                                    if (!prev) return prev;
+                                                    const newQuestions = [...prev.questions];
+                                                    const [moved] = newQuestions.splice(dragIndex, 1);
+                                                    newQuestions.splice(index, 0, moved);
+                                                    return { ...prev, questions: newQuestions };
+                                                });
+                                                setDragIndex(null);
+                                            }}
+                                        >
+                                            <div className="flex justify-between items-start">
+                                                <p className="text-sm font-medium text-slate-800 sm:text-base">
+                                                    Q: {renderMixedLatex(question.question_text)}
+                                                </p>
+                                                <Dialog
+                                                    open={questionToRemove === question.id}
+                                                    onOpenChange={(open) =>
+                                                        setQuestionToRemove(open ? question.id : null)
+                                                    }
+                                                >
+                                                    <DialogTrigger asChild>
                                                         <Button
-                                                            onClick={() => handleRemoveQuestion(question.id)}
-                                                            className="bg-red-500 hover:bg-red-600"
+                                                            variant="destructive"
+                                                            size="sm"
+                                                            className="bg-red-500 hover:bg-red-600 rounded-full h-8 w-8"
                                                         >
-                                                            Remove
+                                                            <Trash className='h-4 w-4' />
                                                         </Button>
-                                                    </DialogFooter>
-                                                </DialogContent>
-                                            </Dialog>
-                                        </div>
-                                        <span className="text-xs text-slate-600 sm:text-xs mt-2 bg-white px-2 py-1 rounded-md">
-                                            {question.subject || 'No subject'} • {question.exam_name || 'No exam'} •{' '}
-                                            {question.chapter || 'No chapter'} • Answer: {question.answer}
-                                        </span>
-                                        {question.question_image && (
-                                            <Image
-                                                src={question.question_image}
-                                                alt="Question"
-                                                className="mt-2 w-full max-w-[200px] sm:max-w-[300px] h-auto rounded-md"
-                                                width={300}
-                                                height={300}
-                                            />
-                                        )}
-                                    </li>
-                                ))}
-                            </ul>
+                                                    </DialogTrigger>
+                                                    <DialogContent className="sm:max-w-md bg-white max-h-[100vh] !top-[50%] !left-[50%] !transform !-translate-x-1/2 !-translate-y-1/2">
+                                                        <DialogHeader>
+                                                            <DialogTitle>Remove Question</DialogTitle>
+                                                        </DialogHeader>
+                                                        <div className="text-sm text-slate-600">
+                                                            Are you sure you want to remove this question from{' '}
+                                                            {selectedFolder.name}?
+                                                        </div>
+                                                        <DialogFooter className="sm:justify-start">
+                                                            <DialogClose asChild>
+                                                                <Button
+                                                                    variant="outline"
+                                                                    className="border-slate-500 text-slate-600 hover:bg-slate-100"
+                                                                >
+                                                                    Cancel
+                                                                </Button>
+                                                            </DialogClose>
+                                                            <Button
+                                                                onClick={() => handleRemoveQuestion(question.id)}
+                                                                className="bg-red-500 hover:bg-red-600"
+                                                            >
+                                                                Remove
+                                                            </Button>
+                                                        </DialogFooter>
+                                                    </DialogContent>
+                                                </Dialog>
+                                            </div>
+                                            <span className="text-xs text-slate-600 sm:text-xs mt-2 bg-white px-2 py-1 rounded-md">
+                                                {question.subject || 'No subject'} • {question.exam_name || 'No exam'} •{' '}
+                                                {question.chapter || 'No chapter'} • Answer: {question.answer}
+                                            </span>
+                                            {question.question_image && (
+                                                <Image
+                                                    src={question.question_image}
+                                                    alt="Question"
+                                                    className="mt-2 w-full max-w-[200px] sm:max-w-[300px] h-auto rounded-md"
+                                                    width={300}
+                                                    height={300}
+                                                />
+                                            )}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </>
                         ) : (
                             <p className="text-slate-500 text-sm sm:text-base">No questions in this folder</p>
                         )}
@@ -316,7 +312,7 @@ const DraftManager = () => {
             ) : (
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {drafts?.length ? (
-                        drafts.map((draft) => (
+                        (previewLimit ? drafts.slice(0, previewLimit) : drafts).map((draft) => (
                             <div
                                 key={draft.id}
                                 className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200 hover:shadow-md transition-all duration-200 cursor-pointer"
@@ -330,6 +326,11 @@ const DraftManager = () => {
                         ))
                     ) : (
                         <p className="text-slate-500 text-sm sm:text-base col-span-full">No folders available</p>
+                    )}
+                    {previewLimit && drafts?.length > previewLimit && (
+                        <div className="col-span-full flex justify-end mt-2">
+                            <Link href="/drafts" className="text-indigo-600 hover:underline text-sm">View all</Link>
+                        </div>
                     )}
                 </div>
             )}

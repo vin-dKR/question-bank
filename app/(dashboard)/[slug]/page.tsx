@@ -1,4 +1,4 @@
-import DraftQuesiton from "@/components/dashboard/drafts/DraftQuestionsPage";
+import DraftQuestion from "@/components/dashboard/drafts/DraftQuestionsPage";
 import PaperHistory from "@/components/dashboard/history/PaperHistoryPage";
 import QuesitonsPage from "@/components/dashboard/questions/QuestionsPage";
 import QuestionTemplate from "@/components/dashboard/templates/QuestionTemplatePage";
@@ -17,7 +17,7 @@ export default async function SlugPage({
         case "history":
             return <PaperHistory />;
         case "drafts":
-            return <DraftQuesiton />;
+            return <DraftQuestion />;
         case "templates":
             return <QuestionTemplate />;
         default:
