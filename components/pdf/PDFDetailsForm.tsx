@@ -197,13 +197,14 @@ export default function PDFDetailsForm({ initialData, onSubmit, onCancel, isGene
                     if (isEditingTemplate && selectedTemplate?.id) {
                         const changed: Partial<Template> = {};
                         const keys: (keyof TemplateFormData)[] = [
-                            'templateName','institution','institutionAddress','marks','time','exam','subject','logo','standard','session'
+                            'templateName', 'institution', 'institutionAddress', 'marks', 'time', 'exam', 'subject', 'logo', 'standard', 'session'
                         ];
                         let hasChanges = false;
                         keys.forEach((k) => {
-                            const oldVal = (selectedTemplate as any)[k] ?? '';
-                            const newVal = (formData as any)[k] ?? '';
+                            const oldVal = (selectedTemplate as Template)[k] ?? '';
+                            const newVal = (formData as TemplateFormData)[k] ?? '';
                             if (oldVal !== newVal) {
+                                // eslint-disable-next-line
                                 (changed as any)[k] = newVal;
                                 hasChanges = true;
                             }

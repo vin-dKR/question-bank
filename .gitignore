@@ -12,6 +12,7 @@
 
 # ide
 .vscode
+.kiro
 
 # testing
 /coverage

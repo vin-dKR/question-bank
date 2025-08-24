@@ -43,8 +43,6 @@ export async function POST(req: NextRequest) {
                     }
                 })
             }
-
-            console.log("-------------------------------uploaded user")
         }
 
         // Handle user deletion

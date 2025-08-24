@@ -4,10 +4,7 @@ import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { LoadingOverlay } from '@/components/Loader';
-import { QuestionBankProvider } from '@/lib/context/QuestionBankContext';
-import { FolderProvider } from '@/lib/context/FolderContext';
-import { PDFGeneratorProvider } from '@/lib/context/PDFGeneratorContext';
-import QuestionBankViewer from '@/components/question/QuestionBankViewer';
+import Link from 'next/link';
 
 export default function Home() {
     const { user } = useUser();
@@ -25,13 +22,7 @@ export default function Home() {
 
     return (
         <div className="container bg-gray-50 mx-auto">
-            <QuestionBankProvider>
-                <FolderProvider>
-                    <PDFGeneratorProvider>
-                        <QuestionBankViewer />
-                    </PDFGeneratorProvider>
-                </FolderProvider>
-            </QuestionBankProvider>
+            <Link href="/dashboard">Go to Main</Link>
         </div>
     )
 }

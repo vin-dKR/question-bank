@@ -11,18 +11,48 @@ export interface CollaborationInvite {
   role: 'editor' | 'viewer';
 }
 
+import { CollaborationError, CollaborationErrorType, createCollaborationError, logCollaborationError } from '@/types/collaboration-errors';
+
 export interface CollaborationResponse {
   success: boolean;
   error?: string;
+  collaborationError?: CollaborationError;
   data?: any;
 }
 
 // Check if user has access to folder
 export async function checkFolderAccess(folderId: string, requiredRole: 'owner' | 'editor' | 'viewer' = 'viewer'): Promise<CollaborationResponse> {
   try {
+    // Validate folder ID format
+    if (!folderId || typeof folderId !== 'string' || folderId.trim() === '') {
+      const error = createCollaborationError(
+        CollaborationErrorType.INVALID_FOLDER_ID,
+        undefined,
+        undefined,
+        folderId
+      );
+      logCollaborationError(error, { requiredRole, function: 'checkFolderAccess' });
+      return { 
+        success: false, 
+        error: 'Invalid folder ID provided',
+        collaborationError: error
+      };
+    }
+
     const { userId: clerkUserId } = await auth();
     if (!clerkUserId) {
-      return { success: false, error: 'Unauthorized' };
+      const error = createCollaborationError(
+        CollaborationErrorType.AUTHENTICATION_REQUIRED,
+        undefined,
+        undefined,
+        folderId
+      );
+      logCollaborationError(error, { requiredRole, function: 'checkFolderAccess' });
+      return { 
+        success: false, 
+        error: 'Unauthorized',
+        collaborationError: error
+      };
     }
 
     const user = await prisma.user.findUnique({
@@ -31,7 +61,19 @@ export async function checkFolderAccess(folderId: string, requiredRole: 'owner' 
     });
 
     if (!user) {
-      return { success: false, error: 'User not found' };
+      const error = createCollaborationError(
+        CollaborationErrorType.AUTHENTICATION_REQUIRED,
+        'User account not found in database',
+        undefined,
+        folderId,
+        clerkUserId
+      );
+      logCollaborationError(error, { requiredRole, function: 'checkFolderAccess' });
+      return { 
+        success: false, 
+        error: 'User not found',
+        collaborationError: error
+      };
     }
 
     // Check if user is owner
@@ -51,7 +93,41 @@ export async function checkFolderAccess(folderId: string, requiredRole: 'owner' 
     });
 
     if (!collaboration) {
-      return { success: false, error: 'Access denied' };
+      // Check if folder exists at all
+      const folderExists = await prisma.folder.findUnique({
+        where: { id: folderId },
+        select: { id: true },
+      });
+
+      if (!folderExists) {
+        const error = createCollaborationError(
+          CollaborationErrorType.FOLDER_NOT_FOUND,
+          undefined,
+          undefined,
+          folderId,
+          user.id
+        );
+        logCollaborationError(error, { requiredRole, function: 'checkFolderAccess' });
+        return { 
+          success: false, 
+          error: 'Folder not found',
+          collaborationError: error
+        };
+      }
+
+      const error = createCollaborationError(
+        CollaborationErrorType.ACCESS_DENIED,
+        undefined,
+        undefined,
+        folderId,
+        user.id
+      );
+      logCollaborationError(error, { requiredRole, function: 'checkFolderAccess' });
+      return { 
+        success: false, 
+        error: 'Access denied',
+        collaborationError: error
+      };
     }
 
     // Check role hierarchy
@@ -60,13 +136,40 @@ export async function checkFolderAccess(folderId: string, requiredRole: 'owner' 
     const userLevel = roleHierarchy[collaboration.role as keyof typeof roleHierarchy];
 
     if (userLevel < requiredLevel) {
-      return { success: false, error: 'Insufficient permissions' };
+      const error = createCollaborationError(
+        CollaborationErrorType.ACCESS_DENIED,
+        `Insufficient permissions. Required: ${requiredRole}, Current: ${collaboration.role}`,
+        undefined,
+        folderId,
+        user.id
+      );
+      logCollaborationError(error, { requiredRole, currentRole: collaboration.role, function: 'checkFolderAccess' });
+      return { 
+        success: false, 
+        error: 'Insufficient permissions',
+        collaborationError: error
+      };
     }
 
     return { success: true, data: { role: collaboration.role } };
   } catch (error) {
+    const collaborationError = createCollaborationError(
+      CollaborationErrorType.UNKNOWN_ERROR,
+      'Failed to check folder access',
+      error instanceof Error ? error.message : 'Unknown error occurred',
+      folderId
+    );
+    logCollaborationError(collaborationError, { 
+      requiredRole, 
+      function: 'checkFolderAccess',
+      originalError: error instanceof Error ? error.message : String(error)
+    });
     console.error('Error checking folder access:', error);
-    return { success: false, error: 'Failed to check access' };
+    return { 
+      success: false, 
+      error: 'Failed to check access',
+      collaborationError: collaborationError
+    };
   }
 }
 

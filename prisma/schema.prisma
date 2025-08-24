@@ -21,6 +21,7 @@ model User {
   clerkUserId       String   @unique
   email             String   @unique
   name              String?
+  profileImage      String?
   role              String   @default("student")
   folders           Folder[]
   collaborations    FolderCollaborator[]
