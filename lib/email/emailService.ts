@@ -1,66 +1,57 @@
 import { fetchEmail } from '@/actions/user/fetchEmail';
 import nodemailer, { Transporter, SendMailOptions } from 'nodemailer';
 
-interface EmailOptions {
-  to: string;
-  subject: string;
-  text?: string;
-  html?: string;
-}
-
 
 export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
-  try {
-    // Fetch the current user's email from Clerk/DB
-    const result = await fetchEmail();
+    try {
+        const result = await fetchEmail();
 
-    if (!result.success || !result.data?.email) {
-      throw new Error(result.success ? "Email not found" : result.err);
+        if (!result.success || !result.data?.email) {
+            throw new Error(result.success ? "Email not found" : result.err);
+        }
+
+        const senderEmail = result.data.email;
+
+        const transporter: Transporter = nodemailer.createTransport({
+            host: "smtp.gmail.com",
+            port: 587,
+            secure: false,
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASSWORD
+            },
+        });
+
+        // Define email options
+        const mailOptions: SendMailOptions = {
+            from: `"Eduents Collaboration" <${senderEmail}>`,
+            to: options.to,
+            subject: options.subject,
+            text: options.text,
+            html: options.html,
+        };
+
+        // Send the email
+        const info = await transporter.sendMail(mailOptions);
+
+        console.log("Email sent:", info.messageId);
+        console.log("Preview URL:", nodemailer.getTestMessageUrl(info));
+
+        return true;
+    } catch (error) {
+        console.error("Failed to send email:", error);
+        return false;
     }
-
-    const senderEmail = result.data.email;
-
-    const testAccount = await nodemailer.createTestAccount();
-    const transporter: Transporter = nodemailer.createTransport({
-      host: "smtp.ethereal.email",
-      port: 587,
-      secure: false,
-      auth: {
-        user: testAccount.user,
-        pass: testAccount.pass,
-      },
-    });
-
-    // Define email options
-    const mailOptions: SendMailOptions = {
-      from: `"Eduents Collaboration" <${senderEmail}>`,
-      to: options.to,
-      subject: options.subject,
-      text: options.text,
-      html: options.html,
-    };
-
-    // Send the email
-    const info = await transporter.sendMail(mailOptions);
-
-    console.log("Email sent:", info.messageId);
-    console.log("Preview URL:", nodemailer.getTestMessageUrl(info));
-
-    return true;
-  } catch (error) {
-    console.error("Failed to send email:", error);
-    return false;
-  }
 };
 
 
 export const createCollaborationInviteEmail = (
-  inviterName: string,
-  folderName: string,
-  inviteLink: string,
-  role: string
+    inviterName: string,
+    folderName: string,
+    inviteLink: string,
+    role: string
 ) => {
-  return `
+    return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #333;">You've been invited to collaborate!</h2>
       
