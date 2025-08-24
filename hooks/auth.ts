@@ -163,7 +163,7 @@ export const useCustomAuth = (mode: AuthMode) => {
                 } else if (result.status === 'complete' && setSignInActive) {
                     console.log("Sign in complete, setting active session...");
                     await setSignInActive({ session: result.createdSessionId });
-                    router.push('/');
+                    router.push('/dashboard');
                     console.log("Redirecting to homepage");
                     return;
                 }
@@ -184,7 +184,7 @@ export const useCustomAuth = (mode: AuthMode) => {
                 } else if (result.status === 'complete' && setSignUpActive) {
                     console.log("Sign up complete, setting active session...");
                     await setSignUpActive({ session: result.createdSessionId });
-                    router.push('/');
+                    router.push('/dashboard');
                     console.log("Redirecting to homepage");
                     return;
                 }
@@ -229,7 +229,7 @@ export const useCustomAuth = (mode: AuthMode) => {
 
                 if (result.status === 'complete') {
                     await setSignInActive({ session: result.createdSessionId });
-                    router.push('/');
+                    router.push('/dashboard');
                     console.log("Redirecting to homepage after second factor");
                     return;
                 }
@@ -243,7 +243,7 @@ export const useCustomAuth = (mode: AuthMode) => {
 
                 if (result.status === 'complete') {
                     await setSignUpActive({ session: result.createdSessionId });
-                    router.push('/');
+                    router.push('/dashboard');
                     console.log("Redirecting to homepage after verification");
                     return;
                 }
