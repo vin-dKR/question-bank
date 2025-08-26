@@ -372,14 +372,14 @@ const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
             )}
 
             {selectedFolder ? (
-                <div className="bg-white p-2 sm:p-6 rounded-lg shadow-md border border-slate-200 transition-all duration-200">
-                    <div className="flex sm:flex-row sm:justify-between gap-2 mb-4">
+                <div className="bg-white p-4 sm:p-6 md:p-8 rounded-lg shadow-md border border-slate-200 transition-all duration-200">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4 flex-wrap">
                         {/* Back Button */}
                         <Button
                             variant="ghost"
                             size="sm"
                             onClick={handleBackToList}
-                            className="flex items-center gap-1 whitespace-nowrap text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-black/5 justify-start"
+                            className="flex items-center gap-1 whitespace-nowrap text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-black/5 self-end sm:self-auto"
                         >
                             <StepBack />
                             <span>Back to folders</span>
@@ -520,7 +520,7 @@ const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
                                             {userRole !== 'viewer' && (
                                                 <Button
                                                     size="sm"
-                                                    className="bg-emerald-500 hover:bg-emerald-600"
+                                                    className="bg-emerald-500 hover:bg-emerald-600 whitespace-nowrap"
                                                     onClick={handleSaveOrder}
                                                 >
                                                     Save Order

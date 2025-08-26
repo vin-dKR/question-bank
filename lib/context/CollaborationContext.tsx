@@ -14,6 +14,19 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
     const connectionAttemptsRef = useRef<number>(0);
     const maxConnectionAttempts = 3;
 
+    const wsCandidatesRef = useRef<string[]>([]);
+    const wsCandidateIndexRef = useRef<number>(0);
+
+    const buildCandidates = useCallback((folderId: string) => {
+        const base = 'wss://ws-questions-b-production.up.railway.app';
+        const query = `folderId=${encodeURIComponent(folderId)}&userId=${encodeURIComponent(user?.id || '')}&userName=${encodeURIComponent(user?.fullName || user?.emailAddresses?.[0]?.emailAddress || 'Unknown')}`;
+        return [
+            `${base}?${query}`,
+            `${base}/?${query}`,
+            `${base}/ws?${query}`,
+        ];
+    }, [user?.id, user?.fullName, user?.emailAddresses]);
+
     const connectToFolder = useCallback((folderId: string) => {
         if (!user) return;
 
@@ -35,9 +48,15 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
         }
 
         connectionAttemptsRef.current++;
+        // Initialize/refresh candidate list when folder changes or list empty
+        const needsInit = wsCandidatesRef.current.length === 0 || !wsCandidatesRef.current[0]?.includes(folderId);
+        if (needsInit) {
+            wsCandidatesRef.current = buildCandidates(folderId);
+            wsCandidateIndexRef.current = 0;
+        }
 
         try {
-            const wsUrl = `ws://ws-questions-b-production.up.railway.app?folderId=${folderId}&userId=${user.id}&userName=${encodeURIComponent(user.fullName || user.emailAddresses[0]?.emailAddress || 'Unknown')}`;
+            const wsUrl = wsCandidatesRef.current[wsCandidateIndexRef.current] || wsCandidatesRef.current[0];
             const newWs = new WebSocket(wsUrl);
 
             // Set a timeout for connection
@@ -67,10 +86,24 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
 
             newWs.onclose = (event) => {
                 clearTimeout(connectionTimeout);
-                console.log('WebSocket closed:', event.code, event.reason);
+                console.log('WebSocket closed:', event.code, event.reason, 'candidate:', wsCandidateIndexRef.current);
                 setIsConnected(false);
                 setConnectedUsers([]);
                 setCurrentFolderId(null);
+                // Try next candidate on abnormal close
+                if ((event.code === 1006 || event.code === 1005) && wsCandidateIndexRef.current < wsCandidatesRef.current.length - 1) {
+                    wsCandidateIndexRef.current += 1;
+                    connectToFolder(folderId);
+                    return;
+                }
+                // Backoff retry from first candidate
+                if (connectionAttemptsRef.current < maxConnectionAttempts) {
+                    const delay = Math.min(10000, 500 * Math.pow(2, connectionAttemptsRef.current));
+                    setTimeout(() => {
+                        wsCandidateIndexRef.current = 0;
+                        connectToFolder(folderId);
+                    }, delay);
+                }
             };
 
             newWs.onerror = (error) => {
