@@ -96,16 +96,25 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
                             userName: u.userName,
                             isOnline: true,
                         }));
-                        setConnectedUsers(users);
+                        // Dedupe by userId to avoid duplicate entries from server state
+                        const uniqueUsersMap = new Map<string, CollaborationUser>();
+                        users.forEach((u) => {
+                            uniqueUsersMap.set(u.userId, u);
+                        });
+                        setConnectedUsers(Array.from(uniqueUsersMap.values()));
                     } else if (message.data?.action === 'joined') {
                         setConnectedUsers(prev => {
                             const existing = prev.find(u => u.userId === message.userId);
                             if (existing) return prev;
-                            return [...prev, {
+                            const next = [...prev, {
                                 userId: message.userId,
                                 userName: message.userName,
                                 isOnline: true,
                             }];
+                            // Defensive dedupe
+                            const uniqueUsersMap = new Map<string, CollaborationUser>();
+                            next.forEach((u) => uniqueUsersMap.set(u.userId, u));
+                            return Array.from(uniqueUsersMap.values());
                         });
                     } else if (message.data?.action === 'left') {
                         setConnectedUsers(prev => prev.filter(u => u.userId !== message.userId));

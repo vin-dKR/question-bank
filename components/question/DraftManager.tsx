@@ -387,17 +387,29 @@ const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
 
                         <div className="flex flex-wrap gap-2 h-full items-center">
                             {userRole !== 'viewer' && (
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                        setEditMode(selectedFolder.id);
-                                        setNewName(selectedFolder.name);
-                                    }}
-                                    className="border-amber-500 text-amber-600 hover:bg-amber-50"
-                                >
-                                    Rename
-                                </Button>
+
+                                <>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                                    >
+                                        <Link href="/questions">
+                                            Add Questions
+                                        </Link>
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                            setEditMode(selectedFolder.id);
+                                            setNewName(selectedFolder.name);
+                                        }}
+                                        className="border-amber-500 text-amber-600 hover:bg-amber-50"
+                                    >
+                                        Rename
+                                    </Button>
+                                </>
                             )}
                             {userRole === 'owner' && (
                                 <Button

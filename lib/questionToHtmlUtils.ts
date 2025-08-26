@@ -181,6 +181,17 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
         watermarkOpacity = 0
     } = config;
 
+    // Coalesce null/undefined to empty strings to avoid printing "null"/"undefined" in PDF
+    const safe = (value: unknown): string => (value === null || value === undefined ? '' : String(value));
+    const sInstitution = safe(institution);
+    const sInstitutionAddress = safe(institutionAddress);
+    const sMarks = safe(marks);
+    const sTime = safe(time);
+    const sSubject = safe(subject);
+    const sExam = safe(exam);
+    const sSession = safe(session);
+    const sStandard = safe(standard);
+
 
     // Generate questions HTML
     const questionsHTML = selectedQuestions.map((question, index) =>
@@ -232,7 +243,7 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
                         font-weight: bold;
                         letter-spacing: 1px;
                         text-transform: uppercase;
-                    ">${institution}</h1>
+                    ">${sInstitution}</h1>
 
                     <h2 style="
                         margin: 0;
@@ -240,7 +251,7 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
                         letter-spacing: 0px;
                         font-style: italic;
                         font-weight: 600;
-                    ">${institutionAddress}</h2>
+                    ">${sInstitutionAddress}</h2>
 
                     <div style="
                         display: flex;
@@ -249,8 +260,8 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
                         margin-top: 6px;
                         font-weight: bold;
                     ">
-                        <div style=" padding: 0px 40px; "> ${exam} </div>
-                        <div style=" padding: 0px 40px; "> Session: ${session} </div>
+                        <div style=" padding: 0px 40px; "> ${sExam} </div>
+                        <div style=" padding: 0px 40px; "> Session: ${sSession} </div>
                     </div>
                 </div>
             </div>
@@ -271,8 +282,8 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
                     font-size: 10px;
                     font-weight: bold;
                 ">
-                    <div>Class: ${standard}</div>
-                    <div>Time: ${time} hr</div>
+                    <div>Class: ${sStandard}</div>
+                    <div>Time: ${sTime} hr</div>
                 </div>
 
                 <div class="exam-details" style="
@@ -282,8 +293,8 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
                     font-size: 10px;
                     font-weight: bold;
                     ">
-                    <div>Sub: ${subject}</div>
-                    <div>Marks: ${marks}</div>
+                    <div>Sub: ${sSubject}</div>
+                    <div>Marks: ${sMarks}</div>
                 </div>
             </div>
 
@@ -364,7 +375,7 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>${institution} - ${exam}</title>
+            <title>${sInstitution} - ${sExam}</title>
 
             <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
@@ -483,6 +494,11 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
         watermarkOpacity = 0.1
     } = config;
 
+    // Coalesce null/undefined to empty strings for header fields
+    const safe = (value: unknown): string => (value === null || value === undefined ? '' : String(value));
+    const sInstitution = safe(institution);
+    const sExam = safe(exam);
+
     // Generate answers HTML
     const answersHTML = selectedQuestions.map((question, index) => {
         const questionNumber = index + 1;
@@ -562,7 +578,7 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
                         font-weight: bold;
                         letter-spacing: 2px;
                         text-transform: uppercase;
-                    ">${institution}</h1>
+                    ">${sInstitution}</h1>
 
                     <div style="
                         display: flex;
@@ -573,7 +589,7 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
                             border: 1px solid #000;
                             padding: 2px 20px;
                             background-color: #f0f0f0;
-                        ">${exam}</div>
+                        ">${sExam}</div>
                     </div>
                 </div>
             </div>
@@ -621,7 +637,7 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>${institution} - Answer Key</title>
+                <title>${sInstitution} - Answer Key</title>
 
                 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 

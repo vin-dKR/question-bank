@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,6 +35,13 @@ export function CollaborationPanel({ folderId, folderName, userRole }: Collabora
     const [isLoading, setIsLoading] = useState(false);
     const [inviteLink, setInviteLink] = useState<string>('');
     const [showInviteLink, setShowInviteLink] = useState(false);
+
+    // Dedupe connected users by userId to avoid duplicate keys and incorrect counts
+    const uniqueConnectedUsers = useMemo(() => {
+        const map = new Map<string, CollaborationUser>();
+        connectedUsers.forEach((u) => map.set(u.userId, u));
+        return Array.from(map.values());
+    }, [connectedUsers]);
 
     const loadCollaborators = async () => {
         try {
@@ -148,7 +155,7 @@ export function CollaborationPanel({ folderId, folderName, userRole }: Collabora
                 <div className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
                     <span className="text-sm text-gray-600">
-                        {isConnected ? `${connectedUsers.length} online` : 'Disconnected'}
+                        {isConnected ? `${uniqueConnectedUsers.length} online` : 'Disconnected'}
                     </span>
                 </div>
             </div>
@@ -157,8 +164,8 @@ export function CollaborationPanel({ folderId, folderName, userRole }: Collabora
             <div className="mb-4">
                 <h4 className="text-sm font-medium text-gray-700 mb-2">Currently Online</h4>
                 <div className="space-y-1">
-                    {connectedUsers.length > 0 ? (
-                        connectedUsers.map((user) => (
+                    {uniqueConnectedUsers.length > 0 ? (
+                        uniqueConnectedUsers.map((user) => (
                             <div key={user.userId} className="flex items-center gap-2 text-sm">
                                 <div className="w-2 h-2 bg-green-500 rounded-full" />
                                 <span>{user.userName}</span>
@@ -175,7 +182,7 @@ export function CollaborationPanel({ folderId, folderName, userRole }: Collabora
                 <div className="space-y-2">
                     <Dialog>
                         <DialogTrigger asChild>
-                            <Button size="sm" className="w-full">
+                            <Button size="sm" className="w-full bg-black text-white">
                                 <UserPlus className="h-4 w-4 mr-2" />
                                 Invite by Email
                             </Button>
@@ -193,7 +200,7 @@ export function CollaborationPanel({ folderId, folderName, userRole }: Collabora
                                         value={inviteEmail}
                                         onChange={(e) => setInviteEmail(e.target.value)}
                                         placeholder="Enter email address"
-                                        className='border border-black/30'
+                                        className='border border-black/30 mt-1'
                                     />
                                 </div>
                                 <div>
@@ -229,7 +236,7 @@ export function CollaborationPanel({ folderId, folderName, userRole }: Collabora
 
             {/* Invite Link Dialog */}
             <Dialog open={showInviteLink} onOpenChange={setShowInviteLink}>
-                <DialogContent>
+                <DialogContent className='bg-white rounded-xl'>
                     <DialogHeader>
                         <DialogTitle>Invite Link for &quot;{folderName}&quot;</DialogTitle>
                     </DialogHeader>
@@ -241,9 +248,9 @@ export function CollaborationPanel({ folderId, folderName, userRole }: Collabora
                                     id="inviteLink"
                                     value={inviteLink}
                                     readOnly
-                                    className="flex-1"
+                                    className="flex-1 border border-black/20"
                                 />
-                                <Button size="sm" onClick={handleCopyLink}>
+                                <Button size="sm" onClick={handleCopyLink} className='bg-black/10 w-10'>
                                     <Copy className="h-4 w-4" />
                                 </Button>
                             </div>
