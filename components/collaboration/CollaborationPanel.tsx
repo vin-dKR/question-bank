@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,6 +35,7 @@ export function CollaborationPanel({ folderId, folderName, userRole }: Collabora
     const [isLoading, setIsLoading] = useState(false);
     const [inviteLink, setInviteLink] = useState<string>('');
     const [showInviteLink, setShowInviteLink] = useState(false);
+    const reloadTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Dedupe connected users by userId to avoid duplicate keys and incorrect counts
     const uniqueConnectedUsers = useMemo(() => {
@@ -117,6 +118,24 @@ export function CollaborationPanel({ folderId, folderName, userRole }: Collabora
     useEffect(() => {
         loadCollaborators();
     }, [folderId]);
+
+    // Auto-refresh collaborators when presence changes to reflect new joiners without full reload
+    useEffect(() => {
+        if (!isConnected) return;
+        if (reloadTimerRef.current) {
+            clearTimeout(reloadTimerRef.current);
+        }
+        // Debounce to avoid rapid reloads on burst join events
+        reloadTimerRef.current = setTimeout(() => {
+            loadCollaborators();
+        }, 600);
+        return () => {
+            if (reloadTimerRef.current) {
+                clearTimeout(reloadTimerRef.current);
+                reloadTimerRef.current = null;
+            }
+        };
+    }, [uniqueConnectedUsers.length, isConnected, folderId]);
 
     const handleRemoveCollaborator = async (collaboratorId: string) => {
         try {

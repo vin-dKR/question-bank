@@ -88,41 +88,36 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
 
     const handleMessage = useCallback((message: CollaborationMessage) => {
         switch (message.type) {
-            case 'presence':
-                if (message.data?.users) {
-                    if (message.data?.action === 'room_state') {
-                        const users = message.data?.users.map((u: CollaborationUser) => ({
-                            userId: u.userId,
-                            userName: u.userName,
+            case 'presence': {
+                const action = message.data?.action;
+                const users = message.data?.users;
+                if (action === 'room_state' && Array.isArray(users)) {
+                    const mapped = users.map((u: CollaborationUser) => ({
+                        userId: u.userId,
+                        userName: u.userName,
+                        isOnline: true,
+                    }));
+                    const unique = new Map<string, CollaborationUser>();
+                    mapped.forEach((u) => unique.set(u.userId, u));
+                    setConnectedUsers(Array.from(unique.values()));
+                } else if (action === 'joined') {
+                    setConnectedUsers(prev => {
+                        const existing = prev.find(u => u.userId === message.userId);
+                        if (existing) return prev;
+                        const next = [...prev, {
+                            userId: message.userId,
+                            userName: message.userName,
                             isOnline: true,
-                        }));
-                        // Dedupe by userId to avoid duplicate entries from server state
-                        const uniqueUsersMap = new Map<string, CollaborationUser>();
-                        users.forEach((u) => {
-                            uniqueUsersMap.set(u.userId, u);
-                        });
-                        setConnectedUsers(Array.from(uniqueUsersMap.values()));
-                    } else if (message.data?.action === 'joined') {
-                        setConnectedUsers(prev => {
-                            const existing = prev.find(u => u.userId === message.userId);
-                            if (existing) return prev;
-                            const next = [...prev, {
-                                userId: message.userId,
-                                userName: message.userName,
-                                isOnline: true,
-                            }];
-                            // Defensive dedupe
-                            const uniqueUsersMap = new Map<string, CollaborationUser>();
-                            next.forEach((u) => uniqueUsersMap.set(u.userId, u));
-                            return Array.from(uniqueUsersMap.values());
-                        });
-                    } else if (message.data?.action === 'left') {
-                        setConnectedUsers(prev => prev.filter(u => u.userId !== message.userId));
-                    }
-                } else {
-                    console.log("error in CollaborationContext user setting in index.d.ts")
+                        }];
+                        const unique = new Map<string, CollaborationUser>();
+                        next.forEach((u) => unique.set(u.userId, u));
+                        return Array.from(unique.values());
+                    });
+                } else if (action === 'left') {
+                    setConnectedUsers(prev => prev.filter(u => u.userId !== message.userId));
                 }
                 break;
+            }
             case 'update':
                 // Handle folder updates - could trigger a refresh
                 console.log('Folder updated by:', message.userName);

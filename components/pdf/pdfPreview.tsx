@@ -149,7 +149,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
     return (
         <Dialog key={dialogKey}>
             <DialogTrigger asChild>
-                <div className="flex gap-2">
+                <div className="flex gap-2 justify-end">
                     <Button
                         size="sm"
                         onClick={() => setStep('form')}
@@ -162,7 +162,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
                         size="sm"
                         onClick={handlePreviewAnswer}
                         disabled={!selectedQuestions || selectedQuestions.length === 0}
-                        className={clsx("bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed border border-black/20", className)}
+                        className={clsx("bg-green-600 hover:bg-green-700 text-white px-4 py-2 whitespace-nowrap text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed border border-black/20", className)}
                     >
                         {isGenerating === "answer" ? "Generating..." : selectedQuestions.length === 0 ? "No Questions" : "Preview Answers"}
                     </Button>

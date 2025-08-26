@@ -73,6 +73,7 @@ export const createFolder = async (name: string, questions: { id: string }[]): P
             include: {
                 questionRelations: {
                     include: { question: true },
+                    orderBy: { position: 'asc' },
                 },
                 user: true,
             },
@@ -113,6 +114,7 @@ export const getFolders = async (): Promise<FolderWithCollaboration[] | null> =>
                 include: {
                     questionRelations: {
                         include: { question: true },
+                        orderBy: { position: 'asc' },
                     },
                     collaborators: true, // Include collaborators to get count
                 },
@@ -128,6 +130,7 @@ export const getFolders = async (): Promise<FolderWithCollaboration[] | null> =>
                 include: {
                     questionRelations: {
                         include: { question: true },
+                        orderBy: { position: 'asc' },
                     },
                     collaborators: {
                         where: { userId: user.id }
@@ -389,6 +392,7 @@ export const renameFolder = async (id: string, name: string): Promise<Folder> =>
             include: {
                 questionRelations: {
                     include: { question: true },
+                    orderBy: { position: 'asc' },
                 },
             },
         });
@@ -438,19 +442,23 @@ export const updateFolderQuestions = async (
             throw new Error("One or more questions not found");
         }
 
-        await prisma.$transaction([
+        await prisma.$transaction(async (tx) => {
             // Delete existing relations
-            prisma.folderQuestion.deleteMany({
+            await tx.folderQuestion.deleteMany({
                 where: { folderId },
-            }),
-            // Create new relations
-            prisma.folderQuestion.createMany({
-                data: questionIds.map((questionId) => ({
-                    folderId,
-                    questionId,
-                })),
-            }),
-        ]);
+            });
+
+            // Create new relations with deterministic order positions
+            const data = questionIds.map((questionId, index) => ({
+                folderId,
+                questionId,
+                position: index * 1000,
+            }));
+
+            await tx.folderQuestion.createMany({
+                data,
+            });
+        });
 
         // Return updated folder
         const updatedFolder = await prisma.folder.findUnique({
@@ -458,6 +466,7 @@ export const updateFolderQuestions = async (
             include: {
                 questionRelations: {
                     include: { question: true },
+                    orderBy: { position: 'asc' },
                 },
             },
         });

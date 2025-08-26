@@ -57,9 +57,8 @@ const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
         await getAllFolders();
     };
 
+    // Initial fetch is already handled in useFolders; avoid extra refresh to prevent unnecessary re-renders
     useEffect(() => {
-        console.log("refreshing folders")
-        refreshFolders();
     }, []);
 
     // Handle URL parameter for collaboration links
@@ -205,7 +204,7 @@ const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
             }
             setEditMode(null);
             setNewName('');
-            await refreshFolders();
+            // Avoid full refresh; local state and context are already updated
         } catch (error) {
             console.error('Failed to rename folder:', error);
         }
@@ -217,7 +216,7 @@ const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
             if (success && selectedFolder?.id === id) {
                 setSelectedFolder(null);
             }
-            await refreshFolders();
+            // Avoid full refresh; context state already reflects deletion
         } catch (error) {
             console.error('Failed to delete folder:', error);
         }
@@ -238,7 +237,7 @@ const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
             if (!success) {
                 throw new Error('Failed to remove question');
             }
-            await refreshFolders();
+            // Avoid full refresh; optimistic update + context update suffice
             setQuestionToRemove(null);
         } catch (error) {
             console.error('Failed to remove question:', error);
@@ -262,7 +261,7 @@ const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
 
             if (success.success) {
                 toast.success('Question order saved successfully');
-                await refreshFolders();
+                // Avoid full refresh; order is already persisted and reflected locally
 
                 // Notify other collaborators
                 sendMessage({
@@ -374,18 +373,20 @@ const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
 
             {selectedFolder ? (
                 <div className="bg-white p-2 sm:p-6 rounded-lg shadow-md border border-slate-200 transition-all duration-200">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+                    <div className="flex sm:flex-row sm:justify-between gap-2 mb-4">
+                        {/* Back Button */}
                         <Button
                             variant="ghost"
                             size="sm"
                             onClick={handleBackToList}
-                            className="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-black/5"
+                            className="flex items-center gap-1 whitespace-nowrap text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-black/5 justify-start"
                         >
                             <StepBack />
-                            Back to folders
+                            <span>Back to folders</span>
                         </Button>
 
-                        <div className="flex flex-wrap gap-2 h-full items-center">
+                        {/* Right-side Actions */}
+                        <div className="flex flex-wrap gap-2 items-center justify-end w-full sm:w-auto">
                             {userRole !== 'viewer' && (
 
                                 <>
@@ -463,7 +464,7 @@ const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
                     )}
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                        <div className="lg:col-span-2">
+                        <div className={previewLimit ? "lg:col-span-3" : "lg:col-span-2"}>
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center space-x-3">
                                     <h3 className="text-lg font-medium text-slate-800 sm:text-xl">{selectedFolder.name}</h3>
