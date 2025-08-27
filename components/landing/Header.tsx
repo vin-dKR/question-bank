@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
+import Link from "next/link";
 
 const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -31,7 +32,9 @@ const Header = () => {
                             Contact
                         </Button>
                         <Button variant="default" size="sm" className="ml-4 bg-black text-white cursor-pointer">
-                            Get Started
+                            <Link href='/auth/signup'>
+                                Get Started
+                            </Link>
                         </Button>
                     </div>
 
@@ -60,7 +63,9 @@ const Header = () => {
                             </Button>
                             <div className="pt-4">
                                 <Button variant="default" className="w-full">
-                                    Get Started
+                                    <Link href='/auth/signup'>
+                                        Get Started
+                                    </Link>
                                 </Button>
                             </div>
                         </div>

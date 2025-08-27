@@ -52,6 +52,7 @@ const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
     const [urlFolderProcessed, setUrlFolderProcessed] = useState(false);
     const [urlFolderError, setUrlFolderError] = useState<string | null>(null);
     const [urlFolderLoading, setUrlFolderLoading] = useState(false);
+    const [orderLoading, setOrderLoading] = useState<boolean>(false)
 
     const refreshFolders = async () => {
         await getAllFolders();
@@ -242,6 +243,7 @@ const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
         if (!selectedFolder) return;
 
         try {
+            setOrderLoading(true)
             const success = await updateFolderQuestionsWithOrder(
                 selectedFolder.id,
                 selectedFolder.questions.map((q) => q.id)
@@ -262,6 +264,7 @@ const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
             } else {
                 toast.error(success.error || 'Failed to save order');
             }
+            setOrderLoading(false)
         } catch (error) {
             console.error('Failed to save order:', error);
             toast.error('Failed to save question order');
@@ -510,6 +513,7 @@ const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
                                                     size="sm"
                                                     className="bg-emerald-500 hover:bg-emerald-600 whitespace-nowrap"
                                                     onClick={handleSaveOrder}
+                                                    disabled={orderLoading}
                                                 >
                                                     Save Order
                                                 </Button>

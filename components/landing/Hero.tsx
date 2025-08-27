@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 const Hero = () => {
     return (
@@ -20,12 +21,16 @@ const Hero = () => {
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-2 justify-center items-center tracking-1">
-                        <Button size="sm" className="text-lg px-4 md:px-8 py-4 bg-black text-white md:size-md font-bold">
-                            Get Started
-                            <ArrowRight className="ml-2" size={20} />
-                        </Button>
+                        <Link href='/auth/signup'>
+                            <Button size="sm" className="text-lg px-4 md:px-8 py-4 bg-black text-white md:size-md font-bold">
+                                Get Started
+                                <ArrowRight className="ml-2" size={20} />
+                            </Button>
+                        </Link>
                         <Button variant="outline" size="sm" className="text-lg px-4 md:px-8 py-4 md:size-md font-bold">
-                            Watch Demo
+                            <Link href='/demo'>
+                                Watch Demo
+                            </Link>
                         </Button>
                     </div>
 
@@ -38,7 +43,7 @@ const Hero = () => {
                     </div>
                 </div>
             </div>
-        </section>
+        </section >
     );
 };
 

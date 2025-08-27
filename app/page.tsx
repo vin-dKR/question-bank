@@ -1,28 +1,32 @@
-'use client';
+"use client"
+import Header from "@/components/landing/Header";
+import Hero from "@/components/landing/Hero";
+import CoreFeaturesIntro from "@/components/landing/CoreFeaturesIntro";
+import Features from "@/components/landing/Features";
+import Pricing from "@/components/landing/Pricing";
+import SecondaryFeatures from "@/components/landing/SecondaryFeatures";
+import CallToAction from "@/components/landing/CallToAction";
+import FAQ from "@/components/landing/FAQ";
+import Footer from "@/components/landing/Footer";
 
-import { useUser } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { LoadingOverlay } from '@/components/Loader';
-import Link from 'next/link';
-
-export default function Home() {
-    const { user } = useUser();
-    const router = useRouter()
-
-
-    useEffect(() => {
-        if (!user) {
-            router.push('/auth/signup')
-        }
-    }, [user, router]);
-
-    if (!user) return <LoadingOverlay text="Authenticating..." />
-
+const Index = () => {
 
     return (
-        <div className="container bg-gray-50 mx-auto">
-            <Link href="/dashboard">Go to Main</Link>
+        <div className="min-h-screen w-full bg-white flex flex-col overflow-x-hidden">
+            <Header />
+            <main className="max-w-[1000px] w-full mx-auto lg:border-l lg:border-r lg:border-gray-300">
+                <Hero />
+                <CoreFeaturesIntro />
+                <Features />
+                <Pricing />
+                <SecondaryFeatures />
+                <CallToAction />
+                <FAQ />
+            </main>
+            <Footer />
         </div>
-    )
-}
+    );
+};
+
+export default Index;
+

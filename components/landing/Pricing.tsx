@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
+import Link from "next/link";
 
 const Pricing = () => {
     const plans = [
@@ -91,7 +92,9 @@ const Pricing = () => {
                                         : 'bg-white border-black/10'}
                                     `}
                                 >
-                                    Get Started
+                                    <Link href='/auth/signup'>
+                                        Get Started
+                                    </Link>
                                 </Button>
                             </div>
 

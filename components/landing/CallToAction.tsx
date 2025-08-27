@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Users, Clock, Star } from "lucide-react";
+import Link from "next/link";
 
 const CallToAction = () => {
     return (
@@ -41,11 +42,15 @@ const CallToAction = () => {
                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
                         <div className="flex flex-col sm:flex-row gap-2 justify-center items-center tracking-1">
                             <Button size="sm" className="text-lg px-4 md:px-8 py-4 bg-black text-white md:size-md font-bold">
-                                Get Started
+                                <Link href='/auth/signup'>
+                                    Get Started
+                                </Link>
                                 <ArrowRight className="ml-2" size={20} />
                             </Button>
                             <Button variant="outline" size="sm" className="text-lg px-4 md:px-8 py-4 md:size-md font-bold">
-                                Watch Demo
+                                <Link href='/demo'>
+                                    Watch Demo
+                                </Link>
                             </Button>
                         </div>
 

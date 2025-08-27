@@ -93,6 +93,7 @@ export function CollaborationPanel({ folderId, folderName, userRole }: Collabora
 
     const handleGenerateLink = async () => {
         try {
+            setIsLoading(true)
             const result = await generateInviteLink(folderId);
             if (result.success) {
                 setInviteLink(result.data.inviteLink);
@@ -100,6 +101,8 @@ export function CollaborationPanel({ folderId, folderName, userRole }: Collabora
             } else {
                 toast.error(result.error || 'Failed to generate invite link');
             }
+
+            setIsLoading(false)
         } catch {
             toast.error('Failed to generate invite link');
         }
@@ -246,6 +249,7 @@ export function CollaborationPanel({ folderId, folderName, userRole }: Collabora
                         variant="outline"
                         className="w-full"
                         onClick={handleGenerateLink}
+                        disabled={isLoading}
                     >
                         <Link className="h-4 w-4 mr-2" />
                         Copy Invite Link

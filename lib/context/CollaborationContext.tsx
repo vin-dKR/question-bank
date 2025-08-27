@@ -18,7 +18,7 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
     const isLeavingRef = useRef<boolean>(false); // Track intentional leave
 
     const buildCandidates = useCallback((folderId: string) => {
-        const base = 'ws://localhost:3001';
+        const base = 'ws://ws-questions-b-production.up.railway.app';
         const query = `folderId=${encodeURIComponent(folderId)}&userId=${encodeURIComponent(user?.id || '')}&userName=${encodeURIComponent(user?.fullName || user?.emailAddresses?.[0]?.emailAddress || 'Unknown')}`;
         return [
             `${base}?${query}`,
