@@ -10,7 +10,7 @@ const SecondaryFeatures = () => {
         {
             icon: Zap,
             title: "Lightning Fast",
-            description: "Process thousands of questions in seconds"
+            description: "Produce hundred of questions in seconds"
         },
         {
             icon: Users,
@@ -19,8 +19,8 @@ const SecondaryFeatures = () => {
         },
         {
             icon: Globe,
-            title: "Multi-Language",
-            description: "Support for Hindi, English, and regional languages"
+            title: "Multi-Subjects",
+            description: "Support for Physics, Chemistry, Maths and more subjects"
         }
     ];
 

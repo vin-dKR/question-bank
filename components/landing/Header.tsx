@@ -14,7 +14,19 @@ const Header = () => {
                 <div className="flex w-full items-center justify-between h-16">
                     {/* Logo */}
                     <div className="flex items-center">
+                        {/*
                         <h1 className="text-xl md:text-2xl font-bold text-primary font-inter tracking-1">Eduents</h1>
+                        */}
+                        <video
+                            src="/output.mp4"
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            preload="auto"
+                            width={60}
+                            height={60}
+                        />
                     </div>
 
                     {/* Desktop Navigation */}

@@ -1,7 +1,8 @@
 "use client";
 
 import { BarChart, Book, Home, Layers, LogOut, Menu, Settings } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useMediaQuery } from "react-responsive";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -13,12 +14,13 @@ import {
 import { usePathname } from "next/navigation";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { CollaborationProvider } from "@/lib/context/CollaborationContext";
+import Link from "next/link";
 
 interface SidebarItem {
     name: string;
     description: string;
     href: string;
-    icon: React.ReactNode;
+    icon: React.ReactElement;
 }
 
 const sidebarItems: SidebarItem[] = [
@@ -29,19 +31,30 @@ const sidebarItems: SidebarItem[] = [
     { name: "Question Templates", description: "Configure account settings", href: "/templates", icon: <Settings className="h-5 w-5" /> },
 ];
 
-export default function DashboardLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const { user } = useUser();
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const { signOut } = useAuth();
+    const isMobile = useMediaQuery({ maxWidth: 768 });
 
-    const { signOut } = useAuth()
+    // Initialize sidebar state from localStorage, default to closed on mobile
+    const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => {
+        if (typeof window !== "undefined") {
+            const saved = localStorage.getItem("sidebarOpen");
+            return saved !== null ? JSON.parse(saved) : !isMobile;
+        }
+        return !isMobile;
+    });
+
+    // Save sidebar state to localStorage when it changes
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            localStorage.setItem("sidebarOpen", JSON.stringify(isSidebarOpen));
+        }
+    }, [isSidebarOpen]);
 
     const handleLogout = async () => {
-        await signOut({ redirectUrl: '/auth/signup' })
+        await signOut({ redirectUrl: "/auth/signup" });
     };
 
     // Determine the active item based on the current pathname
@@ -58,25 +71,40 @@ export default function DashboardLayout({
                         variant="ghost"
                         className={`w-full ${isSidebarOpen ? "justify-between px-2" : "justify-center"}`}
                         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                        aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
+                        aria-expanded={isSidebarOpen}
                     >
-                        {isSidebarOpen && <span className="text-xl font-bold">Eduents</span>}
+                        {isSidebarOpen && (
+                            <div>
+                                <video
+                                    src="/output.mp4"
+                                    autoPlay
+                                    loop
+                                    muted
+                                    playsInline
+                                    preload="auto"
+                                    width={60}
+                                    height={60}
+                                />
+                            </div>
+                        )}
                         <Menu className="h-8 w-8 text-black" />
                     </Button>
                 </div>
 
                 <nav className="mt-6">
                     {sidebarItems.map((item) => (
-                        <a
+                        <Link
                             key={item.name}
                             href={item.href}
                             className={`flex items-center py-2 text-gray-700 hover:bg-gray-200 transition-colors duration-200 my-1 mx-2 rounded rounded-lg 
-                        ${isSidebarOpen ? "px-4" : "justify-center"} 
-                        ${pathname === item.href ? " bg-gray-200 font-bold" : ""}`}
+                ${isSidebarOpen ? "px-4" : "justify-center"} 
+                ${pathname === item.href ? "bg-gray-200 font-bold" : ""}`}
                             title={!isSidebarOpen ? item.name : ""}
                         >
                             <div className="flex-shrink-0">{item.icon}</div>
                             {isSidebarOpen && <span className="ml-3">{item.name}</span>}
-                        </a>
+                        </Link>
                     ))}
                 </nav>
             </div>
@@ -114,9 +142,7 @@ export default function DashboardLayout({
 
                 {/* Content Area */}
                 <main className="flex-1 overflow-y-auto p-6">
-                    <CollaborationProvider>
-                        {children}
-                    </CollaborationProvider>
+                    <CollaborationProvider>{children}</CollaborationProvider>
                 </main>
             </div>
         </div>
