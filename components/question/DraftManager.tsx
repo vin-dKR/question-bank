@@ -57,10 +57,6 @@ const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
         await getAllFolders();
     };
 
-    // Initial fetch is already handled in useFolders; avoid extra refresh to prevent unnecessary re-renders
-    useEffect(() => {
-    }, []);
-
     // Handle URL parameter for collaboration links
     useEffect(() => {
         const handleUrlFolder = async () => {
@@ -168,14 +164,6 @@ const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
     }, [selectedFolder?.id, previewLimit, currentFolderId, isConnected, joinFolder, leaveFolder]);
 
     // Cleanup on unmount
-    useEffect(() => {
-        return () => {
-            if (isConnected) {
-                console.log('Component unmounting, leaving folder');
-                leaveFolder();
-            }
-        };
-    }, [isConnected, leaveFolder]);
 
     // eslint-disable-next-line
     const handleFolderClick = (draft: LocalFetchDraft) => {

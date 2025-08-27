@@ -13,12 +13,12 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
     const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
     const connectionAttemptsRef = useRef<number>(0);
     const maxConnectionAttempts = 3;
-
     const wsCandidatesRef = useRef<string[]>([]);
     const wsCandidateIndexRef = useRef<number>(0);
+    const isLeavingRef = useRef<boolean>(false); // Track intentional leave
 
     const buildCandidates = useCallback((folderId: string) => {
-        const base = 'wss://ws-questions-b-production.up.railway.app';
+        const base = 'ws://localhost:3001';
         const query = `folderId=${encodeURIComponent(folderId)}&userId=${encodeURIComponent(user?.id || '')}&userName=${encodeURIComponent(user?.fullName || user?.emailAddresses?.[0]?.emailAddress || 'Unknown')}`;
         return [
             `${base}?${query}`,
@@ -30,8 +30,8 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
     const connectToFolder = useCallback((folderId: string) => {
         if (!user) return;
 
-        // Don't reconnect if we're already connected to this folder
-        if (wsRef.current && currentFolderId === folderId && isConnected) {
+        // Don't reconnect if already connected to this folder
+        if (wsRef.current && currentFolderId === folderId && isConnected && !isLeavingRef.current) {
             console.log('Already connected to folder:', folderId);
             return;
         }
@@ -42,9 +42,9 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
             return;
         }
 
-        // Close existing connection
-        if (wsRef.current) {
-            wsRef.current.close();
+        // Close existing connection if not already leaving
+        if (wsRef.current && !isLeavingRef.current) {
+            wsRef.current.close(1000, 'Intentional disconnect'); // Use normal closure code
         }
 
         connectionAttemptsRef.current++;
@@ -63,7 +63,7 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
             const connectionTimeout = setTimeout(() => {
                 if (newWs.readyState === WebSocket.CONNECTING) {
                     console.warn('WebSocket connection timeout');
-                    newWs.close();
+                    newWs.close(1000, 'Connection timeout');
                 }
             }, 5000);
 
@@ -73,6 +73,7 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
                 setIsConnected(true);
                 setCurrentFolderId(folderId);
                 connectionAttemptsRef.current = 0; // Reset on successful connection
+                isLeavingRef.current = false; // Reset leaving state
             };
 
             newWs.onmessage = (event) => {
@@ -90,12 +91,21 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
                 setIsConnected(false);
                 setConnectedUsers([]);
                 setCurrentFolderId(null);
+
+                // Skip reconnection if intentionally closed
+                if (event.code === 1000 || isLeavingRef.current) {
+                    console.log('Intentional WebSocket closure, skipping reconnection');
+                    isLeavingRef.current = false; // Reset leaving state
+                    return;
+                }
+
                 // Try next candidate on abnormal close
                 if ((event.code === 1006 || event.code === 1005) && wsCandidateIndexRef.current < wsCandidatesRef.current.length - 1) {
                     wsCandidateIndexRef.current += 1;
                     connectToFolder(folderId);
                     return;
                 }
+
                 // Backoff retry from first candidate
                 if (connectionAttemptsRef.current < maxConnectionAttempts) {
                     const delay = Math.min(10000, 500 * Math.pow(2, connectionAttemptsRef.current));
@@ -147,12 +157,12 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
                         return Array.from(unique.values());
                     });
                 } else if (action === 'left') {
+                    console.log("user left -----------------------------------------------------")
                     setConnectedUsers(prev => prev.filter(u => u.userId !== message.userId));
                 }
                 break;
             }
             case 'update':
-                // Handle folder updates - could trigger a refresh
                 console.log('Folder updated by:', message.userName);
                 break;
             default:
@@ -167,23 +177,29 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
     }, []);
 
     const joinFolder = useCallback((folderId: string) => {
+        isLeavingRef.current = false; // Ensure not marked as leaving
         connectToFolder(folderId);
     }, [connectToFolder]);
 
     const leaveFolder = useCallback(() => {
-        if (wsRef.current) {
-            wsRef.current.close();
+        if (wsRef.current && wsRef.current.readyState !== WebSocket.CLOSED) {
+            isLeavingRef.current = true; // Mark as intentional leave
+            wsRef.current.close(1000, 'Intentional disconnect');
+            wsRef.current = null;
+            setIsConnected(false);
+            setConnectedUsers([]);
+            setCurrentFolderId(null);
+            connectionAttemptsRef.current = 0; // Reset connection attempts
+            wsCandidateIndexRef.current = 0; // Reset candidate index
         }
     }, []);
 
     // Cleanup on unmount
     useEffect(() => {
         return () => {
-            if (wsRef.current) {
-                wsRef.current.close();
-            }
+            leaveFolder();
         };
-    }, []);
+    }, [leaveFolder]);
 
     // Reset connection attempts when user changes
     useEffect(() => {
@@ -212,4 +228,4 @@ export function useCollaboration() {
         throw new Error('useCollaboration must be used within a CollaborationProvider');
     }
     return context;
-} 
+}
