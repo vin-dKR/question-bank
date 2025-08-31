@@ -2,6 +2,7 @@ import DraftQuestion from "@/components/dashboard/drafts/DraftQuestionsPage";
 import PaperHistory from "@/components/dashboard/history/PaperHistoryPage";
 import QuesitonsPage from "@/components/dashboard/questions/QuestionsPage";
 import QuestionTemplate from "@/components/dashboard/templates/QuestionTemplatePage";
+import ExaminationPage from "../examination/page";
 
 export default async function SlugPage({
     params,
@@ -20,6 +21,8 @@ export default async function SlugPage({
             return <DraftQuestion />;
         case "templates":
             return <QuestionTemplate />;
+        case "examination":
+            return <ExaminationPage />;
         default:
             return <QuesitonsPage />;
     }

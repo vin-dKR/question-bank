@@ -25,6 +25,8 @@ import { checkFolderAccess } from '@/actions/collaboration/folder';
 import { updateFolderQuestionsWithOrder } from '@/actions/collaboration/folder';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
+
 
 const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
     const {
@@ -57,6 +59,10 @@ const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
     const refreshFolders = async () => {
         await getAllFolders();
     };
+    const router = useRouter();
+
+    const selectedCount = selectedFolder?.questions.length || 0;
+
 
     // Handle URL parameter for collaboration links
     useEffect(() => {
@@ -274,6 +280,28 @@ const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
     if (loading) return <div>Loading folders...</div>;
     if (err) return <div className="text-red-500">Error: {err}</div>;
 
+    const createTestFromSelected = () => {
+        if (selectedCount === 0) {
+            alert('Please select at least one question to create a test.');
+            return;
+        }
+
+        // Prepare the selected questions data for the examination creation page
+        const questionsData = selectedFolder?.questions.map((q, index) => ({
+            questionText: q.question_text,
+            options: q.options,
+            answer: q.answer || '',
+            marks: 1, // Default marks, can be changed in the creation page
+            questionNumber: index + 1,
+        }));
+
+        // Store the data in sessionStorage for the examination creation page
+        sessionStorage.setItem('selectedQuestionsForTest', JSON.stringify(questionsData));
+        
+        // Navigate to the examination creation page
+        router.push('/examination/create');
+    };
+
     // Show loading state when processing URL folder parameter
     if (urlFolderLoading) {
         return (
@@ -413,6 +441,15 @@ const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
                                     Delete
                                 </Button>
                             )}
+
+<Button
+                    size="sm"
+                    onClick={createTestFromSelected}
+                    disabled={selectedCount === 0}
+                    className="bg-green-600 text-white hover:bg-green-700 transition text-md border border-black/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    Create Test
+                </Button>
 
                             {selectedFolder.questions.length > 0 && (
                                 <div className="flex gap-1">

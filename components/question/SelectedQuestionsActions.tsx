@@ -6,12 +6,13 @@ import PDFGenerator from '../pdf/pdfPreview';
 import { DialogCloseButton } from '../DialogCloseButton';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function SelectedQuestionsActions() {
     const { selectedQuestionIds, questions, toggleQuestionSelection, getAllSelectedQuestions } = useQuestionBankContext();
     const { institution, options } = usePDFGeneratorContext();
     const [allSelectedQuestions, setAllSelectedQuestions] = useState<Question[]>([]);
-
+    const router = useRouter();
 
     const selectedCount = selectedQuestionIds.size;
     // Fetch all selected questions when selection changes
@@ -46,6 +47,28 @@ export default function SelectedQuestionsActions() {
         });
     };
 
+    const createTestFromSelected = () => {
+        if (selectedCount === 0) {
+            alert('Please select at least one question to create a test.');
+            return;
+        }
+
+        // Prepare the selected questions data for the examination creation page
+        const questionsData = selectedQuestions.map((q, index) => ({
+            questionText: q.question_text,
+            options: q.options,
+            answer: q.answer || '',
+            marks: 1, // Default marks, can be changed in the creation page
+            questionNumber: index + 1,
+        }));
+
+        // Store the data in sessionStorage for the examination creation page
+        sessionStorage.setItem('selectedQuestionsForTest', JSON.stringify(questionsData));
+        
+        // Navigate to the examination creation page
+        router.push('/examination/create');
+    };
+
     return (
         <div className="flex flex-wrap justify-between items-center gap-3 bg-white p-3 md:p-4 rounded-xl shadow-md border border-slate-200">
 
@@ -69,6 +92,14 @@ export default function SelectedQuestionsActions() {
                     className="px-3 py-1 bg-slate-200 text-slate-700 hover:bg-slate-300 transition text-md border border-black/5"
                 >
                     Unselect All
+                </Button>
+                <Button
+                    size="sm"
+                    onClick={createTestFromSelected}
+                    disabled={selectedCount === 0}
+                    className="bg-green-600 text-white hover:bg-green-700 transition text-md border border-black/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    Create Test
                 </Button>
                 <PDFGenerator
                     institution={institution}

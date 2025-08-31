@@ -1,36 +1,130 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Examination Results Dashboard
+
+A comprehensive examination management system built with Next.js, Prisma, and MongoDB.
+
+## Features
+
+### For Teachers
+- **Test Creation**: Create multiple-choice tests with custom questions and answers
+- **Test Management**: View all created tests with response counts
+- **Analytics Dashboard**: Detailed performance insights including:
+  - Overall test statistics (average, highest, lowest scores)
+  - Per-question performance analysis
+  - Individual student performance tracking
+  - Response accuracy metrics
+- **PDF Export**: Export analytics reports (coming soon)
+
+### For Students
+- **Test Taking**: Submit answers to tests (simulated OMR responses)
+- **Performance Tracking**: View individual results and progress
+
+## Database Schema
+
+The system uses the following models:
+
+- **Test**: Contains test metadata and questions
+- **TestQuestion**: Individual questions with options and correct answers
+- **Student**: Student information and details
+- **StudentResponse**: Student answers and calculated scores
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18+
+- MongoDB database
+- Clerk authentication setup
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### Installation
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Set up environment variables:
+   ```bash
+   DATABASE_URL="your-mongodb-connection-string"
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="your-clerk-key"
+   CLERK_SECRET_KEY="your-clerk-secret"
+   ```
+
+4. Run database migrations:
+   ```bash
+   npx prisma db push
+   ```
+
+5. Seed sample data:
+   ```bash
+   npx tsx scripts/seed-examination-data.ts
+   ```
+
+6. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+## Usage
+
+### Creating a Test
+1. Navigate to `/examination/create`
+2. Fill in test details (title, subject, duration)
+3. Add questions with multiple choice options
+4. Set correct answers and marks for each question
+5. Save the test
+
+### Viewing Analytics
+1. Go to `/examination` to see all tests
+2. Click "View Analytics" on any test
+3. Review performance metrics and student results
+
+## API Endpoints
+
+- `POST /api/examination/tests` - Create a new test
+- `GET /api/examination/tests` - Get all tests for the current user
+- `GET /api/examination/analytics/[testId]` - Get test analytics
+
+## File Structure
+
+```
+├── components/
+│   └── examination/
+│       ├── TestCreator.tsx      # Test creation interface
+│       ├── TestDashboard.tsx    # Main dashboard
+│       └── TestAnalytics.tsx    # Analytics display
+├── app/
+│   └── examination/
+│       ├── page.tsx             # Dashboard page
+│       ├── create/
+│       │   └── page.tsx         # Test creation page
+│       └── analytics/
+│           └── [testId]/
+│               └── page.tsx     # Analytics page
+├── actions/
+│   └── examination/
+│       ├── test.ts              # Test management actions
+│       └── student.ts           # Student and response actions
+├── scripts/
+│   └── seed-examination-data.ts # Sample data seeding
+└── prisma/
+    └── schema.prisma            # Database schema
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Sample Data
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The seed script creates:
+- 5 sample students with different performance levels
+- 1 mathematics test with 20 questions
+- Student responses with varying scores (45% - 95%)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Contributing
 
-## Learn More
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
-To learn more about Next.js, take a look at the following resources:
+## License
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT License

@@ -2,8 +2,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
+import { useUser } from "@clerk/nextjs";
 
 const Header = () => {
+    const { user } = useUser()
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -44,9 +46,15 @@ const Header = () => {
                             Contact
                         </Button>
                         <Button variant="default" size="sm" className="ml-4 bg-black text-white cursor-pointer">
-                            <Link href='/auth/signup'>
-                                Get Started
-                            </Link>
+                            {user ? (
+                                <Link href='/dashboard'>
+                                    Dashboard
+                                </Link>
+                            ) : (
+                                <Link href='/auth/signup'>
+                                    Get Started
+                                </Link>
+                            )}
                         </Button>
                     </div>
 

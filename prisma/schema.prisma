@@ -30,6 +30,8 @@ model User {
   coachingData      CoachingData?
   studentData       StudentData?
   templateForms     TemplateForm[]
+
+  tests             Test[] @relation("TestCreator")
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }
@@ -95,8 +97,9 @@ model Question {
   chapter         String?
   answer          String?
   flagged         Boolean?
-  folderRelations FolderQuestion[] @relation("QuestionToFolderQuestion")
 
+  folderRelations FolderQuestion[] @relation("QuestionToFolderQuestion")
+  testReation     TestQuestion[] @relation("QuestionToTestQuestion")
 
   @@index([question_number])
   @@index([exam_name])
@@ -129,6 +132,7 @@ model FolderQuestion {
   position  Float    @default(0) // For ordering questions
   folder     Folder   @relation("FolderToFolderQuestion", fields: [folderId], references: [id])
   question   Question @relation("QuestionToFolderQuestion", fields: [questionId], references: [id])
+
   @@index([folderId])
   @@index([questionId])
   @@unique([folderId, questionId]) // Prevent duplicates
@@ -183,4 +187,76 @@ model TemplateForm {
     updatedAt DateTime  @updatedAt
 
     @@index([userId])
+}
+
+
+// -------------------- TEST/EXAMINATION -------------------------- 
+
+model Test {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  subject     String
+  duration    Int
+  totalMarks  Int
+  createdBy   String       @db.ObjectId
+  creator     User         @relation("TestCreator", fields: [createdBy], references: [id])
+  questions   TestQuestion[]
+  responses   StudentResponse[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([createdBy])
+  @@index([subject])
+}
+
+model TestQuestion {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  testId       String   @db.ObjectId
+  test         Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
+  questionId String   @db.ObjectId
+  question   Question @relation("QuestionToTestQuestion", fields: [questionId], references: [id])
+  marks        Int      @default(1)
+  questionNumber Int
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([testId])
+  @@index([questionNumber])
+}
+
+model Student {
+  id          String           @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  rollNumber  String
+  className   String
+  email       String?          @unique
+  responses   StudentResponse[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([className])
+}
+
+model StudentResponse {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  testId       String   @db.ObjectId
+  test         Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
+  studentId    String   @db.ObjectId
+  student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  answers      Json     // Array of {questionId: string, selectedAnswer: string}
+  score        Float
+  totalMarks   Int
+  percentage   Float
+  submittedAt  DateTime @default(now())
+  timeTaken    Int?     // in minutes
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([testId, studentId])
+  @@index([testId])
+  @@index([studentId])
+  @@index([score])
+  @@index([percentage])
 }
