@@ -27,6 +27,7 @@ export interface TestAnalytics {
     questionAnalytics: {
         questionId: string;
         questionNumber: number;
+        questionText: string;
         correctAnswers: number;
         totalAttempts: number;
         accuracy: number;
@@ -84,7 +85,12 @@ export const submitStudentResponse = async (data: StudentResponseData) => {
                 questions: {
                     orderBy: { questionNumber: 'asc' },
                     include: {
-                        question: true, // Include the related Question model
+                        question: {
+                            select: {
+                                id: true,
+                                answer: true,
+                            },
+                        },
                     },
                 },
             },
@@ -105,7 +111,7 @@ export const submitStudentResponse = async (data: StudentResponseData) => {
             }
         }
 
-        const percentage = (score / totalMarks) * 100;
+        const percentage = totalMarks > 0 ? (score / totalMarks) * 100 : 0;
 
         // Create or update response
         const response = await prisma.studentResponse.upsert({
@@ -116,21 +122,40 @@ export const submitStudentResponse = async (data: StudentResponseData) => {
                 },
             },
             update: {
-                answers: data.answers,
                 score,
                 totalMarks,
                 percentage,
                 timeTaken: data.timeTaken,
                 submittedAt: new Date(),
+                answers: {
+                    deleteMany: {}, // Delete existing TestAnswer records
+                    create: data.answers.map(answer => ({
+                        questionId: answer.questionId,
+                        selectedAnswer: answer.selectedAnswer,
+                    })),
+                },
             },
             create: {
                 testId: data.testId,
                 studentId: data.studentId,
-                answers: data.answers,
                 score,
                 totalMarks,
                 percentage,
                 timeTaken: data.timeTaken,
+                answers: {
+                    create: data.answers.map(answer => ({
+                        questionId: answer.questionId,
+                        selectedAnswer: answer.selectedAnswer,
+                    })),
+                },
+            },
+            include: {
+                answers: {
+                    select: {
+                        questionId: true,
+                        selectedAnswer: true,
+                    },
+                },
             },
         });
 
@@ -157,7 +182,7 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
             throw new Error('User not found');
         }
 
-        // Verify test ownership and include related Question data
+        // Verify test ownership and include related data
         const test = await prisma.test.findFirst({
             where: {
                 id: testId,
@@ -167,12 +192,24 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
                 questions: {
                     orderBy: { questionNumber: 'asc' },
                     include: {
-                        question: true, // Include the related Question model
+                        question: {
+                            select: {
+                                id: true,
+                                question_text: true,
+                                answer: true,
+                            },
+                        },
                     },
                 },
                 responses: {
                     include: {
                         student: true,
+                        answers: {
+                            select: {
+                                questionId: true,
+                                selectedAnswer: true,
+                            },
+                        },
                     },
                 },
             },
@@ -183,6 +220,7 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
         }
 
         const responses = test.responses;
+        console.log('responses -----------------', responses);
         const totalStudents = responses.length;
 
         if (totalStudents === 0) {
@@ -196,6 +234,7 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
                 questionAnalytics: test.questions.map(q => ({
                     questionId: q.questionId,
                     questionNumber: q.questionNumber,
+                    questionText: q.question.question_text,
                     correctAnswers: 0,
                     totalAttempts: 0,
                     accuracy: 0,
@@ -219,7 +258,7 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
             let totalAttempts = 0;
 
             for (const response of responses) {
-                const answer = (response.answers as any[]).find(a => a.questionId === testQuestion.questionId);
+                const answer = response.answers.find(a => a.questionId === testQuestion.questionId);
                 if (answer) {
                     totalAttempts++;
                     if (answer.selectedAnswer === testQuestion.question.answer) {
@@ -233,6 +272,7 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
             return {
                 questionId: testQuestion.questionId,
                 questionNumber: testQuestion.questionNumber,
+                questionText: testQuestion.question.question_text,
                 correctAnswers,
                 totalAttempts,
                 accuracy,
@@ -241,7 +281,7 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
 
         // Calculate student analytics
         const studentAnalytics = responses.map(response => {
-            const correctAnswers = (response.answers as any[]).filter(answer => {
+            const correctAnswers = response.answers.filter(answer => {
                 const testQuestion = test.questions.find(q => q.questionId === answer.questionId);
                 return testQuestion && testQuestion.question.answer === answer.selectedAnswer;
             }).length;
@@ -295,6 +335,12 @@ export const getStudentResponses = async (testId: string) => {
             where: { testId },
             include: {
                 student: true,
+                answers: {
+                    select: {
+                        questionId: true,
+                        selectedAnswer: true,
+                    },
+                },
             },
             orderBy: { submittedAt: 'desc' },
         });

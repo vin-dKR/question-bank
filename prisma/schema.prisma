@@ -99,7 +99,8 @@ model Question {
   flagged         Boolean?
 
   folderRelations FolderQuestion[] @relation("QuestionToFolderQuestion")
-  testReation     TestQuestion[] @relation("QuestionToTestQuestion")
+  testRelations   TestQuestion[] @relation("QuestionToTestQuestion")
+  testAnswers     TestAnswer[]        @relation("QuestionToAnswer")
 
   @@index([question_number])
   @@index([exam_name])
@@ -214,8 +215,8 @@ model TestQuestion {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   testId       String   @db.ObjectId
   test         Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
-  questionId String   @db.ObjectId
-  question   Question @relation("QuestionToTestQuestion", fields: [questionId], references: [id])
+  questionId   String   @db.ObjectId
+  question     Question @relation("QuestionToTestQuestion", fields: [questionId], references: [id], onDelete: Cascade)
   marks        Int      @default(1)
   questionNumber Int
 
@@ -245,12 +246,12 @@ model StudentResponse {
   test         Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
   studentId    String   @db.ObjectId
   student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  answers      Json     // Array of {questionId: string, selectedAnswer: string}
+  answers      TestAnswer[] @relation("StudentResponseToAnswer")
   score        Float
   totalMarks   Int
   percentage   Float
   submittedAt  DateTime @default(now())
-  timeTaken    Int?     // in minutes
+  timeTaken    Int?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -259,4 +260,17 @@ model StudentResponse {
   @@index([studentId])
   @@index([score])
   @@index([percentage])
+}
+
+model TestAnswer {
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  studentResponseId String       @db.ObjectId
+  studentResponse  StudentResponse @relation("StudentResponseToAnswer", fields: [studentResponseId], references: [id], onDelete: Cascade)
+  questionId      String        @db.ObjectId
+  question        Question      @relation("QuestionToAnswer", fields: [questionId], references: [id], onDelete: Cascade)
+  selectedAnswer  String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  @@index([studentResponseId])
+  @@index([questionId])
 }

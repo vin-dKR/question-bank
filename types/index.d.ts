@@ -402,6 +402,142 @@ declare global {
         html?: string;
     }
 
+
+    // Examination / Tests ----------------------------------------------------
+
+    interface QuestionForTestQuestion {
+        id: string;
+        question_text: string;
+        options: string[];
+        answer: string | null; // Matches Prisma schema's String?
+        question_number: number;
+        isQuestionImage: boolean;
+        isOptionImage: boolean;
+        option_images: string[];
+    }
+
+    interface TestQuestion {
+        id: string;
+        testId: string;
+        questionId: string;
+        marks: number;
+        questionNumber: number;
+        createdAt: Date;
+        updatedAt: Date;
+        question: QuestionForTestQuestion;
+    }
+
+    interface Student {
+        id: string;
+        name: string;
+        rollNumber: string;
+        className: string;
+        email: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+    }
+
+    interface StudentResponse {
+        id: string;
+        testId: string;
+        studentId: string;
+        answers: { questionId: string; selectedAnswer: string }[]; // Matches Prisma Json
+        score: number;
+        totalMarks: number;
+        percentage: number;
+        submittedAt: Date;
+        timeTaken: number | null; // Matches Prisma Int?
+        createdAt: Date;
+        updatedAt: Date;
+        correctAnswers?: number;
+        student: Student;
+    }
+
+    interface Test {
+        id: string;
+        title: string;
+        description: string | null; // Matches Prisma String?
+        subject: string;
+        duration: number;
+        totalMarks: number;
+        createdBy: string;
+        createdAt: Date;
+        updatedAt: Date;
+        questions: TestQuestion[];
+        responses: StudentResponse[];
+        _count: {
+            responses: number;
+        };
+    }
+
+    interface CreateTestData {
+        title: string;
+        description?: string; // Optional to match Prisma
+        subject: string;
+        duration: number;
+        totalMarks: number;
+        questions: {
+            questionText: string;
+            options: string[];
+            answer: string; // Input as string to match comparison logic
+            marks: number;
+            questionNumber: number;
+        }[];
+    }
+
+    interface ExaminationTest {
+        id: string;
+        title: string;
+        description: string | null | undefined; // Matches global types.d.ts
+        subject: string;
+        duration: number;
+        totalMarks: number;
+        createdBy: string;
+        createdAt: Date;
+        updatedAt: Date;
+        questions: {
+            id: string;
+            questionText: string;
+            options: string[];
+            answer: string; // Output as string, default to empty string
+            marks: number;
+            questionNumber: number;
+        }[];
+        responses?: StudentResponse[];
+        _count?: {
+            responses: number;
+        };
+    }
+
+    interface QuestionAnalytics {
+        questionId: string;
+        questionNumber: number; // Matches global types.d.ts
+        questionText: string;
+        correctAnswers: number;
+        totalAttempts: number;
+        accuracy: number;
+    }
+
+    interface StudentAnalytics {
+        studentId: string;
+        studentName: string;
+        rollNumber: string;
+        className: string;
+        score: number;
+        percentage: number;
+        correctAnswers: number;
+        totalQuestions: number;
+        timeTaken: number | null; // Matches Prisma Int?
+    }
+
+    interface TestAnalytics {
+        testId: string;
+        totalStudents: number;
+        averageScore: number;
+        highestScore: number;
+        lowestScore: number;
+        averagePercentage: number;
+        questionAnalytics: QuestionAnalytics[];
+        studentAnalytics: StudentAnalytics[];
+    }
 }
-
-

@@ -3,73 +3,7 @@
 import prisma from '@/lib/prisma';
 import { auth } from '@clerk/nextjs/server';
 
-export interface CreateTestData {
-    title: string;
-    description?: string;
-    subject: string;
-    duration: number;
-    totalMarks: number;
-    questions: {
-        questionText: string;
-        options: string[];
-        answer: string;
-        marks: number;
-        questionNumber: number;
-    }[];
-}
-
-export interface TestWithQuestions {
-    id: string;
-    title: string;
-    description: string | null | undefined;
-    subject: string;
-    duration: number;
-    totalMarks: number;
-    createdBy: string;
-    createdAt: Date;
-    updatedAt: Date;
-    questions: {
-        id: string;
-        questionText: string;
-        options: string[];
-        answer: string;
-        marks: number;
-        questionNumber: number;
-    }[];
-    _count: {
-        responses: number;
-    };
-}
-
-export interface TestAnalytics {
-    testId: string;
-    totalStudents: number;
-    averageScore: number;
-    highestScore: number;
-    lowestScore: number;
-    averagePercentage: number;
-    questionAnalytics: {
-        questionId: string;
-        questionNumber: number;
-        questionText: string;
-        correctAnswers: number;
-        totalAttempts: number;
-        accuracy: number;
-    }[];
-    studentAnalytics: {
-        studentId: string;
-        studentName: string;
-        rollNumber: string;
-        className: string;
-        score: number;
-        percentage: number;
-        correctAnswers: number;
-        totalQuestions: number;
-        timeTaken?: number;
-    }[];
-}
-
-export const createTest = async (data: CreateTestData): Promise<TestWithQuestions> => {
+export const createTest = async (data: CreateTestData): Promise<Partial<ExaminationTest>> => {
     try {
         const { userId: clerkUserId } = await auth();
         if (!clerkUserId) {
@@ -85,8 +19,7 @@ export const createTest = async (data: CreateTestData): Promise<TestWithQuestion
             throw new Error('User not found');
         }
 
-        // WIP
-        console.log("------------DATA", data)
+        console.log('------------DATA', data);
 
         const test = await prisma.test.create({
             data: {
@@ -99,19 +32,17 @@ export const createTest = async (data: CreateTestData): Promise<TestWithQuestion
                 questions: {
                     create: await Promise.all(
                         data.questions.map(async (q) => {
-                            // Create a Question record
                             const question = await prisma.question.create({
                                 data: {
                                     question_text: q.questionText,
                                     options: q.options,
-                                    answer: q.answer,
+                                    answer: q.answer, // Stored as string
                                     question_number: q.questionNumber,
                                     isQuestionImage: false,
                                     isOptionImage: false,
                                     option_images: [],
                                 },
                             });
-                            // Return TestQuestion data
                             return {
                                 questionId: question.id,
                                 marks: q.marks,
@@ -141,7 +72,6 @@ export const createTest = async (data: CreateTestData): Promise<TestWithQuestion
             },
         });
 
-        // Map the response to match TestWithQuestions interface
         return {
             ...test,
             description: test.description,
@@ -149,10 +79,11 @@ export const createTest = async (data: CreateTestData): Promise<TestWithQuestion
                 id: tq.id,
                 questionText: tq.question.question_text,
                 options: tq.question.options,
-                answer: tq.question.answer || '',
+                answer: tq.question.answer || '', // Default to empty string
                 marks: tq.marks,
                 questionNumber: tq.questionNumber,
             })),
+            _count: test._count,
         };
     } catch (error) {
         console.error('Error creating test:', error);
@@ -160,7 +91,7 @@ export const createTest = async (data: CreateTestData): Promise<TestWithQuestion
     }
 };
 
-export const getTests = async (): Promise<TestWithQuestions[]> => {
+export const getTests = async (): Promise<Partial<ExaminationTest>[]> => {
     try {
         const { userId: clerkUserId } = await auth();
         if (!clerkUserId) {
@@ -199,7 +130,6 @@ export const getTests = async (): Promise<TestWithQuestions[]> => {
             orderBy: { createdAt: 'desc' },
         });
 
-        // Map the response to match TestWithQuestions interface
         return tests.map((test) => ({
             ...test,
             description: test.description,
@@ -211,6 +141,7 @@ export const getTests = async (): Promise<TestWithQuestions[]> => {
                 marks: tq.marks,
                 questionNumber: tq.questionNumber,
             })),
+            _count: test._count,
         }));
     } catch (error) {
         console.error('Error fetching tests:', error);
@@ -218,7 +149,7 @@ export const getTests = async (): Promise<TestWithQuestions[]> => {
     }
 };
 
-export const getTestById = async (testId: string): Promise<TestWithQuestions | null> => {
+export const getTestById = async (testId: string): Promise<Partial<ExaminationTest> | null> => {
     try {
         const { userId: clerkUserId } = await auth();
         if (!clerkUserId) {
@@ -263,7 +194,6 @@ export const getTestById = async (testId: string): Promise<TestWithQuestions | n
             return null;
         }
 
-        // Map the response to match TestWithQuestions interface
         return {
             ...test,
             description: test.description,
@@ -275,6 +205,7 @@ export const getTestById = async (testId: string): Promise<TestWithQuestions | n
                 marks: tq.marks,
                 questionNumber: tq.questionNumber,
             })),
+            _count: test._count,
         };
     } catch (error) {
         console.error('Error fetching test:', error);
@@ -308,7 +239,7 @@ export const deleteTest = async (testId: string): Promise<void> => {
         console.error('Error deleting test:', error);
         throw error instanceof Error ? error : new Error('Failed to delete test');
     }
-}
+};
 
 export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> => {
     try {
@@ -326,7 +257,6 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
             throw new Error('User not found');
         }
 
-        // Get test with responses
         const test = await prisma.test.findFirst({
             where: {
                 id: testId,
@@ -349,6 +279,12 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
                 responses: {
                     include: {
                         student: true,
+                        answers: {
+                            select: {
+                                questionId: true,
+                                selectedAnswer: true,
+                            },
+                        },
                     },
                 },
             },
@@ -359,6 +295,7 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
         }
 
         const responses = test.responses;
+        console.log('responses -----------------', responses);
         const totalStudents = responses.length;
 
         if (totalStudents === 0) {
@@ -369,7 +306,7 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
                 highestScore: 0,
                 lowestScore: 0,
                 averagePercentage: 0,
-                questionAnalytics: test.questions.map((q: any) => ({
+                questionAnalytics: test.questions.map((q) => ({
                     questionId: q.id,
                     questionNumber: q.questionNumber,
                     questionText: q.question.question_text,
@@ -381,22 +318,20 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
             };
         }
 
-        // Calculate overall statistics
-        const scores = responses.map((r: any) => r.score);
-        const percentages = responses.map((r: any) => r.percentage);
+        const scores = responses.map((r) => r.score);
+        const percentages = responses.map((r) => r.percentage);
 
-        const averageScore = scores.reduce((a: number, b: number) => a + b, 0) / totalStudents;
+        const averageScore = scores.reduce((a, b) => a + b, 0) / totalStudents;
         const highestScore = Math.max(...scores);
         const lowestScore = Math.min(...scores);
-        const averagePercentage = percentages.reduce((a: number, b: number) => a + b, 0) / totalStudents;
+        const averagePercentage = percentages.reduce((a, b) => a + b, 0) / totalStudents;
 
-        // Calculate question analytics
-        const questionAnalytics = test.questions.map((question: any) => {
+        const questionAnalytics: QuestionAnalytics[] = test.questions.map((question) => {
             let correctAnswers = 0;
             let totalAttempts = 0;
 
             for (const response of responses) {
-                const answer = (response.answers as any[]).find((a: any) => a.questionId === question.id);
+                const answer = response.answers?.find((a) => a.questionId === question.questionId);
                 if (answer) {
                     totalAttempts++;
                     if (answer.selectedAnswer === question.question.answer) {
@@ -416,12 +351,12 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
                 accuracy,
             };
         });
+        //WIP
 
-        // Calculate student analytics
-        const studentAnalytics = responses.map((response: any) => {
-            const correctAnswers = (response.answers as any[]).filter((answer: any) => {
-                const question = test.questions.find((q: any) => q.id === answer.questionId);
-                return question && question.question.answer === answer.selectedAnswer;
+        const studentAnalytics: StudentAnalytics[] = responses.map((response) => {
+            const correctAnswers = response.answers?.filter((answer) => {
+                const question = test.questions.find((q) => q.questionId === answer.questionId);
+                return question && answer.selectedAnswer === question.question.answer;
             }).length;
 
             return {
@@ -433,9 +368,19 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
                 percentage: response.percentage,
                 correctAnswers,
                 totalQuestions: test.questions.length,
-                timeTaken: response.timeTaken || undefined,
+                timeTaken: response.timeTaken,
             };
         });
+
+        console.log(testId,
+            totalStudents,
+            averageScore,
+            highestScore,
+            lowestScore,
+            averagePercentage,
+            questionAnalytics,
+            studentAnalytics,
+        )
 
         return {
             testId,
