@@ -19,7 +19,6 @@ declare global {
         logo?: File | null;
     }
 
-
     interface Question {
         id: string;
         question_number: number;
@@ -283,6 +282,21 @@ declare global {
         isGenerating?: boolean;
     }
 
+    // Sidebar ----------------------------------------------------------------
+
+    interface SidebarItem {
+        name: string;
+        description: string;
+        href: string;
+        icon: React.ReactElement;
+    }
+
+    interface SidebarGroup {
+        name: string;
+        description: string;
+        icon: React.ReactElement;
+        items: SidebarItem[];
+    }
     // Onboarding/FormComponents ----------------------------------------------
     interface FormInputProps {
         id: string;

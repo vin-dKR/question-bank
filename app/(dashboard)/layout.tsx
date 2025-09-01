@@ -1,51 +1,22 @@
 "use client";
 
-import { BarChart, Book, Home, Layers, LogOut, Menu, Settings, TestTube, ChevronDown, ChevronRight } from "lucide-react";
-import { useState, useEffect } from "react";
-import { useMediaQuery } from "react-responsive";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Link from "next/link";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { useMediaQuery } from "react-responsive";
 import { useAuth, useUser } from "@clerk/nextjs";
+import { sidebarItems } from "@/constant/sidebar/sidebar";
+import { LogOut, Menu, ChevronDown, ChevronRight } from "lucide-react";
 import { CollaborationProvider } from "@/lib/context/CollaborationContext";
-import Link from "next/link";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-interface SidebarItem {
-    name: string;
-    description: string;
-    href: string;
-    icon: React.ReactElement;
-}
-
-interface SidebarGroup {
-    name: string;
-    description: string;
-    icon: React.ReactElement;
-    items: SidebarItem[];
-}
-
-const sidebarItems: (SidebarItem | SidebarGroup)[] = [
-    { name: "Dashboard", description: "View overview and metrics", href: "/dashboard", icon: <Home className="h-5 w-5" /> },
-    { name: "Questions", description: "Select questions to Print", href: "/questions", icon: <Book className="h-5 w-5" /> },
-    { name: "Paper History", description: "Organize question categories", href: "/history", icon: <Layers className="h-5 w-5" /> },
-    { name: "Drats Questions", description: "Analyze performance data", href: "/drafts", icon: <BarChart className="h-5 w-5" /> },
-    { name: "Question Templates", description: "Configure account settings", href: "/templates", icon: <Settings className="h-5 w-5" /> },
-    {
-        name: "Examination",
-        description: "Manage examinations",
-        icon: <TestTube className="h-5 w-5" />,
-        items: [
-            { name: "All Tests", description: "View all tests", href: "/examination", icon: <BarChart className="h-4 w-4" /> },
-            { name: "Create Test", description: "Create new test", href: "/examination/create", icon: <Book className="h-4 w-4" /> },
-        ]
-    },
-];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -99,45 +70,69 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     const renderSidebarItem = (item: SidebarItem, isSubItem = false) => {
         const isActive = pathname === item.href;
+
         return (
             <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center py-2 text-gray-700 hover:bg-gray-200 transition-colors duration-200 my-1 mx-2 rounded rounded-lg 
-                    ${isSidebarOpen ? "px-4" : "justify-center"} 
-                    ${isActive ? "bg-gray-200 font-bold" : ""}
-                    ${isSubItem ? "ml-6" : ""}`}
+                className={`
+                    flex items-center truncate
+                    ${isSidebarOpen ? "px-4 justify-start" : "justify-center"}
+                    py-2 my-1 rounded-lg
+                    text-gray-700 hover:bg-gray-100 transition
+                    ${isActive ? "bg-gray-100 font-semibold text-gray-900" : ""}
+                    ${isSubItem ? "pl-3" : ""}
+              `}
                 title={!isSidebarOpen ? item.name : ""}
             >
                 <div className="flex-shrink-0">{item.icon}</div>
-                {isSidebarOpen && <span className="ml-3">{item.name}</span>}
+
+                {isSidebarOpen && (
+                    <span className="ml-3 text-sm truncate">{item.name}</span>
+                )}
             </Link>
         );
     };
+
 
     const renderSidebarGroup = (group: SidebarGroup) => {
         const isExpanded = expandedGroups.has(group.name);
         const hasActiveChild = group.items.some(item => pathname === item.href);
 
         return (
-            <div key={group.name}>
+            <div
+                key={group.name}
+                className={`
+                    flex truncate cursor-pointer
+                    ${isSidebarOpen ? "px-4 justify-start" : "justify-center"}
+                    py-2 mx-2 my-1 rounded-lg
+                    ${hasActiveChild ? "bg-gray-200 font-semibold text-gray-900" : ""}
+                    ${isSidebarOpen && isExpanded ? "flex-col" : ""}
+                `}>
                 <button
                     onClick={() => toggleGroup(group.name)}
-                    className={`flex items-center w-full py-2 text-gray-700 hover:bg-gray-200 transition-colors duration-200 my-1 mx-2 rounded rounded-lg 
-                        ${isSidebarOpen ? "px-4 justify-between" : "justify-center"} 
-                        ${hasActiveChild ? "bg-gray-200 font-bold" : ""}`}
+                    className={`
+                        flex items-center w-full cursor-pointer
+                        ${isSidebarOpen ? "px-0 justify-between" : ""}
+                    `}
                     title={!isSidebarOpen ? group.name : ""}
                 >
                     <div className="flex items-center">
                         <div className="flex-shrink-0">{group.icon}</div>
-                        {isSidebarOpen && <span className="ml-3">{group.name}</span>}
+                        {isSidebarOpen && <span className="ml-3 text-sm">{group.name}</span>}
                     </div>
-                    {isSidebarOpen && (
-                        isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
-                    )}
+
+                    {/* Chevron stays far right without expanding width */}
+                    {isSidebarOpen &&
+                        (isExpanded ? (
+                            <ChevronDown className="h-4 w-4" />
+                        ) : (
+                            <ChevronRight className="h-4 w-4" />
+                        ))}
                 </button>
+
                 {isExpanded && isSidebarOpen && (
-                    <div className="mt-1">
+                    <div className="flex flex-col mt-1">
                         {group.items.map(item => renderSidebarItem(item, true))}
                     </div>
                 )}
@@ -145,12 +140,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         );
     };
 
+
+
+
     return (
         <div className="flex h-screen bg-gray-100 tracking-3">
             {/* Sidebar */}
             <div
-                className={`${isSidebarOpen ? "w-64 px-2" : "w-14"} bg-white shadow-lg transition-all duration-300 ease-in-out`}
-            >
+                className={`${isSidebarOpen ? "w-64 px-2" : "w-14"} 
+                    bg-white shadow-lg transition-all duration-300 ease-in-out 
+                    overflow-x-hidden`
+                }>
                 <div className="flex items-center mt-4">
                     <Button
                         variant="ghost"
@@ -179,7 +179,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                 <nav className="mt-6">
                     {sidebarItems.map((item) => {
-                        if ('items' in item) {
+                        if ("items" in item) {
                             return renderSidebarGroup(item);
                         } else {
                             return renderSidebarItem(item);
@@ -187,6 +187,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     })}
                 </nav>
             </div>
+
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col overflow-hidden">
