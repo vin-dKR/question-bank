@@ -26,7 +26,7 @@ export const createTest = async (data: CreateTestData): Promise<Partial<Examinat
                 title: data.title,
                 description: data.description,
                 subject: data.subject,
-                duration: data.duration,
+                duration: typeof data.duration === 'string' ? parseInt(data.duration) : data.duration,
                 totalMarks: data.totalMarks,
                 createdBy: user.id,
                 questions: {
@@ -351,21 +351,27 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
                 accuracy,
             };
         });
-        //WIP
 
         const studentAnalytics: StudentAnalytics[] = responses.map((response) => {
-            const correctAnswers = response.answers?.filter((answer) => {
+            // Calculate correct answers and score based on individual question marks
+            let correctAnswers = 0;
+            let calculatedScore = 0;
+
+            for (const answer of response.answers || []) {
                 const question = test.questions.find((q) => q.questionId === answer.questionId);
-                return question && answer.selectedAnswer === question.question.answer;
-            }).length;
+                if (question && answer.selectedAnswer === question.question.answer) {
+                    correctAnswers++;
+                    calculatedScore += question.marks; // Add marks for correct answer
+                }
+            }
 
             return {
                 studentId: response.studentId,
                 studentName: response.student.name,
                 rollNumber: response.student.rollNumber,
                 className: response.student.className,
-                score: response.score,
-                percentage: response.percentage,
+                score: calculatedScore, // Use calculated score instead of stored score
+                percentage: test.totalMarks > 0 ? (calculatedScore / test.totalMarks) * 100 : 0,
                 correctAnswers,
                 totalQuestions: test.questions.length,
                 timeTaken: response.timeTaken,

@@ -20,7 +20,7 @@ export async function POST(request: Request) {
 				'Content-Disposition': `attachment; filename="${(filename || 'analytics').replace(/[^a-zA-Z0-9_-]/g, '')}.pdf"`,
 			},
 		})
-	} catch (e) {
+	} catch {
 		return NextResponse.json({ error: 'Unexpected error' }, { status: 500 })
 	}
 }

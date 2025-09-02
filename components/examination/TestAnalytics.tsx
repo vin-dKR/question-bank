@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,11 +18,8 @@ export default function TestAnalytics({ testId }: Props) {
     const [loading, setLoading] = useState(true);
 
     console.log("student anal------------", analytics)
-    useEffect(() => {
-        fetchAnalytics();
-    }, [testId]);
-
-    const fetchAnalytics = async () => {
+    
+    const fetchAnalytics = useCallback(async () => {
         try {
             const data = await getTestAnalytics(testId);
             setAnalytics(data);
@@ -32,7 +29,11 @@ export default function TestAnalytics({ testId }: Props) {
         } finally {
             setLoading(false);
         }
-    };
+    }, [testId]);
+
+    useEffect(() => {
+        fetchAnalytics();
+    }, [fetchAnalytics]);
 
     const exportToPDF = async () => {
         try {
@@ -54,7 +55,7 @@ export default function TestAnalytics({ testId }: Props) {
             a.remove();
             window.URL.revokeObjectURL(url);
             toast.success('PDF downloaded');
-        } catch (e) {
+        } catch {
             toast.error('Could not export PDF');
         }
     };
@@ -287,88 +288,91 @@ export default function TestAnalytics({ testId }: Props) {
                 </Card>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Score Distribution (by %)</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-10 gap-2 items-end h-40">
-                            {computeDerived(analytics).histogram.map((count, idx, arr) => {
-                                const max = Math.max(...arr, 1);
-                                const height = Math.max(4, Math.round((count / max) * 100));
-                                return (
-                                    <div key={idx} className="flex flex-col items-center">
-                                        <div className="w-full bg-indigo-500" style={{ height }} />
-                                        <div className="text-[10px] text-gray-500 mt-1">{idx * 10}-{idx * 10 + 9}</div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </CardContent>
-                </Card>
-                {/* Question Analytics */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Question Performance</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            {analytics.questionAnalytics.map((question) => (
-                                <div key={question.questionId} className="border rounded-lg p-4">
-                                    <div className="flex items-start justify-between mb-2">
-                                        <h4 className="font-medium">Q{question.questionNumber}</h4>
-                                        <Badge className={getAccuracyColor(question.accuracy)}>
-                                            {question.accuracy.toFixed(1)}%
-                                        </Badge>
-                                    </div>
-                                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-                                        {question.questionText}
-                                    </p>
-                                    <div className="text-xs text-gray-500">
-                                        {question.correctAnswers} correct out of {question.totalAttempts} attempts
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Student Analytics */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Student Performance</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            {analytics.studentAnalytics.map((student) => (
-                                <div key={student.studentId} className="border rounded-lg p-4">
-                                    <div className="flex items-start justify-between mb-2">
-                                        <div>
-                                            <h4 className="font-medium">{student.studentName}</h4>
-                                            <p className="text-sm text-gray-600">
-                                                {student.rollNumber} • {student.className}
-                                            </p>
+            <div className="flex flex-col lg:flex-row gap-6">
+                {/* First Column */}
+                <div className="flex-1 flex flex-col gap-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Score Distribution (by %)</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-10 gap-2 items-end h-40">
+                                {computeDerived(analytics).histogram.map((count, idx, arr) => {
+                                    const max = Math.max(...arr, 1);
+                                    const height = Math.max(4, Math.round((count / max) * 100));
+                                    return (
+                                        <div key={idx} className="flex flex-col items-center">
+                                            <div className="w-full bg-indigo-500" style={{ height }} />
+                                            <div className="text-[10px] text-gray-500 mt-1">{idx * 10}-{idx * 10 + 9}</div>
                                         </div>
-                                        <div className="text-right">
-                                            <div className={`font-bold ${getPerformanceColor(student.percentage)}`}>
-                                                {student.score}/{student.totalQuestions}
-                                            </div>
-                                            <div className="text-sm text-gray-600">
-                                                {student.percentage.toFixed(1)}%
-                                            </div>
+                                    );
+                                })}
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Question Performance</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                {analytics.questionAnalytics.map((question) => (
+                                    <div key={question.questionId} className="border rounded-lg p-4">
+                                        <div className="flex items-start justify-between mb-2">
+                                            <h4 className="font-medium">Q{question.questionNumber}</h4>
+                                            <Badge className={getAccuracyColor(question.accuracy)}>
+                                                {question.accuracy.toFixed(1)}%
+                                            </Badge>
+                                        </div>
+                                        <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                                            {question.questionText}
+                                        </p>
+                                        <div className="text-xs text-gray-500">
+                                            {question.correctAnswers} correct out of {question.totalAttempts} attempts
                                         </div>
                                     </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
 
-                                    <div className="text-xs text-gray-500">
-                                        {student.correctAnswers} correct answers
-                                        {student.timeTaken && ` • ${student.timeTaken} min`}
+                {/* Second Column */}
+                <div className="flex-1 flex flex-col gap-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Student Performance</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                {analytics.studentAnalytics.map((student) => (
+                                    <div key={student.studentId} className="border rounded-lg p-4">
+                                        <div className="flex items-start justify-between mb-2">
+                                            <div>
+                                                <h4 className="font-medium">{student.studentName}</h4>
+                                                <p className="text-sm text-gray-600">
+                                                    {student.rollNumber} • {student.className}
+                                                </p>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className={`font-bold ${getPerformanceColor(student.percentage)}`}>
+                                                    {student.score}/{student.totalQuestions}
+                                                </div>
+                                                <div className="text-sm text-gray-600">
+                                                    {student.percentage.toFixed(1)}%
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="text-xs text-gray-500">
+                                            {student.correctAnswers} correct answers
+                                            {student.timeTaken && ` • ${student.timeTaken} min`}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         </div>
     );

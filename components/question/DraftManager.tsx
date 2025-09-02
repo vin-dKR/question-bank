@@ -172,7 +172,7 @@ const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
 
     // Cleanup on unmount
 
-    // eslint-disable-next-line
+     
     const handleFolderClick = (draft: LocalFetchDraft) => {
         // Convert the draft to LocalFetchDraft format if needed
         const localDraft: LocalFetchDraft = {

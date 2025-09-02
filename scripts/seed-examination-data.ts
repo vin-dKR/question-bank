@@ -67,8 +67,12 @@ async function main() {
     const responses = students.map((student) => {
         // Random score: 0 to 19 (number of correct answers)
         const correctCount = Math.floor(Math.random() * 20); // 0 to 19 correct answers
-        const score = correctCount; // 1 mark per correct answer
-        const totalMarks = test.totalMarks; // Assume 19 marks (1 per question)
+        
+        // Calculate score based on individual question marks
+        const marksPerQuestion = test.totalMarks / test.questions.length;
+        const score = correctCount * marksPerQuestion;
+        
+        const totalMarks = test.totalMarks;
         const percentage = totalMarks > 0 ? (score / totalMarks) * 100 : 0;
         const timeTaken = Math.floor(Math.random() * (120 - 60 + 1)) + 60; // Random time between 60 and 120 minutes
 
