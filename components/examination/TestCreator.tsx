@@ -38,6 +38,7 @@ export default function TestCreator() {
                     setTestData(prev => ({
                         ...prev,
                         questions,
+                        // eslint-disable-next-line
                         totalMarks: questions.reduce((total: number, q: any) => total + (q.marks || 1), 0),
                     }));
                     setHasLoadedQuestions(true);
@@ -60,7 +61,7 @@ export default function TestCreator() {
             duration: value === "" ? "" : parseInt(value, 10)
         }));
     };
-
+// eslint-disable-next-line
     const updateQuestion = (index: number, field: keyof Omit<QuestionForCreateTestData, 'id'>, value: any) => {
         setTestData(prev => {
             const updatedQuestions = prev.questions.map((q, i) =>
@@ -399,7 +400,7 @@ export default function TestCreator() {
                 <Card>
                     <CardContent className="text-center py-12">
                         <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-500">No questions added yet. Select questions from the question bank, add from drafts, or click "Add QuestionForCreateTestData" to get started.</p>
+                        <p className="text-gray-500">No questions added yet. Select questions from the question bank, add from drafts, or click &quot;Add QuestionForCreateTestData&quot; to get started.</p>
                     </CardContent>
                 </Card>
             )}

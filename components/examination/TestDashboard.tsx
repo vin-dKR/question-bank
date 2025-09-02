@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, BarChart3, Users, Clock, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { getTests, TestWithQuestions } from '@/actions/examination/test';
+import { getTests } from '@/actions/examination/test';
 
 interface Test {
   id: string;
@@ -33,7 +33,7 @@ export default function TestDashboard() {
   const fetchTests = async () => {
     try {
       const data = await getTests();
-      setTests(data);
+      setTests(data as Test[]);
     } catch (error) {
       console.error('Error fetching tests:', error);
       toast.error('Failed to load tests');
@@ -123,7 +123,7 @@ export default function TestDashboard() {
                     {test.description}
                   </p>
                 )}
-                
+
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-gray-500" />

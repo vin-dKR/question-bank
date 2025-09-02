@@ -8,12 +8,13 @@ import { ArrowLeft, Download, TrendingUp, Users, Target, Clock } from 'lucide-re
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { getTestAnalytics } from '@/actions/examination/test';
+import { useParams } from 'next/navigation';
 
-interface Props {
-    testId: string;
-}
 
-export default function TestAnalytics({ testId }: Props) {
+export default function TestAnalytics() {
+    const {testId} = useParams()
+    console.log("testId -----------------", testId)
+
     const [analytics, setAnalytics] = useState<TestAnalytics | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -21,7 +22,7 @@ export default function TestAnalytics({ testId }: Props) {
     
     const fetchAnalytics = useCallback(async () => {
         try {
-            const data = await getTestAnalytics(testId);
+            const data = await getTestAnalytics(testId as string);
             setAnalytics(data);
         } catch (error) {
             console.error('Error fetching analytics:', error);
