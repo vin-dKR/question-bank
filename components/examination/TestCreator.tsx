@@ -24,6 +24,8 @@ export default function TestCreator() {
         questions: [],
     });
 
+    console.log("----", testData)
+
     const [bulkMarks, setBulkMarks] = useState<number>(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hasLoadedQuestions, setHasLoadedQuestions] = useState(false);
@@ -61,7 +63,7 @@ export default function TestCreator() {
             duration: value === "" ? "" : parseInt(value, 10)
         }));
     };
-// eslint-disable-next-line
+    // eslint-disable-next-line
     const updateQuestion = (index: number, field: keyof Omit<QuestionForCreateTestData, 'id'>, value: any) => {
         setTestData(prev => {
             const updatedQuestions = prev.questions.map((q, i) =>
@@ -133,15 +135,15 @@ export default function TestCreator() {
         for (let i = 0; i < testData.questions.length; i++) {
             const q = testData.questions[i];
             if (!q.questionText.trim()) {
-                toast.error(`QuestionForCreateTestData ${i + 1}: Please enter question text`);
+                toast.error(`Question ${i + 1}: Please enter question text`);
                 return;
             }
             if (q.options.some(opt => !opt.trim())) {
-                toast.error(`QuestionForCreateTestData ${i + 1}: Please fill all options`);
+                toast.error(`Question ${i + 1}: Please fill all options`);
                 return;
             }
             if (!q.answer) {
-                toast.error(`QuestionForCreateTestData ${i + 1}: Please select correct answer`);
+                toast.error(`Question ${i + 1}: Please select correct answer`);
                 return;
             }
         }
@@ -183,7 +185,7 @@ export default function TestCreator() {
 
             {hasLoadedQuestions && (
                 <Card className="border-green-200 bg-green-50">
-                    <CardContent className="pt-6">
+                    <CardContent className="pt-1">
                         <div className="flex items-center gap-2 text-green-800">
                             <AlertCircle className="w-4 h-4" />
                             <span className="font-medium">Questions loaded from selection</span>
@@ -295,7 +297,7 @@ export default function TestCreator() {
                                     onChange={(e) => setBulkMarks(parseInt(e.target.value) || 1)}
                                     min="1"
                                 />
-                                <Button onClick={applyBulkMarks} size="sm">
+                                <Button onClick={applyBulkMarks} size="sm" className='bg-black text-white'>
                                     Apply to All
                                 </Button>
                             </div>
@@ -309,7 +311,7 @@ export default function TestCreator() {
                     <Card key={index}>
                         <CardHeader>
                             <div className="flex items-center justify-between">
-                                <CardTitle className="text-lg">QuestionForCreateTestData {question.questionNumber}</CardTitle>
+                                <CardTitle className="text-lg">Question {question.questionNumber}</CardTitle>
                                 <div className="flex items-center gap-4">
                                     <div className="flex items-center gap-2">
                                         <label className="text-sm font-medium">Marks:</label>
@@ -334,8 +336,8 @@ export default function TestCreator() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium mb-2">QuestionForCreateTestData Text</label>
-                                <div className="p-3 bg-gray-50 rounded-xl border">
+                                <label className="block text-sm font-medium mb-2">Question Text</label>
+                                <div className="p-3 bg-gray-50 rounded-xl border border-black/40">
                                     {renderMixedLatex(question.questionText)}
                                 </div>
                                 {/* Commented out for read-only mode
@@ -353,14 +355,14 @@ export default function TestCreator() {
                                 <div className="space-y-2">
                                     {question.options.map((option, optionIndex) => (
                                         <div key={optionIndex} className="flex items-center gap-2">
-                                            <div className="flex-1 p-2 bg-gray-50 rounded-xl border">
+                                            <div className="flex-1 p-2 bg-gray-50 rounded-xl border border-black/40">
                                                 {renderMixedLatex(option)}
                                             </div>
                                             <input
                                                 type="radio"
                                                 name={`correct-${index}`}
                                                 value={option}
-                                                checked={question.answer === option}
+                                                checked={question.answer === option || String.fromCharCode(optionIndex + 65) === question.answer}
                                                 onChange={(e) => updateQuestion(index, 'answer', e.target.value)}
                                                 className="w-4 h-4"
                                             />
@@ -400,7 +402,7 @@ export default function TestCreator() {
                 <Card>
                     <CardContent className="text-center py-12">
                         <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-500">No questions added yet. Select questions from the question bank, add from drafts, or click &quot;Add QuestionForCreateTestData&quot; to get started.</p>
+                        <p className="text-gray-500">No questions added yet. Select questions from the question bank, add from drafts, or click &quot;Add Question&quot; to get started.</p>
                     </CardContent>
                 </Card>
             )}

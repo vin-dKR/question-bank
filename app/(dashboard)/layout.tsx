@@ -79,7 +79,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     flex items-center truncate
                     ${isSidebarOpen ? "px-4 justify-start" : "justify-center"}
                     py-2 my-1 rounded-lg
-                    text-gray-700 hover:bg-gray-100 transition
+                    text-gray-700 transition
                     ${isActive ? "bg-gray-100 font-semibold text-gray-900" : ""}
                     ${isSubItem ? "pl-3" : ""}
               `}
@@ -105,8 +105,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className={`
                     flex truncate cursor-pointer
                     ${isSidebarOpen ? "px-4 justify-start" : "justify-center"}
-                    py-2 mx-2 my-1 rounded-lg
-                    ${hasActiveChild ? "bg-gray-200 font-semibold text-gray-900" : ""}
+                    py-2 my-1 rounded-lg 
+                    ${hasActiveChild ? "bg-gray-200 font-semibold text-gray-900" : "hover:bg-gray-100"}
                     ${isSidebarOpen && isExpanded ? "flex-col" : ""}
                 `}>
                 <button
