@@ -171,7 +171,7 @@ export default function TestCreator() {
 
     return (
         <div className="relative max-w-4xl mx-auto p-6 space-y-6">
-            <div className="flex items-center justify-between tracking-2">
+            <div className="flex flex-col sm:flex-col items-start md:items-center justify-between tracking-2">
                 <h1 className="text-3xl font-bold">Create New Test</h1>
                 <Button
                     onClick={handleSubmit}
@@ -261,7 +261,7 @@ export default function TestCreator() {
                 </CardContent>
             </Card>
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
                 <h2 className="text-2xl font-semibold tracking-2">Questions ({testData.questions.length})</h2>
                 <div className="flex items-center gap-2">
                     <Link href="/drafts">

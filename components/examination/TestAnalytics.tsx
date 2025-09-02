@@ -1,25 +1,22 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Download, TrendingUp, Users, Target, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { getTestAnalytics } from '@/actions/examination/test';
 import { useParams } from 'next/navigation';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { useState, useEffect, useCallback } from 'react';
+import { getTestAnalytics } from '@/actions/examination/test';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, Download, TrendingUp, Users, Target, Clock } from 'lucide-react';
 
 
 export default function TestAnalytics() {
-    const {testId} = useParams()
-    console.log("testId -----------------", testId)
+    const { testId } = useParams()
 
     const [analytics, setAnalytics] = useState<TestAnalytics | null>(null);
     const [loading, setLoading] = useState(true);
 
-    console.log("student anal------------", analytics)
-    
     const fetchAnalytics = useCallback(async () => {
         try {
             const data = await getTestAnalytics(testId as string);
@@ -187,10 +184,10 @@ export default function TestAnalytics() {
 
     return (
         <div className="max-w-7xl mx-auto p-6 space-y-6">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                     <Link href="/examination">
-                        <Button variant="outline" size="sm">
+                        <Button size="sm" className='bg-black/10 border border-black/15'>
                             <ArrowLeft className="w-4 h-4 mr-2" />
                             Back to Tests
                         </Button>
@@ -200,7 +197,7 @@ export default function TestAnalytics() {
                         <p className="text-gray-600 mt-1">Performance insights and student results</p>
                     </div>
                 </div>
-                <Button onClick={exportToPDF}>
+                <Button onClick={exportToPDF} className='bg-black text-white'>
                     <Download className="w-4 h-4 mr-2" />
                     Export PDF
                 </Button>
@@ -318,7 +315,7 @@ export default function TestAnalytics() {
                         <CardContent>
                             <div className="space-y-4">
                                 {analytics.questionAnalytics.map((question) => (
-                                    <div key={question.questionId} className="border rounded-lg p-4">
+                                    <div key={question.questionId} className="border border-black/10 rounded-lg p-4">
                                         <div className="flex items-start justify-between mb-2">
                                             <h4 className="font-medium">Q{question.questionNumber}</h4>
                                             <Badge className={getAccuracyColor(question.accuracy)}>
@@ -347,7 +344,7 @@ export default function TestAnalytics() {
                         <CardContent>
                             <div className="space-y-4">
                                 {analytics.studentAnalytics.map((student) => (
-                                    <div key={student.studentId} className="border rounded-lg p-4">
+                                    <div key={student.studentId} className="border border-black/10 rounded-lg p-4">
                                         <div className="flex items-start justify-between mb-2">
                                             <div>
                                                 <h4 className="font-medium">{student.studentName}</h4>

@@ -77,7 +77,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 href={item.href}
                 className={`
                     flex items-center truncate
-                    ${isSidebarOpen ? "px-4 justify-start" : "justify-center"}
+                    ${isSidebarOpen ? "px-4 justify-start" : "justify-center mx-2"}
                     py-2 my-1 rounded-lg
                     text-gray-700 transition
                     ${isActive ? "bg-gray-100 font-semibold text-gray-900" : ""}
@@ -104,7 +104,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 key={group.name}
                 className={`
                     flex truncate cursor-pointer
-                    ${isSidebarOpen ? "px-4 justify-start" : "justify-center"}
+                    ${isSidebarOpen ? "px-4 justify-start" : "justify-center px-0 items-center mx-2"}
                     py-2 my-1 rounded-lg 
                     ${hasActiveChild ? "bg-gray-200 font-semibold text-gray-900" : "hover:bg-gray-100"}
                     ${isSidebarOpen && isExpanded ? "flex-col" : ""}
@@ -113,7 +113,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     onClick={() => toggleGroup(group.name)}
                     className={`
                         flex items-center w-full cursor-pointer
-                        ${isSidebarOpen ? "px-0 justify-between" : ""}
+                        ${isSidebarOpen ? "px-0 justify-between" : "items-center justify-center"}
                     `}
                     title={!isSidebarOpen ? group.name : ""}
                 >
