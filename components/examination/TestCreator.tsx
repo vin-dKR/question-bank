@@ -1,35 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Save, AlertCircle, FolderOpen, BookOpen } from 'lucide-react';
+import Link from 'next/link';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { renderMixedLatex } from '@/lib/render-tex';
-import Link from 'next/link';
 import { createTest } from '@/actions/examination/test';
-
-interface Question {
-    id: string;
-    questionText: string;
-    options: string[];
-    answer: string;
-    marks: number;
-    questionNumber: number;
-}
-
-interface CreateTestData {
-    title: string;
-    description: string;
-    subject: string;
-    duration: number;
-    totalMarks: number;
-    questions: Omit<Question, 'id'>[];
-}
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Plus, Trash2, Save, AlertCircle, FolderOpen, BookOpen } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function TestCreator() {
     const router = useRouter();
@@ -42,9 +24,9 @@ export default function TestCreator() {
         questions: [],
     });
 
+    const [bulkMarks, setBulkMarks] = useState<number>(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hasLoadedQuestions, setHasLoadedQuestions] = useState(false);
-    const [bulkMarks, setBulkMarks] = useState<number>(1);
 
     // Load selected questions from sessionStorage on component mount
     useEffect(() => {
@@ -71,7 +53,15 @@ export default function TestCreator() {
         loadSelectedQuestions();
     }, []);
 
-    const updateQuestion = (index: number, field: keyof Omit<Question, 'id'>, value: any) => {
+    const handleChangeDuration = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setTestData(prev => ({
+            ...prev,
+            duration: value === "" ? "" : parseInt(value, 10)
+        }));
+    };
+
+    const updateQuestion = (index: number, field: keyof Omit<QuestionForCreateTestData, 'id'>, value: any) => {
         setTestData(prev => {
             const updatedQuestions = prev.questions.map((q, i) =>
                 i === index ? { ...q, [field]: value } : q
@@ -142,15 +132,15 @@ export default function TestCreator() {
         for (let i = 0; i < testData.questions.length; i++) {
             const q = testData.questions[i];
             if (!q.questionText.trim()) {
-                toast.error(`Question ${i + 1}: Please enter question text`);
+                toast.error(`QuestionForCreateTestData ${i + 1}: Please enter question text`);
                 return;
             }
             if (q.options.some(opt => !opt.trim())) {
-                toast.error(`Question ${i + 1}: Please fill all options`);
+                toast.error(`QuestionForCreateTestData ${i + 1}: Please fill all options`);
                 return;
             }
             if (!q.answer) {
-                toast.error(`Question ${i + 1}: Please select correct answer`);
+                toast.error(`QuestionForCreateTestData ${i + 1}: Please select correct answer`);
                 return;
             }
         }
@@ -178,9 +168,13 @@ export default function TestCreator() {
 
     return (
         <div className="relative max-w-4xl mx-auto p-6 space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between tracking-2">
                 <h1 className="text-3xl font-bold">Create New Test</h1>
-                <Button onClick={handleSubmit} disabled={isSubmitting}>
+                <Button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    className='bg-gray-200 border border-gray-300 rounded-xl'
+                >
                     <Save className="w-4 h-4 mr-2" />
                     {isSubmitting ? 'Creating...' : 'Create Test'}
                 </Button>
@@ -209,6 +203,7 @@ export default function TestCreator() {
                         <div>
                             <label className="block text-sm font-medium mb-2">Test Title</label>
                             <Input
+                                className='border border-black/30'
                                 value={testData.title}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTestData(prev => ({ ...prev, title: e.target.value }))}
                                 placeholder="Enter test title"
@@ -216,27 +211,27 @@ export default function TestCreator() {
                         </div>
                         <div>
                             <label className="block text-sm font-medium mb-2">Subject</label>
-                            <Select value={testData.subject} onValueChange={(value) => setTestData(prev => ({ ...prev, subject: value }))}>
-                                <SelectTrigger>
+                            <Select
+                                value={testData.subject}
+                                onValueChange={(value) => setTestData(prev => ({ ...prev, subject: value }))}
+                            >
+                                <SelectTrigger className='border-black/30'>
                                     <SelectValue placeholder="Select subject" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className='bg-white border border-black/10'>
                                     <SelectItem value="Mathematics">Mathematics</SelectItem>
                                     <SelectItem value="Physics">Physics</SelectItem>
                                     <SelectItem value="Chemistry">Chemistry</SelectItem>
-                                    <SelectItem value="Biology">Biology</SelectItem>
-                                    <SelectItem value="English">English</SelectItem>
-                                    <SelectItem value="History">History</SelectItem>
-                                    <SelectItem value="Geography">Geography</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <div>
                             <label className="block text-sm font-medium mb-2">Duration (minutes)</label>
                             <Input
+                                className='border border-black/30'
                                 type="number"
                                 value={testData.duration}
-                                onChange={(e) => setTestData(prev => ({ ...prev, duration: parseInt(e.target.value) || 60 }))}
+                                onChange={handleChangeDuration}
                                 min="1"
                             />
                         </div>
@@ -246,7 +241,7 @@ export default function TestCreator() {
                                 type="number"
                                 value={testData.totalMarks}
                                 disabled
-                                className="bg-gray-50"
+                                className='bg-gray-50 border border-black/30'
                             />
                         </div>
                     </div>
@@ -257,25 +252,26 @@ export default function TestCreator() {
                             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setTestData(prev => ({ ...prev, description: e.target.value }))}
                             placeholder="Enter test description"
                             rows={3}
+                            className='border-black/30'
                         />
                     </div>
                 </CardContent>
             </Card>
 
             <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-semibold">Questions ({testData.questions.length})</h2>
+                <h2 className="text-2xl font-semibold tracking-2">Questions ({testData.questions.length})</h2>
                 <div className="flex items-center gap-2">
                     <Link href="/drafts">
-                        <Button variant="outline">
+                        <Button className='bg-yellow-300 border border-yellow-400'>
                             <FolderOpen className="w-4 h-4 mr-2" />
                             Add from Drafts
                         </Button>
                     </Link>
 
                     <Link href={"/questions"}>
-                        <Button variant="outline">
+                        <Button className='bg-green-500 border border-green-600'>
                             <Plus className="w-4 h-4 mr-2" />
-                            Add Question
+                            Add From Questions
                         </Button>
                     </Link>
                 </div>
@@ -292,10 +288,10 @@ export default function TestCreator() {
                             <div className="flex items-center gap-2">
                                 <label className="text-sm font-medium">Set marks for all questions:</label>
                                 <Input
+                                    className='w-20 border border-black/30'
                                     type="number"
                                     value={bulkMarks}
                                     onChange={(e) => setBulkMarks(parseInt(e.target.value) || 1)}
-                                    className="w-20"
                                     min="1"
                                 />
                                 <Button onClick={applyBulkMarks} size="sm">
@@ -312,15 +308,15 @@ export default function TestCreator() {
                     <Card key={index}>
                         <CardHeader>
                             <div className="flex items-center justify-between">
-                                <CardTitle className="text-lg">Question {question.questionNumber}</CardTitle>
+                                <CardTitle className="text-lg">QuestionForCreateTestData {question.questionNumber}</CardTitle>
                                 <div className="flex items-center gap-4">
                                     <div className="flex items-center gap-2">
                                         <label className="text-sm font-medium">Marks:</label>
                                         <Input
+                                            className='w-16 border border-black/30'
                                             type="number"
                                             value={question.marks}
                                             onChange={(e) => updateQuestion(index, 'marks', parseInt(e.target.value) || 1)}
-                                            className="w-16"
                                             min="1"
                                         />
                                     </div>
@@ -337,8 +333,8 @@ export default function TestCreator() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium mb-2">Question Text</label>
-                                <div className="p-3 bg-gray-50 rounded-md border">
+                                <label className="block text-sm font-medium mb-2">QuestionForCreateTestData Text</label>
+                                <div className="p-3 bg-gray-50 rounded-xl border">
                                     {renderMixedLatex(question.questionText)}
                                 </div>
                                 {/* Commented out for read-only mode
@@ -356,7 +352,7 @@ export default function TestCreator() {
                                 <div className="space-y-2">
                                     {question.options.map((option, optionIndex) => (
                                         <div key={optionIndex} className="flex items-center gap-2">
-                                            <div className="flex-1 p-2 bg-gray-50 rounded-md border">
+                                            <div className="flex-1 p-2 bg-gray-50 rounded-xl border">
                                                 {renderMixedLatex(option)}
                                             </div>
                                             <input
@@ -403,7 +399,7 @@ export default function TestCreator() {
                 <Card>
                     <CardContent className="text-center py-12">
                         <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-500">No questions added yet. Select questions from the question bank, add from drafts, or click "Add Question" to get started.</p>
+                        <p className="text-gray-500">No questions added yet. Select questions from the question bank, add from drafts, or click "Add QuestionForCreateTestData" to get started.</p>
                     </CardContent>
                 </Card>
             )}
@@ -415,7 +411,7 @@ export default function TestCreator() {
 
 
 // const addQuestion = () => {
-//     const newQuestion: Omit<Question, 'id'> = {
+//     const newQuestion: Omit<QuestionForCreateTestData, 'id'> = {
 //         questionText: '',
 //         options: ['', '', '', ''],
 //         answer: '',

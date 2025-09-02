@@ -484,20 +484,24 @@ declare global {
         };
     }
 
+    interface QuestionForCreateTestData {
+        id: string;
+        questionText: string;
+        options: string[];
+        answer: string;
+        marks: number;
+        questionNumber: number;
+    }
+
     interface CreateTestData {
         title: string;
-        description?: string; // Optional to match Prisma
+        description: string;
         subject: string;
-        duration: number;
+        duration: number | string
         totalMarks: number;
-        questions: {
-            questionText: string;
-            options: string[];
-            answer: string; // Input as string to match comparison logic
-            marks: number;
-            questionNumber: number;
-        }[];
+        questions: Omit<QuestionForCreateTestData, 'id'>[];
     }
+
 
     interface ExaminationTest {
         id: string;
