@@ -55,6 +55,7 @@ export default function SelectedQuestionsActions() {
 
         // Prepare the selected questions data for the examination creation page
         const questionsData = selectedQuestions.map((q, index) => ({
+            id: q.id,
             questionText: q.question_text,
             options: q.options,
             answer: q.answer || '',

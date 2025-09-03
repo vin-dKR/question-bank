@@ -24,68 +24,67 @@ export const createTest = async (data: CreateTestData): Promise<Partial<Examinat
 
         const test = await prisma.test.create({
             data: {
-                title: data.title,
-                description: data.description,
-                subject: data.subject,
-                duration: typeof data.duration === 'string' ? parseInt(data.duration) : data.duration,
-                totalMarks: data.totalMarks,
-                createdBy: user.id,
-                questions: {
-                    create: await Promise.all(
-                        data.questions.map(async (q) => {
-                            const question = await prisma.question.create({
-                                data: {
-                                    question_text: q.questionText,
-                                    options: q.options,
-                                    answer: q.answer, // Stored as string
-                                    question_number: q.questionNumber,
-                                    isQuestionImage: false,
-                                    isOptionImage: false,
-                                    option_images: [],
-                                },
-                            });
-                            return {
-                                questionId: question.id,
-                                marks: q.marks,
-                                questionNumber: q.questionNumber,
-                            };
-                        })
-                    ),
-                },
+              title: data.title,
+              description: data.description,
+              subject: data.subject,
+              duration: typeof data.duration === 'string' ? parseInt(data.duration) : data.duration,
+              totalMarks: data.totalMarks,
+              createdBy: user.id,
+              questions: {
+                create: data.questions.map(q => ({
+                  question: {
+                    connect: { id: q.id },
+                  },
+                  marks: q.marks,
+                  questionNumber: q.questionNumber,
+                })),
+              },
             },
             include: {
-                questions: {
-                    orderBy: { questionNumber: 'asc' },
-                    include: {
-                        question: {
-                            select: {
-                                id: true,
-                                question_text: true,
-                                options: true,
-                                answer: true,
-                            },
-                        },
+              questions: {
+                orderBy: { questionNumber: 'asc' },
+                include: {
+                  question: {
+                    select: {
+                      id: true,
+                      question_text: true,
+                      options: true,
+                      answer: true,
+                      topic: true,
+                      question_type: true,
+                      section_name: true,
+                      exam_name: true,
+                      subject: true,
+                      chapter: true,
                     },
+                  },
                 },
-                _count: {
-                    select: { responses: true },
-                },
+              },
+              _count: {
+                select: { responses: true },
+              },
             },
-        });
-
-        return {
+          });
+      
+          return {
             ...test,
             description: test.description,
             questions: test.questions.map((tq) => ({
-                id: tq.id,
-                questionText: tq.question.question_text,
-                options: tq.question.options,
-                answer: tq.question.answer || '', // Default to empty string
-                marks: tq.marks,
-                questionNumber: tq.questionNumber,
+              id: tq.id,
+              questionText: tq.question.question_text,
+              options: tq.question.options,
+              answer: tq.question.answer || '',
+              marks: tq.marks,
+              questionNumber: tq.questionNumber,
+              topic: tq.question.topic,
+              questionType: tq.question.question_type,
+              sectionName: tq.question.section_name,
+              examName: tq.question.exam_name,
+              subject: tq.question.subject,
+              chapter: tq.question.chapter,
             })),
             _count: test._count,
-        };
+          };
     } catch (error) {
         console.error('Error creating test:', error);
         throw error instanceof Error ? error : new Error('Failed to create test');
@@ -296,7 +295,7 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
         }
 
         const responses = test.responses;
-        console.log('responses -----------------', responses);
+        // console.log('responses -----------------', responses);
         const totalStudents = responses.length;
 
         if (totalStudents === 0) {
@@ -479,6 +478,7 @@ export const generateStudentAnalyticsPdf = async (
     }
 
     const response = test.responses[0];
+    console.log('TEWST response -----------------', test.questions);
     if (!response) {
         throw new Error('Student response not found');
     }
@@ -496,6 +496,7 @@ export const generateStudentAnalyticsPdf = async (
         topic: string;
     };
     const perQuestion: PerQuestion[] = test.questions.map((q: TestQuestionWithQuestion) => {
+        // console.log('q -----------------', q);
         const ans = response.answers?.find((a: ResponseAnswerSelect) => a.questionId === q.questionId);
         const isCorrect = ans && ans.selectedAnswer === q.question.answer;
         if (isCorrect) {

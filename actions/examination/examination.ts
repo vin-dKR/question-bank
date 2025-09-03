@@ -220,7 +220,7 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
         }
 
         const responses = test.responses;
-        console.log('responses -----------------', responses);
+        // console.log('responses -----------------', responses);
         const totalStudents = responses.length;
 
         if (totalStudents === 0) {

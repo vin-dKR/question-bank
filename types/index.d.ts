@@ -499,7 +499,7 @@ declare global {
         subject: string;
         duration: number | string
         totalMarks: number;
-        questions: Omit<QuestionForCreateTestData, 'id'>[];
+        questions: QuestionForCreateTestData[];
     }
 
 
