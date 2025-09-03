@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect, useCallback } from 'react';
-import { getTestAnalytics } from '@/actions/examination/test';
+import { getTestAnalytics, generateStudentAnalyticsPdf } from '@/actions/examination/test';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Download, TrendingUp, Users, Target, Clock } from 'lucide-react';
 
@@ -55,6 +55,26 @@ export default function TestAnalytics() {
             toast.success('PDF downloaded');
         } catch {
             toast.error('Could not export PDF');
+        }
+    };
+
+    const downloadStudentPdf = async (studentId: string, studentName: string) => {
+        try {
+            if (!testId) return;
+            const { data, filename } = await generateStudentAnalyticsPdf(testId as string, studentId);
+            const blob = new Blob([data], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename || `${studentName}-report.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success('PDF downloaded');
+        } catch (e) {
+            console.error(e);
+            toast.error('Failed to generate student PDF');
         }
     };
 
@@ -352,13 +372,18 @@ export default function TestAnalytics() {
                                                     {student.rollNumber} • {student.className}
                                                 </p>
                                             </div>
-                                            <div className="text-right">
-                                                <div className={`font-bold ${getPerformanceColor(student.percentage)}`}>
-                                                    {student.score}/{student.totalQuestions}
+                                            <div className="text-right flex flex-col items-end gap-2">
+                                                <div>
+                                                    <div className={`font-bold ${getPerformanceColor(student.percentage)} text-right`}>
+                                                        {student.score}/{student.totalQuestions}
+                                                    </div>
+                                                    <div className="text-sm text-gray-600 text-right">
+                                                        {student.percentage.toFixed(1)}%
+                                                    </div>
                                                 </div>
-                                                <div className="text-sm text-gray-600">
-                                                    {student.percentage.toFixed(1)}%
-                                                </div>
+                                                <Button size="sm" className="bg-black text-white" onClick={() => downloadStudentPdf(student.studentId, student.studentName)}>
+                                                    <Download className="w-3 h-3 mr-1" /> PDF
+                                                </Button>
                                             </div>
                                         </div>
                                         <div className="text-xs text-gray-500">
