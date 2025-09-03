@@ -560,15 +560,46 @@ export const generateStudentAnalyticsPdf = async (
     `;
 
     const pieTotal = pieData.correct + pieData.incorrect + pieData.unanswered || 1;
-    const pieAngles = [pieData.correct, pieData.incorrect, pieData.unanswered].map((v) => (v / pieTotal) * 360);
-    const [a1, a2] = [pieAngles[0], pieAngles[0] + pieAngles[1]];
-    const svgPie = `
+    const correct = pieData.correct;
+    const incorrectOrUnanswered = pieData.incorrect + pieData.unanswered;
+    const correctRatio = correct / pieTotal;
+
+    const polarToCartesian = (cx: number, cy: number, r: number, angleDeg: number) => {
+        const rad = (Math.PI / 180) * (angleDeg - 90);
+        return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+    };
+    const describeSlice = (cx: number, cy: number, r: number, startAngle: number, endAngle: number) => {
+        const start = polarToCartesian(cx, cy, r, endAngle);
+        const end = polarToCartesian(cx, cy, r, startAngle);
+        const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
+        return `M ${cx} ${cy} L ${end.x} ${end.y} A ${r} ${r} 0 ${largeArcFlag} 1 ${start.x} ${start.y} Z`;
+    };
+
+    let svgPie: string;
+    if (correctRatio <= 0) {
+        // 0% correct => full red
+        svgPie = `
         <svg viewBox="0 0 32 32" width="160" height="160">
-          <circle r="16" cx="16" cy="16" fill="#e5e7eb"/>
-          <circle r="16" cx="16" cy="16" fill="transparent" stroke="#22c55e" stroke-width="32" stroke-dasharray="${(pieAngles[0] / 360) * 100} ${100 - (pieAngles[0] / 360) * 100}" transform="rotate(-90 16 16)"/>
-          <circle r="16" cx="16" cy="16" fill="transparent" stroke="#ef4444" stroke-width="32" stroke-dasharray="${(pieAngles[1] / 360) * 100} ${100 - (pieAngles[1] / 360) * 100}" stroke-dashoffset="-${(pieAngles[0] / 360) * 100}" transform="rotate(-90 16 16)"/>
-          <circle r="16" cx="16" cy="16" fill="transparent" stroke="#f59e0b" stroke-width="32" stroke-dasharray="${(pieAngles[2] / 360) * 100} ${100 - (pieAngles[2] / 360) * 100}" stroke-dashoffset="-${((pieAngles[0] + pieAngles[1]) / 360) * 100}" transform="rotate(-90 16 16)"/>
+          <circle r="16" cx="16" cy="16" fill="#ef4444"/>
         </svg>`;
+    } else if (correctRatio >= 1) {
+        // 100% correct => full green
+        svgPie = `
+        <svg viewBox="0 0 32 32" width="160" height="160">
+          <circle r="16" cx="16" cy="16" fill="#22c55e"/>
+        </svg>`;
+    } else {
+        const correctAngle = correctRatio * 360;
+        const redStart = correctAngle;
+        const redEnd = 360;
+        const greenPath = describeSlice(16, 16, 16, 0, correctAngle);
+        const redPath = describeSlice(16, 16, 16, redStart, redEnd);
+        svgPie = `
+        <svg viewBox="0 0 32 32" width="160" height="160">
+          <path d="${greenPath}" fill="#22c55e" />
+          <path d="${redPath}" fill="#ef4444" />
+        </svg>`;
+    }
 
     const topicBars = topics
         .map((t) => `<div>
