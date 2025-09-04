@@ -45,7 +45,22 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
     const [optionsLoading, setOptionsLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [totalCount, setTotalCount] = useState(0);
-    const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(new Set());
+    const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(() => {
+        if (typeof window !== 'undefined') {
+            try {
+                const stored = localStorage.getItem('qb:selectedQuestionIds');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed)) {
+                        return new Set(parsed.filter((v: unknown): v is string => typeof v === 'string'));
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to parse stored selectedQuestionIds', e);
+            }
+        }
+        return new Set();
+    });
 
     const { role, isTeacher } = useUserRole();
     const { subject } = useUserSubject();
@@ -307,6 +322,34 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
     useEffect(() => {
         fetchFilterOptions();
     }, [fetchFilterOptions]);
+
+    // Persist selected questions across navigation using localStorage
+    // Keep selection in sync if changed in another tab
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const onStorage = (e: StorageEvent) => {
+            if (e.key === 'qb:selectedQuestionIds' && e.newValue) {
+                try {
+                    const parsed = JSON.parse(e.newValue);
+                    if (Array.isArray(parsed)) {
+                        setSelectedQuestionIds(new Set(parsed.filter((v: unknown): v is string => typeof v === 'string')));
+                    }
+                } catch {}
+            }
+        };
+        window.addEventListener('storage', onStorage);
+        return () => window.removeEventListener('storage', onStorage);
+    }, []);
+
+    useEffect(() => {
+        try {
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('qb:selectedQuestionIds', JSON.stringify(Array.from(selectedQuestionIds)));
+            }
+        } catch (e) {
+            console.error('Failed to save selectedQuestionIds to storage', e);
+        }
+    }, [selectedQuestionIds]);
 
     return (
         <QuestionBankContext.Provider value={value}>
