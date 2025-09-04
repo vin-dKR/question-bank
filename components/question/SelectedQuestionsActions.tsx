@@ -9,9 +9,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function SelectedQuestionsActions() {
-    const { selectedQuestionIds, questions, toggleQuestionSelection, getAllSelectedQuestions } = useQuestionBankContext();
+    const { selectedQuestionIds, questions, toggleQuestionSelection, getAllSelectedQuestions, showOnlySelected, setShowOnlySelected } = useQuestionBankContext();
     const { institution, options } = usePDFGeneratorContext();
     const [allSelectedQuestions, setAllSelectedQuestions] = useState<Question[]>([]);
+    const [isLoadingSelected, setIsLoadingSelected] = useState(false);
     const router = useRouter();
 
     const selectedCount = selectedQuestionIds.size;
@@ -19,11 +20,19 @@ export default function SelectedQuestionsActions() {
     useEffect(() => {
         const fetchAllSelected = async () => {
             if (selectedQuestionIds.size > 0) {
-                const allQuestions = await getAllSelectedQuestions();
-                setAllSelectedQuestions(allQuestions);
-                // console.log('All selected questions fetched:', allQuestions);
+                setIsLoadingSelected(true);
+                try {
+                    const allQuestions = await getAllSelectedQuestions();
+                    setAllSelectedQuestions(allQuestions);
+                    // console.log('All selected questions fetched:', allQuestions);
+                } catch (error) {
+                    console.error('Failed to fetch selected questions:', error);
+                } finally {
+                    setIsLoadingSelected(false);
+                }
             } else {
                 setAllSelectedQuestions([]);
+                setIsLoadingSelected(false);
             }
         };
 
@@ -45,6 +54,8 @@ export default function SelectedQuestionsActions() {
         selectedQuestionIds.forEach(id => {
             toggleQuestionSelection(id);
         });
+        // Reset to show all questions when unselecting all
+        setShowOnlySelected(false);
     };
 
     const createTestFromSelected = () => {
@@ -77,13 +88,35 @@ export default function SelectedQuestionsActions() {
                 <span className="text-md font-medium text-slate-700">
                     {selectedCount} Question{selectedCount !== 1 ? 's' : ''} Selected
                 </span>
+                {selectedCount > 0 ? (
+                    <button
+                        onClick={() => setShowOnlySelected(!showOnlySelected)}
+                        className="text-sm text-blue-600 hover:text-blue-800 underline mt-1 text-left"
+                    >
+                        {showOnlySelected ? 'Show All Questions' : 'See All Selected Questions'}
+                    </button>
+                ) : (
+                    <button
+                        onClick={() => setShowOnlySelected(false)}
+                        className="text-sm text-blue-600 hover:text-blue-800 underline mt-1 text-left"
+                    >
+                        Show All Questions
+                    </button>
+                )}
+                {isLoadingSelected && showOnlySelected && (
+                    <div className="flex items-center gap-2 mt-1">
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+                        <span className="text-xs text-blue-600">Loading selected questions...</span>
+                    </div>
+                )}
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
                 <Button
                     size="sm"
                     onClick={selectAllQuestions}
-                    className="bg-indigo-600 text-white hover:bg-indigo-700 transition text-md border border-black/20"
+                    disabled={showOnlySelected}
+                    className="bg-indigo-600 text-white hover:bg-indigo-700 transition text-md border border-black/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     Select All
                 </Button>

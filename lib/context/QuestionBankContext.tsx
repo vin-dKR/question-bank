@@ -26,6 +26,8 @@ interface QuestionBankContextType {
     toggleQuestionSelection: (id: string) => void;
     getAllSelectedQuestions: () => Promise<Question[]>;
     updateQuestion: (updatedQuestion: Question) => void;
+    showOnlySelected: boolean;
+    setShowOnlySelected: (show: boolean) => void;
 }
 
 const QuestionBankContext = createContext<QuestionBankContextType | undefined>(undefined);
@@ -45,6 +47,17 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
     const [optionsLoading, setOptionsLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [totalCount, setTotalCount] = useState(0);
+    const [showOnlySelected, setShowOnlySelected] = useState(() => {
+        if (typeof window !== 'undefined') {
+            try {
+                const stored = localStorage.getItem('qb:showOnlySelected');
+                return stored ? JSON.parse(stored) : false;
+            } catch (e) {
+                console.error('Failed to parse stored showOnlySelected', e);
+            }
+        }
+        return false;
+    });
     const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(() => {
         if (typeof window !== 'undefined') {
             try {
@@ -295,7 +308,9 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
         selectedQuestionIds,
         toggleQuestionSelection,
         getAllSelectedQuestions,
-        updateQuestion
+        updateQuestion,
+        showOnlySelected,
+        setShowOnlySelected
     }), [
         questions,
         loading,
@@ -313,6 +328,8 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
         selectedQuestionIds,
         toggleQuestionSelection,
         getAllSelectedQuestions,
+        showOnlySelected,
+        setShowOnlySelected
     ]);
 
     useEffect(() => {
@@ -336,6 +353,12 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
                     }
                 } catch {}
             }
+            if (e.key === 'qb:showOnlySelected' && e.newValue) {
+                try {
+                    const parsed = JSON.parse(e.newValue);
+                    setShowOnlySelected(Boolean(parsed));
+                } catch {}
+            }
         };
         window.addEventListener('storage', onStorage);
         return () => window.removeEventListener('storage', onStorage);
@@ -350,6 +373,16 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
             console.error('Failed to save selectedQuestionIds to storage', e);
         }
     }, [selectedQuestionIds]);
+
+    useEffect(() => {
+        try {
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('qb:showOnlySelected', JSON.stringify(showOnlySelected));
+            }
+        } catch (e) {
+            console.error('Failed to save showOnlySelected to storage', e);
+        }
+    }, [showOnlySelected]);
 
     return (
         <QuestionBankContext.Provider value={value}>

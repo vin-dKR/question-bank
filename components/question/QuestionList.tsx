@@ -145,6 +145,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
         }
     };
 
+
     return (
         <div
             className={`p-3 sm:p-4 bg-white rounded-xl shadow-md border transition-all duration-200 ${isSelected ? 'border-amber-500 bg-amber-50' : 'border-slate-200 hover:shadow-md'}`}
@@ -359,12 +360,40 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
 QuestionItem.displayName = 'QuestionItem';
 
 const QuestionList = memo(() => {
-    const { questions, loading, error, selectedQuestionIds, toggleQuestionSelection, toggleQuestionFlag } =
-        useQuestionBankContext();
+    const { 
+        error, 
+        loading, 
+        questions, 
+        showOnlySelected, 
+        toggleQuestionFlag, 
+        setShowOnlySelected,
+        selectedQuestionIds, 
+        toggleQuestionSelection, 
+    } = useQuestionBankContext();
+
+        
+        // Filter questions based on showOnlySelected state
+        const filteredQuestions = showOnlySelected 
+          ? questions.filter(question => selectedQuestionIds.has(question.id))
+          : questions;
+        console.log('filteredQuestions', filteredQuestions);
+        console.log('selectedQuestionIds', selectedQuestionIds);
+        console.log('questions', questions);
+
+
 
     return (
         <div className="min-h-screen bg-gray-100">
             <div className="w-full mx-auto">
+                {showOnlySelected && (
+                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-blue-800 text-sm">
+                            Showing {filteredQuestions.length} of {questions.length} questions (selected only)
+                        </p>
+                        <Button className='text-blue-600 hover:text-blue-800 underline mt-1 text-left' onClick={() => setShowOnlySelected(false)}>Show All Questions</Button>
+                    </div>
+                )}
+                
                 {loading && (
                     <div className="text-center py-6">
                         <p className="text-slate-600">Loading questions...</p>
@@ -377,15 +406,20 @@ const QuestionList = memo(() => {
                     </div>
                 )}
 
-                {!loading && questions.length === 0 && (
+                {!loading && filteredQuestions.length === 0 && (
                     <div className="text-center py-6">
-                        <p className="text-slate-600">No questions found matching your criteria.</p>
+                        <p className="text-slate-600">
+                            {showOnlySelected 
+                                ? 'No selected questions found. Select some questions first.' 
+                                : 'No questions found matching your criteria.'
+                            }
+                        </p>
                     </div>
                 )}
 
-                {!loading && questions.length > 0 && (
+                {!loading && filteredQuestions.length > 0 && (
                     <div className="space-y-4">
-                        {questions.map((question) => (
+                        {filteredQuestions.map((question) => (
                             <QuestionItem
                                 key={question.id}
                                 question={question}
