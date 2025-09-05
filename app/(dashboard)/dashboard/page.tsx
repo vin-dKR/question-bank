@@ -54,7 +54,7 @@ export default function Dashboard() {
                 <p className="text-gray-600 mt-2">Add new question or category</p>
                 <Button className="mt-4 bg-black text-white">Add Question</Button>
             </div>
-            <div className="md:col-span-2 lg:col-span-3 bg-white p-6 rounded-lg shadow-md mt-6">
+            <div className="md:col-span-1 bg-white p-6 rounded-lg shadow-md mt-6">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-medium text-gray-700">Recent Papers</h3>
                     <Link href="/history">

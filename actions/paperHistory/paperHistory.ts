@@ -51,7 +51,6 @@ export const savePaperHistory = async (data: PaperHistoryData): Promise<{ succes
 
         return { success: true, id: paperHistory.id };
     } catch (error) {
-        console.error('Error saving paper history:', error);
         return {
             success: false,
             error: error instanceof Error ? error.message : 'Failed to save paper history'

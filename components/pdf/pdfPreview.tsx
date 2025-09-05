@@ -131,6 +131,11 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
         if (previewUrl) {
             // Save to paper history
             try {
+                const link = document.createElement('a');
+                link.href = previewUrl;
+                link.download = `${formData.institution}_${formData.exam}.pdf`
+                link.click();
+
                 const paperHistoryData = {
                     isContinue: saveToHistory || false,
                     title: formData.exam || 'Untitled Paper',
@@ -154,18 +159,13 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
                 if (success) {
                     toast.success('Paper history saved successfully');
                 } else {
-                    toast.error('Failed to save paper history');
+                    toast.error('Paper history did not save');
                 }
+
 
             } catch (error) {
                 console.error('Failed to save paper history:', error);
-                // Don't block download if history save fails
             }
-
-            const link = document.createElement('a');
-            link.href = previewUrl;
-            link.download = `${formData.institution}_${formData.exam}.pdf`
-            link.click();
         }
     };
 
