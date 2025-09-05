@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useQuestionsData } from "@/hooks/dashboard/questionsData";
-import { getPaperHistories, type PaperHistoryWithQuestions } from "@/actions/paperHistory/paperHistory";
+import { getPaperHistories } from "@/actions/paperHistory/paperHistory";
 import { FileText, Calendar, Eye, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
@@ -64,7 +64,7 @@ export default function Dashboard() {
                         </Button>
                     </Link>
                 </div>
-                
+
                 {loadingPapers ? (
                     <div className="flex items-center justify-center py-8">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>

@@ -3,57 +3,14 @@
 import prisma from '@/lib/prisma';
 import { auth } from '@clerk/nextjs/server';
 
-export interface PaperHistoryData {
-    title: string;
-    description?: string;
-    institution?: string;
-    subject?: string;
-    marks?: string;
-    time?: string;
-    exam?: string;
-    logo?: string;
-    standard?: string;
-    session?: string;
-    questions: {
-        id: string;
-        marks: number;
-        questionNumber: number;
-    }[];
-}
-
-export interface PaperHistoryWithQuestions {
-    id: string;
-    title: string;
-    description: string | null;
-    institution: string | null;
-    subject: string | null;
-    marks: string | null;
-    time: string | null;
-    exam: string | null;
-    logo: string | null;
-    standard: string | null;
-    session: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-    questions: {
-        id: string;
-        questionId: string;
-        marks: number;
-        questionNumber: number;
-        question: {
-            id: string;
-            question_text: string;
-            options: string[];
-            answer: string | null;
-            topic: string | null;
-            exam_name: string | null;
-            subject: string | null;
-            chapter: string | null;
-        };
-    }[];
-}
-
 export const savePaperHistory = async (data: PaperHistoryData): Promise<{ success: boolean; id?: string; error?: string }> => {
+    if (!data.isContinue) {
+        return {
+            success: false,
+            error: "Not been pushed to Db"
+        }
+    }
+
     try {
         const { userId: clerkUserId } = await auth();
         if (!clerkUserId) {
@@ -95,9 +52,9 @@ export const savePaperHistory = async (data: PaperHistoryData): Promise<{ succes
         return { success: true, id: paperHistory.id };
     } catch (error) {
         console.error('Error saving paper history:', error);
-        return { 
-            success: false, 
-            error: error instanceof Error ? error.message : 'Failed to save paper history' 
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Failed to save paper history'
         };
     }
 };
@@ -167,7 +124,7 @@ export const getPaperHistoryById = async (id: string): Promise<PaperHistoryWithQ
         }
 
         const paperHistory = await prisma.paperHistory.findFirst({
-            where: { 
+            where: {
                 id,
                 userId: user.id,
             },
@@ -225,9 +182,9 @@ export const deletePaperHistory = async (id: string): Promise<{ success: boolean
         return { success: true };
     } catch (error) {
         console.error('Error deleting paper history:', error);
-        return { 
-            success: false, 
-            error: error instanceof Error ? error.message : 'Failed to delete paper history' 
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Failed to delete paper history'
         };
     }
 };

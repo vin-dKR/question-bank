@@ -1,12 +1,12 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import PDFGenerator from '../pdf/pdfPreview';
+import { Button } from '@/components/ui/button';
+import { DialogCloseButton } from '../DialogCloseButton';
 import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
 import { usePDFGeneratorContext } from '@/lib/context/PDFGeneratorContext';
-import PDFGenerator from '../pdf/pdfPreview';
-import { DialogCloseButton } from '../DialogCloseButton';
-import { Button } from '@/components/ui/button';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function SelectedQuestionsActions() {
     const router = useRouter();
@@ -143,6 +143,7 @@ export default function SelectedQuestionsActions() {
                     Create Test
                 </Button>
                 <PDFGenerator
+                    saveToHistory={true}
                     institution={institution}
                     selectedQuestions={selectedQuestions}
                     options={options}

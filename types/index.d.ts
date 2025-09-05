@@ -91,6 +91,7 @@ declare global {
     }
 
     interface PDFConfig {
+        saveToHistory?: boolean;
         institution: string
         institutionAddress?: string
         selectedQuestions: Question[];
@@ -593,4 +594,68 @@ declare global {
             chapter: string | null;
         };
     }
+
+
+    interface PaperHistoryData {
+        isContinue: boolean;
+        title: string;
+        description?: string;
+        institution?: string;
+        subject?: string;
+        marks?: string;
+        time?: string;
+        exam?: string;
+        logo?: string;
+        standard?: string;
+        session?: string;
+        questions: {
+            id: string;
+            marks: number;
+            questionNumber: number;
+        }[];
+    }
+
+    interface PaperHistoryWithQuestions {
+        id: string;
+        title: string;
+        description: string | null;
+        institution: string | null;
+        subject: string | null;
+        marks: string | null;
+        time: string | null;
+        exam: string | null;
+        logo: string | null;
+        standard: string | null;
+        session: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        questions: {
+            id: string;
+            questionId: string;
+            marks: number;
+            questionNumber: number;
+            question: {
+                id: string;
+                question_text: string;
+                options: string[];
+                answer: string | null;
+                topic: string | null;
+                exam_name: string | null;
+                subject: string | null;
+                chapter: string | null;
+            };
+        }[];
+    }
+
+    interface PaperHistoryViewerProps {
+        paperHistory: PaperHistoryWithQuestions;
+        onBack: () => void;
+    }
+
+    interface QuestionCardProps {
+        phq: PaperHistoryWithQuestions['questions'][number];
+        isSelected: boolean;
+        toggleSelection: (id: string) => void;
+    }
+
 }

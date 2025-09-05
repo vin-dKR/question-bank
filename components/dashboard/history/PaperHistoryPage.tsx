@@ -5,14 +5,13 @@ import { useState, useEffect } from 'react';
 import {
     getPaperHistories,
     deletePaperHistory,
-    type PaperHistoryWithQuestions
 } from '@/actions/paperHistory/paperHistory';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import PaperHistoryViewer from './PaperHistoryViewer';
+import AppProviders from '@/components/providers/AppProviders';
 import { Trash2, Eye, Calendar, FileText, Users, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import AppProviders from '@/components/providers/AppProviders';
 
 const PaperHistory = () => {
     const [loading, setLoading] = useState(true);

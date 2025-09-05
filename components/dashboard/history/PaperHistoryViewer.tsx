@@ -3,17 +3,11 @@
 import { useState, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { renderMixedLatex } from '@/lib/render-tex';
 import PDFGenerator from '@/components/pdf/pdfPreview';
 import { usePDFGeneratorContext } from '@/lib/context/PDFGeneratorContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Calendar, FileText, Users, Clock, Building } from 'lucide-react';
-import { type PaperHistoryWithQuestions } from '@/actions/paperHistory/paperHistory';
-
-interface PaperHistoryViewerProps {
-    paperHistory: PaperHistoryWithQuestions;
-    onBack: () => void;
-}
+import QuestionCard from './QuestionCard';
 
 const PaperHistoryViewer = ({ paperHistory, onBack }: PaperHistoryViewerProps) => {
     const { institution, options } = usePDFGeneratorContext();
@@ -35,6 +29,7 @@ const PaperHistoryViewer = ({ paperHistory, onBack }: PaperHistoryViewerProps) =
         }));
     }, [paperHistory.questions]);
 
+    // Derive selected questions from selectedQuestionIds
     const selectedQuestions = useMemo(() => {
         return questions.filter(q => selectedQuestionIds.has(q.id));
     }, [questions, selectedQuestionIds]);
@@ -49,16 +44,25 @@ const PaperHistoryViewer = ({ paperHistory, onBack }: PaperHistoryViewerProps) =
         }).format(new Date(date));
     };
 
-    // Create a custom SelectedQuestionsActions component that works with local state
+    // Toggle selection of a question
+    const toggleSelection = (id: string) => {
+        setSelectedQuestionIds(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) {
+                newSet.delete(id);
+            } else {
+                newSet.add(id);
+            }
+            return newSet;
+        });
+    };
+
+    // Create a custom SelectedQuestionsActions component
     const LocalSelectedQuestionsActions = () => {
         const selectedCount = selectedQuestionIds.size;
 
         const selectAllQuestions = () => {
-            questions.forEach(q => {
-                if (!selectedQuestionIds.has(q.id)) {
-                    setSelectedQuestionIds(prev => new Set([...prev, q.id]));
-                }
-            });
+            setSelectedQuestionIds(new Set(questions.map(q => q.id)));
         };
 
         const unselectAllQuestions = () => {
@@ -71,21 +75,16 @@ const PaperHistoryViewer = ({ paperHistory, onBack }: PaperHistoryViewerProps) =
                 return;
             }
 
-            // Prepare the selected questions data for the examination creation page
-            const selectedQuestions = questions.filter(q => selectedQuestionIds.has(q.id));
             const questionsData = selectedQuestions.map((q, index) => ({
                 id: q.id,
                 questionText: q.question_text,
                 options: q.options,
                 answer: q.answer || '',
-                marks: 1, // Default marks, can be changed in the creation page
+                marks: 1,
                 questionNumber: index + 1,
             }));
 
-            // Store the data in sessionStorage for the examination creation page
             sessionStorage.setItem('selectedQuestionsForTest', JSON.stringify(questionsData));
-
-            // Navigate to the examination creation page
             window.location.href = '/examination/create';
         };
 
@@ -96,10 +95,7 @@ const PaperHistoryViewer = ({ paperHistory, onBack }: PaperHistoryViewerProps) =
                         {selectedCount} Question{selectedCount !== 1 ? 's' : ''} Selected
                     </span>
                 </div>
-                <div>
-
-                </div>
-
+                <div></div>
                 <div className="flex flex-wrap items-center gap-2">
                     <Button
                         size="sm"
@@ -123,8 +119,8 @@ const PaperHistoryViewer = ({ paperHistory, onBack }: PaperHistoryViewerProps) =
                     >
                         Create Test
                     </Button>
-
                     <PDFGenerator
+                        saveToHistory={false}
                         institution={institution}
                         selectedQuestions={selectedQuestions}
                         options={options}
@@ -215,107 +211,27 @@ const PaperHistoryViewer = ({ paperHistory, onBack }: PaperHistoryViewerProps) =
                     )}
 
                     <div className="flex flex-wrap gap-2 mt-4">
-                        {paperHistory.standard && (
-                            <Badge variant="secondary">{paperHistory.standard}</Badge>
-                        )}
-                        {paperHistory.session && (
-                            <Badge variant="outline">{paperHistory.session}</Badge>
-                        )}
+                        {paperHistory.standard && <Badge variant="secondary">{paperHistory.standard}</Badge>}
+                        {paperHistory.session && <Badge variant="outline">{paperHistory.session}</Badge>}
                         <Badge variant="outline">{paperHistory.questions.length} Questions</Badge>
                     </div>
                 </CardContent>
             </Card>
 
             {/* Selected Questions Actions */}
-            {selectedQuestionIds.size > 0 && (
-                <LocalSelectedQuestionsActions />
-            )}
+            {selectedQuestionIds.size > 0 && <LocalSelectedQuestionsActions />}
 
             {/* Questions List */}
             <div className="space-y-4">
                 <h2 className="text-2xl font-bold">Questions ({paperHistory.questions.length})</h2>
-
-                {paperHistory.questions.map((phq, _index) => {
-                    const question = phq.question;
-                    const questionText = useMemo(() => renderMixedLatex(question.question_text), [question.question_text]);
-                    const answerText = useMemo(() => renderMixedLatex(question.answer || ''), [question.answer]);
-                    const renderedOptions = useMemo(() => question.options.map((option) => renderMixedLatex(option)), [question.options]);
-                    const isSelected = selectedQuestionIds.has(question.id);
-
-                    return (
-                        <Card key={phq.id} className={`transition-all duration-200 ${isSelected ? 'border-amber-500 bg-amber-50' : 'border-slate-200'}`}>
-                            <CardContent className="p-4">
-                                <div className="flex items-start gap-3">
-                                    <input
-                                        type="checkbox"
-                                        checked={isSelected}
-                                        onChange={() => {
-                                            setSelectedQuestionIds(prev => {
-                                                const newSet = new Set(prev);
-                                                if (newSet.has(question.id)) {
-                                                    newSet.delete(question.id);
-                                                } else {
-                                                    newSet.add(question.id);
-                                                }
-                                                return newSet;
-                                            });
-                                        }}
-                                        className="mt-1 h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
-                                    />
-
-                                    <div className="flex-1">
-                                        <div className="flex flex-wrap gap-2 mb-3">
-                                            <Badge variant="outline">Q{phq.questionNumber}</Badge>
-                                            {question.topic && (
-                                                <Badge variant="secondary">{question.topic}</Badge>
-                                            )}
-                                            {question.exam_name && (
-                                                <Badge variant="outline">{question.exam_name}</Badge>
-                                            )}
-                                            {question.subject && (
-                                                <Badge variant="outline">{question.subject}</Badge>
-                                            )}
-                                            {question.chapter && (
-                                                <Badge variant="outline">{question.chapter}</Badge>
-                                            )}
-                                        </div>
-
-                                        <h3 className="text-lg font-semibold mb-3">
-                                            {questionText}
-                                        </h3>
-
-                                        <div className="space-y-2 mb-3">
-                                            {renderedOptions.map((option, optIndex) => {
-                                                const optionLetter = String.fromCharCode(65 + optIndex);
-                                                const answers = (question.answer || '')
-                                                    .toString()
-                                                    .split(',')
-                                                    .map((a) => a.trim().toUpperCase());
-
-                                                const isCorrect = answers.includes(optionLetter) || answers.includes(String(optIndex + 1));
-
-                                                return (
-                                                    <div
-                                                        key={optIndex}
-                                                        className={`pl-3 border-l-4 py-1 rounded-r-md ${isCorrect ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200'}`}
-                                                    >
-                                                        <span className="text-sm">{option}</span>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-
-                                        {question.answer && (
-                                            <div className="text-sm text-green-600">
-                                                <span className="font-medium">Answer:</span> {answerText}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    );
-                })}
+                {paperHistory.questions.map(phq => (
+                    <QuestionCard
+                        key={phq.id}
+                        phq={phq}
+                        isSelected={selectedQuestionIds.has(phq.question.id)}
+                        toggleSelection={toggleSelection}
+                    />
+                ))}
             </div>
         </div>
     );

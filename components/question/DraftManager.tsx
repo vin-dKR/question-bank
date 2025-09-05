@@ -172,7 +172,7 @@ const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
 
     // Cleanup on unmount
 
-     
+
     const handleFolderClick = (draft: LocalFetchDraft) => {
         // Convert the draft to LocalFetchDraft format if needed
         const localDraft: LocalFetchDraft = {
@@ -298,7 +298,7 @@ const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
 
         // Store the data in sessionStorage for the examination creation page
         sessionStorage.setItem('selectedQuestionsForTest', JSON.stringify(questionsData));
-        
+
         // Navigate to the examination creation page
         router.push('/examination/create');
     };
@@ -443,18 +443,19 @@ const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
                                 </Button>
                             )}
 
-<Button
-                    size="sm"
-                    onClick={createTestFromSelected}
-                    disabled={selectedCount === 0}
-                    className="bg-green-600 text-white hover:bg-green-700 transition text-md border border-black/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    Create Test
-                </Button>
+                            <Button
+                                size="sm"
+                                onClick={createTestFromSelected}
+                                disabled={selectedCount === 0}
+                                className="bg-green-600 text-white hover:bg-green-700 transition text-md border border-black/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Create Test
+                            </Button>
 
                             {selectedFolder.questions.length > 0 && (
                                 <div className="flex gap-1">
                                     <PDFGenerator
+                                        saveToHistory={false}
                                         institution={institution}
                                         selectedQuestions={selectedFolder.questions}
                                         options={options}

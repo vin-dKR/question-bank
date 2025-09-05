@@ -10,22 +10,22 @@ import {
     DialogTrigger,
     DialogClose,
 } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import PDFDetailsForm from './PDFDetailsForm';
 import { Button } from '@/components/ui/button';
 import { preRenderHtml } from '@/lib/preRenderHtml';
 import { htmlTopdfBlob } from '@/actions/htmlToPdf/htmlToPdf';
-import { pdfConfigToAnswerKeyHTML, pdfConfigToHTML } from '@/lib/questionToHtmlUtils';
 import { savePaperHistory } from '@/actions/paperHistory/paperHistory';
-import { toast } from 'sonner';
+import { pdfConfigToAnswerKeyHTML, pdfConfigToHTML } from '@/lib/questionToHtmlUtils';
 
 
-export default function PDFGenerator({ institution, selectedQuestions, options, className }: PDFConfig) {
-    const [isGenerating, setIsGenerating] = useState<"question" | "answer" | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+export default function PDFGenerator({ institution, selectedQuestions, options, className, saveToHistory }: PDFConfig) {
     const [isMobile, setIsMobile] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [step, setStep] = useState<'form' | 'preview'>('form');
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [isGenerating, setIsGenerating] = useState<"question" | "answer" | null>(null);
     const [formData, setFormData] = useState<TemplateFormData>({
         templateName: '',
         institution: institution || '',
@@ -132,6 +132,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
             // Save to paper history
             try {
                 const paperHistoryData = {
+                    isContinue: saveToHistory || false,
                     title: formData.exam || 'Untitled Paper',
                     description: `${formData.subject || 'General'} - ${formData.standard || 'All Levels'}`,
                     institution: formData.institution,
