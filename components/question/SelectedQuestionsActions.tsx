@@ -9,11 +9,18 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function SelectedQuestionsActions() {
-    const { selectedQuestionIds, questions, toggleQuestionSelection, getAllSelectedQuestions, showOnlySelected, setShowOnlySelected } = useQuestionBankContext();
-    const { institution, options } = usePDFGeneratorContext();
-    const [allSelectedQuestions, setAllSelectedQuestions] = useState<Question[]>([]);
-    const [isLoadingSelected, setIsLoadingSelected] = useState(false);
     const router = useRouter();
+    const { institution, options } = usePDFGeneratorContext();
+    const [isLoadingSelected, setIsLoadingSelected] = useState(false);
+    const [allSelectedQuestions, setAllSelectedQuestions] = useState<Question[]>([]);
+    const {
+        questions,
+        showOnlySelected,
+        setShowOnlySelected,
+        selectedQuestionIds,
+        toggleQuestionSelection,
+        getAllSelectedQuestions,
+    } = useQuestionBankContext();
 
     const selectedCount = selectedQuestionIds.size;
     // Fetch all selected questions when selection changes
@@ -76,7 +83,7 @@ export default function SelectedQuestionsActions() {
 
         // Store the data in sessionStorage for the examination creation page
         sessionStorage.setItem('selectedQuestionsForTest', JSON.stringify(questionsData));
-        
+
         // Navigate to the examination creation page
         router.push('/examination/create');
     };

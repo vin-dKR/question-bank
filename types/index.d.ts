@@ -558,4 +558,39 @@ declare global {
         questionAnalytics: QuestionAnalytics[];
         studentAnalytics: StudentAnalytics[];
     }
+
+    // Paper History Types
+    interface PaperHistory {
+        id: string;
+        title: string;
+        description: string | null;
+        institution: string | null;
+        subject: string | null;
+        marks: string | null;
+        time: string | null;
+        exam: string | null;
+        logo: string | null;
+        standard: string | null;
+        session: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        questions: PaperHistoryQuestion[];
+    }
+
+    interface PaperHistoryQuestion {
+        id: string;
+        questionId: string;
+        marks: number;
+        questionNumber: number;
+        question: {
+            id: string;
+            question_text: string;
+            options: string[];
+            answer: string | null;
+            topic: string | null;
+            exam_name: string | null;
+            subject: string | null;
+            chapter: string | null;
+        };
+    }
 }

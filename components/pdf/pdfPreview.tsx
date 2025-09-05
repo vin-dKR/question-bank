@@ -16,6 +16,8 @@ import { Button } from '@/components/ui/button';
 import { preRenderHtml } from '@/lib/preRenderHtml';
 import { htmlTopdfBlob } from '@/actions/htmlToPdf/htmlToPdf';
 import { pdfConfigToAnswerKeyHTML, pdfConfigToHTML } from '@/lib/questionToHtmlUtils';
+import { savePaperHistory } from '@/actions/paperHistory/paperHistory';
+import { toast } from 'sonner';
 
 
 export default function PDFGenerator({ institution, selectedQuestions, options, className }: PDFConfig) {
@@ -125,8 +127,40 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
         setIsGenerating(null);
     };
 
-    const handleDownload = () => {
+    const handleDownload = async () => {
         if (previewUrl) {
+            // Save to paper history
+            try {
+                const paperHistoryData = {
+                    title: formData.exam || 'Untitled Paper',
+                    description: `${formData.subject || 'General'} - ${formData.standard || 'All Levels'}`,
+                    institution: formData.institution,
+                    subject: formData.subject,
+                    marks: formData.marks,
+                    time: formData.time,
+                    exam: formData.exam,
+                    logo: formData.logo,
+                    standard: formData.standard,
+                    session: formData.session,
+                    questions: selectedQuestions.map((q, index) => ({
+                        id: q.id,
+                        marks: 1, // Default marks
+                        questionNumber: index + 1,
+                    })),
+                };
+
+                const { success } = await savePaperHistory(paperHistoryData);
+                if (success) {
+                    toast.success('Paper history saved successfully');
+                } else {
+                    toast.error('Failed to save paper history');
+                }
+
+            } catch (error) {
+                console.error('Failed to save paper history:', error);
+                // Don't block download if history save fails
+            }
+
             const link = document.createElement('a');
             link.href = previewUrl;
             link.download = `${formData.institution}_${formData.exam}.pdf`
