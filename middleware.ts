@@ -6,11 +6,12 @@ const allowedOrigins = [
     'http://localhost:3001',
     'http://localhost:5173',
     'https://question-editor.vercel.app',
-    'https://multi-crop.vercel.app'
+    'https://multi-crop.vercel.app',
+    'https://interstellar-moon-397051.postman.co'
 ]
 
 const isOnboardingRoute = (req: NextRequest) => req.nextUrl.pathname.startsWith('/onboarding');
-const isPublicRoute = createRouteMatcher(['/auth/signin', '/auth/signup', '/auth/sso-callback', "/"])
+const isPublicRoute = createRouteMatcher(['/auth/signin', '/auth/signup', '/auth/sso-callback', "/", "/api"])
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
     // console.log("c-midddleare", req.url)
