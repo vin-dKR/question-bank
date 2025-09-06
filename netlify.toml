@@ -1,14 +1,18 @@
 [[headers]]
-  for = "/api/questions"  # This specifies the path(s) to apply these headers to.
+  for = "/api/omr/*"  # Apply to all /api/omr/* endpoints, including /api/omr/fetchTestbyId
   [headers.values]
-    Access-Control-Allow-Origin = "https://question-editor.vercel.app" # Your allowed frontend origin
-    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"  # Allowed HTTP methods
-    Access-Control-Allow-Headers = "Content-Type, Authorization"      # Allowed request headers
-    Access-Control-Max-Age = "86400"                                # Cache preflight response for 24 hours
+    Access-Control-Allow-Origin = "https://omr-checker.vercel.app,https://question-editor.vercel.app,https://multi-crop.vercel.app,http://localhost:3000,http://localhost:3001,http://localhost:5173"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
+    Access-Control-Allow-Credentials = "true"
+    Access-Control-Max-Age = "86400"
 
-# You can add other Netlify configurations below this headers section,
-# such as build settings, redirects, etc.
-# Example:
-# [build]
-#   command = "bun run build"
-#   publish = "dist"
+[[headers]]
+  for = "/api/questions"  # Keep existing rule for /api/questions
+  [headers.values]
+    Access-Control-Allow-Origin = "https://question-editor.vercel.app,https://omr-checker.vercel.app,https://multi-crop.vercel.app,http://localhost:3000,http://localhost:3001,http://localhost:5173"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
+    Access-Control-Allow-Credentials = "true"
+    Access-Control-Max-Age = "86400"
+

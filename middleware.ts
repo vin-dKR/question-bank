@@ -19,6 +19,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     if (req.nextUrl.pathname.startsWith('/api/')) {
         return handleCors(req)
     }
+
     const { userId, sessionClaims, redirectToSignIn } = await auth()
 
     // For users visiting /onboarding, don't try to redirect
