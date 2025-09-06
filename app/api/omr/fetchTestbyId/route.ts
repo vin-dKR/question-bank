@@ -27,11 +27,16 @@ export async function POST(req: Request) {
             }
         })
 
+        const headers = {
+            "Access-Control-Allow-Origin": "https://omr-checker.vercel.app", // Or specify your origin: "http://localhost:5173"
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        };
         return NextResponse.json({
             message: 'Student responses saved successfully',
             status: 200,
             data: testObject
-        });
+        }, { headers });
         // eslint-disable-next-line
     } catch (error: any) {
         console.error('Error saving student responses:', error);

@@ -89,11 +89,16 @@ export async function POST(req: Request) {
 
         console.log("studentResponse ----------------------------------------", studentRes)
 
+        const headers = {
+            "Access-Control-Allow-Origin": "https://omr-checker.vercel.app", // Or specify your origin: "http://localhost:5173"
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        };
         return NextResponse.json({
             message: 'Verified answers saved successfully',
             status: 200,
             data: studentRes,
-        });
+        }, { headers });
 
     } catch (error) {
         console.error('Error saving verified answers:', error);
