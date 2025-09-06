@@ -27,6 +27,7 @@ export async function GET(req: Request) {
         });
 
         return NextResponse.json({ students }, { status: 200 });
+        // eslint-disable-next-line
     } catch (error: any) {
         console.error('Error fetching student suggestions:', error);
         return NextResponse.json({ error: 'Failed to fetch student suggestions', details: error.message }, { status: 500 });

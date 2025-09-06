@@ -32,6 +32,7 @@ export async function POST(req: Request) {
             status: 200,
             data: testObject
         });
+        // eslint-disable-next-line
     } catch (error: any) {
         console.error('Error saving student responses:', error);
         return NextResponse.json({ error: 'Failed to save student responses', details: error.message }, { status: 500 });
