@@ -7,7 +7,7 @@ const allowedOrigins = [
     'http://localhost:5173',
     'https://question-editor.vercel.app',
     'https://multi-crop.vercel.app',
-    'https://interstellar-moon-397051.postman.co'
+    'https://omr-checker.vercel.app'
 ]
 
 const isOnboardingRoute = (req: NextRequest) => req.nextUrl.pathname.startsWith('/onboarding');
