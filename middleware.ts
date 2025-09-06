@@ -86,6 +86,7 @@ function handleCors(request: NextRequest) {
     response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Cache-Control, Accept, Accept-Language, Content-Language, Range, Expires')
     response.headers.set('Access-Control-Allow-Credentials', 'true')
     console.log("response -----------------", response)
+    console.log(response.headers.get('Access-Control-Allow-Origin'))
 
     return response
 }
