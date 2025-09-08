@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, BarChart3, Users, Clock, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { getTests } from '@/actions/examination/test';
+import { getTests } from '@/actions/examination/test/crudTest';
 
 interface Test {
     id: string;

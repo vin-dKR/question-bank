@@ -418,7 +418,7 @@ declare global {
     }
 
 
-    // Examination / Tests ----------------------------------------------------
+    // Examination / Tests & Analtics ----------------------------------------------------
 
     interface QuestionForTestQuestion {
         id: string;
@@ -528,27 +528,6 @@ declare global {
         };
     }
 
-    interface QuestionAnalytics {
-        questionId: string;
-        questionNumber: number; // Matches global types.d.ts
-        questionText: string;
-        correctAnswers: number;
-        totalAttempts: number;
-        accuracy: number;
-    }
-
-    interface StudentAnalytics {
-        studentId: string;
-        studentName: string;
-        rollNumber: string;
-        className: string;
-        score: number;
-        percentage: number;
-        correctAnswers: number;
-        totalQuestions: number;
-        timeTaken: number | null; // Matches Prisma Int?
-    }
-
     interface TestAnalytics {
         testId: string;
         totalStudents: number;
@@ -560,7 +539,87 @@ declare global {
         studentAnalytics: StudentAnalytics[];
     }
 
-    // Paper History Types
+    interface QuestionAnalytics {
+        questionId: string;
+        questionNumber: number;
+        questionText: string;
+        correctAnswers: number;
+        totalAttempts: number;
+        accuracy: number;
+        chapter?: string | null;
+        topic?: string | null;
+    }
+
+    interface StudentAnalytics {
+        studentId: string;
+        studentName: string;
+        rollNumber: string;
+        className: string;
+        score: number;
+        percentage: number;
+        correctAnswers: number;
+        totalQuestions: number;
+        timeTaken: number | null;
+        chapterAnalytics: ChapterAnalytics[];
+        topicAnalytics: TopicAnalytics[];
+    }
+
+    interface ChapterAnalytics {
+        chapter: string;
+        totalQuestions: number;
+        correctAnswers: number;
+        accuracy: number;
+    }
+
+    interface TopicAnalytics {
+        topic: string;
+        totalQuestions: number;
+        correctAnswers: number;
+        accuracy: number;
+    }
+
+    interface TestQuestionWithQuestion {
+        id: string;
+        questionId: string;
+        marks: number;
+        questionNumber: number;
+        question: {
+            id: string;
+            question_text: string;
+            options: string[];
+            answer: string | null;
+            topic: string | null;
+        };
+    }
+    interface ResponseAnswerSelect { questionId: string; selectedAnswer: string }
+    interface StudentMinimal { id: string; name: string; rollNumber: string; className: string }
+    interface StudentResponseWithAnswers {
+        studentId: string;
+        timeTaken: number | null;
+        student: StudentMinimal;
+        answers: ResponseAnswerSelect[];
+    }
+    interface TestWithRelations {
+        id: string;
+        title: string;
+        totalMarks: number;
+        questions: TestQuestionWithQuestion[];
+        responses: StudentResponseWithAnswers[];
+    }
+
+    interface PerQuestion {
+        questionNumber: number;
+        questionText: string;
+        selectedAnswer: string | null;
+        correctAnswer: string | null;
+        isCorrect: boolean;
+        marks: number;
+        timeSpent: number | null;
+        topic: string;
+    };
+
+
+    // Paper History Types ----------------------------------------------------
     interface PaperHistory {
         id: string;
         title: string;

@@ -47,14 +47,6 @@ function handleCors(request: NextRequest) {
     const origin = request.headers.get('origin')
     const isAllowedOrigin = origin && allowedOrigins.includes(origin)
 
-    console.log('CORS Debug:', {
-        origin,
-        isAllowedOrigin,
-        allowedOrigins,
-        method: request.method,
-        url: request.url
-    })
-
     // Handle preflight requests (OPTIONS)
     if (request.method === 'OPTIONS') {
         const response = new NextResponse(null, { status: 200 })
@@ -71,12 +63,8 @@ function handleCors(request: NextRequest) {
         return response
     }
 
-    console.log("------------------------PASSED OPTIONS")
-
     // For other requests, let them proceed and add CORS headers in the response
     const response = NextResponse.next()
-
-    console.log("-----------------------GO AHEAD")
 
     if (isAllowedOrigin) {
         response.headers.set('Access-Control-Allow-Origin', origin)
@@ -85,8 +73,6 @@ function handleCors(request: NextRequest) {
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
     response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Cache-Control, Accept, Accept-Language, Content-Language, Range, Expires')
     response.headers.set('Access-Control-Allow-Credentials', 'true')
-    console.log("response -----------------", response)
-    console.log(response.headers.get('Access-Control-Allow-Origin'))
 
     return response
 }

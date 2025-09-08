@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { renderMixedLatex } from '@/lib/render-tex';
-import { createTest } from '@/actions/examination/test';
+import { createTest } from '@/actions/examination/test/crudTest';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Trash2, Save, AlertCircle, FolderOpen, BookOpen } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -24,7 +24,7 @@ export default function TestCreator() {
         questions: [],
     });
 
-    console.log("----", testData)
+    // console.log("----", testData)
 
     const [bulkMarks, setBulkMarks] = useState<number>(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
