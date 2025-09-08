@@ -271,7 +271,6 @@ model Student {
   name        String
   rollNumber  String
   className   String
-  email       String?          @unique
   responses   StudentResponse[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
