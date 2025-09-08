@@ -24,67 +24,67 @@ export const createTest = async (data: CreateTestData): Promise<Partial<Examinat
 
         const test = await prisma.test.create({
             data: {
-              title: data.title,
-              description: data.description,
-              subject: data.subject,
-              duration: typeof data.duration === 'string' ? parseInt(data.duration) : data.duration,
-              totalMarks: data.totalMarks,
-              createdBy: user.id,
-              questions: {
-                create: data.questions.map(q => ({
-                  question: {
-                    connect: { id: q.id },
-                  },
-                  marks: q.marks,
-                  questionNumber: q.questionNumber,
-                })),
-              },
+                title: data.title,
+                description: data.description,
+                subject: data.subject,
+                duration: typeof data.duration === 'string' ? parseInt(data.duration) : data.duration,
+                totalMarks: data.totalMarks,
+                createdBy: user.id,
+                questions: {
+                    create: data.questions.map(q => ({
+                        question: {
+                            connect: { id: q.id },
+                        },
+                        marks: q.marks,
+                        questionNumber: q.questionNumber,
+                    })),
+                },
             },
             include: {
-              questions: {
-                orderBy: { questionNumber: 'asc' },
-                include: {
-                  question: {
-                    select: {
-                      id: true,
-                      question_text: true,
-                      options: true,
-                      answer: true,
-                      topic: true,
-                      question_type: true,
-                      section_name: true,
-                      exam_name: true,
-                      subject: true,
-                      chapter: true,
+                questions: {
+                    orderBy: { questionNumber: 'asc' },
+                    include: {
+                        question: {
+                            select: {
+                                id: true,
+                                question_text: true,
+                                options: true,
+                                answer: true,
+                                topic: true,
+                                question_type: true,
+                                section_name: true,
+                                exam_name: true,
+                                subject: true,
+                                chapter: true,
+                            },
+                        },
                     },
-                  },
                 },
-              },
-              _count: {
-                select: { responses: true },
-              },
+                _count: {
+                    select: { responses: true },
+                },
             },
-          });
-      
-          return {
+        });
+
+        return {
             ...test,
             description: test.description,
             questions: test.questions.map((tq) => ({
-              id: tq.id,
-              questionText: tq.question.question_text,
-              options: tq.question.options,
-              answer: tq.question.answer || '',
-              marks: tq.marks,
-              questionNumber: tq.questionNumber,
-              topic: tq.question.topic,
-              questionType: tq.question.question_type,
-              sectionName: tq.question.section_name,
-              examName: tq.question.exam_name,
-              subject: tq.question.subject,
-              chapter: tq.question.chapter,
+                id: tq.id,
+                questionText: tq.question.question_text,
+                options: tq.question.options,
+                answer: tq.question.answer || '',
+                marks: tq.marks,
+                questionNumber: tq.questionNumber,
+                topic: tq.question.topic,
+                questionType: tq.question.question_type,
+                sectionName: tq.question.section_name,
+                examName: tq.question.exam_name,
+                subject: tq.question.subject,
+                chapter: tq.question.chapter,
             })),
             _count: test._count,
-          };
+        };
     } catch (error) {
         console.error('Error creating test:', error);
         throw error instanceof Error ? error : new Error('Failed to create test');
@@ -616,7 +616,6 @@ export const generateStudentAnalyticsPdf = async (
     const detailRows = perQuestion
         .map((q: PerQuestion) => `<tr>
             <td>Q${q.questionNumber}</td>
-            <td>${q.questionText}</td>
             <td>${q.selectedAnswer ?? '-'}</td>
             <td>${q.correctAnswer ?? '-'}</td>
             <td>${q.isCorrect ? '✔' : q.selectedAnswer === null ? '—' : '✖'}</td>
@@ -656,19 +655,37 @@ export const generateStudentAnalyticsPdf = async (
 
         <h2>Detailed Question Analysis</h2>
         <table>
-            <thead><tr><th>Question</th><th>Text</th><th>Chosen</th><th>Correct</th><th>Status</th><th>Marks</th><th>Topic</th><th>Time</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>Question</th>
+                    <th>Chosen</th>
+                    <th>Correct</th>
+                    <th>Status</th>
+                    <th>Marks</th>
+                    <th>Topic</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+
             <tbody>${detailRows}</tbody>
         </table>
 
         <h2>Topic/Skill-Wise Performance</h2>
         <table>
-            <thead><tr><th>Topic</th><th>Total</th><th>Correct</th><th>Accuracy %</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>Topic</th>
+                    <th>Total</th>
+                    <th>Correct</th>
+                    <th>Accuracy %</th>
+                </tr>
+            </thead>
             <tbody>
                 ${topics
-                    .map(
-                        (t) => `<tr><td>${t.topic}</td><td>${t.total}</td><td>${t.correct}</td><td>${t.accuracy.toFixed(1)}%</td></tr>`
-                    )
-                    .join('')}
+            .map(
+                (t) => `<tr><td>${t.topic}</td><td>${t.total}</td><td>${t.correct}</td><td>${t.accuracy.toFixed(1)}%</td></tr>`
+            )
+            .join('')}
             </tbody>
         </table>
 
