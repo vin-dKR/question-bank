@@ -1,9 +1,11 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { getQuestions, getQuestionCount, toggleFlag, getFilterOptions, searchQuestions, getQuestionsByIds } from "@/actions/question/questionBank";
+'use client';
+
+import { toast } from 'sonner';
 import { useUserRole } from '@/hooks/auth/useUserRole';
 import { useUserSubject } from '@/hooks/auth/useUserSubject';
 import { updateQuestionInDB } from '@/actions/question/questionUpdate';
-import { toast } from 'sonner';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { getQuestions, getQuestionCount, toggleFlag, getFilterOptions, searchQuestions, getQuestionsByIds } from '@/actions/question/questionBank';
 
 interface QuestionBankContextType {
     questions: Question[];
@@ -34,7 +36,7 @@ const QuestionBankContext = createContext<QuestionBankContextType | undefined>(u
 
 export const QuestionBankProvider = ({ children }: { children: React.ReactNode }) => {
     const [questions, setQuestions] = useState<Question[]>([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true); // Start with loading: true
     const [error, setError] = useState<string | null>(null);
     const [filters, setFilters] = useState<Filters>({});
     const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 20 });
@@ -78,9 +80,7 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
     const { role, isTeacher } = useUserRole();
     const { subject } = useUserSubject();
 
-    const updateQuestion = async (
-        updatedQuestion: Pick<Question, 'id' | 'question_text' | 'options'>,
-    ) => {
+    const updateQuestion = async (updatedQuestion: Pick<Question, 'id' | 'question_text' | 'options'>) => {
         try {
             setQuestions((prev) =>
                 prev.map((q) =>
@@ -113,7 +113,7 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
 
         try {
             if (searchQuery && searchQuery.trim().length >= 2) {
-                const searchRes = await searchQuestions(searchQuery, (role || "student") as UserRole, isTeacher ? subject || undefined : undefined);
+                const searchRes = await searchQuestions(searchQuery, (role || 'student') as UserRole, isTeacher ? subject || undefined : undefined);
                 if (searchRes && searchRes.success) {
                     setQuestions(searchRes.data as Question[]);
                     setTotalCount(searchRes.data.length);
@@ -133,45 +133,25 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
                     skip: (pagination.page - 1) * pagination.limit,
                 };
 
-                // console.log('Fetching questions with filters:', queryFilters);
-                // console.log('User role:', role, 'isTeacher:', isTeacher, 'userSubject:', subject);
-
                 const [questionsRes, countRes] = await Promise.all([
-                    getQuestions(queryFilters, (role || "student") as UserRole, isTeacher ? subject || undefined : undefined),
-                    getQuestionCount({
-                        exam_name: filters.exam_name,
-                        subject: isTeacher ? subject || undefined : filters.subject,
-                        chapter: filters.chapter,
-                        section_name: filters.section_name,
-                        flagged: filters.flagged,
-                    }, (role || "student") as UserRole, isTeacher ? subject || undefined : undefined),
+                    getQuestions(queryFilters, (role || 'student') as UserRole, isTeacher ? subject || undefined : undefined),
+                    getQuestionCount(
+                        {
+                            exam_name: filters.exam_name,
+                            subject: isTeacher ? subject || undefined : filters.subject,
+                            chapter: filters.chapter,
+                            section_name: filters.section_name,
+                            flagged: filters.flagged,
+                        },
+                        (role || 'student') as UserRole,
+                        isTeacher ? subject || undefined : undefined
+                    ),
                 ]);
 
                 if (questionsRes && questionsRes.success && countRes && countRes.success) {
-                    console.log('Questions fetched successfully:', questionsRes.data.length);
-                    // console.log('Total count:', countRes.data);
                     setQuestions(questionsRes.data as Question[]);
                     setTotalCount(countRes.data);
                 } else {
-                    console.error('Failed to fetch questions:', {
-                        questionsRes: {
-                            success: questionsRes?.success,
-                            error: questionsRes?.error,
-                            dataLength: questionsRes?.data?.length
-                        },
-                        countRes: {
-                            success: countRes?.success,
-                            error: countRes?.error,
-                            data: countRes?.data
-                        },
-                        filters,
-                        pagination,
-                        searchQuery,
-                        role,
-                        isTeacher,
-                        subject
-                    });
-
                     const errorMessage = questionsRes?.error || countRes?.error || 'Failed to fetch data';
                     setError(errorMessage);
                     setQuestions([]);
@@ -193,12 +173,11 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
         try {
             const response = await getFilterOptions(
                 { exam_name: filters.exam_name, subject: isTeacher ? subject || undefined : filters.subject, chapter: filters.chapter },
-                (role || "student") as UserRole,
+                (role || 'student') as UserRole,
                 isTeacher ? subject || undefined : undefined
             );
             if (response && response.success) {
                 setFilterOptions(response.data);
-                console.log('Filter options fetched successfully:', response.data);
             } else {
                 setFilterOptions({
                     exams: [],
@@ -225,17 +204,13 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
         if (!question) return;
 
         const originalFlagged = question.flagged;
-        setQuestions((prev) =>
-            prev.map((q) => (q.id === id ? { ...q, flagged: !q.flagged } : q))
-        );
+        setQuestions((prev) => prev.map((q) => (q.id === id ? { ...q, flagged: !q.flagged } : q)));
 
         try {
-            const response = await toggleFlag(id, (role || "student") as UserRole);
+            const response = await toggleFlag(id, (role || 'student') as UserRole);
             if (!response || !response.success) throw new Error(response?.error);
         } catch (error) {
-            setQuestions((prev) =>
-                prev.map((q) => (q.id === id ? { ...q, flagged: originalFlagged } : q))
-            );
+            setQuestions((prev) => prev.map((q) => (q.id === id ? { ...q, flagged: originalFlagged } : q)));
             setError(`Failed to toggle flag: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }, [questions, role]);
@@ -258,12 +233,7 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
         }
 
         try {
-            const response = await getQuestionsByIds(
-                Array.from(selectedQuestionIds),
-                (role || "student") as UserRole,
-                isTeacher ? subject || undefined : undefined
-            );
-
+            const response = await getQuestionsByIds(Array.from(selectedQuestionIds), (role || 'student') as UserRole, isTeacher ? subject || undefined : undefined);
             if (response && response.success) {
                 return response.data as Question[];
             } else {
@@ -277,60 +247,65 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
     }, [selectedQuestionIds, role, isTeacher, subject]);
 
     const loadMore = useCallback(() => {
-        setPagination(prev => ({ ...prev, limit: prev.limit + 20 }));
+        setPagination((prev) => ({ ...prev, limit: prev.limit + 20 }));
     }, []);
 
     const refreshQuestions = useCallback(() => {
+        setPagination({ page: 1, limit: 20 }); // Reset pagination
         fetchQuestions();
     }, [fetchQuestions]);
 
-    // Memoize hasMore to prevent unnecessary re-renders
     const hasMore = useMemo(() => questions.length < totalCount, [questions.length, totalCount]);
 
-    // Memoize the context value to prevent unnecessary re-renders
-    const value = useMemo<QuestionBankContextType>(() => ({
-        questions,
-        loading,
-        error,
-        filters,
-        setFilters,
-        pagination,
-        setPagination,
-        filterOptions,
-        optionsLoading,
-        searchQuery,
-        setSearchQuery,
-        totalCount,
-        hasMore,
-        loadMore,
-        refreshQuestions,
-        toggleQuestionFlag,
-        selectedQuestionIds,
-        toggleQuestionSelection,
-        getAllSelectedQuestions,
-        updateQuestion,
-        showOnlySelected,
-        setShowOnlySelected
-    }), [
-        questions,
-        loading,
-        error,
-        filters,
-        pagination,
-        filterOptions,
-        optionsLoading,
-        searchQuery,
-        totalCount,
-        hasMore,
-        loadMore,
-        refreshQuestions,
-        toggleQuestionFlag,
-        selectedQuestionIds,
-        toggleQuestionSelection,
-        getAllSelectedQuestions,
-        showOnlySelected,
-        setShowOnlySelected
-    ]);
+    // Validate selectedQuestionIds against available questions
+    useEffect(() => {
+        if (questions.length > 0 && selectedQuestionIds.size > 0) {
+            const validIds = new Set(questions.map((q) => q.id));
+            const invalidIds = Array.from(selectedQuestionIds).filter((id) => !validIds.has(id));
+            if (invalidIds.length > 0) {
+                setSelectedQuestionIds((prev) => {
+                    const newSet = new Set(prev);
+                    invalidIds.forEach((id) => newSet.delete(id));
+                    return newSet;
+                });
+            }
+        }
+    }, [questions, selectedQuestionIds]);
+
+    // Reset showOnlySelected if no questions are selected
+    useEffect(() => {
+        if (selectedQuestionIds.size === 0 && showOnlySelected) {
+            setShowOnlySelected(false);
+        }
+    }, [selectedQuestionIds, showOnlySelected]);
+
+    const value = useMemo<QuestionBankContextType>(
+        () => ({
+            questions,
+            loading,
+            error,
+            filters,
+            setFilters,
+            pagination,
+            setPagination,
+            filterOptions,
+            optionsLoading,
+            searchQuery,
+            setSearchQuery,
+            totalCount,
+            hasMore,
+            loadMore,
+            refreshQuestions,
+            toggleQuestionFlag,
+            selectedQuestionIds,
+            toggleQuestionSelection,
+            getAllSelectedQuestions,
+            updateQuestion,
+            showOnlySelected,
+            setShowOnlySelected,
+        }),
+        [questions, loading, error, filters, pagination, filterOptions, optionsLoading, searchQuery, totalCount, hasMore, loadMore, refreshQuestions, toggleQuestionFlag, selectedQuestionIds, toggleQuestionSelection, getAllSelectedQuestions, showOnlySelected]
+    );
 
     useEffect(() => {
         fetchQuestions();
@@ -340,8 +315,6 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
         fetchFilterOptions();
     }, [fetchFilterOptions]);
 
-    // Persist selected questions across navigation using localStorage
-    // Keep selection in sync if changed in another tab
     useEffect(() => {
         if (typeof window === 'undefined') return;
         const onStorage = (e: StorageEvent) => {
@@ -351,13 +324,17 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
                     if (Array.isArray(parsed)) {
                         setSelectedQuestionIds(new Set(parsed.filter((v: unknown): v is string => typeof v === 'string')));
                     }
-                } catch {}
+                } catch {
+                    console.error('Failed to parse storage event for selectedQuestionIds');
+                }
             }
             if (e.key === 'qb:showOnlySelected' && e.newValue) {
                 try {
                     const parsed = JSON.parse(e.newValue);
                     setShowOnlySelected(Boolean(parsed));
-                } catch {}
+                } catch {
+                    console.error('Failed to parse storage event for showOnlySelected');
+                }
             }
         };
         window.addEventListener('storage', onStorage);
@@ -384,11 +361,7 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
         }
     }, [showOnlySelected]);
 
-    return (
-        <QuestionBankContext.Provider value={value}>
-            {children}
-        </QuestionBankContext.Provider>
-    );
+    return <QuestionBankContext.Provider value={value}>{children}</QuestionBankContext.Provider>;
 };
 
 export const useQuestionBankContext = () => {
@@ -397,4 +370,4 @@ export const useQuestionBankContext = () => {
         throw new Error('useQuestionBankContext must be used within a QuestionBankProvider');
     }
     return context;
-};
+}

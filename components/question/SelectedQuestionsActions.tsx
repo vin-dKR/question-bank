@@ -8,7 +8,11 @@ import { DialogCloseButton } from '../DialogCloseButton';
 import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
 import { usePDFGeneratorContext } from '@/lib/context/PDFGeneratorContext';
 
-export default function SelectedQuestionsActions() {
+interface SelectedQuestionsActionsProps {
+    showPrintBtn: boolean;
+}
+
+export default function SelectedQuestionsActions({ showPrintBtn }: SelectedQuestionsActionsProps) {
     const router = useRouter();
     const { institution, options } = usePDFGeneratorContext();
     const [isLoadingSelected, setIsLoadingSelected] = useState(false);
@@ -23,7 +27,7 @@ export default function SelectedQuestionsActions() {
     } = useQuestionBankContext();
 
     const selectedCount = selectedQuestionIds.size;
-    // Fetch all selected questions when selection changes
+
     useEffect(() => {
         const fetchAllSelected = async () => {
             if (selectedQuestionIds.size > 0) {
@@ -31,7 +35,6 @@ export default function SelectedQuestionsActions() {
                 try {
                     const allQuestions = await getAllSelectedQuestions();
                     setAllSelectedQuestions(allQuestions);
-                    // console.log('All selected questions fetched:', allQuestions);
                 } catch (error) {
                     console.error('Failed to fetch selected questions:', error);
                 } finally {
@@ -46,11 +49,10 @@ export default function SelectedQuestionsActions() {
         fetchAllSelected();
     }, [selectedQuestionIds, getAllSelectedQuestions]);
 
-    // Use all selected questions for PDF generation
     const selectedQuestions = allSelectedQuestions;
 
     const selectAllQuestions = () => {
-        questions.forEach(q => {
+        questions.forEach((q) => {
             if (!selectedQuestionIds.has(q.id)) {
                 toggleQuestionSelection(q.id);
             }
@@ -58,10 +60,9 @@ export default function SelectedQuestionsActions() {
     };
 
     const unselectAllQuestions = () => {
-        selectedQuestionIds.forEach(id => {
+        selectedQuestionIds.forEach((id) => {
             toggleQuestionSelection(id);
         });
-        // Reset to show all questions when unselecting all
         setShowOnlySelected(false);
     };
 
@@ -71,26 +72,21 @@ export default function SelectedQuestionsActions() {
             return;
         }
 
-        // Prepare the selected questions data for the examination creation page
         const questionsData = selectedQuestions.map((q, index) => ({
             id: q.id,
             questionText: q.question_text,
             options: q.options,
             answer: q.answer || '',
-            marks: 1, // Default marks, can be changed in the creation page
+            marks: 1,
             questionNumber: index + 1,
         }));
 
-        // Store the data in sessionStorage for the examination creation page
         sessionStorage.setItem('selectedQuestionsForTest', JSON.stringify(questionsData));
-
-        // Navigate to the examination creation page
         router.push('/examination/create');
     };
 
     return (
-        <div className="flex flex-wrap justify-between items-center gap-3 bg-white p-3 md:p-4 rounded-xl shadow-md border border-slate-200">
-
+        <div className="sticky top-0 z-10 flex flex-wrap justify-between items-center gap-3 bg-white p-3 md:p-4 rounded-xl shadow-md border border-slate-200">
             <div className="flex flex-col">
                 <span className="text-md font-medium text-slate-700">
                     {selectedCount} Question{selectedCount !== 1 ? 's' : ''} Selected
@@ -142,15 +138,16 @@ export default function SelectedQuestionsActions() {
                 >
                     Create Test
                 </Button>
-                <PDFGenerator
-                    saveToHistory={true}
-                    institution={institution}
-                    selectedQuestions={selectedQuestions}
-                    options={options}
-                />
+                {showPrintBtn && (
+                    <PDFGenerator
+                        saveToHistory={true}
+                        institution={institution}
+                        selectedQuestions={selectedQuestions}
+                        options={options}
+                    />
+                )}
                 <DialogCloseButton selectedQuestions={selectedQuestions} />
             </div>
-
         </div>
-    )
+    );
 }
