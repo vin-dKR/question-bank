@@ -16,6 +16,7 @@ import { sidebarItems } from "@/constant/sidebar/sidebar";
 import { LogOut, Menu, ChevronDown, ChevronRight } from "lucide-react";
 import { CollaborationProvider } from "@/lib/context/CollaborationContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import AppProviders from "@/components/providers/AppProviders";
 
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -224,7 +225,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                 {/* Content Area */}
                 <main className="flex-1 overflow-y-auto p-6">
-                    <CollaborationProvider>{children}</CollaborationProvider>
+                    <AppProviders>
+                        <CollaborationProvider>
+                            {children}
+                        </CollaborationProvider>
+                    </AppProviders>
                 </main>
             </div>
         </div>

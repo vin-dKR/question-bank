@@ -94,7 +94,7 @@ declare global {
         saveToHistory?: boolean;
         institution: string
         institutionAddress?: string
-        selectedQuestions: Question[];
+        selectedQuestions: Question[] | QuestionForCreateTestData[]
         options: PDFGenerationOptions;
         className?: string;
         marks?: string;
@@ -487,7 +487,7 @@ declare global {
 
     interface QuestionForCreateTestData {
         id: string;
-        questionText: string;
+        question_text: string;
         options: string[];
         answer: string;
         marks: number;

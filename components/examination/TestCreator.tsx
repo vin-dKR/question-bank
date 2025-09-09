@@ -13,6 +13,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Trash2, Save, AlertCircle, FolderOpen, BookOpen } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+import { usePDFGeneratorContext } from '@/lib/context/PDFGeneratorContext';
+import PDFGenerator from '../pdf/pdfPreview';
+
 export default function TestCreator() {
     const router = useRouter();
     const [testData, setTestData] = useState<CreateTestData>({
@@ -23,8 +26,8 @@ export default function TestCreator() {
         totalMarks: 0,
         questions: [],
     });
-
-    // console.log("----", testData)
+    const { institution, options } = usePDFGeneratorContext();
+    console.log("testData", testData.questions)
 
     const [bulkMarks, setBulkMarks] = useState<number>(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,11 +40,14 @@ export default function TestCreator() {
             if (storedQuestions) {
                 try {
                     const questions = JSON.parse(storedQuestions);
+                    const formattedQuestions = questions.map((q: any) => ({
+                        ...q,
+                        question_text: q.question_text || '', // Ensure question_text exists
+                    }));
                     setTestData(prev => ({
                         ...prev,
-                        questions,
-                        // eslint-disable-next-line
-                        totalMarks: questions.reduce((total: number, q: any) => total + (q.marks || 1), 0),
+                        questions: formattedQuestions,
+                        totalMarks: formattedQuestions.reduce((total: number, q: any) => total + (q.marks || 1), 0),
                     }));
                     setHasLoadedQuestions(true);
                     // Clear the stored data after loading
@@ -134,7 +140,7 @@ export default function TestCreator() {
         // Validate questions
         for (let i = 0; i < testData.questions.length; i++) {
             const q = testData.questions[i];
-            if (!q.questionText.trim()) {
+            if (!q.question_text.trim()) {
                 toast.error(`Question ${i + 1}: Please enter question text`);
                 return;
             }
@@ -171,7 +177,7 @@ export default function TestCreator() {
 
     return (
         <div className="relative max-w-4xl mx-auto p-6 space-y-6">
-            <div className="flex flex-col sm:flex-col items-start md:items-center justify-between tracking-2">
+            <div className="flex flex-col sm:flex-row items-start md:items-center justify-between tracking-2">
                 <h1 className="text-3xl font-bold">Create New Test</h1>
                 <Button
                     onClick={handleSubmit}
@@ -261,7 +267,15 @@ export default function TestCreator() {
                 </CardContent>
             </Card>
 
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
+            <PDFGenerator
+                saveToHistory={true}
+                institution={institution}
+                selectedQuestions={testData.questions}
+                options={options}
+            />
+            <div className="flex flex-col sm:flex-row items-start md:items-center justify-between">
+
+
                 <h2 className="text-2xl font-semibold tracking-2">Questions ({testData.questions.length})</h2>
                 <div className="flex items-center gap-2">
                     <Link href="/drafts">
@@ -338,12 +352,12 @@ export default function TestCreator() {
                             <div>
                                 <label className="block text-sm font-medium mb-2">Question Text</label>
                                 <div className="p-3 bg-gray-50 rounded-xl border border-black/40">
-                                    {renderMixedLatex(question.questionText)}
+                                    {renderMixedLatex(question.question_text)}
                                 </div>
                                 {/* Commented out for read-only mode
                                 <Textarea
-                                  value={question.questionText}
-                                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updateQuestion(index, 'questionText', e.target.value)}
+                                  value={question.question_text}
+                                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updateQuestion(index, 'question_text', e.target.value)}
                                   placeholder="Enter your question"
                                   rows={3}
                                 />
@@ -415,7 +429,7 @@ export default function TestCreator() {
 
 // const addQuestion = () => {
 //     const newQuestion: Omit<QuestionForCreateTestData, 'id'> = {
-//         questionText: '',
+//         question_text: '',
 //         options: ['', '', '', ''],
 //         answer: '',
 //         marks: 1,

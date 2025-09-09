@@ -74,7 +74,7 @@ export default function SelectedQuestionsActions({ showPrintBtn }: SelectedQuest
 
         const questionsData = selectedQuestions.map((q, index) => ({
             id: q.id,
-            questionText: q.question_text,
+            question_text: q.question_text,
             options: q.options,
             answer: q.answer || '',
             marks: 1,
