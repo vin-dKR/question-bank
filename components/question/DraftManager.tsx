@@ -289,7 +289,7 @@ const DraftManager = ({ previewLimit }: DraftManagerPropsLimit) => {
         // Prepare the selected questions data for the examination creation page
         const questionsData = selectedFolder?.questions.map((q, index) => ({
             id: q.id,
-            questionText: q.question_text,
+            question_text: q.question_text,
             options: q.options,
             answer: q.answer || '',
             marks: 1, // Default marks, can be changed in the creation page

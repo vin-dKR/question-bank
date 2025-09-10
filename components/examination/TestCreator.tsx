@@ -296,7 +296,7 @@ export default function TestCreator() {
 
             {/* Bulk Marks Assignment */}
             {testData.questions.length > 0 && (
-                <Card>
+                <Card className='gap-2'>
                     <CardHeader>
                         <CardTitle className="text-lg">Bulk Mark Assignment</CardTitle>
                     </CardHeader>
@@ -322,7 +322,7 @@ export default function TestCreator() {
 
             <div className="space-y-6">
                 {testData.questions.map((question, index) => (
-                    <Card key={index}>
+                    <Card key={index} className='gap-2'>
                         <CardHeader>
                             <div className="flex items-center justify-between">
                                 <CardTitle className="text-lg">Question {question.questionNumber}</CardTitle>

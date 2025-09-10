@@ -191,7 +191,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
                         disabled={!selectedQuestions || selectedQuestions.length === 0}
                         className={clsx("bg-indigo-600 hover:bg-indigo-600 text-white px-4 py-1 text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed border border-black/20", className)}
                     >
-                        {isGenerating === "question" ? "Generating..." : selectedQuestions.length === 0 ? "No Questions" : "PDF"}
+                        {isGenerating === "question" ? "Generating..." : "PDF"}
                     </Button>
                     <Button
                         size="sm"
@@ -199,7 +199,7 @@ export default function PDFGenerator({ institution, selectedQuestions, options, 
                         disabled={!selectedQuestions || selectedQuestions.length === 0}
                         className={clsx("bg-green-600 hover:bg-green-700 text-white px-4 py-2 whitespace-nowrap text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed border border-black/20", className)}
                     >
-                        {isGenerating === "answer" ? "Generating..." : selectedQuestions.length === 0 ? "No Questions" : "Preview Answers"}
+                        {isGenerating === "answer" ? "Generating..." : "Preview Answers"}
                     </Button>
                 </div>
             </DialogTrigger>
