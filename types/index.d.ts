@@ -492,6 +492,7 @@ declare global {
         answer: string;
         marks: number;
         questionNumber: number;
+        negativeMark?: number
     }
 
     interface CreateTestData {

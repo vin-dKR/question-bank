@@ -24,10 +24,9 @@ export default function TestCreator() {
         subject: '',
         duration: 60,
         totalMarks: 0,
-        questions: [],
+        questions: [] as QuestionForCreateTestData[],
     });
     const { institution, options } = usePDFGeneratorContext();
-    console.log("testData", testData.questions)
 
     const [bulkMarks, setBulkMarks] = useState<number>(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -302,18 +301,31 @@ export default function TestCreator() {
                     </CardHeader>
                     <CardContent>
                         <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2">
-                                <label className="text-sm font-medium">Set marks for all questions:</label>
-                                <Input
-                                    className='w-20 border border-black/30'
-                                    type="number"
-                                    value={bulkMarks}
-                                    onChange={(e) => setBulkMarks(parseInt(e.target.value) || 1)}
-                                    min="1"
-                                />
-                                <Button onClick={applyBulkMarks} size="sm" className='bg-black text-white'>
-                                    Apply to All
-                                </Button>
+                            <div className="flex flex-col gap-2">
+                                <div className='flex items-center gap-2'>
+                                    <label className="text-sm font-medium">Set marks for all questions:</label>
+                                    <Input
+                                        className='w-20 border border-black/30'
+                                        type="number"
+                                        value={bulkMarks}
+                                        onChange={(e) => setBulkMarks(parseInt(e.target.value) || 1)}
+                                        min="1"
+                                    />
+                                    <Button onClick={applyBulkMarks} size="sm" className='bg-black text-white'>
+                                        Apply to All
+                                    </Button>
+                                </div>
+
+                                <div className='flex items-center gap-2'>
+                                    <label className="text-sm font-medium">Negative Mark</label>
+                                    <Input
+                                        className='w-20 border border-black/30'
+                                        type="number"
+                                        value={bulkMarks}
+                                        onChange={(e) => }
+                                        min="1"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </CardContent>
@@ -384,28 +396,6 @@ export default function TestCreator() {
                                         </div>
                                     ))}
                                 </div>
-                                {/* Commented out for read-only mode
-                                <div className="space-y-2">
-                                  {question.options.map((option, optionIndex) => (
-                                    <div key={optionIndex} className="flex items-center gap-2">
-                                      <Input
-                                        value={option}
-                                        onChange={(e) => updateQuestionOption(index, optionIndex, e.target.value)}
-                                        placeholder={`Option ${optionIndex + 1}`}
-                                      />
-                                      <input
-                                        type="radio"
-                                        name={`correct-${index}`}
-                                        value={option}
-                                        checked={question.answer === option}
-                                        onChange={(e) => updateQuestion(index, 'answer', e.target.value)}
-                                        className="w-4 h-4"
-                                      />
-                                      <span className="text-sm text-gray-600">Correct</span>
-                                    </div>
-                                  ))}
-                                </div>
-                                */}
                             </div>
                         </CardContent>
                     </Card>
@@ -425,6 +415,30 @@ export default function TestCreator() {
 }
 
 
+// Feature for options
+
+{/* Commented out for read-only mode
+<div className="space-y-2">
+  {question.options.map((option, optionIndex) => (
+    <div key={optionIndex} className="flex items-center gap-2">
+      <Input
+        value={option}
+        onChange={(e) => updateQuestionOption(index, optionIndex, e.target.value)}
+        placeholder={`Option ${optionIndex + 1}`}
+      />
+      <input
+        type="radio"
+        name={`correct-${index}`}
+        value={option}
+        checked={question.answer === option}
+        onChange={(e) => updateQuestion(index, 'answer', e.target.value)}
+        className="w-4 h-4"
+      />
+      <span className="text-sm text-gray-600">Correct</span>
+    </div>
+  ))}
+</div>
+*/}
 
 
 // const addQuestion = () => {
