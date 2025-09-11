@@ -224,7 +224,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </header>
 
                 {/* Content Area */}
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="relative flex-1 overflow-y-auto p-6">
                     <AppProviders>
                         <CollaborationProvider>
                             {children}
