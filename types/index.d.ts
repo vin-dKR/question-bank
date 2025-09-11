@@ -168,6 +168,7 @@ declare global {
         quality?: number;
         returnBlob?: boolean;
     }
+
     interface PDFGenerationOptions {
         includeAnswers?: boolean;
         includeMetadata?: boolean;
@@ -181,6 +182,8 @@ declare global {
         margin?: number;
         pdfOptions?: HTMLToPDFOptions;
     }
+
+    // QuestionBank tools
 
     interface Filters {
         exam_name?: string;
@@ -202,6 +205,7 @@ declare global {
         section_names: string[];
     }
 
+    // Onboarding --------------------------------------------------------
     interface TeacherOnboardingData {
         name: string;
         email: string;

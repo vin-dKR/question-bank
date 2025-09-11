@@ -16,7 +16,7 @@ import BulkMarksAssignment from './test-creator/BulkMarksAssignment';
 
 import { createTest } from '@/actions/examination/test/crudTest';
 import { usePDFGeneratorContext } from '@/lib/context/PDFGeneratorContext';
-import { useTestCreatorReducer } from "@/hooks/test-creator/useTestCreatorReducer"
+import { useTestCreatorReducer } from '@/hooks/reducer/useTestCreatorReducer';
 
 export default function TestCreator() {
     const router = useRouter();
