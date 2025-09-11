@@ -79,7 +79,11 @@ const reducer = (state: State, action: Action): State => {
             }
         }
         case 'APPLY_BULK_MARKS': {
+<<<<<<< HEAD
             if (action.marks = 0) {
+=======
+            if (action.marks <= 0) {
+>>>>>>> 08f5e7e (reducer state implemented @TestCreator)
                 toast("Marks must be greater than 0")
                 return state
             }
@@ -153,7 +157,11 @@ const reducer = (state: State, action: Action): State => {
     }
 }
 
+<<<<<<< HEAD
 export const useTestCreator = () => {
+=======
+export const useTestCreatorReducer = () => {
+>>>>>>> 08f5e7e (reducer state implemented @TestCreator)
     const [state, dispatch] = useReducer(reducer, initialState)
 
     useEffect(() => {

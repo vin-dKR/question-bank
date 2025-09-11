@@ -1,5 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { renderMixedLatex } from '@/lib/render-tex';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface QuestionPerformanceProps {
     questions: QuestionAnalytics[];
@@ -22,7 +23,7 @@ export default function QuestionPerformance({ questions, getAccuracyColor }: Que
                                     {question.accuracy.toFixed(1)}%
                                 </Badge>
                             </div>
-                            <p className="text-sm text-gray-600 mb-2 line-clamp-2">{question.questionText}</p>
+                            <p className="text-sm text-gray-600 mb-2 line-clamp-2">{renderMixedLatex(question.questionText)}</p>
                             <div className="text-xs text-gray-500">
                                 {question.correctAnswers} correct out of {question.totalAttempts} attempts
                             </div>

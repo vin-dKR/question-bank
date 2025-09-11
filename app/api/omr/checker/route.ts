@@ -86,8 +86,6 @@ export async function POST(req: Request) {
             }
         })
 
-        console.log("studentResponse ----------------------------------------", studentRes)
-
         const headers = {
             "Access-Control-Allow-Origin": "https://omr-checker.vercel.app", // Or specify your origin: "http://localhost:5173"
             "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",

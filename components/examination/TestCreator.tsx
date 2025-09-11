@@ -1,23 +1,26 @@
 'use client';
 
 import Link from 'next/link';
-import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { renderMixedLatex } from '@/lib/render-tex';
-import { createTest } from '@/actions/examination/test/crudTest';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Save, AlertCircle, FolderOpen, BookOpen } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-import { usePDFGeneratorContext } from '@/lib/context/PDFGeneratorContext';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Save, FolderOpen, Plus, AlertCircle } from 'lucide-react';
+
 import PDFGenerator from '../pdf/pdfPreview';
+import QuestionCard from './test-creator/QuestionCard';
+import TestDetailsForm from './test-creator/TestDetailsForm';
+import EmptyQuestionsCard from './test-creator/EmptyQuestionsCard';
+import BulkMarksAssignment from './test-creator/BulkMarksAssignment';
+
+import { createTest } from '@/actions/examination/test/crudTest';
+import { usePDFGeneratorContext } from '@/lib/context/PDFGeneratorContext';
+import { useTestCreatorReducer } from "@/hooks/test-creator/useTestCreatorReducer"
 
 export default function TestCreator() {
     const router = useRouter();
+<<<<<<< HEAD
     const [testData, setTestData] = useState<CreateTestData>({
         title: '',
         description: '',
@@ -119,31 +122,32 @@ export default function TestCreator() {
 
         toast.success(`Applied ${bulkMarks} marks to all questions`);
     };
+=======
+    const { state, dispatch } = useTestCreatorReducer();
+    const { testData, isSubmitting, hasLoadedQuestions, bulkMarks, bulkNegativeMarks } = state;
+    const { institution, options } = usePDFGeneratorContext();
+>>>>>>> 08f5e7e (reducer state implemented @TestCreator)
 
     const handleSubmit = async () => {
         if (!testData.title.trim()) {
             toast.error('Please enter a test title');
             return;
         }
-
         if (!testData.subject.trim()) {
             toast.error('Please select a subject');
             return;
         }
-
         if (testData.questions.length === 0) {
             toast.error('Please add at least one question');
             return;
         }
-
-        // Validate questions
         for (let i = 0; i < testData.questions.length; i++) {
             const q = testData.questions[i];
             if (!q.question_text.trim()) {
                 toast.error(`Question ${i + 1}: Please enter question text`);
                 return;
             }
-            if (q.options.some(opt => !opt.trim())) {
+            if (q.options.some((opt) => !opt.trim())) {
                 toast.error(`Question ${i + 1}: Please fill all options`);
                 return;
             }
@@ -153,24 +157,26 @@ export default function TestCreator() {
             }
         }
 
-        setIsSubmitting(true);
+        dispatch({ type: 'SET_SUBMITTING', isSubmitting: true });
         try {
             await createTest({
                 title: testData.title,
                 description: testData.description,
                 subject: testData.subject,
-                duration: testData.duration,
+                duration: typeof testData.duration === 'string' ? parseInt(testData.duration) || 60 : testData.duration,
                 totalMarks: testData.questions.reduce((total, q) => total + q.marks, 0),
-                questions: testData.questions,
+                questions: testData.questions.map((q) => ({
+                    ...q,
+                    negativeMark: q.negativeMark ?? 0,
+                })),
             });
-
             toast.success('Test created successfully!');
             router.push('/examination');
         } catch (error) {
             console.error('Error creating test:', error);
             toast.error('Failed to create test');
         } finally {
-            setIsSubmitting(false);
+            dispatch({ type: 'SET_SUBMITTING', isSubmitting: false });
         }
     };
 
@@ -181,7 +187,7 @@ export default function TestCreator() {
                 <Button
                     onClick={handleSubmit}
                     disabled={isSubmitting}
-                    className='bg-gray-200 border border-gray-300 rounded-xl'
+                    className="bg-gray-200 border border-gray-300 rounded-xl"
                 >
                     <Save className="w-4 h-4 mr-2" />
                     {isSubmitting ? 'Creating...' : 'Create Test'}
@@ -202,90 +208,19 @@ export default function TestCreator() {
                 </Card>
             )}
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Test Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Test Title</label>
-                            <Input
-                                className='border border-black/30'
-                                value={testData.title}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTestData(prev => ({ ...prev, title: e.target.value }))}
-                                placeholder="Enter test title"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Subject</label>
-                            <Select
-                                value={testData.subject}
-                                onValueChange={(value) => setTestData(prev => ({ ...prev, subject: value }))}
-                            >
-                                <SelectTrigger className='border-black/30'>
-                                    <SelectValue placeholder="Select subject" />
-                                </SelectTrigger>
-                                <SelectContent className='bg-white border border-black/10'>
-                                    <SelectItem value="Mathematics">Mathematics</SelectItem>
-                                    <SelectItem value="Physics">Physics</SelectItem>
-                                    <SelectItem value="Chemistry">Chemistry</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Duration (minutes)</label>
-                            <Input
-                                className='border border-black/30'
-                                type="number"
-                                value={testData.duration}
-                                onChange={handleChangeDuration}
-                                min="1"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Total Marks</label>
-                            <Input
-                                type="number"
-                                value={testData.totalMarks}
-                                disabled
-                                className='bg-gray-50 border border-black/30'
-                            />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Description</label>
-                        <Textarea
-                            value={testData.description}
-                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setTestData(prev => ({ ...prev, description: e.target.value }))}
-                            placeholder="Enter test description"
-                            rows={3}
-                            className='border-black/30'
-                        />
-                    </div>
-                </CardContent>
-            </Card>
-
-            <PDFGenerator
-                saveToHistory={true}
-                institution={institution}
-                selectedQuestions={testData.questions}
-                options={options}
-            />
+            <TestDetailsForm testData={testData} dispatch={dispatch} />
+            <PDFGenerator saveToHistory={true} institution={institution} selectedQuestions={testData.questions} options={options} />
             <div className="flex flex-col sm:flex-row items-start md:items-center justify-between">
-
-
                 <h2 className="text-2xl font-semibold tracking-2">Questions ({testData.questions.length})</h2>
                 <div className="flex items-center gap-2">
                     <Link href="/drafts">
-                        <Button className='bg-yellow-300 border border-yellow-400'>
+                        <Button className="bg-yellow-300 border border-yellow-400">
                             <FolderOpen className="w-4 h-4 mr-2" />
                             Add from Drafts
                         </Button>
                     </Link>
-
-                    <Link href={"/questions"}>
-                        <Button className='bg-green-500 border border-green-600'>
+                    <Link href="/questions">
+                        <Button className="bg-green-500 border border-green-600">
                             <Plus className="w-4 h-4 mr-2" />
                             Add From Questions
                         </Button>
@@ -293,6 +228,7 @@ export default function TestCreator() {
                 </div>
             </div>
 
+<<<<<<< HEAD
             {/* Bulk Marks Assignment */}
             {testData.questions.length > 0 && (
                 <Card className='gap-2'>
@@ -400,19 +336,28 @@ export default function TestCreator() {
                         </CardContent>
                     </Card>
                 ))}
-            </div>
+=======
+            <BulkMarksAssignment
+                bulkMarks={bulkMarks}
+                bulkNegativeMarks={bulkNegativeMarks}
+                dispatch={dispatch}
+                questionCount={testData.questions.length}
+            />
 
-            {testData.questions.length === 0 && (
-                <Card>
-                    <CardContent className="text-center py-12">
-                        <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-500">No questions added yet. Select questions from the question bank, add from drafts, or click &quot;Add Question&quot; to get started.</p>
-                    </CardContent>
-                </Card>
-            )}
+            <div className="space-y-6">
+                {testData.questions.length > 0 ? (
+                    testData.questions.map((question, index) => (
+                        <QuestionCard key={question.id} question={question} index={index} dispatch={dispatch} />
+                    ))
+                ) : (
+                    <EmptyQuestionsCard />
+                )}
+>>>>>>> 08f5e7e (reducer state implemented @TestCreator)
+            </div>
         </div>
     );
 }
+<<<<<<< HEAD
 
 
 // Feature for options
@@ -468,3 +413,5 @@ export default function TestCreator() {
 //         ),
 //     }));
 // };
+=======
+>>>>>>> 08f5e7e (reducer state implemented @TestCreator)
