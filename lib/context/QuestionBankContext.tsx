@@ -13,7 +13,7 @@ const QuestionBankContext = createContext<QuestionBankContextType | undefined>(u
 
 export const QuestionBankProvider = ({ children }: { children: React.ReactNode }) => {
     const [state, dispatch] = useQuestionBankReducer();
-    const { questions, loading, error, filters, pagination, filterOptions, optionsLoading, searchQuery, totalCount, showOnlySelected, selectedQuestionIds, selectedQuestions, selectedPagination } = state;
+    const { questions, loading, error, filters, pagination, filterOptions, optionsLoading, searchQuery, totalCount, showOnlySelected, selectedQuestionIds, selectedQuestions, selectedPagination, initialFetchDone } = state;
 
     const { role, isTeacher, isLoading: roleLoading } = useUserRole();
     const { subject } = useUserSubject();
@@ -92,6 +92,7 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
             selectedPagination,
             setSelectedPagination: (pagination: Pagination) => dispatch({ type: 'SET_SELECTED_PAGINATION', pagination }),
             fetchSelectedQuestions,
+            initialFetchDone
         }),
         [
             questions,

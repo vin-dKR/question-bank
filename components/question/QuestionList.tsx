@@ -368,6 +368,7 @@ const QuestionList = memo(() => {
         selectedQuestions,
         selectedPagination,
         setSelectedPagination,
+        initialFetchDone
     } = useQuestionBankContext();
 
     const displayedQuestions = showOnlySelected
@@ -436,7 +437,7 @@ const QuestionList = memo(() => {
                     </div>
                 )}
 
-                {!loading && displayedQuestions.length === 0 && (
+                {!loading && initialFetchDone && displayedQuestions.length === 0 && (
                     <div className="text-center py-6">
                         <p className="text-slate-600">
                             {showOnlySelected

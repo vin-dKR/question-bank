@@ -1,6 +1,6 @@
-import { useCallback } from "react";
-import { QuestionBankAction } from "../reducer/useQuestionBankReducer";
-import { getQuestionCount, getQuestions, searchQuestions } from "@/actions/question/questionBank";
+import { useCallback } from 'react';
+import { toast } from 'sonner';
+import { getQuestions, getQuestionCount, searchQuestions } from '@/actions/question/questionBank';
 
 export const useFetchQuestions = (
     filters: Filters,
@@ -8,53 +8,70 @@ export const useFetchQuestions = (
     searchQuery: string,
     role: UserRole,
     isTeacher: boolean,
-    dispatch: (action: QuestionBankAction) => void,
-    subject?: string,
+    dispatch: (action: any) => void,
+    subject: string
 ) => {
     const fetchQuestions = useCallback(async () => {
-        dispatch({ type: 'SET_LOADING', loading: true })
-        dispatch({ type: 'SET_ERROR', error: null })
+        dispatch({ type: 'SET_LOADING', loading: true });
+        dispatch({ type: 'SET_ERROR', error: null });
+
+        console.log('Fetching questions with:', { filters, pagination, searchQuery, role, isTeacher, subject });
 
         try {
             if (searchQuery.trim().length >= 2) {
-                const searchRes = await searchQuestions(searchQuery, role, isTeacher ? subject : undefined)
-
+                const searchRes = await searchQuestions(searchQuery, role, isTeacher ? subject : undefined);
+                console.log('Search response:', searchRes);
                 if (searchRes?.success) {
-                    dispatch({ type: 'SET_QUESTIONS', questions: searchRes.data as Question[], totalCount: searchRes.data.length })
+                    dispatch({ type: 'SET_QUESTIONS', questions: searchRes.data as Question[], totalCount: searchRes.data.length });
                 } else {
-                    dispatch({ type: 'SET_ERROR', error: searchRes?.error || "Failed to search questions" })
-                    dispatch({ type: 'SET_QUESTIONS', questions: [], totalCount: 0 })
+                    const error = searchRes?.error || 'Failed to search questions';
+                    console.error('Search error:', error);
+                    dispatch({ type: 'SET_ERROR', error });
+                    dispatch({ type: 'SET_QUESTIONS', questions: [], totalCount: 0 });
+                    toast.error(error);
                 }
             } else {
                 const queryFilters = {
                     exam_name: filters.exam_name,
-                    subject: filters.subject,
+                    subject: isTeacher ? subject : filters.subject,
                     chapter: filters.chapter,
                     section_name: filters.section_name,
                     flagged: filters.flagged,
                     limit: pagination.limit,
-                    skip: (pagination.page - 1) * pagination.limit
-                }
+                    skip: (pagination.page - 1) * pagination.limit,
+                };
+
+                console.log('Query filters:', queryFilters);
 
                 const [questionsRes, countRes] = await Promise.all([
                     getQuestions(queryFilters, role, isTeacher ? subject : undefined),
-                    getQuestionCount({ ...queryFilters, limit: undefined, skip: undefined }, role, isTeacher ? subject : undefined)
-                ])
+                    getQuestionCount({ ...queryFilters, limit: undefined, skip: undefined }, role, isTeacher ? subject : undefined),
+                ]);
 
-                if (questionsRes.success && countRes.success) {
-                    dispatch({ type: 'SET_QUESTIONS', questions: questionsRes.data as Question[], totalCount: countRes.data })
+                console.log('Questions response:', questionsRes);
+                console.log('Count response:', countRes);
+
+                if (questionsRes?.success && countRes?.success) {
+                    dispatch({ type: 'SET_QUESTIONS', questions: questionsRes.data as Question[], totalCount: countRes.data });
                 } else {
-                    dispatch({ type: 'SET_ERROR', error: questionsRes?.error || countRes?.error || 'Failed to fetch data' });
+                    const error = questionsRes?.error || countRes?.error || 'Failed to fetch questions';
+                    console.error('Fetch error:', error);
+                    dispatch({ type: 'SET_ERROR', error });
                     dispatch({ type: 'SET_QUESTIONS', questions: [], totalCount: 0 });
+                    toast.error(error);
                 }
             }
         } catch (err) {
-            dispatch({ type: 'SET_ERROR', error: 'An unexpected error occurred' });
+            const error = err instanceof Error ? err.message : 'An unexpected error occurred';
+            console.error('Unexpected error in fetchQuestions:', err);
+            dispatch({ type: 'SET_ERROR', error });
             dispatch({ type: 'SET_QUESTIONS', questions: [], totalCount: 0 });
+            toast.error(error);
         } finally {
             dispatch({ type: 'SET_LOADING', loading: false });
+            dispatch({ type: 'SET_INITIAL_FETCH_DONE' }); // Set flag when fetch completes
         }
-    }, [filters, pagination, searchQuery, role, isTeacher, subject, dispatch])
+    }, [filters, pagination, searchQuery, role, isTeacher, subject, dispatch]);
 
-    return fetchQuestions
-}
+    return fetchQuestions;
+};

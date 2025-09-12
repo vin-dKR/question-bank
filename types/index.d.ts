@@ -67,6 +67,7 @@ declare global {
         selectedQuestions: Question[];
         selectedPagination: Pagination;
         setSelectedPagination: (pagination: Pagination) => void
+        initialFetchDone: boolean
     }
 
 

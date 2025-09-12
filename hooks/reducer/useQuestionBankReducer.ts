@@ -14,6 +14,7 @@ interface State {
     selectedQuestionIds: Set<string>;
     selectedQuestions: Question[];
     selectedPagination: Pagination;
+    initialFetchDone: boolean;
 }
 
 type Action =
@@ -30,11 +31,12 @@ type Action =
     | { type: 'TOGGLE_SELECTION'; id: string }
     | { type: 'SET_SHOW_ONLY_SELECTED'; show: boolean }
     | { type: 'SET_SELECTED_QUESTIONS'; questions: Question[] }
-    | { type: 'SET_SELECTED_PAGINATION'; pagination: Pagination };
+    | { type: 'SET_SELECTED_PAGINATION'; pagination: Pagination }
+    | { type: 'SET_INITIAL_FETCH_DONE' };
 
 const initialState: State = {
     questions: [],
-    loading: false,
+    loading: true,
     error: null,
     filters: {},
     pagination: { page: 1, limit: 20 },
@@ -46,16 +48,17 @@ const initialState: State = {
     selectedQuestionIds: new Set(),
     selectedQuestions: [],
     selectedPagination: { page: 1, limit: 20 },
+    initialFetchDone: false,
 };
 
 const reducer = (state: State, action: Action): State => {
     switch (action.type) {
         case 'SET_QUESTIONS':
-            return { ...state, questions: action.questions, totalCount: action.totalCount };
+            return { ...state, questions: action.questions, totalCount: action.totalCount, initialFetchDone: true };
         case 'SET_LOADING':
             return { ...state, loading: action.loading };
         case 'SET_ERROR':
-            return { ...state, error: action.error };
+            return { ...state, error: action.error, initialFetchDone: true };
         case 'SET_FILTERS':
             return { ...state, filters: { ...state.filters, ...action.filters } };
         case 'SET_PAGINATION':
@@ -100,6 +103,8 @@ const reducer = (state: State, action: Action): State => {
             return { ...state, selectedQuestions: action.questions };
         case 'SET_SELECTED_PAGINATION':
             return { ...state, selectedPagination: action.pagination };
+        case 'SET_INITIAL_FETCH_DONE':
+            return { ...state, initialFetchDone: true };
         default:
             return state;
     }
