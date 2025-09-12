@@ -64,6 +64,9 @@ declare global {
         updateQuestion: (updatedQuestion: Question) => void;
         showOnlySelected: boolean;
         setShowOnlySelected: (show: boolean) => void;
+        selectedQuestions: Question[];
+        selectedPagination: Pagination;
+        setSelectedPagination: (pagination: Pagination) => void
     }
 
 

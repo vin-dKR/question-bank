@@ -5,9 +5,9 @@ import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
 import { renderMixedLatex } from '@/lib/render-tex';
 import { Flag, FlagOff } from 'lucide-react';
 import Image from 'next/image';
-import { Button } from '../ui/button';
-import { refineTextWithAI } from '@/lib/ai/aiService';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { refineTextWithAI } from '@/lib/ai/aiService';
 
 interface QuestionProps {
     question: Question;
@@ -28,7 +28,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
     const answerText = useMemo(() => renderMixedLatex(question.answer), [question.answer]);
     const renderedOptions = useMemo(() => question.options.map((option) => renderMixedLatex(option)), [question.options]);
 
-    const handleFlagToggle = () => {
+    const handleFlagToggle = async () => {
         setIsFlagging(true);
         try {
             toggleQuestionFlag(question.id);
@@ -47,13 +47,11 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
         try {
             let textsToRefine: string[] = [];
             if (property === 'options' && index === null) {
-                // Refine all options
                 textsToRefine = question.options;
                 if (textsToRefine.length === 0) {
                     toast.error('No options to refine.');
                     return;
                 }
-                // Store original options before update
                 setOriginalOptions([...question.options]);
             } else if (property === 'question_text') {
                 textsToRefine = [question.question_text];
@@ -61,7 +59,6 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                     toast.error('There is no text to refine.');
                     return;
                 }
-                // Store original question_text before update
                 setOriginalQuestionText(question.question_text);
             } else if (property === 'options' && index !== null) {
                 if (!question.options[index]) {
@@ -79,7 +76,6 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
 
             const updatedQuestion = { ...question };
             if (property === 'options' && index === null) {
-                // Update all options
                 updatedQuestion.options = results.map((result) => {
                     if (!result.success || !result.refined_text) {
                         throw new Error(result.error || 'Failed to refine one or more options');
@@ -87,7 +83,6 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                     return result.refined_text;
                 });
             } else {
-                // Update single field (question_text or single option)
                 const result = results[0];
                 if (!result.success || !result.refined_text) {
                     throw new Error(result.error || 'Failed to refine text');
@@ -100,12 +95,10 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                 }
             }
 
-            updateQuestion(updatedQuestion)
+            updateQuestion(updatedQuestion);
             toast.success(property === 'question_text' ? 'Question updated successfully!' : 'All options updated successfully!');
         } catch (err) {
-            if (err instanceof Error) {
-                toast.error(`Refinement failed: ${err.message}`);
-            }
+            toast.error(`Refinement failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
         } finally {
             setRefiningField(null);
         }
@@ -118,13 +111,11 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
         }
         const updatedQuestion = { ...question, question_text: originalQuestionText };
         try {
-            updateQuestion(updatedQuestion)
+            updateQuestion(updatedQuestion);
             toast.success('Question text undone successfully!');
             setOriginalQuestionText(null);
         } catch (err) {
-            if (err instanceof Error) {
-                toast.error(`Undo failed: ${err.message}`);
-            }
+            toast.error(`Undo failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
         }
     };
 
@@ -139,16 +130,14 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
             toast.success('Options undone successfully!');
             setOriginalOptions(null);
         } catch (err) {
-            if (err instanceof Error) {
-                toast.error(`Undo failed: ${err.message}`);
-            }
+            toast.error(`Undo failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
         }
     };
 
-
     return (
         <div
-            className={`p-3 sm:p-4 bg-white rounded-xl shadow-md border transition-all duration-200 ${isSelected ? 'border-amber-500 bg-amber-50' : 'border-slate-200 hover:shadow-md'}`}
+            className={`p-3 sm:p-4 bg-white rounded-xl shadow-md border transition-all duration-200 ${isSelected ? 'border-amber-500 bg-amber-50' : 'border-slate-200 hover:shadow-md'
+                }`}
         >
             <div className="flex items-start">
                 <input
@@ -178,7 +167,8 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                             <button
                                 onClick={handleFlagToggle}
                                 disabled={isFlagging}
-                                className={`ml-2 p-1 text-slate-600 hover:text-amber-600 transition ${isFlagging ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                className={`ml-2 p-1 text-slate-600 hover:text-amber-600 transition ${isFlagging ? 'opacity-50 cursor-not-allowed' : ''
+                                    }`}
                                 title={question.flagged ? 'Unflag question' : 'Flag question'}
                             >
                                 {question.flagged ? (
@@ -338,7 +328,8 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                                 return (
                                     <div
                                         key={index}
-                                        className={`pl-3 border-l-4 py-1 rounded-r-md ${isCorrect ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200'}`}
+                                        className={`pl-3 border-l-4 py-1 rounded-r-md ${isCorrect ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200'
+                                            }`}
                                     >
                                         <span className="text-sm sm:text-base">{renderedOptions[index]}</span>
                                     </div>
@@ -369,29 +360,67 @@ const QuestionList = memo(() => {
         setShowOnlySelected,
         selectedQuestionIds,
         toggleQuestionSelection,
+        totalCount,
+        pagination,
+        setPagination,
+        hasMore,
+        loadMore,
+        selectedQuestions,
+        selectedPagination,
+        setSelectedPagination,
     } = useQuestionBankContext();
 
-
-    // Filter questions based on showOnlySelected state
-    const filteredQuestions = showOnlySelected
-        ? questions.filter(question => selectedQuestionIds.has(question.id))
+    const displayedQuestions = showOnlySelected
+        ? selectedQuestions.slice(
+            (selectedPagination.page - 1) * selectedPagination.limit,
+            selectedPagination.page * selectedPagination.limit
+        )
         : questions;
 
-    console.log('filteredQuestions', filteredQuestions);
-    console.log('selectedQuestionIds', selectedQuestionIds);
-    console.log('questions', questions);
+    const displayedTotal = showOnlySelected ? selectedQuestions.length : totalCount;
+    const displayedHasMore = showOnlySelected
+        ? selectedPagination.page * selectedPagination.limit < selectedQuestions.length
+        : hasMore;
 
+    const handlePrevious = () => {
+        const currentPagination = showOnlySelected ? selectedPagination : pagination;
+        if (currentPagination.page > 1) {
+            const newPagination = { ...currentPagination, page: currentPagination.page - 1 };
+            if (showOnlySelected) {
+                setSelectedPagination(newPagination);
+            } else {
+                setPagination(newPagination);
+            }
+        }
+    };
 
+    const handleNext = () => {
+        const currentPagination = showOnlySelected ? selectedPagination : pagination;
+        if (currentPagination.page * currentPagination.limit < displayedTotal) {
+            const newPagination = { ...currentPagination, page: currentPagination.page + 1 };
+            if (showOnlySelected) {
+                setSelectedPagination(newPagination);
+            } else {
+                setPagination(newPagination);
+            }
+        }
+    };
+
+    const loadMoreSelected = () => {
+        setSelectedPagination({ ...selectedPagination, limit: selectedPagination.limit + 20 });
+    };
+
+    const displayedLoadMore = showOnlySelected ? loadMoreSelected : loadMore;
 
     return (
         <div className="min-h-screen bg-gray-100">
-            <div className="w-full mx-auto">
+            <div className="w-full max-w-4xl mx-auto space-y-6">
+
                 {showOnlySelected && (
                     <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                         <p className="text-blue-800 text-sm">
-                            Showing {filteredQuestions.length} of {selectedQuestionIds.size} questions (selected only)
+                            Showing {displayedQuestions.length} of {selectedQuestions.length} selected questions
                         </p>
-                        <Button className='text-blue-600 hover:text-blue-800 underline mt-1 text-left' onClick={() => setShowOnlySelected(false)}>Show All Questions</Button>
                     </div>
                 )}
 
@@ -407,20 +436,19 @@ const QuestionList = memo(() => {
                     </div>
                 )}
 
-                {!loading && filteredQuestions.length === 0 && (
+                {!loading && displayedQuestions.length === 0 && (
                     <div className="text-center py-6">
                         <p className="text-slate-600">
                             {showOnlySelected
                                 ? 'No selected questions found. Select some questions first.'
-                                : 'No questions found matching your criteria.'
-                            }
+                                : 'No questions found matching your criteria.'}
                         </p>
                     </div>
                 )}
 
-                {!loading && filteredQuestions.length > 0 && (
+                {!loading && displayedQuestions.length > 0 && (
                     <div className="space-y-4">
-                        {filteredQuestions.map((question) => (
+                        {displayedQuestions.map((question) => (
                             <QuestionItem
                                 key={question.id}
                                 question={question}
@@ -429,6 +457,40 @@ const QuestionList = memo(() => {
                                 toggleQuestionFlag={toggleQuestionFlag}
                             />
                         ))}
+                    </div>
+                )}
+
+                {displayedHasMore && !loading && (
+                    <div className="text-center">
+                        <Button
+                            onClick={displayedLoadMore}
+                            className="bg-indigo-600 text-white rounded-lg px-4 py-2 hover:bg-indigo-700"
+                        >
+                            Load More
+                        </Button>
+                    </div>
+                )}
+
+                {displayedQuestions.length > 0 && (
+                    <div className="flex justify-between">
+                        <Button
+                            onClick={handlePrevious}
+                            disabled={(showOnlySelected ? selectedPagination : pagination).page === 1}
+                            className="px-4 py-2 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            onClick={handleNext}
+                            disabled={
+                                (showOnlySelected ? selectedPagination : pagination).page *
+                                (showOnlySelected ? selectedPagination : pagination).limit >=
+                                displayedTotal
+                            }
+                            className="px-4 py-2 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Next
+                        </Button>
                     </div>
                 )}
             </div>

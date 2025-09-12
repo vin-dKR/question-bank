@@ -13,12 +13,13 @@ const QuestionBankContext = createContext<QuestionBankContextType | undefined>(u
 
 export const QuestionBankProvider = ({ children }: { children: React.ReactNode }) => {
     const [state, dispatch] = useQuestionBankReducer();
-    const { questions, loading, error, filters, pagination, filterOptions, optionsLoading, searchQuery, totalCount, showOnlySelected, selectedQuestionIds } = state;
+    const { questions, loading, error, filters, pagination, filterOptions, optionsLoading, searchQuery, totalCount, showOnlySelected, selectedQuestionIds, selectedQuestions, selectedPagination } = state;
 
     const { role, isTeacher, isLoading: roleLoading } = useUserRole();
     const { subject } = useUserSubject();
 
     const fetchQuestions = useFetchQuestions(filters, pagination, searchQuery, role || 'student', isTeacher, dispatch, subject || '');
+
     const fetchFilterOptions = useFetchFilterOptions(filters, role || 'student', isTeacher, dispatch, subject || '');
 
     usePersistentSelection(selectedQuestionIds, showOnlySelected, dispatch);
@@ -32,6 +33,11 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
     const refreshQuestions = useCallback(() => {
         fetchQuestions();
     }, [fetchQuestions]);
+
+    const fetchSelectedQuestions = useCallback(async () => {
+        const selected = await getAllSelectedQuestions();
+        dispatch({ type: 'SET_SELECTED_QUESTIONS', questions: selected });
+    }, [getAllSelectedQuestions, dispatch]);
 
     const hasMore = useMemo(() => questions.length < totalCount, [questions.length, totalCount]);
 
@@ -49,6 +55,15 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
         }
     }, [fetchFilterOptions, roleLoading, role]);
 
+    useEffect(() => {
+        if (showOnlySelected) {
+            fetchSelectedQuestions();
+        } else {
+            dispatch({ type: 'SET_SELECTED_QUESTIONS', questions: [] });
+            dispatch({ type: 'SET_SELECTED_PAGINATION', pagination: { page: 1, limit: 20 } });
+        }
+    }, [showOnlySelected, fetchSelectedQuestions, dispatch]);
+
     const value = useMemo<QuestionBankContextType>(
         () => ({
             questions,
@@ -57,11 +72,11 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
             filters,
             setFilters: (newFilters) => dispatch({ type: 'SET_FILTERS', filters: newFilters }),
             pagination,
-            setPagination: (newPagination) => dispatch({ type: 'SET_PAGINATION', pagination: newPagination }),
+            setPagination: (pagination) => dispatch({ type: 'SET_PAGINATION', pagination }),
             filterOptions,
             optionsLoading,
             searchQuery,
-            setSearchQuery: (query) => dispatch({ type: 'SET_SEARCH_QUERY', searchQuery: query }),
+            setSearchQuery: (query) => dispatch({ type: 'SET_SEARCH_QUERY', query }),
             totalCount,
             hasMore,
             loadMore,
@@ -73,6 +88,10 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
             updateQuestion,
             showOnlySelected,
             setShowOnlySelected: (show) => dispatch({ type: 'SET_SHOW_ONLY_SELECTED', show }),
+            selectedQuestions,
+            selectedPagination,
+            setSelectedPagination: (pagination: Pagination) => dispatch({ type: 'SET_SELECTED_PAGINATION', pagination }),
+            fetchSelectedQuestions,
         }),
         [
             questions,
@@ -93,6 +112,9 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
             getAllSelectedQuestions,
             updateQuestion,
             showOnlySelected,
+            selectedQuestions,
+            selectedPagination,
+            fetchSelectedQuestions,
         ]
     );
 
