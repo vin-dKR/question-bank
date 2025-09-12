@@ -241,6 +241,12 @@ declare global {
 
     type UserRole = "teacher" | "student" | "coaching";
 
+    interface UserRoleState {
+        role: UserRole | null;
+        isLoading: boolean;
+        error: string | null;
+    }
+
     interface OnboardingStore {
         onboarding: { role: UserRole; data: OnboardingData } | null;
         setRole: (role: UserRole) => void;
