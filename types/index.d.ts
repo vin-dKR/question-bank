@@ -41,6 +41,32 @@ declare global {
         flagged?: boolean
     }
 
+    interface QuestionBankContextType {
+        questions: Question[];
+        loading: boolean;
+        error: string | null;
+        filters: Filters;
+        setFilters: (filters: Partial<Filters>) => void;
+        pagination: Pagination;
+        setPagination: (newPagination: Pagination) => void;
+        filterOptions: FilterOptions;
+        optionsLoading: boolean;
+        searchQuery: string;
+        setSearchQuery: (query: string) => void;
+        totalCount: number;
+        hasMore: boolean;
+        loadMore: () => void;
+        refreshQuestions: () => void;
+        toggleQuestionFlag: (id: string) => Promise<void>;
+        selectedQuestionIds: Set<string>;
+        toggleQuestionSelection: (id: string) => void;
+        getAllSelectedQuestions: () => Promise<Question[]>;
+        updateQuestion: (updatedQuestion: Question) => void;
+        showOnlySelected: boolean;
+        setShowOnlySelected: (show: boolean) => void;
+    }
+
+
     // Draft ------------------------------------------------------------------
     interface QuestionDraft {
         id: string;

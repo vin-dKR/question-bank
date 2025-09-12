@@ -53,7 +53,7 @@ const reducer = (state: QuestionBankState, action: QuestionBankAction): Question
         case 'SET_LOADING':
             return {
                 ...state,
-                loading: true
+                loading: action.loading
             }
         case 'SET_ERROR':
             return {

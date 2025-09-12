@@ -1,148 +1,102 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+'use client';
+
+import { createContext, useContext, useCallback, useMemo, useEffect } from 'react';
 import { useQuestionBankReducer } from '@/hooks/reducer/useQuestionBankReducer';
 import { useUserRole } from '@/hooks/auth/useUserRole';
 import { useUserSubject } from '@/hooks/auth/useUserSubject';
 import { useFetchQuestions } from '@/hooks/question/useFetchQuestions';
 import { useFetchFilterOptions } from '@/hooks/question/useFetchFilterOptions';
-
-interface QuestionBankContextType {
-    questions: Question[];
-    loading: boolean;
-    error: string | null;
-    filters: Filters;
-    setFilters: (filters: Partial<Filters>) => void;
-    pagination: Pagination;
-    setPagination: React.Dispatch<React.SetStateAction<Pagination>>;
-    filterOptions: FilterOptions;
-    optionsLoading: boolean;
-    searchQuery: string;
-    setSearchQuery: (query: string) => void;
-    totalCount: number;
-    hasMore: boolean;
-    loadMore: () => void;
-    refreshQuestions: () => void;
-    toggleQuestionFlag: (id: string) => Promise<void>;
-    selectedQuestionIds: Set<string>;
-    toggleQuestionSelection: (id: string) => void;
-    getAllSelectedQuestions: () => Promise<Question[]>;
-    updateQuestion: (updatedQuestion: Question) => void;
-    showOnlySelected: boolean;
-    setShowOnlySelected: (show: boolean) => void;
-}
+import { usePersistentSelection } from '@/hooks/question/usePersistentSelection';
+import { useQuestionActions } from '@/hooks/question/useQuestionActions';
 
 const QuestionBankContext = createContext<QuestionBankContextType | undefined>(undefined);
 
 export const QuestionBankProvider = ({ children }: { children: React.ReactNode }) => {
-    const [state, dispatch] = useQuestionBankReducer()
-    const { questions, loading, error, filters, pagination, filterOptions, optionsLoading, searchQuery, showOnlySelected, selectedQuestionIds } = state
+    const [state, dispatch] = useQuestionBankReducer();
+    const { questions, loading, error, filters, pagination, filterOptions, optionsLoading, searchQuery, totalCount, showOnlySelected, selectedQuestionIds } = state;
 
-    const { role, isTeacher } = useUserRole()
-    const { subject } = useUserSubject()
+    const { role, isTeacher, isLoading: roleLoading } = useUserRole();
+    const { subject } = useUserSubject();
 
-    const fetchQuestions = useFetchQuestions(filters, pagination, searchQuery, role, isTeacher, dispatch, subject)
-    const fetchFilterOptions = useFetchFilterOptions(filters, role, isTeacher, dispatch, subject)
-    // Memoize the context value to prevent unnecessary re-renders
-    const value = useMemo<QuestionBankContextType>(() => ({
-        questions,
-        loading,
-        error,
-        filters,
-        setFilters,
-        pagination,
-        setPagination,
-        filterOptions,
-        optionsLoading,
-        searchQuery,
-        setSearchQuery,
-        totalCount,
-        hasMore,
-        loadMore,
-        refreshQuestions,
-        toggleQuestionFlag,
-        selectedQuestionIds,
-        toggleQuestionSelection,
-        getAllSelectedQuestions,
-        updateQuestion,
-        showOnlySelected,
-        setShowOnlySelected
-    }), [
-        questions,
-        loading,
-        error,
-        filters,
-        pagination,
-        filterOptions,
-        optionsLoading,
-        searchQuery,
-        totalCount,
-        hasMore,
-        loadMore,
-        refreshQuestions,
-        toggleQuestionFlag,
-        selectedQuestionIds,
-        toggleQuestionSelection,
-        getAllSelectedQuestions,
-        showOnlySelected,
-        setShowOnlySelected
-    ]);
+    const fetchQuestions = useFetchQuestions(filters, pagination, searchQuery, role || 'student', isTeacher, dispatch, subject || '');
+    const fetchFilterOptions = useFetchFilterOptions(filters, role || 'student', isTeacher, dispatch, subject || '');
 
-    useEffect(() => {
+    usePersistentSelection(selectedQuestionIds, showOnlySelected, dispatch);
+
+    const { toggleQuestionFlag, updateQuestion, toggleQuestionSelection, getAllSelectedQuestions } = useQuestionActions(questions, role || 'student', isTeacher, selectedQuestionIds, dispatch, subject || '');
+
+    const loadMore = useCallback(() => {
+        dispatch({ type: 'SET_PAGINATION', pagination: { ...pagination, limit: pagination.limit + 20 } });
+    }, [pagination, dispatch]);
+
+    const refreshQuestions = useCallback(() => {
         fetchQuestions();
     }, [fetchQuestions]);
 
-    useEffect(() => {
-        fetchFilterOptions();
-    }, [fetchFilterOptions]);
+    const hasMore = useMemo(() => questions.length < totalCount, [questions.length, totalCount]);
 
-    // Persist selected questions across navigation using localStorage
-    // Keep selection in sync if changed in another tab
+    // Fetch questions when dependencies change
     useEffect(() => {
-        if (typeof window === 'undefined') return;
-        const onStorage = (e: StorageEvent) => {
-            if (e.key === 'qb:selectedQuestionIds' && e.newValue) {
-                try {
-                    const parsed = JSON.parse(e.newValue);
-                    if (Array.isArray(parsed)) {
-                        setSelectedQuestionIds(new Set(parsed.filter((v: unknown): v is string => typeof v === 'string')));
-                    }
-                } catch { }
-            }
-            if (e.key === 'qb:showOnlySelected' && e.newValue) {
-                try {
-                    const parsed = JSON.parse(e.newValue);
-                    setShowOnlySelected(Boolean(parsed));
-                } catch { }
-            }
-        };
-        window.addEventListener('storage', onStorage);
-        return () => window.removeEventListener('storage', onStorage);
-    }, []);
-
-    useEffect(() => {
-        try {
-            if (typeof window !== 'undefined') {
-                localStorage.setItem('qb:selectedQuestionIds', JSON.stringify(Array.from(selectedQuestionIds)));
-            }
-        } catch (e) {
-            console.error('Failed to save selectedQuestionIds to storage', e);
+        if (!roleLoading && role) {
+            fetchQuestions();
         }
-    }, [selectedQuestionIds]);
+    }, [fetchQuestions, roleLoading, role]);
 
+    // Fetch filter options when dependencies change
     useEffect(() => {
-        try {
-            if (typeof window !== 'undefined') {
-                localStorage.setItem('qb:showOnlySelected', JSON.stringify(showOnlySelected));
-            }
-        } catch (e) {
-            console.error('Failed to save showOnlySelected to storage', e);
+        if (!roleLoading && role) {
+            fetchFilterOptions();
         }
-    }, [showOnlySelected]);
+    }, [fetchFilterOptions, roleLoading, role]);
 
-    return (
-        <QuestionBankContext.Provider value={value}>
-            {children}
-        </QuestionBankContext.Provider>
+    const value = useMemo<QuestionBankContextType>(
+        () => ({
+            questions,
+            loading,
+            error,
+            filters,
+            setFilters: (newFilters) => dispatch({ type: 'SET_FILTERS', filters: newFilters }),
+            pagination,
+            setPagination: (newPagination) => dispatch({ type: 'SET_PAGINATION', pagination: newPagination }),
+            filterOptions,
+            optionsLoading,
+            searchQuery,
+            setSearchQuery: (query) => dispatch({ type: 'SET_SEARCH_QUERY', searchQuery: query }),
+            totalCount,
+            hasMore,
+            loadMore,
+            refreshQuestions,
+            toggleQuestionFlag,
+            selectedQuestionIds,
+            toggleQuestionSelection,
+            getAllSelectedQuestions,
+            updateQuestion,
+            showOnlySelected,
+            setShowOnlySelected: (show) => dispatch({ type: 'SET_SHOW_ONLY_SELECTED', show }),
+        }),
+        [
+            questions,
+            loading,
+            error,
+            filters,
+            pagination,
+            filterOptions,
+            optionsLoading,
+            searchQuery,
+            totalCount,
+            hasMore,
+            loadMore,
+            refreshQuestions,
+            toggleQuestionFlag,
+            selectedQuestionIds,
+            toggleQuestionSelection,
+            getAllSelectedQuestions,
+            updateQuestion,
+            showOnlySelected,
+        ]
     );
+
+    return <QuestionBankContext.Provider value={value}>{children}</QuestionBankContext.Provider>;
 };
 
 export const useQuestionBankContext = () => {

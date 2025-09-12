@@ -6,7 +6,7 @@ import { getUserSubject } from '@/actions/onBoarding/getUserSubject';
 
 export const useUserSubject = () => {
     const { user, isLoaded } = useUser();
-    const [subject, setSubject] = useState<string | null>(null);
+    const [subject, setSubject] = useState<string | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -22,7 +22,7 @@ export const useUserSubject = () => {
                 setSubject(userSubject);
             } catch (error) {
                 console.error('Error fetching user subject:', error);
-                setSubject(null);
+                setSubject(undefined);
             } finally {
                 setIsLoading(false);
             }
