@@ -114,6 +114,8 @@ export async function getQuestionCount(
         chapter?: string;
         section_name?: string;
         flagged?: boolean;
+        limit: number | undefined
+        skip: number | undefined
     },
     userRole: UserRole,
     userSubject?: string

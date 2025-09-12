@@ -1,6 +1,6 @@
 import { useReducer } from "react";
 
-interface State {
+interface QuestionBankState {
     loading: boolean
     error: string | null
     filters: Filters
@@ -14,10 +14,10 @@ interface State {
     selectedQuestionIds: Set<string>
 }
 
-type Action =
+export type QuestionBankAction =
     | { type: 'SET_QUESTIONS'; questions: Question[]; totalCount: number }
     | { type: 'SET_LOADING', loading: boolean }
-    | { type: 'SET_ERROR', error: string }
+    | { type: 'SET_ERROR', error: string | null }
     | { type: 'SET_FILTERS', filters: Partial<Filters> }
     | { type: 'SET_PAGINATION', pagination: Pagination }
     | { type: 'SET_FILTER_OPTIONS', options: FilterOptions }
@@ -28,7 +28,7 @@ type Action =
     | { type: 'TOGGLE_SELECTION', id: string }
     | { type: 'SET_SHOW_ONLY_SELECTED', show: boolean }
 
-const initialState: State = {
+const initialState: QuestionBankState = {
     loading: false,
     error: null,
     filters: {},
@@ -42,7 +42,7 @@ const initialState: State = {
     selectedQuestionIds: new Set()
 }
 
-const reducer = (state: State, action: Action): State => {
+const reducer = (state: QuestionBankState, action: QuestionBankAction): QuestionBankState => {
     switch (action.type) {
         case 'SET_QUESTIONS':
             return {
