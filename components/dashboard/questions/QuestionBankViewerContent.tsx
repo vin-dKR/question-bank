@@ -3,12 +3,11 @@ import EmptyState from "@/components/question/EmptyState";
 import QuestionList from "@/components/question/QuestionList";
 import FilterControls from "@/components/question/FilterControls"
 import FoldersControls from "@/components/question/FoldersControls"
-import PaginationControls from "@/components/question/PaginationControls";
 import SelectedQuestionsActions from "@/components/question/SelectedQuestionsActions";
 import { useQuestionBankContext } from "@/lib/context/QuestionBankContext";
 
 const QuestionBankViewerContent = () => {
-    const { questions, loading, error, totalCount, selectedQuestionIds } = useQuestionBankContext();
+    const { questions, loading, error, selectedQuestionIds } = useQuestionBankContext();
 
     return (
         <div className="relative">
@@ -38,7 +37,6 @@ const QuestionBankViewerContent = () => {
                             </div>
                         )}
                         {!loading && questions.length > 0 && <QuestionList />}
-                        {totalCount > 0 && !loading && <PaginationControls />}
                         {!loading && questions.length === 0 && <EmptyState />}
                     </main>
                 </div>

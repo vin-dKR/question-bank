@@ -1,13 +1,18 @@
 'use client';
 
-import { memo, useMemo, useState } from 'react';
-import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
-import { renderMixedLatex } from '@/lib/render-tex';
-import { Flag, FlagOff } from 'lucide-react';
 import Image from 'next/image';
-import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { Flag, FlagOff } from 'lucide-react';
+import { memo, useMemo, useState, useCallback } from 'react';
+import { Button } from '@/components/ui/button';
+import { renderMixedLatex } from '@/lib/render-tex';
 import { refineTextWithAI } from '@/lib/ai/aiService';
+import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
+import LoadingState from './question-list/LoadingState';
+import ErrorState from './question-list/ErrorState';
+import EmptyState from './question-list/EmptyState';
+import SelectedQuestionsBanner from './question-list/SelectedQuestionsBanner';
+import PaginationControls from './question-list/PaginationControls';
 
 interface QuestionProps {
     question: Question;
@@ -171,11 +176,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                                     }`}
                                 title={question.flagged ? 'Unflag question' : 'Flag question'}
                             >
-                                {question.flagged ? (
-                                    <Flag className="h-4 w-4 text-amber-600" />
-                                ) : (
-                                    <FlagOff className="h-4 w-4" />
-                                )}
+                                {question.flagged ? <Flag className="h-4 w-4 text-amber-600" /> : <FlagOff className="h-4 w-4" />}
                             </button>
                         </div>
 
@@ -368,22 +369,32 @@ const QuestionList = memo(() => {
         selectedQuestions,
         selectedPagination,
         setSelectedPagination,
-        initialFetchDone
+        initialFetchDone,
     } = useQuestionBankContext();
 
-    const displayedQuestions = showOnlySelected
-        ? selectedQuestions.slice(
-            (selectedPagination.page - 1) * selectedPagination.limit,
-            selectedPagination.page * selectedPagination.limit
-        )
-        : questions;
+    const displayedQuestions = useMemo(
+        () =>
+            showOnlySelected
+                ? selectedQuestions.slice(
+                    (selectedPagination.page - 1) * selectedPagination.limit,
+                    selectedPagination.page * selectedPagination.limit
+                )
+                : questions,
+        [showOnlySelected, selectedQuestions, selectedPagination, questions]
+    );
 
-    const displayedTotal = showOnlySelected ? selectedQuestions.length : totalCount;
-    const displayedHasMore = showOnlySelected
-        ? selectedPagination.page * selectedPagination.limit < selectedQuestions.length
-        : hasMore;
+    const displayedTotal = useMemo(() => (showOnlySelected ? selectedQuestions.length : totalCount), [
+        showOnlySelected,
+        selectedQuestions.length,
+        totalCount,
+    ]);
 
-    const handlePrevious = () => {
+    const displayedHasMore = useMemo(
+        () => (showOnlySelected ? selectedPagination.page * selectedPagination.limit < selectedQuestions.length : hasMore),
+        [showOnlySelected, selectedPagination, selectedQuestions.length, hasMore]
+    );
+
+    const handlePrevious = useCallback(() => {
         const currentPagination = showOnlySelected ? selectedPagination : pagination;
         if (currentPagination.page > 1) {
             const newPagination = { ...currentPagination, page: currentPagination.page - 1 };
@@ -393,9 +404,9 @@ const QuestionList = memo(() => {
                 setPagination(newPagination);
             }
         }
-    };
+    }, [showOnlySelected, selectedPagination, pagination, setSelectedPagination, setPagination]);
 
-    const handleNext = () => {
+    const handleNext = useCallback(() => {
         const currentPagination = showOnlySelected ? selectedPagination : pagination;
         if (currentPagination.page * currentPagination.limit < displayedTotal) {
             const newPagination = { ...currentPagination, page: currentPagination.page + 1 };
@@ -405,49 +416,35 @@ const QuestionList = memo(() => {
                 setPagination(newPagination);
             }
         }
-    };
+    }, [showOnlySelected, selectedPagination, pagination, displayedTotal, setSelectedPagination, setPagination]);
 
-    const loadMoreSelected = () => {
-        setSelectedPagination({ ...selectedPagination, limit: selectedPagination.limit + 20 });
-    };
-
-    const displayedLoadMore = showOnlySelected ? loadMoreSelected : loadMore;
+    const handleLoadMore = useCallback(() => {
+        const currentPagination = showOnlySelected ? selectedPagination : pagination;
+        const newPagination = { ...currentPagination, limit: currentPagination.limit + 20 };
+        if (showOnlySelected) {
+            setSelectedPagination(newPagination);
+        } else {
+            loadMore();
+        }
+    }, [showOnlySelected, selectedPagination, pagination, setSelectedPagination, loadMore]);
 
     return (
         <div className="min-h-screen bg-gray-100">
-            <div className="w-full max-w-4xl mx-auto space-y-6">
+            <div className="w-full mx-auto space-y-6">
 
                 {showOnlySelected && (
-                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <p className="text-blue-800 text-sm">
-                            Showing {displayedQuestions.length} of {selectedQuestions.length} selected questions
-                        </p>
-                    </div>
+                    <SelectedQuestionsBanner displayedCount={displayedQuestions.length} totalCount={selectedQuestions.length} />
                 )}
 
-                {loading && (
-                    <div className="text-center py-6">
-                        <p className="text-slate-600">Loading questions...</p>
-                    </div>
-                )}
+                {loading && <LoadingState />}
 
-                {error && (
-                    <div className="text-center py-6">
-                        <p className="text-red-600">{error}</p>
-                    </div>
-                )}
+                {error && <ErrorState error={error} />}
 
                 {!loading && initialFetchDone && displayedQuestions.length === 0 && (
-                    <div className="text-center py-6">
-                        <p className="text-slate-600">
-                            {showOnlySelected
-                                ? 'No selected questions found. Select some questions first.'
-                                : 'No questions found matching your criteria.'}
-                        </p>
-                    </div>
+                    <EmptyState showOnlySelected={showOnlySelected} />
                 )}
 
-                {!loading && displayedQuestions.length > 0 && (
+                {displayedQuestions.length > 0 && (
                     <div className="space-y-4">
                         {displayedQuestions.map((question) => (
                             <QuestionItem
@@ -461,44 +458,23 @@ const QuestionList = memo(() => {
                     </div>
                 )}
 
-                {displayedHasMore && !loading && (
-                    <div className="text-center">
-                        <Button
-                            onClick={displayedLoadMore}
-                            className="bg-indigo-600 text-white rounded-lg px-4 py-2 hover:bg-indigo-700"
-                        >
-                            Load More
-                        </Button>
-                    </div>
-                )}
-
                 {displayedQuestions.length > 0 && (
-                    <div className="flex justify-between">
-                        <Button
-                            onClick={handlePrevious}
-                            disabled={(showOnlySelected ? selectedPagination : pagination).page === 1}
-                            className="px-4 py-2 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Previous
-                        </Button>
-                        <Button
-                            onClick={handleNext}
-                            disabled={
-                                (showOnlySelected ? selectedPagination : pagination).page *
-                                (showOnlySelected ? selectedPagination : pagination).limit >=
-                                displayedTotal
-                            }
-                            className="px-4 py-2 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Next
-                        </Button>
-                    </div>
+                    <PaginationControls
+                        pagination={pagination}
+                        currentPage={showOnlySelected ? selectedPagination.page : pagination.page}
+                        limit={showOnlySelected ? selectedPagination.limit : pagination.limit}
+                        totalCount={displayedTotal}
+                        hasMore={displayedHasMore}
+                        onPrevious={handlePrevious}
+                        onNext={handleNext}
+                        onLoadMore={handleLoadMore}
+                        showOnlySelected={showOnlySelected}
+                    />
                 )}
             </div>
         </div>
     );
 });
-
 QuestionList.displayName = 'QuestionList';
 
 export default QuestionList;
