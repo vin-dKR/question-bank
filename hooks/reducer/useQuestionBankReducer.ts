@@ -24,7 +24,7 @@ export type QuestionBankAction =
     | { type: 'SET_OPTIONS_LOADING', optionsLoading: boolean }
     | { type: 'SET_SEARCH_QUERY', searchQuery: string }
     | { type: 'TOGGLE_FLAG', id: string }
-    | { type: 'UPDATE_QUESTION', updatedQuestions: Pick<Question, 'id' | 'question_text' | 'options'> }
+    | { type: 'UPDATE_QUESTION', updatedQuestion: Pick<Question, 'id' | 'question_text' | 'options'> }
     | { type: 'TOGGLE_SELECTION', id: string }
     | { type: 'SET_SHOW_ONLY_SELECTED', show: boolean }
 
@@ -102,11 +102,11 @@ const reducer = (state: QuestionBankState, action: QuestionBankAction): Question
             return {
                 ...state,
                 questions: state.questions.map((q) =>
-                    q.id === action.updatedQuestions.id
+                    q.id === action.updatedQuestion.id
                         ? {
                             ...q,
-                            question_text: action.updatedQuestions.question_text,
-                            options: action.updatedQuestions.options
+                            question_text: action.updatedQuestion.question_text,
+                            options: action.updatedQuestion.options
                         }
                         : q
                 )
