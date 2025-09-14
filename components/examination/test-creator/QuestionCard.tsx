@@ -3,11 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
 import { renderMixedLatex } from '@/lib/render-tex';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { TestCreatorAction } from '@/hooks/reducer/useTestCreatorReducer';
 
 interface QuestionCardProps {
     question: QuestionForCreateTestData;
     index: number;
-    dispatch: (action: any) => void;
+    dispatch: (action: TestCreatorAction) => void;
 }
 
 export default function QuestionCard({ question, index, dispatch }: QuestionCardProps) {

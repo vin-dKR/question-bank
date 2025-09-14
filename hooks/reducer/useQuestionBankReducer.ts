@@ -1,6 +1,27 @@
-import { useReducer } from 'react';
+import { useReducer, useEffect } from 'react';
 
-interface State {
+// Helper functions for localStorage
+const getPersistedSelectedIds = (): Set<string> => {
+    if (typeof window === 'undefined') return new Set<string>();
+    const stored = localStorage.getItem('selectedQuestionIds');
+    return stored ? new Set(JSON.parse(stored)) : new Set<string>();
+};
+
+const getPersistedSelectedQuestions = (): Question[] => {
+    if (typeof window === 'undefined') return [];
+    const stored = localStorage.getItem('selectedQuestions');
+    return stored ? JSON.parse(stored) : [];
+};
+
+const saveSelectedIds = (ids: Set<string>) => {
+    localStorage.setItem('selectedQuestionIds', JSON.stringify(Array.from(ids)));
+};
+
+const saveSelectedQuestions = (questions: Question[]) => {
+    localStorage.setItem('selectedQuestions', JSON.stringify(questions));
+};
+
+export interface QuestionBankState {
     questions: Question[];
     loading: boolean;
     error: string | null;
@@ -17,7 +38,7 @@ interface State {
     initialFetchDone: boolean;
 }
 
-type Action =
+export type QuestionBankAction =
     | { type: 'SET_QUESTIONS'; questions: Question[]; totalCount: number }
     | { type: 'SET_LOADING'; loading: boolean }
     | { type: 'SET_ERROR'; error: string | null }
@@ -34,7 +55,7 @@ type Action =
     | { type: 'SET_SELECTED_PAGINATION'; pagination: Pagination }
     | { type: 'SET_INITIAL_FETCH_DONE' };
 
-const initialState: State = {
+const initialState: QuestionBankState = {
     questions: [],
     loading: true,
     error: null,
@@ -45,16 +66,28 @@ const initialState: State = {
     searchQuery: '',
     totalCount: 0,
     showOnlySelected: false,
-    selectedQuestionIds: new Set(),
-    selectedQuestions: [],
+    selectedQuestionIds: getPersistedSelectedIds(),
+    selectedQuestions: getPersistedSelectedQuestions(),
     selectedPagination: { page: 1, limit: 20 },
     initialFetchDone: false,
 };
 
-const reducer = (state: State, action: Action): State => {
+const reducer = (state: QuestionBankState, action: QuestionBankAction): QuestionBankState => {
+    let newState: QuestionBankState;
     switch (action.type) {
         case 'SET_QUESTIONS':
-            return { ...state, questions: action.questions, totalCount: action.totalCount, initialFetchDone: true };
+            newState = {
+                ...state,
+                questions: action.questions,
+                totalCount: action.totalCount,
+                initialFetchDone: true,
+                // Update selectedQuestions to match current questions if IDs exist
+                selectedQuestions: state.selectedQuestionIds.size > 0
+                    ? action.questions.filter((q) => state.selectedQuestionIds.has(q.id))
+                    : state.selectedQuestions,
+            };
+            saveSelectedQuestions(newState.selectedQuestions);
+            return newState;
         case 'SET_LOADING':
             return { ...state, loading: action.loading };
         case 'SET_ERROR':
@@ -88,19 +121,43 @@ const reducer = (state: State, action: Action): State => {
                         }
                         : q
                 ),
+                selectedQuestions: state.selectedQuestions.map((q) =>
+                    q.id === action.updatedQuestion.id
+                        ? {
+                            ...q,
+                            question_text: action.updatedQuestion.question_text ?? q.question_text,
+                            options: action.updatedQuestion.options ?? q.options,
+                        }
+                        : q
+                ),
             };
         case 'TOGGLE_SELECTION':
             const newSet = new Set(state.selectedQuestionIds);
-            if (newSet.has(action.id)) {
+            const isSelected = newSet.has(action.id);
+            if (isSelected) {
                 newSet.delete(action.id);
             } else {
                 newSet.add(action.id);
             }
-            return { ...state, selectedQuestionIds: newSet };
+            newState = {
+                ...state,
+                selectedQuestionIds: newSet,
+                selectedQuestions: isSelected
+                    ? state.selectedQuestions.filter((q) => q.id !== action.id)
+                    : [
+                        ...state.selectedQuestions,
+                        ...state.questions.filter((q) => q.id === action.id && !state.selectedQuestions.some((sq) => sq.id === q.id)),
+                    ],
+            };
+            saveSelectedIds(newSet);
+            saveSelectedQuestions(newState.selectedQuestions);
+            return newState;
         case 'SET_SHOW_ONLY_SELECTED':
             return { ...state, showOnlySelected: action.show };
         case 'SET_SELECTED_QUESTIONS':
-            return { ...state, selectedQuestions: action.questions };
+            newState = { ...state, selectedQuestions: action.questions };
+            saveSelectedQuestions(newState.selectedQuestions);
+            return newState;
         case 'SET_SELECTED_PAGINATION':
             return { ...state, selectedPagination: action.pagination };
         case 'SET_INITIAL_FETCH_DONE':
@@ -110,4 +167,18 @@ const reducer = (state: State, action: Action): State => {
     }
 };
 
-export const useQuestionBankReducer = () => useReducer(reducer, initialState);
+export const useQuestionBankReducer = () => {
+    const [state, dispatch] = useReducer(reducer, initialState);
+
+    // Sync selectedQuestions with questions when questions change
+    useEffect(() => {
+        if (state.selectedQuestionIds.size > 0 && state.questions.length > 0) {
+            const updatedSelectedQuestions = state.questions.filter((q) => state.selectedQuestionIds.has(q.id));
+            if (updatedSelectedQuestions.length !== state.selectedQuestions.length) {
+                dispatch({ type: 'SET_SELECTED_QUESTIONS', questions: updatedSelectedQuestions });
+            }
+        }
+    }, [state.questions, state.selectedQuestionIds]);
+
+    return [state, dispatch] as const;
+};

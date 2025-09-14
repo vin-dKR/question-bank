@@ -1,11 +1,12 @@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { TestCreatorAction } from '@/hooks/reducer/useTestCreatorReducer';
 
 interface BulkMarksAssignmentProps {
     bulkMarks: number;
     bulkNegativeMarks: number;
-    dispatch: (action: any) => void;
+    dispatch: (action: TestCreatorAction) => void;
     questionCount: number;
 }
 

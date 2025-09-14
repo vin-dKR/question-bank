@@ -2,10 +2,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { TestCreatorAction } from '@/hooks/reducer/useTestCreatorReducer';
 
 interface TestDetailsFormProps {
     testData: CreateTestData;
-    dispatch: (action: any) => void;
+    dispatch: (action: TestCreatorAction) => void;
 }
 
 export default function TestDetailsForm({ testData, dispatch }: TestDetailsFormProps) {

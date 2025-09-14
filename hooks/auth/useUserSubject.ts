@@ -19,7 +19,7 @@ export const useUserSubject = () => {
             try {
                 setIsLoading(true);
                 const userSubject = await getUserSubject(user.id);
-                setSubject(userSubject);
+                setSubject(userSubject ?? undefined);
             } catch (error) {
                 console.error('Error fetching user subject:', error);
                 setSubject(undefined);
@@ -35,4 +35,4 @@ export const useUserSubject = () => {
         subject,
         isLoading,
     };
-}; 
+};

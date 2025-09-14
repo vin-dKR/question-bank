@@ -67,7 +67,8 @@ declare global {
         selectedQuestions: Question[];
         selectedPagination: Pagination;
         setSelectedPagination: (pagination: Pagination) => void
-        initialFetchDone: boolean
+        initialFetchDone: boolean,
+        setSelectedQuestions: (questions: Question[]) => void
     }
 
 
@@ -528,6 +529,7 @@ declare global {
     interface QuestionForCreateTestData {
         id: string;
         question_text: string;
+        question_number: number
         options: string[];
         answer: string;
         marks: number;

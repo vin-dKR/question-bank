@@ -41,6 +41,10 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
 
     const hasMore = useMemo(() => questions.length < totalCount, [questions.length, totalCount]);
 
+    const setSelectedQuestions = useCallback((questions: Question[]) => {
+        dispatch({ type: 'SET_SELECTED_QUESTIONS', questions });
+    }, [dispatch]);
+
     // Fetch questions when dependencies change
     useEffect(() => {
         if (!roleLoading && role) {
@@ -92,7 +96,8 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
             selectedPagination,
             setSelectedPagination: (pagination: Pagination) => dispatch({ type: 'SET_SELECTED_PAGINATION', pagination }),
             fetchSelectedQuestions,
-            initialFetchDone
+            initialFetchDone,
+            setSelectedQuestions
         }),
         [
             questions,
@@ -116,6 +121,8 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
             selectedQuestions,
             selectedPagination,
             fetchSelectedQuestions,
+            initialFetchDone,
+            setSelectedQuestions
         ]
     );
 

@@ -1,7 +1,7 @@
 import { toast } from "sonner"
 import { useEffect, useReducer } from "react"
 
-interface State {
+export interface TestCreatorState {
     testData: CreateTestData
     bulkMarks: number
     bulkNegativeMarks: number
@@ -9,7 +9,7 @@ interface State {
     hasLoadedQuestions: boolean
 }
 
-type Action =
+export type TestCreatorAction =
     | {
         type: 'SET_TEST_FIELD';
         field: keyof Omit<CreateTestData, 'questions' | 'totalMarks'>;
@@ -29,7 +29,7 @@ type Action =
     | { type: 'LOAD_QUESTIONS', questions: QuestionForCreateTestData[] }
     | { type: 'SET_SUBMITTING', isSubmitting: boolean }
 
-const initialState: State = {
+const initialState: TestCreatorState = {
     testData: {
         title: '',
         description: '',
@@ -44,7 +44,7 @@ const initialState: State = {
     hasLoadedQuestions: false,
 }
 
-const reducer = (state: State, action: Action): State => {
+const reducer = (state: TestCreatorState, action: TestCreatorAction): TestCreatorState => {
     switch (action.type) {
         case 'SET_TEST_FIELD':
             return {

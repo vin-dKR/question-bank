@@ -13,6 +13,7 @@ import ErrorState from './question-list/ErrorState';
 import EmptyState from './question-list/EmptyState';
 import SelectedQuestionsBanner from './question-list/SelectedQuestionsBanner';
 import PaginationControls from './question-list/PaginationControls';
+import { useQuestionBankReducer } from '@/hooks/reducer/useQuestionBankReducer';
 
 interface QuestionProps {
     question: Question;
@@ -358,7 +359,6 @@ const QuestionList = memo(() => {
         questions,
         showOnlySelected,
         toggleQuestionFlag,
-        setShowOnlySelected,
         selectedQuestionIds,
         toggleQuestionSelection,
         totalCount,
@@ -370,7 +370,10 @@ const QuestionList = memo(() => {
         selectedPagination,
         setSelectedPagination,
         initialFetchDone,
+        setSelectedQuestions,
     } = useQuestionBankContext();
+
+    const [, dispatch] = useQuestionBankReducer()
 
     const displayedQuestions = useMemo(
         () =>
@@ -428,9 +431,27 @@ const QuestionList = memo(() => {
         }
     }, [showOnlySelected, selectedPagination, pagination, setSelectedPagination, loadMore]);
 
+    const handleClearSelected = useCallback(() => {
+        setSelectedQuestions([]);
+        dispatch({ type: 'TOGGLE_SELECTION', id: '' });
+        localStorage.removeItem('selectedQuestionIds');
+        localStorage.removeItem('selectedQuestions');
+        toast.success('Selected questions cleared.');
+    }, [setSelectedQuestions]);
+
     return (
         <div className="min-h-screen bg-gray-100">
             <div className="w-full mx-auto space-y-6">
+                <div className="flex gap-4">
+                    {selectedQuestions.length > 0 && (
+                        <Button
+                            className="text-red-600 hover:text-red-800 underline"
+                            onClick={handleClearSelected}
+                        >
+                            Clear Selected Questions
+                        </Button>
+                    )}
+                </div>
 
                 {showOnlySelected && (
                     <SelectedQuestionsBanner displayedCount={displayedQuestions.length} totalCount={selectedQuestions.length} />
@@ -460,7 +481,6 @@ const QuestionList = memo(() => {
 
                 {displayedQuestions.length > 0 && (
                     <PaginationControls
-                        pagination={pagination}
                         currentPage={showOnlySelected ? selectedPagination.page : pagination.page}
                         limit={showOnlySelected ? selectedPagination.limit : pagination.limit}
                         totalCount={displayedTotal}
@@ -469,6 +489,7 @@ const QuestionList = memo(() => {
                         onNext={handleNext}
                         onLoadMore={handleLoadMore}
                         showOnlySelected={showOnlySelected}
+                        pagination={pagination}
                     />
                 )}
             </div>

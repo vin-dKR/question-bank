@@ -10,7 +10,7 @@ export const useFetchFilterOptions = (
     subject?: string
 ) => {
     const fetchFilterOptions = useCallback(async () => {
-        dispatch({ type: "SET_OPTIONS_LOADING", optionsLoading: true })
+        dispatch({ type: "SET_OPTIONS_LOADING", loading: true })
 
         try {
             const response = await getFilterOptions(
@@ -28,7 +28,7 @@ export const useFetchFilterOptions = (
             console.log("Error on useFetchFilterOptions", err)
             dispatch({ type: "SET_FILTER_OPTIONS", options: { exams: [], subjects: [], chapters: [], section_names: [] } })
         } finally {
-            dispatch({ type: "SET_OPTIONS_LOADING", optionsLoading: false })
+            dispatch({ type: "SET_OPTIONS_LOADING", loading: false })
         }
     }, [filters.exam_name, filters.chapter, filters.subject, filters.section_name, role, isTeacher, subject, dispatch])
 

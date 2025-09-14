@@ -4,6 +4,7 @@ import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
 
 export default function PaginationControls() {
     const { totalCount, pagination, setPagination, hasMore } = useQuestionBankContext();
+    console.log("tis pagin", pagination)
 
     const handlePrevious = () => {
         if (pagination.page > 1) {
