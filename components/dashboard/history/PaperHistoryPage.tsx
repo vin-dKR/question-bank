@@ -1,73 +1,72 @@
 'use client';
 
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
-import { useState, useEffect } from 'react';
 import {
     getPaperHistories,
     deletePaperHistory,
 } from '@/actions/paperHistory/paperHistory';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import PaperHistoryViewer from './PaperHistoryViewer';
-import AppProviders from '@/components/providers/AppProviders';
-import { Trash2, Eye, Calendar, FileText, Users, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import PaperHistoryViewer from './PaperHistoryViewer';
+import { Trash2, Eye, Calendar, FileText, Users, Clock } from 'lucide-react';
 
 const PaperHistory = () => {
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [showViewer, setShowViewer] = useState(false);
     const [paperHistories, setPaperHistories] = useState<PaperHistoryWithQuestions[]>([]);
     const [selectedHistory, setSelectedHistory] = useState<PaperHistoryWithQuestions | null>(null);
 
-    const fetchPaperHistories = async () => {
+    const dateFormatter = useMemo(
+        () =>
+            new Intl.DateTimeFormat('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+            }),
+        []
+    );
+
+    const fetchPaperHistories = useCallback(async () => {
         try {
             setLoading(true);
-            const histories = await getPaperHistories(50); // Get more for history page
+            const histories = await getPaperHistories(50);
             setPaperHistories(histories);
         } catch (error) {
-            console.error('Error fetching paper histories:', error);
+            console.error(error);
             toast.error('Failed to load paper history');
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchPaperHistories();
-    }, []);
+    }, [fetchPaperHistories]);
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this paper history?')) {
-            return;
-        }
+    const handleDelete = useCallback(async (id: string) => {
+        if (!confirm('Are you sure you want to delete this paper history?')) return;
 
         try {
             const result = await deletePaperHistory(id);
             if (result.success) {
-                setPaperHistories(prev => prev.filter(h => h.id !== id));
-                toast.success('Paper history deleted successfully');
+                setPaperHistories((prev) => prev.filter((h) => h.id !== id));
+                toast.success('Paper history deleted');
             } else {
-                toast.error(result.error || 'Failed to delete paper history');
+                toast.error(result.error || 'Failed to delete');
             }
         } catch (error) {
-            console.error('Error deleting paper history:', error);
-            toast.error('Failed to delete paper history');
+            console.error(error);
+            toast.error('Failed to delete');
         }
-    };
+    }, []);
 
     const handleView = (history: PaperHistoryWithQuestions) => {
         setSelectedHistory(history);
         setShowViewer(true);
-    };
-
-    const formatDate = (date: Date) => {
-        return new Intl.DateTimeFormat('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        }).format(new Date(date));
     };
 
     if (loading) {
@@ -82,12 +81,7 @@ const PaperHistory = () => {
     }
 
     if (showViewer && selectedHistory) {
-        return (
-            <PaperHistoryViewer
-                paperHistory={selectedHistory}
-                onBack={() => setShowViewer(false)}
-            />
-        );
+        return <PaperHistoryViewer paperHistory={selectedHistory} onBack={() => setShowViewer(false)} />;
     }
 
     return (
@@ -119,13 +113,9 @@ const PaperHistory = () => {
                             <CardHeader className="pb-3">
                                 <div className="flex items-start justify-between">
                                     <div className="flex-1">
-                                        <CardTitle className="text-lg line-clamp-2">
-                                            {history.title}
-                                        </CardTitle>
+                                        <CardTitle className="text-lg line-clamp-2">{history.title}</CardTitle>
                                         {history.description && (
-                                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                                                {history.description}
-                                            </p>
+                                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">{history.description}</p>
                                         )}
                                     </div>
                                     <Button
@@ -138,23 +128,12 @@ const PaperHistory = () => {
                                     </Button>
                                 </div>
                             </CardHeader>
+
                             <CardContent className="space-y-4">
                                 <div className="flex flex-wrap gap-2">
-                                    {history.subject && (
-                                        <Badge variant="secondary" className="text-xs">
-                                            {history.subject}
-                                        </Badge>
-                                    )}
-                                    {history.exam && (
-                                        <Badge variant="outline" className="text-xs">
-                                            {history.exam}
-                                        </Badge>
-                                    )}
-                                    {history.standard && (
-                                        <Badge variant="outline" className="text-xs">
-                                            {history.standard}
-                                        </Badge>
-                                    )}
+                                    {history.subject && <Badge variant="secondary" className="text-xs">{history.subject}</Badge>}
+                                    {history.exam && <Badge variant="outline" className="text-xs">{history.exam}</Badge>}
+                                    {history.standard && <Badge variant="outline" className="text-xs">{history.standard}</Badge>}
                                 </div>
 
                                 <div className="space-y-2 text-sm text-gray-600">
@@ -176,15 +155,11 @@ const PaperHistory = () => {
                                     )}
                                     <div className="flex items-center gap-2">
                                         <Calendar className="h-4 w-4" />
-                                        <span>{formatDate(history.createdAt)}</span>
+                                        <span>{dateFormatter.format(new Date(history.createdAt))}</span>
                                     </div>
                                 </div>
 
-                                <Button
-                                    onClick={() => handleView(history)}
-                                    className="w-full"
-                                    variant="outline"
-                                >
+                                <Button onClick={() => handleView(history)} className="w-full" variant="outline">
                                     <Eye className="h-4 w-4 mr-2" />
                                     View Questions
                                 </Button>
@@ -197,11 +172,6 @@ const PaperHistory = () => {
     );
 };
 
-const PaperHistoryPage = () => {
-    return (
-        <AppProviders>
-            <PaperHistory />
-        </AppProviders>
-    )
+export default function PaperHistoryPage() {
+    return <PaperHistory />;
 }
-export default PaperHistoryPage
