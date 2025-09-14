@@ -13,7 +13,7 @@ const QuestionBankContext = createContext<QuestionBankContextType | undefined>(u
 
 export const QuestionBankProvider = ({ children }: { children: React.ReactNode }) => {
     const [state, dispatch] = useQuestionBankReducer();
-    const { questions, loading, error, filters, pagination, filterOptions, optionsLoading, searchQuery, totalCount, showOnlySelected, selectedQuestionIds, selectedQuestions, selectedPagination, initialFetchDone } = state;
+    const { questions, loading, error, filters, pagination, filterOptions, optionsLoading, searchQuery, totalCount, showOnlySelected, selectedQuestions, initialFetchDone } = state;
 
     const { role, isTeacher, isLoading: roleLoading } = useUserRole();
     const { subject } = useUserSubject();
@@ -22,9 +22,9 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
 
     const fetchFilterOptions = useFetchFilterOptions(filters, role || 'student', isTeacher, dispatch, subject || '');
 
-    usePersistentSelection(selectedQuestionIds, showOnlySelected, dispatch);
+    usePersistentSelection(selectedQuestions, showOnlySelected, dispatch);
 
-    const { toggleQuestionFlag, updateQuestion, toggleQuestionSelection, getAllSelectedQuestions } = useQuestionActions(questions, role || 'student', isTeacher, selectedQuestionIds, dispatch, subject || '');
+    const { toggleQuestionFlag, updateQuestion, toggleQuestionSelection, getAllSelectedQuestions } = useQuestionActions(questions, role || 'student', isTeacher, new Set(selectedQuestions.map(q => q.id)), dispatch, subject || '');
 
     const loadMore = useCallback(() => {
         dispatch({ type: 'SET_PAGINATION', pagination: { ...pagination, limit: pagination.limit + 20 } });
@@ -34,16 +34,11 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
         fetchQuestions();
     }, [fetchQuestions]);
 
-    const fetchSelectedQuestions = useCallback(async () => {
-        const selected = await getAllSelectedQuestions();
-        dispatch({ type: 'SET_SELECTED_QUESTIONS', questions: selected });
-    }, [getAllSelectedQuestions, dispatch]);
-
-    const hasMore = useMemo(() => questions.length < totalCount, [questions.length, totalCount]);
-
     const setSelectedQuestions = useCallback((questions: Question[]) => {
         dispatch({ type: 'SET_SELECTED_QUESTIONS', questions });
     }, [dispatch]);
+
+    const hasMore = useMemo(() => questions.length < totalCount, [questions.length, totalCount]);
 
     // Fetch questions when dependencies change
     useEffect(() => {
@@ -58,15 +53,6 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
             fetchFilterOptions();
         }
     }, [fetchFilterOptions, roleLoading, role]);
-
-    useEffect(() => {
-        if (showOnlySelected) {
-            fetchSelectedQuestions();
-        } else {
-            dispatch({ type: 'SET_SELECTED_QUESTIONS', questions: [] });
-            dispatch({ type: 'SET_SELECTED_PAGINATION', pagination: { page: 1, limit: 20 } });
-        }
-    }, [showOnlySelected, fetchSelectedQuestions, dispatch]);
 
     const value = useMemo<QuestionBankContextType>(
         () => ({
@@ -86,18 +72,14 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
             loadMore,
             refreshQuestions,
             toggleQuestionFlag,
-            selectedQuestionIds,
             toggleQuestionSelection,
             getAllSelectedQuestions,
             updateQuestion,
             showOnlySelected,
             setShowOnlySelected: (show) => dispatch({ type: 'SET_SHOW_ONLY_SELECTED', show }),
             selectedQuestions,
-            selectedPagination,
-            setSelectedPagination: (pagination: Pagination) => dispatch({ type: 'SET_SELECTED_PAGINATION', pagination }),
-            fetchSelectedQuestions,
+            setSelectedQuestions,
             initialFetchDone,
-            setSelectedQuestions
         }),
         [
             questions,
@@ -113,16 +95,13 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
             loadMore,
             refreshQuestions,
             toggleQuestionFlag,
-            selectedQuestionIds,
             toggleQuestionSelection,
             getAllSelectedQuestions,
             updateQuestion,
             showOnlySelected,
             selectedQuestions,
-            selectedPagination,
-            fetchSelectedQuestions,
+            setSelectedQuestions,
             initialFetchDone,
-            setSelectedQuestions
         ]
     );
 

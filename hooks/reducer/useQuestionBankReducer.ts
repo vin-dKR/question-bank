@@ -1,24 +1,15 @@
-import { useReducer, useEffect } from 'react';
-
-// Helper functions for localStorage
-const getPersistedSelectedIds = (): Set<string> => {
-    if (typeof window === 'undefined') return new Set<string>();
-    const stored = localStorage.getItem('selectedQuestionIds');
-    return stored ? new Set(JSON.parse(stored)) : new Set<string>();
-};
+import { useReducer } from 'react';
 
 const getPersistedSelectedQuestions = (): Question[] => {
     if (typeof window === 'undefined') return [];
-    const stored = localStorage.getItem('selectedQuestions');
+    const stored = localStorage.getItem('qb:selectedQuestions');
     return stored ? JSON.parse(stored) : [];
 };
 
-const saveSelectedIds = (ids: Set<string>) => {
-    localStorage.setItem('selectedQuestionIds', JSON.stringify(Array.from(ids)));
-};
-
-const saveSelectedQuestions = (questions: Question[]) => {
-    localStorage.setItem('selectedQuestions', JSON.stringify(questions));
+const getPersistedShowOnlySelected = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    const stored = localStorage.getItem('qb:showOnlySelected');
+    return stored ? JSON.parse(stored) : false;
 };
 
 export interface QuestionBankState {
@@ -32,9 +23,7 @@ export interface QuestionBankState {
     searchQuery: string;
     totalCount: number;
     showOnlySelected: boolean;
-    selectedQuestionIds: Set<string>;
     selectedQuestions: Question[];
-    selectedPagination: Pagination;
     initialFetchDone: boolean;
 }
 
@@ -51,9 +40,9 @@ export type QuestionBankAction =
     | { type: 'UPDATE_QUESTION'; updatedQuestion: Pick<Question, 'id' | 'question_text' | 'options'> }
     | { type: 'TOGGLE_SELECTION'; id: string }
     | { type: 'SET_SHOW_ONLY_SELECTED'; show: boolean }
-    | { type: 'SET_SELECTED_QUESTIONS'; questions: Question[] }
-    | { type: 'SET_SELECTED_PAGINATION'; pagination: Pagination }
-    | { type: 'SET_INITIAL_FETCH_DONE' };
+    | { type: 'SET_INITIAL_FETCH_DONE' }
+    | { type: 'CLEAR_SELECTIONS' }
+    | { type: 'SET_SELECTED_QUESTIONS'; questions: Question[] };
 
 const initialState: QuestionBankState = {
     questions: [],
@@ -65,10 +54,8 @@ const initialState: QuestionBankState = {
     optionsLoading: false,
     searchQuery: '',
     totalCount: 0,
-    showOnlySelected: false,
-    selectedQuestionIds: getPersistedSelectedIds(),
+    showOnlySelected: getPersistedShowOnlySelected(),
     selectedQuestions: getPersistedSelectedQuestions(),
-    selectedPagination: { page: 1, limit: 20 },
     initialFetchDone: false,
 };
 
@@ -81,12 +68,7 @@ const reducer = (state: QuestionBankState, action: QuestionBankAction): Question
                 questions: action.questions,
                 totalCount: action.totalCount,
                 initialFetchDone: true,
-                // Update selectedQuestions to match current questions if IDs exist
-                selectedQuestions: state.selectedQuestionIds.size > 0
-                    ? action.questions.filter((q) => state.selectedQuestionIds.has(q.id))
-                    : state.selectedQuestions,
             };
-            saveSelectedQuestions(newState.selectedQuestions);
             return newState;
         case 'SET_LOADING':
             return { ...state, loading: action.loading };
@@ -106,6 +88,9 @@ const reducer = (state: QuestionBankState, action: QuestionBankAction): Question
             return {
                 ...state,
                 questions: state.questions.map((q) =>
+                    q.id === action.id ? { ...q, flagged: !q.flagged } : q
+                ),
+                selectedQuestions: state.selectedQuestions.map((q) =>
                     q.id === action.id ? { ...q, flagged: !q.flagged } : q
                 ),
             };
@@ -132,36 +117,25 @@ const reducer = (state: QuestionBankState, action: QuestionBankAction): Question
                 ),
             };
         case 'TOGGLE_SELECTION':
-            const newSet = new Set(state.selectedQuestionIds);
-            const isSelected = newSet.has(action.id);
-            if (isSelected) {
-                newSet.delete(action.id);
-            } else {
-                newSet.add(action.id);
-            }
+            const isSelected = state.selectedQuestions.some((q) => q.id === action.id);
+            const question = state.questions.find((q) => q.id === action.id);
             newState = {
                 ...state,
-                selectedQuestionIds: newSet,
                 selectedQuestions: isSelected
                     ? state.selectedQuestions.filter((q) => q.id !== action.id)
-                    : [
-                        ...state.selectedQuestions,
-                        ...state.questions.filter((q) => q.id === action.id && !state.selectedQuestions.some((sq) => sq.id === q.id)),
-                    ],
+                    : question
+                        ? [...state.selectedQuestions, question]
+                        : state.selectedQuestions,
             };
-            saveSelectedIds(newSet);
-            saveSelectedQuestions(newState.selectedQuestions);
             return newState;
         case 'SET_SHOW_ONLY_SELECTED':
             return { ...state, showOnlySelected: action.show };
-        case 'SET_SELECTED_QUESTIONS':
-            newState = { ...state, selectedQuestions: action.questions };
-            saveSelectedQuestions(newState.selectedQuestions);
-            return newState;
-        case 'SET_SELECTED_PAGINATION':
-            return { ...state, selectedPagination: action.pagination };
         case 'SET_INITIAL_FETCH_DONE':
             return { ...state, initialFetchDone: true };
+        case 'CLEAR_SELECTIONS':
+            return { ...state, selectedQuestions: [] };
+        case 'SET_SELECTED_QUESTIONS':
+            return { ...state, selectedQuestions: action.questions };
         default:
             return state;
     }
@@ -169,16 +143,5 @@ const reducer = (state: QuestionBankState, action: QuestionBankAction): Question
 
 export const useQuestionBankReducer = () => {
     const [state, dispatch] = useReducer(reducer, initialState);
-
-    // Sync selectedQuestions with questions when questions change
-    useEffect(() => {
-        if (state.selectedQuestionIds.size > 0 && state.questions.length > 0) {
-            const updatedSelectedQuestions = state.questions.filter((q) => state.selectedQuestionIds.has(q.id));
-            if (updatedSelectedQuestions.length !== state.selectedQuestions.length) {
-                dispatch({ type: 'SET_SELECTED_QUESTIONS', questions: updatedSelectedQuestions });
-            }
-        }
-    }, [state.questions, state.selectedQuestionIds]);
-
     return [state, dispatch] as const;
 };

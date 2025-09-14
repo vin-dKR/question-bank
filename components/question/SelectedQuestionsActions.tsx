@@ -1,12 +1,11 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import PDFGenerator from '../pdf/pdfPreview';
 import { Button } from '@/components/ui/button';
 import { DialogCloseButton } from '../DialogCloseButton';
 import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
 import { usePDFGeneratorContext } from '@/lib/context/PDFGeneratorContext';
+import PDFGenerator from '../pdf/pdfPreview';
 
 interface SelectedQuestionsActionsProps {
     showPrintBtn: boolean;
@@ -15,54 +14,17 @@ interface SelectedQuestionsActionsProps {
 export default function SelectedQuestionsActions({ showPrintBtn }: SelectedQuestionsActionsProps) {
     const router = useRouter();
     const { institution, options } = usePDFGeneratorContext();
-    const [isLoadingSelected, setIsLoadingSelected] = useState(false);
-    const [allSelectedQuestions, setAllSelectedQuestions] = useState<Question[]>([]);
-    const {
-        questions,
-        showOnlySelected,
-        setShowOnlySelected,
-        selectedQuestionIds,
-        toggleQuestionSelection,
-        getAllSelectedQuestions,
-    } = useQuestionBankContext();
+    const { questions, showOnlySelected, setShowOnlySelected, selectedQuestions, setSelectedQuestions } = useQuestionBankContext();
 
-    const selectedCount = selectedQuestionIds.size;
-
-    useEffect(() => {
-        const fetchAllSelected = async () => {
-            if (selectedQuestionIds.size > 0) {
-                setIsLoadingSelected(true);
-                try {
-                    const allQuestions = await getAllSelectedQuestions();
-                    setAllSelectedQuestions(allQuestions);
-                } catch (error) {
-                    console.error('Failed to fetch selected questions:', error);
-                } finally {
-                    setIsLoadingSelected(false);
-                }
-            } else {
-                setAllSelectedQuestions([]);
-                setIsLoadingSelected(false);
-            }
-        };
-
-        fetchAllSelected();
-    }, [selectedQuestionIds, getAllSelectedQuestions]);
-
-    const selectedQuestions = allSelectedQuestions;
+    const selectedCount = selectedQuestions.length;
 
     const selectAllQuestions = () => {
-        questions.forEach((q) => {
-            if (!selectedQuestionIds.has(q.id)) {
-                toggleQuestionSelection(q.id);
-            }
-        });
+        setSelectedQuestions(questions);
     };
 
     const unselectAllQuestions = () => {
-        selectedQuestionIds.forEach((id) => {
-            toggleQuestionSelection(id);
-        });
+        setSelectedQuestions([]);
+        localStorage.setItem('qb:selectedQuestions', JSON.stringify([]));
         setShowOnlySelected(false);
     };
 
@@ -105,12 +67,6 @@ export default function SelectedQuestionsActions({ showPrintBtn }: SelectedQuest
                     >
                         Show All Questions
                     </button>
-                )}
-                {isLoadingSelected && showOnlySelected && (
-                    <div className="flex items-center gap-2 mt-1">
-                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
-                        <span className="text-xs text-blue-600">Loading selected questions...</span>
-                    </div>
                 )}
             </div>
 

@@ -7,7 +7,7 @@ import SelectedQuestionsActions from "@/components/question/SelectedQuestionsAct
 import { useQuestionBankContext } from "@/lib/context/QuestionBankContext";
 
 const QuestionBankViewerContent = () => {
-    const { questions, loading, error, selectedQuestionIds } = useQuestionBankContext();
+    const { questions, loading, error, selectedQuestions } = useQuestionBankContext();
 
     return (
         <div className="relative">
@@ -24,7 +24,7 @@ const QuestionBankViewerContent = () => {
                     <main className="col-span-1 lg:col-span-4 xl:col-span-6 space-y-4 pt-1">
                         <FoldersControls />
                         <SearchBar />
-                        {selectedQuestionIds.size > 0 && <SelectedQuestionsActions showPrintBtn={true} />}
+                        {selectedQuestions.length > 0 && <SelectedQuestionsActions showPrintBtn={true} />}
                         {error && (
                             <div className="p-3 sm:p-4 bg-rose-50 text-rose-700 rounded-lg shadow-sm text-sm sm:text-base">
                                 {error}

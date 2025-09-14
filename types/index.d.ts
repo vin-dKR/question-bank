@@ -58,17 +58,14 @@ declare global {
         loadMore: () => void;
         refreshQuestions: () => void;
         toggleQuestionFlag: (id: string) => Promise<void>;
-        selectedQuestionIds: Set<string>;
         toggleQuestionSelection: (id: string) => void;
         getAllSelectedQuestions: () => Promise<Question[]>;
         updateQuestion: (updatedQuestion: Question) => void;
         showOnlySelected: boolean;
         setShowOnlySelected: (show: boolean) => void;
         selectedQuestions: Question[];
-        selectedPagination: Pagination;
-        setSelectedPagination: (pagination: Pagination) => void
-        initialFetchDone: boolean,
         setSelectedQuestions: (questions: Question[]) => void
+        initialFetchDone: boolean
     }
 
 

@@ -13,7 +13,6 @@ import ErrorState from './question-list/ErrorState';
 import EmptyState from './question-list/EmptyState';
 import SelectedQuestionsBanner from './question-list/SelectedQuestionsBanner';
 import PaginationControls from './question-list/PaginationControls';
-import { useQuestionBankReducer } from '@/hooks/reducer/useQuestionBankReducer';
 
 interface QuestionProps {
     question: Question;
@@ -142,8 +141,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
 
     return (
         <div
-            className={`p-3 sm:p-4 bg-white rounded-xl shadow-md border transition-all duration-200 ${isSelected ? 'border-amber-500 bg-amber-50' : 'border-slate-200 hover:shadow-md'
-                }`}
+            className={`p-3 sm:p-4 bg-white rounded-xl shadow-md border transition-all duration-200 ${isSelected ? 'border-amber-500 bg-amber-50' : 'border-slate-200 hover:shadow-md'}`}
         >
             <div className="flex items-start">
                 <input
@@ -173,8 +171,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                             <button
                                 onClick={handleFlagToggle}
                                 disabled={isFlagging}
-                                className={`ml-2 p-1 text-slate-600 hover:text-amber-600 transition ${isFlagging ? 'opacity-50 cursor-not-allowed' : ''
-                                    }`}
+                                className={`ml-2 p-1 text-slate-600 hover:text-amber-600 transition ${isFlagging ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 title={question.flagged ? 'Unflag question' : 'Flag question'}
                             >
                                 {question.flagged ? <Flag className="h-4 w-4 text-amber-600" /> : <FlagOff className="h-4 w-4" />}
@@ -330,8 +327,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                                 return (
                                     <div
                                         key={index}
-                                        className={`pl-3 border-l-4 py-1 rounded-r-md ${isCorrect ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200'
-                                            }`}
+                                        className={`pl-3 border-l-4 py-1 rounded-r-md ${isCorrect ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200'}`}
                                     >
                                         <span className="text-sm sm:text-base">{renderedOptions[index]}</span>
                                     </div>
@@ -359,31 +355,18 @@ const QuestionList = memo(() => {
         questions,
         showOnlySelected,
         toggleQuestionFlag,
-        selectedQuestionIds,
         toggleQuestionSelection,
         totalCount,
         pagination,
         setPagination,
         hasMore,
-        loadMore,
         selectedQuestions,
-        selectedPagination,
-        setSelectedPagination,
         initialFetchDone,
-        setSelectedQuestions,
     } = useQuestionBankContext();
 
-    const [, dispatch] = useQuestionBankReducer()
-
     const displayedQuestions = useMemo(
-        () =>
-            showOnlySelected
-                ? selectedQuestions.slice(
-                    (selectedPagination.page - 1) * selectedPagination.limit,
-                    selectedPagination.page * selectedPagination.limit
-                )
-                : questions,
-        [showOnlySelected, selectedQuestions, selectedPagination, questions]
+        () => (showOnlySelected ? selectedQuestions : questions),
+        [showOnlySelected, selectedQuestions, questions]
     );
 
     const displayedTotal = useMemo(() => (showOnlySelected ? selectedQuestions.length : totalCount), [
@@ -392,67 +375,25 @@ const QuestionList = memo(() => {
         totalCount,
     ]);
 
-    const displayedHasMore = useMemo(
-        () => (showOnlySelected ? selectedPagination.page * selectedPagination.limit < selectedQuestions.length : hasMore),
-        [showOnlySelected, selectedPagination, selectedQuestions.length, hasMore]
-    );
-
     const handlePrevious = useCallback(() => {
-        const currentPagination = showOnlySelected ? selectedPagination : pagination;
-        if (currentPagination.page > 1) {
-            const newPagination = { ...currentPagination, page: currentPagination.page - 1 };
-            if (showOnlySelected) {
-                setSelectedPagination(newPagination);
-            } else {
-                setPagination(newPagination);
-            }
+        if (pagination.page > 1) {
+            setPagination({ ...pagination, page: pagination.page - 1 });
         }
-    }, [showOnlySelected, selectedPagination, pagination, setSelectedPagination, setPagination]);
+    }, [pagination, setPagination]);
 
     const handleNext = useCallback(() => {
-        const currentPagination = showOnlySelected ? selectedPagination : pagination;
-        if (currentPagination.page * currentPagination.limit < displayedTotal) {
-            const newPagination = { ...currentPagination, page: currentPagination.page + 1 };
-            if (showOnlySelected) {
-                setSelectedPagination(newPagination);
-            } else {
-                setPagination(newPagination);
-            }
+        if (pagination.page * pagination.limit < totalCount) {
+            setPagination({ ...pagination, page: pagination.page + 1 });
         }
-    }, [showOnlySelected, selectedPagination, pagination, displayedTotal, setSelectedPagination, setPagination]);
+    }, [pagination, totalCount, setPagination]);
 
     const handleLoadMore = useCallback(() => {
-        const currentPagination = showOnlySelected ? selectedPagination : pagination;
-        const newPagination = { ...currentPagination, limit: currentPagination.limit + 20 };
-        if (showOnlySelected) {
-            setSelectedPagination(newPagination);
-        } else {
-            loadMore();
-        }
-    }, [showOnlySelected, selectedPagination, pagination, setSelectedPagination, loadMore]);
-
-    const handleClearSelected = useCallback(() => {
-        setSelectedQuestions([]);
-        dispatch({ type: 'TOGGLE_SELECTION', id: '' });
-        localStorage.removeItem('selectedQuestionIds');
-        localStorage.removeItem('selectedQuestions');
-        toast.success('Selected questions cleared.');
-    }, [setSelectedQuestions]);
+        setPagination({ ...pagination, limit: pagination.limit + 20 });
+    }, [pagination, setPagination]);
 
     return (
         <div className="min-h-screen bg-gray-100">
             <div className="w-full mx-auto space-y-6">
-                <div className="flex gap-4">
-                    {selectedQuestions.length > 0 && (
-                        <Button
-                            className="text-red-600 hover:text-red-800 underline"
-                            onClick={handleClearSelected}
-                        >
-                            Clear Selected Questions
-                        </Button>
-                    )}
-                </div>
-
                 {showOnlySelected && (
                     <SelectedQuestionsBanner displayedCount={displayedQuestions.length} totalCount={selectedQuestions.length} />
                 )}
@@ -471,7 +412,7 @@ const QuestionList = memo(() => {
                             <QuestionItem
                                 key={question.id}
                                 question={question}
-                                isSelected={selectedQuestionIds.has(question.id)}
+                                isSelected={selectedQuestions.some((q) => q.id === question.id)}
                                 toggleQuestionSelection={toggleQuestionSelection}
                                 toggleQuestionFlag={toggleQuestionFlag}
                             />
@@ -479,12 +420,12 @@ const QuestionList = memo(() => {
                     </div>
                 )}
 
-                {displayedQuestions.length > 0 && (
+                {!showOnlySelected && displayedQuestions.length > 0 && (
                     <PaginationControls
-                        currentPage={showOnlySelected ? selectedPagination.page : pagination.page}
-                        limit={showOnlySelected ? selectedPagination.limit : pagination.limit}
+                        currentPage={pagination.page}
+                        limit={pagination.limit}
                         totalCount={displayedTotal}
-                        hasMore={displayedHasMore}
+                        hasMore={hasMore}
                         onPrevious={handlePrevious}
                         onNext={handleNext}
                         onLoadMore={handleLoadMore}
