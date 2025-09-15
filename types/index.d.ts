@@ -133,6 +133,7 @@ declare global {
         session?: string;
         standard?: string;
         watermarkOpacity?: number;
+        showInPDFPreview?: boolean;
     }
 
 
