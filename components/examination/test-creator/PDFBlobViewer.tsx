@@ -18,7 +18,7 @@ const PDFBlobViewer = memo(({ htmlContent, className }: PDFBlobViewerProps) => {
 
     return (
         <div
-            className={`overflow-auto p-4 bg-white rounded-lg ${className}`}
+            className={`overflow-auto bg-white rounded-lg ${className}`}
             style={{ maxHeight: '100%', minHeight: '600px' }}
             dangerouslySetInnerHTML={{ __html: htmlContent }}
         />

@@ -389,7 +389,6 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
                     line-height: ${lineHeight};
                     background-color: #ffffff;
                     margin: 0;
-                    padding: ${margin}mm;
                     font-size: ${fontSize}px;
                     color: #000;
                 }
@@ -652,7 +651,6 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
                         color: #1f2937;
                         background-color: #ffffff;
                         margin: 0;
-                        padding: ${margin}mm;
                         font-size: ${fontSize}px;
                     }
 

@@ -11,12 +11,12 @@ import PDFGenerator from '../pdf/pdfPreview';
 import QuestionCard from './test-creator/QuestionCard';
 import UnifiedTestDetailsForm from './test-creator/UnifiedTestDetailsForm';
 import EmptyQuestionsCard from './test-creator/EmptyQuestionsCard';
-import BulkMarksAssignment from './test-creator/BulkMarksAssignment';
 import RealTimePDFPreview from './test-creator/RealTimePDFPreview';
 import { createTest } from '@/actions/examination/test/crudTest';
 import { usePDFGeneratorContext } from '@/lib/context/PDFGeneratorContext';
 import { useTestCreatorReducer } from '@/hooks/reducer/useTestCreatorReducer';
 import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
+import BulkMarksAssignment from './test-creator/BulkMarksAssignment';
 
 export default function TestCreator() {
     const router = useRouter();
@@ -42,22 +42,26 @@ export default function TestCreator() {
     useEffect(() => {
         const storedQuestions = sessionStorage.getItem('selectedQuestionsForTest');
         if (storedQuestions) {
-            const questions = JSON.parse(storedQuestions);
-            dispatch({ type: 'SET_QUESTIONS', questions });
-            dispatch({ type: 'SET_LOADED_QUESTIONS', hasLoadedQuestions: true });
+            try {
+                const questions = JSON.parse(storedQuestions);
+                dispatch({ type: 'LOAD_QUESTIONS', questions });
+            } catch (error) {
+                console.error('Error parsing sessionStorage questions:', error);
+                toast.error('Failed to load selected questions from session');
+            }
         } else if (selectedQuestions.length > 0) {
             dispatch({
                 type: 'SET_QUESTIONS',
                 questions: selectedQuestions.map((q, index) => ({
                     id: q.id,
-                    question_text: q.question_text,
-                    options: q.options,
+                    question_text: q.question_text || '',
+                    options: q.options || [],
                     answer: q.answer || '',
                     marks: 1,
-                    questionNumber: index + 1,
+                    question_number: q.question_number || index + 1,
+                    negativeMark: 0,
                 })),
             });
-            dispatch({ type: 'SET_LOADED_QUESTIONS', hasLoadedQuestions: true });
         }
     }, [dispatch, selectedQuestions]);
 
@@ -116,11 +120,12 @@ export default function TestCreator() {
                 totalMarks: testData.questions.reduce((total, q) => total + q.marks, 0),
                 questions: testData.questions.map((q) => ({
                     ...q,
-                    negativeMark: q.negativeMark ?? 0,
+                    negativeMark: 0,
+                    question_number: q.question_number
                 })),
             });
             toast.success('Test created successfully!');
-            sessionStorage.removeItem('selectedQuestionsForTest'); // Clear sessionStorage
+            sessionStorage.removeItem('selectedQuestionsForTest');
             router.push('/examination');
         } catch (error) {
             console.error('Error creating test:', error);

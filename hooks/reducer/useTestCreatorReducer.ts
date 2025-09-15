@@ -1,8 +1,7 @@
 'use client';
 
 import { toast } from 'sonner';
-import { useEffect, useReducer } from 'react';
-import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
+import { useReducer } from 'react';
 
 export interface QuestionForCreateTestData {
     id: string;
@@ -10,6 +9,8 @@ export interface QuestionForCreateTestData {
     question_number: number;
     options: string[];
     answer: string;
+    marks: number;
+    negativeMark?: number;
 }
 
 export interface CreateTestData {
@@ -38,7 +39,7 @@ export type TestCreatorAction =
     | {
         type: 'UPDATE_QUESTION';
         index: number;
-        field: keyof Omit<QuestionForCreateTestData, 'id' | 'questionNumber'>;
+        field: keyof Omit<QuestionForCreateTestData, 'id' | 'question_number'>;
         value: string | number;
     }
     | { type: 'REMOVE_QUESTION'; index: number }
@@ -91,7 +92,7 @@ const reducer = (state: TestCreatorState, action: TestCreatorAction): TestCreato
         case 'REMOVE_QUESTION': {
             const updatedQuestions = state.testData.questions
                 .filter((_, i) => i !== action.index)
-                .map((q, i) => ({ ...q, questionNumber: i + 1 }));
+                .map((q, i) => ({ ...q, question_number: i + 1 }));
             return {
                 ...state,
                 testData: {
@@ -147,7 +148,7 @@ const reducer = (state: TestCreatorState, action: TestCreatorAction): TestCreato
             const formattedQuestions = action.questions.map((q, i) => ({
                 ...q,
                 question_text: q.question_text || '',
-                questionNumber: i + 1,
+                question_number: i + 1,
                 marks: q.marks || 1,
                 negativeMark: q.negativeMark || 0,
             }));
@@ -172,35 +173,5 @@ const reducer = (state: TestCreatorState, action: TestCreatorAction): TestCreato
 
 export const useTestCreatorReducer = () => {
     const [state, dispatch] = useReducer(reducer, initialState);
-    const { selectedQuestions } = useQuestionBankContext();
-
-    useEffect(() => {
-        const loadSelectedQuestions = () => {
-            const storedQuestions = sessionStorage.getItem('selectedQuestionsForTest');
-            if (storedQuestions) {
-                try {
-                    const questions = JSON.parse(storedQuestions) as QuestionForCreateTestData[];
-                    dispatch({ type: 'LOAD_QUESTIONS', questions });
-                } catch (error) {
-                    console.error('Error loading selected questions from sessionStorage:', error);
-                    toast.error('Failed to load selected questions from session');
-                }
-            } else if (selectedQuestions.length > 0) {
-                dispatch({
-                    type: 'SET_QUESTIONS',
-                    questions: selectedQuestions.map((q, index) => ({
-                        id: q.id,
-                        question_text: q.question_text,
-                        options: q.options,
-                        answer: q.answer || '',
-                        question_number: index + 1,
-                    })),
-                });
-            }
-        };
-
-        loadSelectedQuestions();
-    }, [selectedQuestions]);
-
     return { state, dispatch };
 };

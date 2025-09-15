@@ -524,22 +524,22 @@ declare global {
         };
     }
 
+
     interface QuestionForCreateTestData {
         id: string;
         question_text: string;
-        question_number: number
+        question_number: number;
         options: string[];
         answer: string;
         marks: number;
-        questionNumber: number;
-        negativeMark?: number
+        negativeMark?: number;
     }
 
     interface CreateTestData {
         title: string;
         description: string;
         subject: string;
-        duration: number | string
+        duration: number | string;
         totalMarks: number;
         questions: QuestionForCreateTestData[];
     }
