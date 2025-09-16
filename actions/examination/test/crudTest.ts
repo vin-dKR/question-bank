@@ -35,7 +35,7 @@ export const createTest = async (data: CreateTestData): Promise<Partial<Examinat
                             connect: { id: q.id },
                         },
                         marks: q.marks,
-                        questionNumber: q.questionNumber,
+                        questionNumber: q.question_number,
                     })),
                 },
             },

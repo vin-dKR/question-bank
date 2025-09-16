@@ -12,12 +12,12 @@ import { savePaperHistory } from '@/actions/paperHistory/paperHistory';
 import { pdfConfigToAnswerKeyHTML, pdfConfigToHTML } from '@/lib/questionToHtmlUtils';
 
 
-export default function PDFGenerator({ 
-    institution, 
-    selectedQuestions, 
-    options, 
-    className, 
-    saveToHistory, 
+export default function PDFGenerator({
+    institution,
+    selectedQuestions,
+    options,
+    className,
+    saveToHistory,
     showInPDFPreview = true,
     marks,
     time,
@@ -28,7 +28,7 @@ export default function PDFGenerator({
     session,
     institutionAddress
 }: PDFConfig) {
-    const [isMobile, setIsMobile] = useState(false);
+    // const [isMobile, setIsMobile] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [step, setStep] = useState<'form' | 'preview'>('form');
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -54,7 +54,6 @@ export default function PDFGenerator({
     }, []);
 
     useEffect(() => {
-        setIsMobile(isMobileDevice);
     }, [isMobileDevice]);
 
     // Cleanup effect for preview URL
@@ -251,7 +250,7 @@ export default function PDFGenerator({
                     disabled={isDisabled}
                     className={className}
                 />
-                
+
                 <PDFPreviewDialog
                     isOpen={!!previewUrl}
                     onClose={handleClose}

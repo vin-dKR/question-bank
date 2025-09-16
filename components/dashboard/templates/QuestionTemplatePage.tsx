@@ -143,7 +143,7 @@ const QuestionTemplate = () => {
                     createdAt: new Date(),
                     updatedAt: new Date()
                 };
-                
+
                 const result = await saveTemplate(templateData);
                 if (result.success) {
                     setEditModalOpen(false);
@@ -154,11 +154,12 @@ const QuestionTemplate = () => {
                 const keys: (keyof TemplateFormData)[] = [
                     'templateName', 'institution', 'institutionAddress', 'marks', 'time', 'exam', 'subject', 'logo', 'standard', 'session'
                 ];
-                
+
                 keys.forEach((k) => {
                     const oldVal = (editingTemplate as Template)[k] ?? '';
                     const newVal = (formData as TemplateFormData)[k] ?? '';
                     if (oldVal !== newVal) {
+                        // eslint-disable-next-line
                         (updates as any)[k] = newVal;
                     }
                 });
@@ -253,9 +254,9 @@ const QuestionTemplate = () => {
                                     </div>
                                     {template.logo && (
                                         <div className="mt-4">
-                                            <img 
-                                                src={template.logo} 
-                                                alt="Template logo" 
+                                            <img
+                                                src={template.logo}
+                                                alt="Template logo"
                                                 className="w-16 h-16 object-contain rounded"
                                             />
                                         </div>
@@ -278,7 +279,7 @@ const QuestionTemplate = () => {
                             Fill in the template details below.
                         </DialogDescription>
                     </DialogHeader>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <Label htmlFor="templateName">Template Name *</Label>

@@ -7,7 +7,6 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Save, FolderOpen, Plus, AlertCircle } from 'lucide-react';
-import PDFGenerator from '../pdf/pdfPreview';
 import QuestionCard from './test-creator/QuestionCard';
 import UnifiedTestDetailsForm from './test-creator/UnifiedTestDetailsForm';
 import EmptyQuestionsCard from './test-creator/EmptyQuestionsCard';
@@ -22,7 +21,7 @@ export default function TestCreator() {
     const router = useRouter();
     const { state, dispatch } = useTestCreatorReducer();
     const { testData, isSubmitting, hasLoadedQuestions, bulkMarks, bulkNegativeMarks } = state;
-    const { institution, options } = usePDFGeneratorContext();
+    const { institution } = usePDFGeneratorContext();
     const { selectedQuestions } = useQuestionBankContext();
     const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
     const [pdfFormData, setPdfFormData] = useState<TemplateFormData>({
@@ -216,7 +215,7 @@ export default function TestCreator() {
                         </div>
                     </div>
 
-                    <div className="lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)]">
+                    <div className="lg:sticky lg:top-2 lg:h-[calc(100vh-3rem)]">
                         <RealTimePDFPreview
                             pdfFormData={pdfFormData}
                             selectedQuestions={testData.questions}
@@ -224,6 +223,7 @@ export default function TestCreator() {
                     </div>
                 </div>
 
+                {/*
                 <div className="mt-8 flex justify-center">
                     <PDFGenerator
                         saveToHistory={true}
@@ -241,6 +241,7 @@ export default function TestCreator() {
                         institutionAddress={pdfFormData.institutionAddress}
                     />
                 </div>
+                */}
             </div>
         </div>
     );

@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { FileText, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { FileText, Eye } from 'lucide-react';
+
+import PDFBlobViewer from './PDFBlobViewer';
+
 import { preRenderHtml } from '@/lib/preRenderHtml';
 import { htmlTopdfBlob } from '@/actions/htmlToPdf/htmlToPdf';
 import { pdfConfigToHTML, pdfConfigToAnswerKeyHTML } from '@/lib/questionToHtmlUtils';
-import PDFBlobViewer from './PDFBlobViewer';
 
 interface RealTimePDFPreviewProps {
     pdfFormData: TemplateFormData;
@@ -16,7 +18,6 @@ interface RealTimePDFPreviewProps {
 }
 
 export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: RealTimePDFPreviewProps) {
-    console.log("pdf Dta from RealTimePDFPreview", pdfFormData)
     const [activeTab, setActiveTab] = useState<'questions' | 'answers'>('questions');
     const [questionHtml, setQuestionHtml] = useState<string | null>(null);
     const [answerHtml, setAnswerHtml] = useState<string | null>(null);
@@ -215,7 +216,7 @@ export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: R
     }, [selectedQuestions, pdfFormData, pdfOptions]);
 
     return (
-        <Card className="h-full">
+        <Card className="h-full overflow-hidden">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <FileText className="w-5 h-5" />
@@ -224,20 +225,24 @@ export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: R
             </CardHeader>
             <CardContent className="h-full flex flex-col">
                 <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'questions' | 'answers')} className="flex-1 flex flex-col">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="questions" className="flex items-center gap-2">
+                    <TabsList className="grid w-full grid-cols-2 rounded-none border-b">
+                        <TabsTrigger value="questions" className={`flex items-center gap-2 rounded-xl ${activeTab === 'questions'
+                            ? 'bg-black text-white shadow-lg'
+                            : 'bg-white text-gray-700 hover:bg-gray-200'}`}>
                             <Eye className="w-4 h-4" />
                             Questions
                         </TabsTrigger>
-                        <TabsTrigger value="answers" className="flex items-center gap-2">
+                        <TabsTrigger value="answers" className={`flex items-center gap-2 rounded-xl ${activeTab === 'answers'
+                            ? 'bg-black text-white shadow-lg'
+                            : 'bg-white text-gray-700 hover:bg-gray-200'}`}>
                             <Eye className="w-4 h-4" />
                             Answers
                         </TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="questions" className="flex-1 mt-4">
-                        <div className="h-full flex flex-col">
-                            <div className="flex justify-between items-center mb-4">
+                        <div className="h-full flex flex-col pb-2">
+                            <div className="flex justify-between items-center mb-4 border-b pb-2">
                                 <h3 className="text-lg font-semibold">Question Paper Preview</h3>
                                 <div className="flex gap-2">
                                     <Button
@@ -263,7 +268,7 @@ export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: R
 
                     <TabsContent value="answers" className="flex-1 mt-4">
                         <div className="h-full flex flex-col">
-                            <div className="flex justify-between items-center mb-4">
+                            <div className="flex justify-between items-center mb-4 border-b pb-2">
                                 <h3 className="text-lg font-semibold">Answer Key Preview</h3>
                                 <div className="flex gap-2">
                                     <Button
