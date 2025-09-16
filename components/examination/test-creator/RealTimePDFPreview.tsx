@@ -137,7 +137,7 @@ export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: R
             const html = pdfConfigToHTML({
                 institution: pdfFormData.institution || '',
                 institutionAddress: pdfFormData.institutionAddress,
-                selectedQuestions: selectedQuestions.slice(0, 3),
+                selectedQuestions: selectedQuestions,
                 options: pdfOptions,
                 marks: pdfFormData.marks,
                 time: pdfFormData.time,
@@ -184,7 +184,7 @@ export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: R
             const html = pdfConfigToAnswerKeyHTML({
                 institution: pdfFormData.institution || '',
                 institutionAddress: pdfFormData.institutionAddress,
-                selectedQuestions: selectedQuestions.slice(0, 3),
+                selectedQuestions: selectedQuestions,
                 options: pdfOptions,
                 marks: pdfFormData.marks,
                 time: pdfFormData.time,
