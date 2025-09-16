@@ -49,7 +49,9 @@ export default function TestCreator() {
                 console.error('Error parsing sessionStorage questions:', error);
                 toast.error('Failed to load selected questions from session');
             }
-        } else if (selectedQuestions.length > 0) {
+        }
+
+        if (selectedQuestions.length > 0) {
             dispatch({
                 type: 'SET_QUESTIONS',
                 questions: selectedQuestions.map((q, index) => ({
@@ -57,6 +59,7 @@ export default function TestCreator() {
                     question_text: q.question_text || '',
                     options: q.options || [],
                     answer: q.answer || '',
+                    question_image: q.question_image || null,
                     marks: 1,
                     question_number: q.question_number || index + 1,
                     negativeMark: 0,

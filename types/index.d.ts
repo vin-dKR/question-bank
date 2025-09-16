@@ -529,6 +529,7 @@ declare global {
         id: string;
         question_text: string;
         question_number: number;
+        question_image?: string | null;
         options: string[];
         answer: string;
         marks: number;

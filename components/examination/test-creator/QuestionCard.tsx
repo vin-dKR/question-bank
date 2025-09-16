@@ -4,6 +4,7 @@ import { Trash2 } from 'lucide-react';
 import { renderMixedLatex } from '@/lib/render-tex';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TestCreatorAction } from '@/hooks/reducer/useTestCreatorReducer';
+import Image from 'next/image';
 
 interface QuestionCardProps {
     question: QuestionForCreateTestData;
@@ -16,7 +17,7 @@ export default function QuestionCard({ question, index, dispatch }: QuestionCard
         <Card className="gap-2">
             <CardHeader>
                 <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">Question {question.questionNumber}</CardTitle>
+                    <CardTitle className="text-lg">Question {question.question_number}</CardTitle>
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2">
                             <label className="text-sm font-medium">Marks:</label>
@@ -51,10 +52,15 @@ export default function QuestionCard({ question, index, dispatch }: QuestionCard
             </CardHeader>
             <CardContent className="space-y-4">
                 <div>
-                    <label className="block text-sm font-medium mb-2">Question Text</label>
-                    <div className="p-3 bg-gray-50 rounded-xl border border-black/40">
-                        {renderMixedLatex(question.question_text)}
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Question Text</label>
+                        <div className="p-3 bg-gray-50 rounded-xl border border-black/40">
+                            {renderMixedLatex(question.question_text)}
+                        </div>
                     </div>
+                    {question.question_image &&
+                        <Image src={question.question_image} alt='no image' width={200} height={200} />
+                    }
                 </div>
                 <div>
                     <label className="block text-sm font-medium mb-2">Options</label>

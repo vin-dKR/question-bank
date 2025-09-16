@@ -3,25 +3,6 @@
 import { toast } from 'sonner';
 import { useReducer } from 'react';
 
-export interface QuestionForCreateTestData {
-    id: string;
-    question_text: string;
-    question_number: number;
-    options: string[];
-    answer: string;
-    marks: number;
-    negativeMark?: number;
-}
-
-export interface CreateTestData {
-    title: string;
-    description: string;
-    subject: string;
-    duration: number | string;
-    totalMarks: number;
-    questions: QuestionForCreateTestData[];
-}
-
 export interface TestCreatorState {
     testData: CreateTestData;
     bulkMarks: number;
@@ -151,6 +132,7 @@ const reducer = (state: TestCreatorState, action: TestCreatorAction): TestCreato
                 question_number: i + 1,
                 marks: q.marks || 1,
                 negativeMark: q.negativeMark || 0,
+                question_image: q.question_image || null
             }));
             return {
                 ...state,
