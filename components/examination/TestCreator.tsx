@@ -81,8 +81,12 @@ export default function TestCreator() {
             time: testData.duration.toString(),
             exam: testData.title,
             subject: testData.subject,
+            institution: testData.institution,
+            institutionAddress: testData.institutionAddress,
+            standard: testData.standard,
+            session: testData.session
         }));
-    }, [testData.totalMarks, testData.duration, testData.title, testData.subject]);
+    }, [testData.totalMarks, testData.duration, testData.title, testData.subject, testData.institution, testData.institutionAddress, testData.standard, testData.session]);
 
     const handleSubmit = async () => {
         if (!testData.title.trim()) {
@@ -139,8 +143,8 @@ export default function TestCreator() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <div className="max-w-7xl mx-auto p-6">
+        <div className="min-h-screen">
+            <div className="w-full mx-auto">
                 <div className="flex flex-col sm:flex-row items-start md:items-center justify-between tracking-2 mb-6">
                     <h1 className="text-3xl font-bold">Create New Test</h1>
                     <Button
@@ -214,7 +218,6 @@ export default function TestCreator() {
 
                     <div className="lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)]">
                         <RealTimePDFPreview
-                            testData={testData}
                             pdfFormData={pdfFormData}
                             selectedQuestions={testData.questions}
                         />

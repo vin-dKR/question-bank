@@ -14,7 +14,7 @@ export interface TestCreatorState {
 export type TestCreatorAction =
     | {
         type: 'SET_TEST_FIELD' | 'UPDATE_TEST_DATA';
-        field: keyof Omit<CreateTestData, 'questions' | 'totalMarks'>;
+        field: keyof Omit<CreateTestData, 'questions'>;
         value: string | number;
     }
     | {
@@ -41,6 +41,10 @@ const initialState: TestCreatorState = {
         duration: 60,
         totalMarks: 0,
         questions: [],
+        institution: '',
+        institutionAddress: '',
+        standard: '',
+        session: ''
     },
     bulkMarks: 1,
     bulkNegativeMarks: 0,
@@ -52,7 +56,7 @@ const reducer = (state: TestCreatorState, action: TestCreatorAction): TestCreato
     switch (action.type) {
         case 'SET_TEST_FIELD':
         case 'UPDATE_TEST_DATA':
-            console.log('Updating test data:', action.field, action.value);
+            console.log('Updating test data:', action.value);
             return {
                 ...state,
                 testData: { ...state.testData, [action.field]: action.value },

@@ -1,18 +1,18 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { useState, useEffect, useCallback } from 'react';
 import { CirclePlus, Trash2, AlertTriangle } from 'lucide-react';
 import { usePdfTemplateForm } from '@/hooks/templates/usePdfTemplateForm';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { TestCreatorAction } from '@/hooks/reducer/useTestCreatorReducer';
 
 interface UnifiedTestDetailsFormProps {
     testData: CreateTestData;
-    dispatch: any;
+    dispatch: (action: TestCreatorAction) => void;
     onTemplateSelect?: (template: Template) => void;
     selectedTemplate?: Template | null;
 }
@@ -35,8 +35,9 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
         standard: '',
         session: ''
     });
+    console.log("formdaa from unifiend", formData)
 
-    const { templates, templatesLoading, saveTemplate, fetchTemplates, removeTemplate, updateTemplate } = usePdfTemplateForm();
+    const { templates, templatesLoading, saveTemplate, fetchTemplates, removeTemplate } = usePdfTemplateForm();
 
     useEffect(() => {
         fetchTemplates();
@@ -57,7 +58,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
         const { name, value } = e.target;
         // console.log('Form input changed:', name, value);
         setFormData((prev) => ({ ...prev, [name]: value }));
-        
+
         // Update test data based on form changes
         if (name === 'exam') {
             // console.log('Dispatching UPDATE_TEST_DATA for title:', value);
@@ -73,7 +74,18 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
             const durationValue = parseInt(value) || 60;
             // console.log('Dispatching UPDATE_TEST_DATA for duration:', durationValue);
             dispatch({ type: 'UPDATE_TEST_DATA', field: 'duration', value: durationValue });
+        } else if (name === 'institution') {
+            dispatch({ type: 'UPDATE_TEST_DATA', field: 'institution', value });
+        } else if (name === 'institutionAddress') {
+            dispatch({ type: 'UPDATE_TEST_DATA', field: 'institutionAddress', value });
+        } else if (name === 'standard') {
+            dispatch({ type: 'UPDATE_TEST_DATA', field: 'standard', value });
+        } else if (name === 'session') {
+            dispatch({ type: 'UPDATE_TEST_DATA', field: 'session', value });
         }
+
+
+
     }, [dispatch]);
 
     const handleLogoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,20 +128,23 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
     }, []);
 
     const handleSelectTemplate = useCallback((template: Template) => {
-        console.log('Template selected:', template);
         setFormData(template);
         setIsEditingTemplate(true);
         setShowTemplateModal(false);
         if (onTemplateSelect) {
             onTemplateSelect(template);
         }
-        
+
         // Update test data with template values
         // console.log('Updating test data from template');
         dispatch({ type: 'UPDATE_TEST_DATA', field: 'title', value: template.exam || '' });
         dispatch({ type: 'UPDATE_TEST_DATA', field: 'subject', value: template.subject || '' });
         dispatch({ type: 'UPDATE_TEST_DATA', field: 'totalMarks', value: parseInt(template.marks || '0') });
         dispatch({ type: 'UPDATE_TEST_DATA', field: 'duration', value: parseInt(template.time || '60') });
+        dispatch({ type: 'UPDATE_TEST_DATA', field: 'institution', value: template.institution || '' })
+        dispatch({ type: 'UPDATE_TEST_DATA', field: 'institutionAddress', value: template.institutionAddress || '' })
+        dispatch({ type: 'UPDATE_TEST_DATA', field: 'standard', value: template.standard || '' })
+        dispatch({ type: 'UPDATE_TEST_DATA', field: 'session', value: template.session || '' })
     }, [onTemplateSelect, dispatch]);
 
     const handleCreateTemplate = useCallback(() => {
@@ -187,7 +202,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                 createdAt: new Date(),
                 updatedAt: new Date()
             };
-            
+
             const result = await saveTemplate(templateData);
             if (result.success) {
                 setShowTemplateModal(false);
@@ -317,7 +332,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                             />
                         </div>
                     </div>
-                    
+
                     {selectedTemplate && (
                         <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                             <p className="text-sm text-blue-800">
@@ -337,7 +352,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                             Choose a template to pre-fill the form or create a new one.
                         </DialogDescription>
                     </DialogHeader>
-                    
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {/* Create new template button */}
                         <Button
@@ -402,7 +417,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
             </Dialog>
 
             {/* Template Creation/Edit Modal */}
-            <Dialog open={isEditingTemplate || isCreatingTemplate} onOpenChange={() => {}}>
+            <Dialog open={isEditingTemplate || isCreatingTemplate} onOpenChange={() => { }}>
                 <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>
@@ -412,7 +427,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                             Fill in the template details below.
                         </DialogDescription>
                     </DialogHeader>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <Label htmlFor="templateName">Template Name *</Label>

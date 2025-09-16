@@ -543,6 +543,10 @@ declare global {
         duration: number | string;
         totalMarks: number;
         questions: QuestionForCreateTestData[];
+        institution?: string
+        institutionAddress?: string
+        standard?: string
+        session?: string
     }
 
 

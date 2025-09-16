@@ -11,12 +11,12 @@ import { pdfConfigToHTML, pdfConfigToAnswerKeyHTML } from '@/lib/questionToHtmlU
 import PDFBlobViewer from './PDFBlobViewer';
 
 interface RealTimePDFPreviewProps {
-    testData: CreateTestData;
     pdfFormData: TemplateFormData;
     selectedQuestions: QuestionForCreateTestData[];
 }
 
-export default function RealTimePDFPreview({ testData, pdfFormData, selectedQuestions }: RealTimePDFPreviewProps) {
+export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: RealTimePDFPreviewProps) {
+    console.log("pdf Dta from RealTimePDFPreview", pdfFormData)
     const [activeTab, setActiveTab] = useState<'questions' | 'answers'>('questions');
     const [questionHtml, setQuestionHtml] = useState<string | null>(null);
     const [answerHtml, setAnswerHtml] = useState<string | null>(null);
@@ -52,16 +52,16 @@ export default function RealTimePDFPreview({ testData, pdfFormData, selectedQues
         }
         return pdfConfigToHTML({
             institution: pdfFormData.institution || '',
-            institutionAddress: pdfFormData.institutionAddress || '',
+            institutionAddress: pdfFormData.institutionAddress,
             selectedQuestions: selectedQuestions.slice(0, 3),
             options: pdfOptions,
-            marks: pdfFormData.marks || testData.totalMarks.toString(),
-            time: pdfFormData.time || testData.duration.toString(),
-            exam: pdfFormData.exam || testData.title,
-            subject: pdfFormData.subject || testData.subject,
+            marks: pdfFormData.marks,
+            time: pdfFormData.time,
+            exam: pdfFormData.exam,
+            subject: pdfFormData.subject,
             logo: pdfFormData.logo || '',
-            standard: pdfFormData.standard || '',
-            session: pdfFormData.session || '',
+            standard: pdfFormData.standard,
+            session: pdfFormData.session,
         });
     }, [
         selectedQuestions,
@@ -74,10 +74,6 @@ export default function RealTimePDFPreview({ testData, pdfFormData, selectedQues
         pdfFormData.logo,
         pdfFormData.standard,
         pdfFormData.session,
-        testData.totalMarks,
-        testData.duration,
-        testData.title,
-        testData.subject,
         pdfOptions,
     ]);
 
@@ -90,10 +86,10 @@ export default function RealTimePDFPreview({ testData, pdfFormData, selectedQues
             institution: pdfFormData.institution || '',
             selectedQuestions: selectedQuestions.slice(0, 3),
             options: pdfOptions,
-            marks: pdfFormData.marks || testData.totalMarks.toString(),
-            time: pdfFormData.time || testData.duration.toString(),
-            exam: pdfFormData.exam || testData.title,
-            subject: pdfFormData.subject || testData.subject,
+            marks: pdfFormData.marks,
+            time: pdfFormData.time,
+            exam: pdfFormData.exam,
+            subject: pdfFormData.subject,
             logo: pdfFormData.logo || '',
         });
     }, [
@@ -104,10 +100,6 @@ export default function RealTimePDFPreview({ testData, pdfFormData, selectedQues
         pdfFormData.exam,
         pdfFormData.subject,
         pdfFormData.logo,
-        testData.totalMarks,
-        testData.duration,
-        testData.title,
-        testData.subject,
         pdfOptions,
     ]);
 
@@ -143,16 +135,16 @@ export default function RealTimePDFPreview({ testData, pdfFormData, selectedQues
 
             const html = pdfConfigToHTML({
                 institution: pdfFormData.institution || '',
-                institutionAddress: pdfFormData.institutionAddress || '',
+                institutionAddress: pdfFormData.institutionAddress,
                 selectedQuestions: selectedQuestions.slice(0, 3),
                 options: pdfOptions,
-                marks: pdfFormData.marks || testData.totalMarks.toString(),
-                time: pdfFormData.time || testData.duration.toString(),
-                exam: pdfFormData.exam || testData.title,
-                subject: pdfFormData.subject || testData.subject,
+                marks: pdfFormData.marks,
+                time: pdfFormData.time,
+                exam: pdfFormData.exam,
+                subject: pdfFormData.subject,
                 logo: pdfFormData.logo || '',
-                standard: pdfFormData.standard || '',
-                session: pdfFormData.session || '',
+                standard: pdfFormData.standard,
+                session: pdfFormData.session,
             });
 
             const blob = await htmlTopdfBlob(html);
@@ -161,7 +153,7 @@ export default function RealTimePDFPreview({ testData, pdfFormData, selectedQues
                 const pdfUrl = URL.createObjectURL(pdfBlob);
                 const link = document.createElement('a');
                 link.href = pdfUrl;
-                link.download = `${pdfFormData.exam || testData.title}_questions.pdf`;
+                link.download = `${pdfFormData.exam}_questions.pdf`;
                 link.click();
                 URL.revokeObjectURL(pdfUrl); // Clean up immediately after download
             } else {
@@ -173,7 +165,7 @@ export default function RealTimePDFPreview({ testData, pdfFormData, selectedQues
         } finally {
             setIsGeneratingPdf(null);
         }
-    }, [selectedQuestions, pdfFormData, testData, pdfOptions]);
+    }, [selectedQuestions, pdfFormData, pdfOptions]);
 
     // Generate PDF for download (answers)
     const generateAnswerPDF = useCallback(async () => {
@@ -190,12 +182,15 @@ export default function RealTimePDFPreview({ testData, pdfFormData, selectedQues
 
             const html = pdfConfigToAnswerKeyHTML({
                 institution: pdfFormData.institution || '',
+                institutionAddress: pdfFormData.institutionAddress,
                 selectedQuestions: selectedQuestions.slice(0, 3),
                 options: pdfOptions,
-                marks: pdfFormData.marks || testData.totalMarks.toString(),
-                time: pdfFormData.time || testData.duration.toString(),
-                exam: pdfFormData.exam || testData.title,
-                subject: pdfFormData.subject || testData.subject,
+                marks: pdfFormData.marks,
+                time: pdfFormData.time,
+                exam: pdfFormData.exam,
+                subject: pdfFormData.subject,
+                standard: pdfFormData.standard,
+                session: pdfFormData.session,
                 logo: pdfFormData.logo || '',
             });
 
@@ -205,7 +200,7 @@ export default function RealTimePDFPreview({ testData, pdfFormData, selectedQues
                 const pdfUrl = URL.createObjectURL(pdfBlob);
                 const link = document.createElement('a');
                 link.href = pdfUrl;
-                link.download = `${pdfFormData.exam || testData.title}_answers.pdf`;
+                link.download = `${pdfFormData.exam}_answers.pdf`;
                 link.click();
                 URL.revokeObjectURL(pdfUrl); // Clean up immediately after download
             } else {
@@ -217,7 +212,7 @@ export default function RealTimePDFPreview({ testData, pdfFormData, selectedQues
         } finally {
             setIsGeneratingPdf(null);
         }
-    }, [selectedQuestions, pdfFormData, testData, pdfOptions]);
+    }, [selectedQuestions, pdfFormData, pdfOptions]);
 
     return (
         <Card className="h-full">
