@@ -54,7 +54,7 @@ export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: R
         return pdfConfigToHTML({
             institution: pdfFormData.institution || '',
             institutionAddress: pdfFormData.institutionAddress,
-            selectedQuestions: selectedQuestions.slice(0, 3),
+            selectedQuestions: selectedQuestions,
             options: pdfOptions,
             marks: pdfFormData.marks,
             time: pdfFormData.time,
@@ -85,7 +85,7 @@ export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: R
         }
         return pdfConfigToAnswerKeyHTML({
             institution: pdfFormData.institution || '',
-            selectedQuestions: selectedQuestions.slice(0, 3),
+            selectedQuestions: selectedQuestions,
             options: pdfOptions,
             marks: pdfFormData.marks,
             time: pdfFormData.time,
@@ -216,7 +216,7 @@ export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: R
     }, [selectedQuestions, pdfFormData, pdfOptions]);
 
     return (
-        <Card className="h-full overflow-hidden">
+        <Card className="h-full overflow-auto">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <FileText className="w-5 h-5" />

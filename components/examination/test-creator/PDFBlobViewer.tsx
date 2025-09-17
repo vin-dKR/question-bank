@@ -1,6 +1,6 @@
 'use client';
 
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 
 interface PDFBlobViewerProps {
     htmlContent: string | null;
@@ -8,6 +8,12 @@ interface PDFBlobViewerProps {
 }
 
 const PDFBlobViewer = memo(({ htmlContent, className }: PDFBlobViewerProps) => {
+    useEffect(() => {
+        // Ensure MathJax typesetting runs after render
+        if (window.MathJax) {
+            window.MathJax.typesetPromise();
+        }
+    }, []);
     if (!htmlContent) {
         return (
             <div className={`flex items-center justify-center bg-gray-100 rounded-lg ${className}`}>
