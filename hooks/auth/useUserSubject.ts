@@ -24,15 +24,15 @@ export const useUserSubject = () => {
                 console.error('Error fetching user subject:', error);
                 setSubject(undefined);
             } finally {
-                setIsLoading(false);
+                setIsLoading(false)
             }
-        };
+        }
 
         fetchSubject();
-    }, [user?.id, isLoaded]);
+    }, [user?.id, isLoaded])
 
     return {
         subject,
         isLoading,
-    };
-};
+    }
+}

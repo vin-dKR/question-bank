@@ -75,11 +75,6 @@ export async function getQuestions(
             orderBy: { question_number: "asc" },
         });
 
-        console.log('getQuestions - Query result count:', questions.length);
-        if (questions.length > 0) {
-            console.log('getQuestions - Sample question section_name:', questions[0].section_name);
-        }
-
         return { success: true, data: questions };
     } catch (error) {
         console.error("Error fetching questions:", error);
@@ -245,8 +240,6 @@ export async function getFilterOptions(
             chapters: chapters.map((c) => c.chapter).filter(Boolean) as string[],
             section_names: sections.map((s) => s.section_name).filter(Boolean) as string[],
         };
-
-        // console.log("filterOptions----------------", filterOptions)
 
         return { success: true, data: filterOptions };
     } catch (error) {

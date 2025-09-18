@@ -20,7 +20,7 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
 
     const fetchQuestions = useFetchQuestions(filters, pagination, searchQuery, role || 'student', isTeacher, dispatch, subject || '');
 
-    const fetchFilterOptions = useFetchFilterOptions(filters, role || 'student', isTeacher, dispatch, subject || '');
+    const fetchFilterOptions = useFetchFilterOptions(filters, role || 'student', isTeacher, dispatch, subject || filters.subject?.toLowerCase() || '');
 
     usePersistentSelection(selectedQuestions, showOnlySelected, dispatch);
 

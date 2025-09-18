@@ -14,7 +14,7 @@ export const useFetchFilterOptions = (
 
         try {
             const response = await getFilterOptions(
-                { exam_name: filters.exam_name, subject: isTeacher ? filters.subject : undefined, chapter: filters.chapter },
+                { exam_name: filters.exam_name, subject: filters.subject, chapter: filters.chapter },
                 role,
                 isTeacher ? subject : undefined
             )

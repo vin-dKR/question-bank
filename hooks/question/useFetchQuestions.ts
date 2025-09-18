@@ -1,5 +1,5 @@
-import { useCallback } from 'react';
 import { toast } from 'sonner';
+import { useCallback } from 'react';
 import { getQuestions, getQuestionCount, searchQuestions } from '@/actions/question/questionBank';
 
 export const useFetchQuestions = (
@@ -33,7 +33,7 @@ export const useFetchQuestions = (
             } else {
                 const queryFilters = {
                     exam_name: filters.exam_name,
-                    subject: isTeacher ? subject : filters.subject,
+                    subject: isTeacher ? subject : filters.subject?.toLowerCase(),
                     chapter: filters.chapter,
                     section_name: filters.section_name,
                     flagged: filters.flagged,
@@ -47,9 +47,6 @@ export const useFetchQuestions = (
                     getQuestions(queryFilters, role, isTeacher ? subject : undefined),
                     getQuestionCount({ ...queryFilters, limit: undefined, skip: undefined }, role, isTeacher ? subject : undefined),
                 ]);
-
-                console.log('Questions response:', questionsRes);
-                console.log('Count response:', countRes);
 
                 if (questionsRes?.success && countRes?.success) {
                     dispatch({ type: 'SET_QUESTIONS', questions: questionsRes.data as Question[], totalCount: countRes.data });
