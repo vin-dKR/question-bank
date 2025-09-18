@@ -14,6 +14,8 @@ const QuestionBankContext = createContext<QuestionBankContextType | undefined>(u
 export const QuestionBankProvider = ({ children }: { children: React.ReactNode }) => {
     const [state, dispatch] = useQuestionBankReducer();
     const { questions, loading, error, filters, pagination, filterOptions, optionsLoading, searchQuery, totalCount, showOnlySelected, selectedQuestions, initialFetchDone } = state;
+    // console.log("filters ----------", filters)
+
 
     const { role, isTeacher, isLoading: roleLoading } = useUserRole();
     const { subject } = useUserSubject();

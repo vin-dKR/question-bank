@@ -14,7 +14,7 @@ export const useFetchFilterOptions = (
 
         try {
             const response = await getFilterOptions(
-                { exam_name: filters.exam_name, subject: filters.subject, chapter: filters.chapter },
+                { exam_name: filters.exam_name, subject: filters.subject, chapter: filters.chapter, questionType: filters.question_type },
                 role,
                 isTeacher ? subject : undefined
             )
@@ -22,15 +22,15 @@ export const useFetchFilterOptions = (
             if (response.success) {
                 dispatch({ type: "SET_FILTER_OPTIONS", options: response.data })
             } else {
-                dispatch({ type: "SET_FILTER_OPTIONS", options: { exams: [], subjects: [], chapters: [], section_names: [] } })
+                dispatch({ type: "SET_FILTER_OPTIONS", options: { exams: [], subjects: [], chapters: [], section_names: [], question_type: [] } })
             }
         } catch (err) {
             console.log("Error on useFetchFilterOptions", err)
-            dispatch({ type: "SET_FILTER_OPTIONS", options: { exams: [], subjects: [], chapters: [], section_names: [] } })
+            dispatch({ type: "SET_FILTER_OPTIONS", options: { exams: [], subjects: [], chapters: [], section_names: [], question_type: [] } })
         } finally {
             dispatch({ type: "SET_OPTIONS_LOADING", loading: false })
         }
-    }, [filters.exam_name, filters.chapter, filters.subject, filters.section_name, role, isTeacher, subject, dispatch])
+    }, [filters.exam_name, filters.chapter, filters.subject, filters.section_name, filters.question_type, role, isTeacher, subject, dispatch])
 
     return fetchFilterOptions
 }

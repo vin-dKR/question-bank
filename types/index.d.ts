@@ -220,6 +220,7 @@ declare global {
         chapter?: string;
         section_name?: string;
         flagged?: boolean;
+        question_type?: string;
     }
 
     interface Pagination {
@@ -232,6 +233,7 @@ declare global {
         subjects: string[];
         chapters: string[];
         section_names: string[];
+        question_type: string[]
     }
 
     // Onboarding --------------------------------------------------------

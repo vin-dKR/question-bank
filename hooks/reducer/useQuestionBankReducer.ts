@@ -50,7 +50,7 @@ const initialState: QuestionBankState = {
     error: null,
     filters: {},
     pagination: { page: 1, limit: 20 },
-    filterOptions: { exams: [], subjects: [], chapters: [], section_names: [] },
+    filterOptions: { exams: [], subjects: [], chapters: [], section_names: [], question_type: [] },
     optionsLoading: false,
     searchQuery: '',
     totalCount: 0,

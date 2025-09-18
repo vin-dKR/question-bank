@@ -12,6 +12,7 @@ export async function getQuestions(
         subject?: string;
         chapter?: string;
         section_name?: string;
+        question_type?: string;
         flagged?: boolean;
         limit?: number;
         skip?: number;
@@ -38,6 +39,10 @@ export async function getQuestions(
             whereClause.section_name = { equals: filters.section_name };
         }
 
+        if (filters.question_type) {
+            whereClause.question_type = { contains: filters.question_type, mode: "insensitive" }
+        }
+
         if (filters.flagged !== undefined) {
             whereClause.flagged = filters.flagged;
         }
@@ -46,13 +51,6 @@ export async function getQuestions(
         if (userRole === "teacher" && userSubject) {
             whereClause.subject = { contains: userSubject, mode: "insensitive" };
         }
-
-        {/*
-            console.log('getQuestions - Filters received:', filters);
-            console.log('getQuestions - User role:', userRole, 'userSubject:', userSubject);
-            console.log('getQuestions - Final whereClause:', JSON.stringify(whereClause, null, 2));
-        */}
-
 
         const questions = await prisma.question.findMany({
             where: whereClause,
@@ -187,6 +185,7 @@ export async function getFilterOptions(
         exam_name?: string;
         subject?: string;
         chapter?: string;
+        questionType?: string;
     },
     userRole: UserRole,
     userSubject?: string
@@ -206,12 +205,16 @@ export async function getFilterOptions(
             whereClause.chapter = { contains: filters.chapter, mode: "insensitive" };
         }
 
+        if (filters.questionType) {
+            whereClause.question_type = { contains: filters.questionType, mode: "insensitive" }
+        }
+
         // Enforce teacher subject restriction
         if (userRole === "teacher" && userSubject) {
             whereClause.subject = { contains: userSubject, mode: "insensitive" };
         }
 
-        const [exams, subjects, chapters, sections] = await Promise.all([
+        const [exams, subjects, chapters, sections, questionTypes] = await Promise.all([
             prisma.question.findMany({
                 where: whereClause,
                 select: { exam_name: true },
@@ -232,6 +235,11 @@ export async function getFilterOptions(
                 select: { section_name: true },
                 distinct: ["section_name"],
             }),
+            prisma.question.findMany({
+                where: whereClause,
+                select: { question_type: true },
+                distinct: ["question_type"],
+            }),
         ]);
 
         const filterOptions = {
@@ -239,14 +247,16 @@ export async function getFilterOptions(
             subjects: subjects.map((s) => s.subject).filter(Boolean) as string[],
             chapters: chapters.map((c) => c.chapter).filter(Boolean) as string[],
             section_names: sections.map((s) => s.section_name).filter(Boolean) as string[],
+            question_type: questionTypes.map((s) => s.question_type).filter(Boolean) as string[]
         };
 
+        console.log("filterOptions in questionBank actions", filterOptions)
         return { success: true, data: filterOptions };
     } catch (error) {
         console.error("Error fetching filter options:", error);
         return {
             success: false,
-            data: { exams: [], subjects: [], chapters: [], section_names: [] },
+            data: { exams: [], subjects: [], chapters: [], section_names: [], question_type: [] },
             error: "Failed to fetch filter options",
         };
     }

@@ -15,12 +15,12 @@ export const useFetchQuestions = (
         dispatch({ type: 'SET_LOADING', loading: true });
         dispatch({ type: 'SET_ERROR', error: null });
 
-        console.log('Fetching questions with:', { filters, pagination, searchQuery, role, isTeacher, subject });
+        // console.log('Fetching questions with: filters', { filters, })
 
         try {
             if (searchQuery.trim().length >= 2) {
                 const searchRes = await searchQuestions(searchQuery, role, isTeacher ? subject : undefined);
-                console.log('Search response:', searchRes);
+                // console.log('Search response:', searchRes);
                 if (searchRes?.success) {
                     dispatch({ type: 'SET_QUESTIONS', questions: searchRes.data as Question[], totalCount: searchRes.data.length });
                 } else {
@@ -36,12 +36,13 @@ export const useFetchQuestions = (
                     subject: isTeacher ? subject : filters.subject?.toLowerCase(),
                     chapter: filters.chapter,
                     section_name: filters.section_name,
+                    question_type: filters.question_type,
                     flagged: filters.flagged,
                     limit: pagination.limit,
                     skip: (pagination.page - 1) * pagination.limit,
                 };
 
-                console.log('Query filters:', queryFilters);
+                // console.log('Query filters:', queryFilters);
 
                 const [questionsRes, countRes] = await Promise.all([
                     getQuestions(queryFilters, role, isTeacher ? subject : undefined),

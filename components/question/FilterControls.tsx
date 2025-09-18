@@ -1,10 +1,16 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
+import {
+    useState,
+    useMemo,
+    useEffect,
+    useRef,
+    useCallback
+} from 'react';
 import Select, { StylesConfig } from 'react-select';
 import { useUserRole } from '@/hooks/auth/useUserRole';
 import { useUserSubject } from '@/hooks/auth/useUserSubject';
+import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
 
 interface FilterUpdate {
     [key: string]: string | boolean | undefined;
@@ -12,16 +18,19 @@ interface FilterUpdate {
     chapter?: string;
     section_name?: string;
     flagged?: boolean;
+    question_type?: string;
 }
 
 export default function FilterControls() {
     const { setFilters, filterOptions, optionsLoading } = useQuestionBankContext();
+    // console.log("FILTEROPTION: =-------------------", filterOptions)
     const [localFilters, setLocalFilters] = useState({
         exam_name: '',
         subject: '',
         chapter: '',
         section_name: '',
         flagged: '',
+        question_type: ''
     });
 
     const { isTeacher, isLoading: roleLoading } = useUserRole();
@@ -42,7 +51,7 @@ export default function FilterControls() {
         const newLocalFilters = { ...localFilters, [name]: value || '' };
         setLocalFilters(newLocalFilters);
 
-        // Immediately update filters for cascading, but only for parent filters
+        // Immediately update filters for cascading parent filters
         if (["exam_name", "subject", "chapter"].includes(name)) {
             const filterUpdate: FilterUpdate = {
                 exam_name: localFilters.exam_name || undefined, // Always include current exam_name
@@ -77,11 +86,11 @@ export default function FilterControls() {
                 newLocalFilters.section_name = '';
             }
 
-            console.log('Applying filter update:', filterUpdate);
+            // console.log('Applying filter update:', filterUpdate);
             setFilters(filterUpdate);
             setLocalFilters(newLocalFilters); // Update local state to reflect reset
-        } else if (name === "section_name" || name === "flagged") {
-            // Apply section and flagged filters immediately
+        } else if (name === "section_name" || name === "flagged" || name === "question_type") {
+            // Apply section, flagged, and question_type filters immediately
             const filterUpdate: FilterUpdate = {
                 exam_name: localFilters.exam_name || undefined, // Include current exam_name
                 subject: isTeacher && subject ? subject : (localFilters.subject || undefined), // Include subject
@@ -94,8 +103,11 @@ export default function FilterControls() {
             if (name === "flagged") {
                 filterUpdate.flagged = value ? value === 'true' : undefined;
             }
+            if (name === "question_type") {
+                filterUpdate.question_type = value || undefined;
+            }
 
-            console.log('Applying section/flagged filter:', filterUpdate);
+            // console.log('Applying section/flagged/question_type filter:', filterUpdate);
             setFilters(filterUpdate);
         }
     }, [localFilters, setFilters, isTeacher, subject]);
@@ -107,11 +119,12 @@ export default function FilterControls() {
             chapter: localFilters.chapter || undefined,
             section_name: localFilters.section_name || undefined,
             flagged: localFilters.flagged ? localFilters.flagged === 'true' : undefined,
+            question_type: localFilters.question_type || undefined,
         });
     }, [localFilters, setFilters, isTeacher, subject]);
 
     const clearFilters = useCallback(() => {
-        const clearedFilters = { exam_name: '', subject: '', chapter: '', section_name: '', flagged: '' };
+        const clearedFilters = { exam_name: '', subject: '', chapter: '', section_name: '', flagged: '', question_type: '' };
 
         // For teachers, preserve their assigned subject
         if (isTeacher && subject) {
@@ -123,7 +136,6 @@ export default function FilterControls() {
             subject: isTeacher && subject ? subject : undefined
         });
     }, [setFilters, isTeacher, subject]);
-
 
     const examOptions = useMemo(
         () => filterOptions.exams.map((exam: string) => ({ value: exam, label: exam })),
@@ -152,6 +164,11 @@ export default function FilterControls() {
     const sectionNameOptions = useMemo(
         () => filterOptions.section_names.map((name: string) => ({ value: name, label: name })),
         [filterOptions.section_names]
+    );
+
+    const questionTypeOptions = useMemo(
+        () => (Array.isArray(filterOptions.question_type) ? filterOptions.question_type.map((type: string) => ({ value: type, label: type })) : []),
+        [filterOptions.question_type]
     );
 
     const flaggedOptions = useMemo(() => [
@@ -236,7 +253,6 @@ export default function FilterControls() {
                         className="text-sm sm:text-base"
                         styles={selectStyles}
                     />
-
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-slate-600 mb-1">Chapter</label>
@@ -260,6 +276,20 @@ export default function FilterControls() {
                         value={sectionNameOptions.find((opt: { value: string; label: string }) => opt.value === localFilters.section_name) || null}
                         onChange={(selected) => handleFilterChange('section_name', selected?.value || null)}
                         placeholder="Select section..."
+                        isClearable
+                        isLoading={optionsLoading}
+                        className="text-sm sm:text-base"
+                        styles={selectStyles}
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-slate-600 mb-1">Question Type</label>
+                    <Select
+                        name="question_type"
+                        options={questionTypeOptions}
+                        value={questionTypeOptions.find((opt) => opt.value === localFilters.question_type) || null}
+                        onChange={(selected) => handleFilterChange('question_type', selected?.value || null)}
+                        placeholder="Select Question Type..."
                         isClearable
                         isLoading={optionsLoading}
                         className="text-sm sm:text-base"
