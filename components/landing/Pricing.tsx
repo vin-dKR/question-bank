@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button";
+import { useUser } from "@clerk/nextjs";
 import { Check } from "lucide-react";
 import Link from "next/link";
 
 const Pricing = () => {
+    const { user } = useUser()
+
     const plans = [
         {
             name: "Free",
@@ -93,7 +96,11 @@ const Pricing = () => {
                                     `}
                                 >
                                     <Link href='/auth/signup'>
-                                        Get Started
+                                        {user ? (
+                                            "Dashboard"
+                                        ) : (
+                                            "Get Started"
+                                        )}
                                     </Link>
                                 </Button>
                             </div>

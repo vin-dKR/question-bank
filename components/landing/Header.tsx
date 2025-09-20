@@ -12,7 +12,7 @@ const Header = () => {
 
     return (
         <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-black/10 border-b border-border">
-            <nav className="flex justify-center max-w-[1000px] px-4 lg:px-0 mx-auto">
+            <nav className="md:flex justify-center max-w-[1000px] px-4 lg:px-0 mx-auto">
                 <div className="flex w-full items-center justify-between h-16">
                     {/* Logo */}
                     <div className="flex items-center">
@@ -70,21 +70,27 @@ const Header = () => {
                 {isMenuOpen && (
                     <div className="md:hidden">
                         <div className="px-2 pt-2 pb-3 space-y-1 bg-background border-t border-border">
-                            <Button variant="navigation" className="block w-full text-left px-3 py-2 font-medium">
-                                Home </Button>
-                            <Button variant="navigation" className="block w-full text-left px-3 py-2 font-medium">
+                            <Button variant="navigation" className="block w-full text-center px-3 py-2 font-medium">
+                                Home
+                            </Button>
+                            <Button variant="navigation" className="block w-full text-center px-3 py-2 font-medium">
                                 Features
                             </Button>
-                            <Button variant="navigation" className="block w-full text-left px-3 py-2 font-medium">
+                            <Button variant="navigation" className="block w-full text-center px-3 py-2 font-medium">
                                 Pricing
                             </Button>
-                            <Button variant="navigation" className="block w-full text-left px-3 py-2 font-medium">
+                            <Button variant="navigation" className="block w-full text-center px-3 py-2 font-medium">
                                 Contact
                             </Button>
                             <div className="pt-4">
-                                <Button variant="default" className="w-full">
+                                <Button variant="default" className="w-full bg-black text-white">
                                     <Link href='/auth/signup'>
-                                        Get Started
+                                        {user ? (
+                                            "Dashboard"
+                                        ) : (
+                                            "Get Started"
+                                        )}
+
                                     </Link>
                                 </Button>
                             </div>

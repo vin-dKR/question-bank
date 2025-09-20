@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button";
+import { useUser } from "@clerk/nextjs";
 import { ArrowRight, Users, Clock, Star } from "lucide-react";
 import Link from "next/link";
 
 const CallToAction = () => {
+    const { user } = useUser()
+
     return (
         <section className="py-20 bg-muted relative">
             <div className="absolute top-0 left-0 w-full h-px bg-border"></div>
@@ -43,7 +46,11 @@ const CallToAction = () => {
                         <div className="flex flex-col sm:flex-row gap-2 justify-center items-center tracking-1">
                             <Button size="sm" className="text-lg px-4 md:px-8 py-4 bg-black text-white md:size-md font-bold">
                                 <Link href='/auth/signup'>
-                                    Get Started
+                                    {user ? (
+                                        "Dashboard"
+                                    ) : (
+                                        "Get Started"
+                                    )}
                                 </Link>
                                 <ArrowRight className="ml-2" size={20} />
                             </Button>

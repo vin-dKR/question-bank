@@ -1,8 +1,10 @@
 import { Button } from "@/components/ui/button";
+import { useUser } from "@clerk/nextjs";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 const Hero = () => {
+    const { user } = useUser()
     return (
         <section className="h-screen py-60 md:py-90 bg-background relative">
             {/* Horizontal line */}
@@ -23,7 +25,11 @@ const Hero = () => {
                     <div className="flex flex-col sm:flex-row gap-2 justify-center items-center tracking-1">
                         <Link href='/auth/signup'>
                             <Button size="sm" className="text-lg px-4 md:px-8 py-4 bg-black text-white md:size-md font-bold">
-                                Get Started
+                                {user ? (
+                                    "Dashboard"
+                                ) : (
+                                    "Get Started"
+                                )}
                                 <ArrowRight className="ml-2" size={20} />
                             </Button>
                         </Link>

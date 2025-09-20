@@ -10,7 +10,6 @@ export const useQuestionsData = () => {
             setTotalQuestions(totalQuestions)
         }
 
-        console.log("ref`")
         questionsData()
     }, [])
 
