@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { useMediaQuery } from "react-responsive";
 import { useAuth, useUser } from "@clerk/nextjs";
@@ -14,6 +14,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const { user } = useUser();
     const { signOut } = useAuth();
     const isMobile = useMediaQuery({ maxWidth: 768 });
+    const sidebarRef = useRef<HTMLDivElement>(null);
 
     const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => {
         if (typeof window !== "undefined") {
@@ -30,6 +31,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             localStorage.setItem("sidebarOpen", JSON.stringify(isSidebarOpen));
         }
     }, [isSidebarOpen]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                isMobile &&
+                isSidebarOpen &&
+                sidebarRef.current &&
+                !sidebarRef.current.contains(event.target as Node)
+            ) {
+                setIsSidebarOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [isMobile, isSidebarOpen])
 
     const handleLogout = async () => {
         await signOut({ redirectUrl: "/auth/signup" });
@@ -57,14 +76,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     return (
         <div className="flex h-screen bg-gray-100 tracking-3">
-            <Sidebar
-                isSidebarOpen={isSidebarOpen}
-                setIsSidebarOpen={setIsSidebarOpen}
-                isMobile={isMobile}
-                pathname={pathname}
-                expandedGroups={expandedGroups}
-                toggleGroup={toggleGroup}
-            />
+            <div ref={sidebarRef} className="h-screen bg-white">
+                <Sidebar
+                    isSidebarOpen={isSidebarOpen}
+                    setIsSidebarOpen={setIsSidebarOpen}
+                    isMobile={isMobile}
+                    pathname={pathname}
+                    expandedGroups={expandedGroups}
+                    toggleGroup={toggleGroup}
+                />
+            </div>
             <div className="flex-1 flex flex-col overflow-hidden">
                 <Header activeItem={activeItem} user={user} handleLogout={handleLogout} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
                 <MainContent>{children}</MainContent>

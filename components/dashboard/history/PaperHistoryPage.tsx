@@ -85,13 +85,13 @@ const PaperHistory = () => {
     }
 
     return (
-        <div className="max-w-7xl mx-auto p-6 space-y-6">
+        <div className="w-full mx-auto p-1 space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold">Paper History</h1>
-                    <p className="text-gray-600 mt-1">View and manage your previously generated papers</p>
+                    <h1 className="text-2xl md:text-3xl font-bold">Paper History</h1>
+                    <p className="text-gray-600 mt-1 text-xs md:text-sm">View and manage your previously generated papers</p>
                 </div>
-                <Badge variant="outline" className="text-sm">
+                <Badge className="text-sm bg-black text-white text-nowrap">
                     {paperHistories.length} Papers
                 </Badge>
             </div>
@@ -122,7 +122,7 @@ const PaperHistory = () => {
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => handleDelete(history.id)}
-                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                        className="text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-200"
                                     >
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
@@ -131,9 +131,9 @@ const PaperHistory = () => {
 
                             <CardContent className="space-y-4">
                                 <div className="flex flex-wrap gap-2">
-                                    {history.subject && <Badge variant="secondary" className="text-xs">{history.subject}</Badge>}
-                                    {history.exam && <Badge variant="outline" className="text-xs">{history.exam}</Badge>}
-                                    {history.standard && <Badge variant="outline" className="text-xs">{history.standard}</Badge>}
+                                    {history.subject && <Badge variant="outline" className="text-xs">{history.subject}</Badge>}
+                                    {history.exam && <Badge variant="outline" className="text-xs bg-black/10">{history.exam}</Badge>}
+                                    {history.standard && <Badge variant="outline" className="text-xs bg-black text-white">{history.standard}</Badge>}
                                 </div>
 
                                 <div className="space-y-2 text-sm text-gray-600">
@@ -159,7 +159,7 @@ const PaperHistory = () => {
                                     </div>
                                 </div>
 
-                                <Button onClick={() => handleView(history)} className="w-full" variant="outline">
+                                <Button onClick={() => handleView(history)} className="w-full bg-black text-white">
                                     <Eye className="h-4 w-4 mr-2" />
                                     View Questions
                                 </Button>
