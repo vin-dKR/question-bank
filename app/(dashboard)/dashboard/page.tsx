@@ -39,6 +39,13 @@ export default function Dashboard() {
         }).format(new Date(date));
     };
 
+    const hiddenFormDate = (date: Date) => {
+        return new Intl.DateTimeFormat('en-US', {
+            month: 'numeric',
+            day: 'numeric',
+        }).format(new Date(date))
+    }
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-white p-6 rounded-lg shadow-md">
@@ -58,7 +65,7 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-medium text-gray-700">Recent Papers</h3>
                     <Link href="/history">
-                        <Button variant="outline" size="sm" className="flex items-center gap-2">
+                        <Button size="sm" className="flex items-center gap-2 bg-black text-white">
                             View All
                             <ArrowRight className="h-4 w-4" />
                         </Button>
@@ -81,15 +88,18 @@ export default function Dashboard() {
                         {recentPapers.map((paper) => (
                             <div key={paper.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                                 <div className="flex items-center gap-3">
-                                    <FileText className="h-5 w-5 text-gray-500" />
+                                    <FileText className="hidden md:block h-5 w-5 text-gray-500" />
                                     <div>
-                                        <h4 className="font-medium text-gray-900">{paper.title}</h4>
+                                        <div className="flex">
+                                            <h4 className="font-medium text-gray-900">{paper.title}</h4>
+                                            <span>- ({paper.subject && <span>{paper.subject}</span>})</span>
+                                        </div>
                                         <div className="flex items-center gap-4 text-sm text-gray-600">
-                                            <span>{paper.questions.length} questions</span>
-                                            {paper.subject && <span>{paper.subject}</span>}
+                                            <span>{paper.questions.length} qs.</span>
                                             <div className="flex items-center gap-1">
                                                 <Calendar className="h-3 w-3" />
-                                                <span>{formatDate(paper.createdAt)}</span>
+                                                <span className="hidden md:block">{formatDate(paper.createdAt)}</span>
+                                                <span className="md:hidden block">{hiddenFormDate(paper.createdAt)}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -97,7 +107,6 @@ export default function Dashboard() {
                                 <Link href={`/history?view=${paper.id}`}>
                                     <Button variant="ghost" size="sm" className="flex items-center gap-1">
                                         <Eye className="h-4 w-4" />
-                                        View
                                     </Button>
                                 </Link>
                             </div>

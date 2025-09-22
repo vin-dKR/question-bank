@@ -3,10 +3,10 @@ import { Twitter, Linkedin, Instagram, Mail, Phone, MapPin } from 'lucide-react'
 
 const Footer = () => {
     return (
-        <footer className="py-12 relative border-t border-black/20 bg-background">
+        <footer className="py-12 relative border-t border-black/20">
             <div className="absolute top-0 left-0 w-full h-px bg-border"></div>
 
-            <div className="max-w-[1000px] px-8 md:px-0 mx-auto relative">
+            <div className="max-w-[1000px] px-8 lg:px-0 mx-auto relative">
                 <div className="absolute -left-8 top-0 w-px h-full bg-border"></div>
                 <div className="absolute -right-8 top-0 w-px h-full bg-border"></div>
 
