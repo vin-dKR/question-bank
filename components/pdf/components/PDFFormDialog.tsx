@@ -35,9 +35,9 @@ interface PDFFormDialogProps {
         pdf: string;
         answer: string;
     };
-} 
+}
 
-const PDFFormDialog = memo(({ 
+const PDFFormDialog = memo(({
     selectedQuestions,
     formData,
     onFormSubmit,
@@ -59,11 +59,13 @@ const PDFFormDialog = memo(({
                 <div className="flex gap-2 justify-end">
                     <Button
                         size="sm"
-                        onClick={() => {}} // Will be handled by dialog
+                        onClick={() => { }}
                         disabled={disabled.pdf}
                         className={buttonClasses.pdf}
                     >
-                        {isGenerating === "question" ? "Generating..." : "PDF"}
+                        <span className='text-xs sm:text-sm text-nowrap font-bold'>
+                            {isGenerating === "question" ? "Generating..." : "PDF"}
+                        </span>
                     </Button>
                     <Button
                         size="sm"
@@ -71,7 +73,9 @@ const PDFFormDialog = memo(({
                         disabled={disabled.answer}
                         className={buttonClasses.answer}
                     >
-                        {isGenerating === "answer" ? "Generating..." : "Preview Answers"}
+                        <span className='text-xs sm:text-sm text-nowrap font-bold'>
+                            {isGenerating === "answer" ? "Generating..." : "Preview Answers"}
+                        </span>
                     </Button>
                 </div>
             </DialogTrigger>
@@ -81,7 +85,7 @@ const PDFFormDialog = memo(({
                         {step === 'form' ? 'Enter PDF Details' : 'PDF Preview'}
                     </DialogTitle>
                 </DialogHeader>
-                
+
                 {step === 'form' ? (
                     <>
                         {selectedQuestions.length === 0 ? (
@@ -107,7 +111,7 @@ const PDFFormDialog = memo(({
                         onDownload={onDownload}
                     />
                 )}
-                
+
                 {step === 'preview' && (
                     <DialogFooter className="sm:justify-between mt-4">
                         <DialogClose asChild>

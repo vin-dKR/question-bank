@@ -88,7 +88,11 @@ export function DialogCloseButton({ selectedQuestions }: { selectedQuestions: Pi
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button className="px-2 hover:bg-black/20 border border-black/20" size="sm">Save to Folder</Button>
+                <Button className="px-2 w-full hover:bg-black/20 border border-black/20" size="sm">
+                    <span className='text-xs sm:text-sm text-nowrap font-bold'>
+                        Save to Folder
+                    </span>
+                </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md bg-white max-h-[100vh] rounded rounded-xl border border-black/20 !top-[50%] !left-[50%] !transform !-translate-x-1/2 !-translate-y-1/2">
                 <DialogHeader>

@@ -48,61 +48,83 @@ export default function SelectedQuestionsActions({ showPrintBtn }: SelectedQuest
     };
 
     return (
-        <div className="sticky top-0 z-10 flex flex-wrap justify-between items-center gap-3 bg-white p-3 md:p-4 rounded-xl shadow-md border border-slate-200">
-            <div className="flex flex-col">
-                <span className="text-md font-medium text-slate-700">
-                    {selectedCount} Question{selectedCount !== 1 ? 's' : ''} Selected
+        <div className="sticky top-[-20px] z-10 flex flex-wrap justify-between items-center gap-3 bg-white p-3 md:p-4 rounded-xl shadow-md border border-slate-200">
+            <div className="flex flex-row w-full justify-between items-center">
+                <span className="text-xs md:text-sm font-bold font-medium text-slate-700">
+                    {selectedCount} {selectedCount !== 1 ? 's' : ''} Selected
                 </span>
                 {selectedCount > 0 ? (
                     <button
                         onClick={() => setShowOnlySelected(!showOnlySelected)}
-                        className="text-sm text-blue-600 hover:text-blue-800 underline mt-1 text-left"
+                        className="text-blue-600 hover:text-blue-800 underline cursor-pointer"
                     >
-                        {showOnlySelected ? 'Show All Questions' : 'See All Selected Questions'}
+                        <span className='text-xs sm:text-sm text-nowrap font-bold'>
+                            {showOnlySelected ? 'Show All Questions' : 'See All Selected Questions'}
+                        </span>
                     </button>
                 ) : (
                     <button
                         onClick={() => setShowOnlySelected(false)}
-                        className="text-sm text-blue-600 hover:text-blue-800 underline mt-1 text-left"
+                        className="text-xs text-blue-600 hover:text-blue-800 underline mt-1 text-right"
                     >
                         Show All Questions
                     </button>
                 )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-                <Button
-                    size="sm"
-                    onClick={selectAllQuestions}
-                    disabled={showOnlySelected}
-                    className="bg-indigo-600 text-white hover:bg-indigo-700 transition text-md border border-black/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    Select All
-                </Button>
-                <Button
-                    size="sm"
-                    onClick={unselectAllQuestions}
-                    className="px-3 py-1 bg-slate-200 text-slate-700 hover:bg-slate-300 transition text-md border border-black/5"
-                >
-                    Unselect All
-                </Button>
-                <Button
-                    size="sm"
-                    onClick={createTestFromSelected}
-                    disabled={selectedCount === 0}
-                    className="bg-green-600 text-white hover:bg-green-700 transition text-md border border-black/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    Create Test
-                </Button>
-                {showPrintBtn && (
-                    <PDFGenerator
-                        saveToHistory={true}
-                        institution={institution}
-                        selectedQuestions={selectedQuestions}
-                        options={options}
-                    />
-                )}
-                <DialogCloseButton selectedQuestions={selectedQuestions} />
+            <div className="flex flex-col w-full gap-3 md:w-auto md:flex-row md:items-center md:justify-between">
+                {/* First row - becomes first column on desktop */}
+                <div className="flex flex-row w-full gap-2 md:flex-row md:flex-1 md:gap-3">
+                    <Button
+                        size="sm"
+                        onClick={selectAllQuestions}
+                        disabled={showOnlySelected}
+                        className="bg-indigo-600 w-full md:flex-1 text-white hover:bg-indigo-700 transition border border-black/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <span className='text-xs sm:text-sm text-nowrap font-bold'>
+                            Select All
+                        </span>
+                    </Button>
+
+                    <Button
+                        size="sm"
+                        onClick={unselectAllQuestions}
+                        className="px-3 py-1 w-full md:flex-1 bg-slate-200 text-slate-700 hover:bg-slate-300 transition text-md border border-black/5"
+                    >
+                        <span className='text-xs sm:text-sm text-nowrap font-bold'>
+                            Unselect All
+                        </span>
+                    </Button>
+
+                    <Button
+                        size="sm"
+                        onClick={createTestFromSelected}
+                        disabled={selectedCount === 0}
+                        className="bg-green-600 w-full md:flex-1 text-white hover:bg-green-700 transition text-md border border-black/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <span className='text-xs sm:text-sm text-nowrap font-bold'>
+                            Create Test
+                        </span>
+                    </Button>
+                </div>
+
+                {/* Second row - becomes second column on desktop */}
+                <div className='flex flex-row w-full gap-2 md:flex-row md:items-center md:justify-end md:flex-1 md:gap-3'>
+                    {showPrintBtn && (
+                        <div className="w-full md:w-auto">
+                            <PDFGenerator
+                                saveToHistory={true}
+                                institution={institution}
+                                selectedQuestions={selectedQuestions}
+                                options={options}
+                            />
+                        </div>
+                    )}
+
+                    <div className="w-full md:w-auto">
+                        <DialogCloseButton selectedQuestions={selectedQuestions} />
+                    </div>
+                </div>
             </div>
         </div>
     );

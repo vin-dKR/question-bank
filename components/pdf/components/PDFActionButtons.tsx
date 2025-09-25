@@ -15,20 +15,20 @@ interface PDFActionButtonsProps {
     className?: string;
 }
 
-const PDFActionButtons = memo(({ 
-    onGeneratePDF, 
-    onPreviewAnswer, 
-    isGenerating, 
-    disabled, 
-    className 
+const PDFActionButtons = memo(({
+    onGeneratePDF,
+    onPreviewAnswer,
+    isGenerating,
+    disabled,
+    className
 }: PDFActionButtonsProps) => {
     const buttonClasses = {
         pdf: clsx(
-            "bg-indigo-600 hover:bg-indigo-600 text-white px-4 py-1 text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed border border-black/20", 
+            "bg-indigo-600 w-full hover:bg-indigo-600 text-white px-4 py-1 disabled:bg-slate-400 disabled:cursor-not-allowed border border-black/20",
             className
         ),
         answer: clsx(
-            "bg-green-600 hover:bg-green-700 text-white px-4 py-2 whitespace-nowrap text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed border border-black/20", 
+            "bg-green-600 w-full hover:bg-green-700 text-white px-4 py-2 whitespace-nowrap disabled:bg-slate-400 disabled:cursor-not-allowed border border-black/20",
             className
         )
     };
@@ -41,7 +41,9 @@ const PDFActionButtons = memo(({
                 disabled={disabled.pdf}
                 className={buttonClasses.pdf}
             >
-                {isGenerating === "question" ? "Generating..." : "Generate PDF"}
+                <span className='text-xs sm:text-sm text-nowrap font-bold'>
+                    {isGenerating === "question" ? "Generating..." : "Generate PDF"}
+                </span>
             </Button>
             <Button
                 size="sm"
@@ -49,7 +51,9 @@ const PDFActionButtons = memo(({
                 disabled={disabled.answer}
                 className={buttonClasses.answer}
             >
-                {isGenerating === "answer" ? "Generating..." : "Preview Answers"}
+                <span className='text-xs sm:text-sm text-nowrap font-bold'>
+                    {isGenerating === "answer" ? "Generating..." : "Preview Answers"}
+                </span>
             </Button>
         </div>
     );
