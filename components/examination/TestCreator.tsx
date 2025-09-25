@@ -144,8 +144,8 @@ export default function TestCreator() {
     return (
         <div className="min-h-screen">
             <div className="w-full mx-auto">
-                <div className="flex flex-col sm:flex-row items-start md:items-center justify-between tracking-2 mb-6">
-                    <h1 className="text-3xl font-bold">Create New Test</h1>
+                <div className="flex flex-row items-center justify-between tracking-2 mb-6">
+                    <h1 className="text-xl md:text-3xl font-bold">Create New Test</h1>
                     <Button
                         onClick={handleSubmit}
                         disabled={isSubmitting}
@@ -180,18 +180,22 @@ export default function TestCreator() {
                         />
 
                         <div className="flex flex-col sm:flex-row items-start md:items-center justify-between">
-                            <h2 className="text-2xl font-semibold tracking-2">Questions ({testData.questions.length})</h2>
-                            <div className="flex items-center gap-2">
+                            <h2 className="text-2xl font-semibold tracking-2 mb-2 md:mb-0">Questions ({testData.questions.length})</h2>
+                            <div className="flex items-right justify-between sm:justify-right gap-2">
                                 <Link href="/drafts">
                                     <Button className="bg-yellow-300 border border-yellow-400">
-                                        <FolderOpen className="w-4 h-4 mr-2" />
-                                        Add from Drafts
+                                        <FolderOpen className="w-4 h-4 mr-1" />
+                                        <span className='text-xs md:text-sm text-nowrap'>
+                                            Add from Drafts
+                                        </span>
                                     </Button>
                                 </Link>
                                 <Link href="/questions">
                                     <Button className="bg-green-500 border border-green-600">
-                                        <Plus className="w-4 h-4 mr-2" />
-                                        Add From Questions
+                                        <Plus className="w-4 h-4 mr-1" />
+                                        <span className='text-xs md:text-sm text-nowrap'>
+                                            Add From Questions
+                                        </span>
                                     </Button>
                                 </Link>
                             </div>

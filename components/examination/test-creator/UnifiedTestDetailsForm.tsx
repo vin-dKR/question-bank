@@ -354,7 +354,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
 
             {/* Template Selection Modal */}
             <Dialog open={showTemplateModal} onOpenChange={setShowTemplateModal}>
-                <DialogContent className="bg-white sm:max-w-4xl sm:overflow-y-auto">
+                <DialogContent className="bg-white sm:max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Select Template</DialogTitle>
                         <DialogDescription>
@@ -427,7 +427,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
 
             {/* Template Creation/Edit Modal */}
             <Dialog open={isEditingTemplate || isCreatingTemplate} onOpenChange={() => { }}>
-                <DialogContent className="bg-white sm:max-w-2xl">
+                <DialogContent className="bg-white sm:max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>
                             {isEditingTemplate ? 'Edit Template' : 'Create New Template'}
