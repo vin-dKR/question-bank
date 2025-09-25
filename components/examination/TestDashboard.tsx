@@ -75,16 +75,18 @@ export default function TestDashboard() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto p-6 space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+        <div className="w-full mx-auto space-y-6">
+            <div className="flex flex-row items-start sm:items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold">Test Dashboard</h1>
-                    <p className="text-gray-600 mt-2">Manage and analyze your examination tests</p>
+                    <h1 className="text-xl md:text-3xl font-bold">Test Dashboard</h1>
+                    <p className="text-gray-600 mb-2 sm:mb-0">Manage and analyze your examination tests</p>
                 </div>
                 <Link href="/examination/create">
-                    <Button className='bg-black text-white'>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Create New Test
+                    <Button className='bg-black text-white items-center justify-center'>
+                        <Plus className="w-4 h-4 mr-0 sm:mr-2" />
+                        <span className='hidden sm:block'>
+                            Create New Test
+                        </span>
                     </Button>
                 </Link>
             </div>
@@ -104,7 +106,7 @@ export default function TestDashboard() {
                     </CardContent>
                 </Card>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {tests.map((test) => (
                         <Card key={test.id} className="hover:shadow-lg transition-shadow">
                             <CardHeader>

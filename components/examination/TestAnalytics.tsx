@@ -134,23 +134,26 @@ export default function TestAnalytics() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto p-6 space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+        <div className="max-w-7xl mx-auto space-y-6">
+            <div className="flex flex-row items-start sm:items-center justify-between">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                     <Link href="/examination">
                         <Button size="sm" className="bg-black/10 border border-black/15">
-                            <ArrowLeft className="w-4 h-4 mr-2" />
-                            Back to Tests
+                            <ArrowLeft className="w-4 h-4 mr-0 mr-2" />
+                            <span className=''>
+                                Back
+                            </span>
                         </Button>
                     </Link>
-                    <div>
-                        <h1 className="text-3xl font-bold">Test Analytics</h1>
-                        <p className="text-gray-600 mt-1">Performance insights and student results</p>
+                    <div className=''>
+                        <h1 className="text-xl md:text-3xl font-bold">Test Analytics</h1>
+                        <p className="text-xs md:text-sm text-gray-600 mt-0 sm:mt-1">Performance insights and results</p>
                     </div>
                 </div>
+
                 <Button onClick={exportToPDF} className="bg-black text-white">
-                    <Download className="w-4 h-4 mr-2" />
-                    Export PDF
+                    <span>Export PDF</span>
+                    <Download className="w-4 h-4 ml-2" />
                 </Button>
             </div>
 
