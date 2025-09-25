@@ -13,16 +13,16 @@ interface FolderDetailsProps {
     previewLimit?: number;
     setEditMode: (id: string | null) => void;
     setNewName: (name: string) => void;
-    setQuestionToRemove: (id: string | null) => void;
-    setSelectedFolder: (folder: LocalFetchDraft | null) => void;
+    setQuestionToRemove: React.Dispatch<React.SetStateAction<string | null>>;
+    setSelectedFolder: React.Dispatch<React.SetStateAction<LocalFetchDraft | null>>;
     onBack: () => void;
     onRename: (id: string, name: string) => Promise<void>;
     onDelete: (id: string) => Promise<void>;
     onRemoveQuestion: (questionId: string) => Promise<void>;
     onCreateTest: () => void;
     institution: string;
-    options: any; // Replace with specific type if available
-    sendMessage: (message: any) => void;
+    options: PDFGenerationOptions;
+    sendMessage: (message: CollaborationMessage) => void;
 }
 
 export function FolderDetails({

@@ -27,7 +27,7 @@ interface FolderHeaderProps {
     onDelete: (id: string) => Promise<void>;
     onCreateTest: () => void;
     institution: string;
-    options: any; // Replace with specific type if available
+    options: PDFGenerationOptions
 }
 
 export function FolderHeader({

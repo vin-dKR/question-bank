@@ -13,7 +13,7 @@ interface QuestionListProps {
     setQuestionToRemove: Dispatch<SetStateAction<string | null>>;
     setSelectedFolder: Dispatch<SetStateAction<LocalFetchDraft | null>>;
     onRemove: (questionId: string) => Promise<void>;
-    sendMessage: (message: any) => void;
+    sendMessage: (message: CollaborationMessage) => void;
 }
 
 export function QuestionList({

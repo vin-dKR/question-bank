@@ -35,7 +35,6 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
         standard: '',
         session: ''
     });
-    console.log("formdaa from unifiend", formData)
 
     const { templates, templatesLoading, saveTemplate, fetchTemplates, removeTemplate } = usePdfTemplateForm();
 
