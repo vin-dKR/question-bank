@@ -11,6 +11,8 @@ import Select, { StylesConfig } from 'react-select';
 import { useUserRole } from '@/hooks/auth/useUserRole';
 import { useUserSubject } from '@/hooks/auth/useUserSubject';
 import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Funnel } from 'lucide-react';
 
 interface FilterUpdate {
     [key: string]: string | boolean | undefined;
@@ -36,6 +38,7 @@ export default function FilterControls() {
     const { isTeacher, isLoading: roleLoading } = useUserRole();
     const { subject, isLoading: subjectLoading } = useUserSubject();
     const hasSetTeacherSubject = useRef(false);
+    const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
 
     useEffect(() => {
         if (isTeacher && subject && !hasSetTeacherSubject.current) {
@@ -217,7 +220,7 @@ export default function FilterControls() {
         );
     }
 
-    return (
+    const renderFilterControls = () => (
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-slate-200 tracking-3">
             <h2 className="text-lg font-semibold mb-3 text-slate-700 sm:text-xl">Filter Questions</h2>
             <div className="space-y-4 mb-4 sm:mb-6">
@@ -325,5 +328,36 @@ export default function FilterControls() {
                 </button>
             </div>
         </div>
+    );
+
+    return (
+        <>
+            {/* Desktop/Tablet inline panel */}
+            <div className="hidden sm:block">
+                {renderFilterControls()}
+            </div>
+
+            {/* Mobile floating action button */}
+            <button
+                type="button"
+                aria-label="Open filters"
+                onClick={() => setIsMobileModalOpen(true)}
+                className="sm:hidden fixed bottom-4 right-4 z-40 rounded-full bg-indigo-600 text-white shadow-lg p-3 font-semibold border border-black/20"
+            >
+                <Funnel className="h-8 w-8 text-white" />
+            </button>
+
+            {/* Mobile modal with same controls (state is shared) */}
+            <Dialog open={isMobileModalOpen} onOpenChange={setIsMobileModalOpen}>
+                <DialogContent className="sm:max-w-lg h-[90vh] bg-white">
+                    <DialogHeader>
+                        <DialogTitle>Filter Questions</DialogTitle>
+                    </DialogHeader>
+                    <div className="max-h-[90vh] overflow-y-auto">
+                        {renderFilterControls()}
+                    </div>
+                </DialogContent>
+            </Dialog>
+        </>
     );
 }
