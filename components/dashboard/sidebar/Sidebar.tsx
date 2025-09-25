@@ -26,7 +26,7 @@ export function Sidebar({
         <div
             className={`
         ${isSidebarOpen ? "w-64 px-2" : "w-14"} 
-        ${isMobile ? "fixed top-0 left-0 h-full z-50 bg-white transition-transform duration-300 ease-in-out" : "hidden sm:block"}
+        ${isMobile ? "fixed top-0 left-0 h-full z-50 bg-white transition-transform duration-300 ease-in-out" : "block"}
         ${isMobile && !isSidebarOpen ? "-translate-x-full" : "translate-x-0"}
         bg-white transition-all duration-300 ease-in-out 
         overflow-x-hidden

@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Trash2, Edit, AlertTriangle, CirclePlus } from 'lucide-react';
 import { usePdfTemplateForm } from '@/hooks/templates/usePdfTemplateForm';
 import { toast } from 'sonner';
+import { useMediaQuery } from 'react-responsive';
 
 const QuestionTemplate = () => {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -30,6 +31,7 @@ const QuestionTemplate = () => {
     });
 
     const { templates, templatesLoading, saveTemplate, fetchTemplates, removeTemplate, updateTemplate } = usePdfTemplateForm();
+    const isMobile = useMediaQuery({ maxWidth: 768 });
 
     useEffect(() => {
         fetchTemplates();
@@ -177,13 +179,13 @@ const QuestionTemplate = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 p-6">
-            <div className="max-w-7xl mx-auto">
+        <div className="min-h-screen bg-gray-100 px-0 sm:px-2">
+            <div className="w-full mx-auto">
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-3xl font-bold">PDF Templates</h1>
+                    <h1 className="text-xl md:text-3xl font-bold">PDF Templates</h1>
                     <Button onClick={handleCreateTemplate} className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                        <CirclePlus className="w-4 h-4 mr-2" />
-                        Create Template
+                        <CirclePlus className="w-4 h-4 mr-0 md:mr-2" />
+                        {!isMobile && "Create Template"}
                     </Button>
                 </div>
 
@@ -270,12 +272,12 @@ const QuestionTemplate = () => {
 
             {/* Create/Edit Template Modal */}
             <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-                <DialogContent className="sm:max-w-2xl">
+                <DialogContent className="sm:max-w-2xl bg-white">
                     <DialogHeader>
                         <DialogTitle>
                             {isCreatingTemplate ? 'Create New Template' : 'Edit Template'}
                         </DialogTitle>
-                        <DialogDescription>
+                        <DialogDescription className='text-gray-500'>
                             Fill in the template details below.
                         </DialogDescription>
                     </DialogHeader>
@@ -290,6 +292,7 @@ const QuestionTemplate = () => {
                                 onChange={handleInputChange}
                                 placeholder="Enter template name"
                                 required
+                                className='border border-black/30'
                             />
                         </div>
                         <div>
@@ -301,6 +304,7 @@ const QuestionTemplate = () => {
                                 onChange={handleInputChange}
                                 placeholder="Enter institution name"
                                 required
+                                className='border border-black/30'
                             />
                         </div>
                         <div>
@@ -311,6 +315,7 @@ const QuestionTemplate = () => {
                                 value={formData.institutionAddress}
                                 onChange={handleInputChange}
                                 placeholder="Enter institution address"
+                                className='border border-black/30'
                             />
                         </div>
                         <div>
@@ -321,6 +326,7 @@ const QuestionTemplate = () => {
                                 value={formData.session}
                                 onChange={handleInputChange}
                                 placeholder="Enter session"
+                                className='border border-black/30'
                             />
                         </div>
                         <div>
@@ -331,6 +337,7 @@ const QuestionTemplate = () => {
                                 value={formData.standard}
                                 onChange={handleInputChange}
                                 placeholder="Enter class/standard"
+                                className='border border-black/30'
                             />
                         </div>
                         <div>
@@ -343,6 +350,7 @@ const QuestionTemplate = () => {
                                 onChange={handleInputChange}
                                 placeholder="Enter total marks"
                                 required
+                                className='border border-black/30'
                             />
                         </div>
                         <div>
@@ -354,6 +362,7 @@ const QuestionTemplate = () => {
                                 onChange={handleInputChange}
                                 placeholder="e.g., 2 hours"
                                 required
+                                className='border border-black/30'
                             />
                         </div>
                         <div>
@@ -365,6 +374,7 @@ const QuestionTemplate = () => {
                                 onChange={handleInputChange}
                                 placeholder="Enter exam name"
                                 required
+                                className='border border-black/30'
                             />
                         </div>
                         <div>
@@ -376,6 +386,7 @@ const QuestionTemplate = () => {
                                 onChange={handleInputChange}
                                 placeholder="Enter subject"
                                 required
+                                className='border border-black/30'
                             />
                         </div>
                         <div>
@@ -386,15 +397,16 @@ const QuestionTemplate = () => {
                                 type="file"
                                 accept="image/*"
                                 onChange={handleLogoChange}
+                                className='border border-black/30'
                             />
                         </div>
                     </div>
 
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setEditModalOpen(false)}>
+                        <Button className='bg-black/20' onClick={() => setEditModalOpen(false)}>
                             Cancel
                         </Button>
-                        <Button onClick={handleSaveTemplate}>
+                        <Button onClick={handleSaveTemplate} className='bg-black text-white'>
                             {isCreatingTemplate ? 'Create Template' : 'Update Template'}
                         </Button>
                     </DialogFooter>
@@ -415,7 +427,7 @@ const QuestionTemplate = () => {
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setDeleteModalOpen(false)}>
+                        <Button className='bg-black/20' onClick={() => setDeleteModalOpen(false)}>
                             Cancel
                         </Button>
                         <Button onClick={confirmDelete} className="bg-red-600 hover:bg-red-700 text-white">

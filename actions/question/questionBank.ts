@@ -250,7 +250,7 @@ export async function getFilterOptions(
             question_type: questionTypes.map((s) => s.question_type).filter(Boolean) as string[]
         };
 
-        console.log("filterOptions in questionBank actions", filterOptions)
+        // console.log("filterOptions in questionBank actions", filterOptions)
         return { success: true, data: filterOptions };
     } catch (error) {
         console.error("Error fetching filter options:", error);

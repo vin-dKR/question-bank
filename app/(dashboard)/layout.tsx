@@ -87,7 +87,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 />
             </div>
             <div className="flex-1 flex flex-col overflow-hidden">
-                <Header activeItem={activeItem} user={user} handleLogout={handleLogout} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
+                <Header activeItem={activeItem} user={user} handleLogout={handleLogout} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} isMobile={isMobile} />
                 <MainContent>{children}</MainContent>
             </div>
         </div>

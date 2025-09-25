@@ -11,7 +11,6 @@ import {
 import { LogOut } from "lucide-react";
 import type { UserResource } from "@clerk/types";
 import { HamburgerMenu } from "@/components/dashboard/sidebar/HamburgerMenu";
-import { useMediaQuery } from "react-responsive";
 import { Dispatch, SetStateAction } from "react";
 
 
@@ -21,10 +20,10 @@ interface HeaderProps {
     handleLogout: () => void;
     isSidebarOpen: boolean;
     setIsSidebarOpen: Dispatch<SetStateAction<boolean>>
+    isMobile: boolean
 }
 
-export function Header({ activeItem, user, handleLogout, isSidebarOpen, setIsSidebarOpen }: HeaderProps) {
-    const isMobile = useMediaQuery({ maxWidth: 768 });
+export function Header({ activeItem, user, handleLogout, isSidebarOpen, setIsSidebarOpen, isMobile }: HeaderProps) {
     return (
         <header className="border-b border-black/10 px-0 py-2 md:px-4 flex justify-between items-center">
             <div className="flex flex-col items-start space-x-4">
