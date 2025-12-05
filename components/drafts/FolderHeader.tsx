@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { StepBack } from "lucide-react";
 import PDFGenerator from "../pdf/pdfPreview";
 
@@ -33,12 +32,9 @@ interface FolderHeaderProps {
 export function FolderHeader({
     selectedFolder,
     userRole,
-    editMode,
-    newName,
     setEditMode,
     setNewName,
     onBack,
-    onRename,
     onDelete,
     onCreateTest,
     institution,
