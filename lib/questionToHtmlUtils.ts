@@ -401,7 +401,8 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
                 /* Question styles */
                 .question-block {
                     margin-bottom: 15px;
-                    page-break-inside: avoid;
+                    break-inside: auto;
+                    page-break-inside: auto;
                 }
 
                 .question-number {
@@ -460,19 +461,19 @@ export function pdfConfigToHTML(config: PDFConfig, options: QuestionToHTMLOption
                 }
 
                 ${watermarkCSS}
-            </style>
-        </head>
+                </style>
+                </head>
 
-        <body>
-            ${headerHTML}
+                <body>
+                ${headerHTML}
 
-            <div class="questions-container">
+                <div class="questions-container">
                 ${questionsHTML}
-            </div>
+                </div>
 
-        </body>
-    </html>
-  `;
+                </body>
+                </html>
+                `;
 
 }
 
@@ -504,203 +505,203 @@ export function pdfConfigToAnswerKeyHTML(config: PDFConfig, options: QuestionToH
         const answerText = textToHtmlWithLatex(question.answer);
 
         return `
-      <div class="answer-item" style="
-        display: flex;
-        flex-direction: row;
-        align-items: flex-start;
-        gap: 12px;
-        margin: 8px 0;
-      ">
-        <span class="question-number" style="
-          color: black;
-          padding: 2px 6px;
-          border-radius: 4px;
-          font-weight: 600;
-          font-size: 14px;
-          text-align: center;
-        ">${questionNumber}.</span>
-        <div class="answer-content">
-          <div class="answer-text" style="
-            font-size: ${fontSize}px;
-            font-weight: 600;
-            color: black;
-          ">${answerText}</div>
-        </div>
-      </div>
+    <div class="answer-item" style="
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 8px 0;
+    ">
+    <span class="question-number" style="
+    color: black;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 14px;
+    text-align: center;
+    ">${questionNumber}.</span>
+    <div class="answer-content">
+    <div class="answer-text" style="
+    font-size: ${fontSize}px;
+    font-weight: 600;
+    color: black;
+    ">${answerText}</div>
+    </div>
+    </div>
     `;
     }).join('');
 
     // Generate header with logo if provided
     const headerHTML = `
-        <div class="header-container" style="
-            margin-bottom: 0;
-        ">
-            <div class="header-row" style="
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                position: relative;
-                padding: 8px 12px;
-                border-bottom: 1px solid #000;
-                background-color: #fff;
-                min-height: 80px;
-            ">
-                ${logo ? `
-                    <div class="logo-section" style="
-                        position: absolute;
-                        left: 12px;
-                        top: 50%;
-                        transform: translateY(-50%);
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                    ">
-                        <img src="${logo}" alt="Logo" style="
-                            height: 80px;
-                            width: 80px;
-                            object-fit: contain;
-                            border-radius: 50%;
-                        "/>
-                    </div>
-                ` : ''}
+<div class="header-container" style="
+margin-bottom: 0;
+">
+<div class="header-row" style="
+display: flex;
+align-items: center;
+justify-content: center;
+position: relative;
+padding: 8px 12px;
+border-bottom: 1px solid #000;
+background-color: #fff;
+min-height: 80px;
+">
+${logo ? `
+    <div class="logo-section" style="
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    ">
+    <img src="${logo}" alt="Logo" style="
+    height: 80px;
+    width: 80px;
+    object-fit: contain;
+    border-radius: 50%;
+    "/>
+    </div>
+    ` : ''}
 
-                <div class="institution-info" style="
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    text-align: center;
-                    gap: 6px;
-                ">
-                    <h1 style="
-                        margin: 0;
-                        font-size: 20px;
-                        font-weight: bold;
-                        letter-spacing: 2px;
-                        text-transform: uppercase;
-                    ">${sInstitution}</h1>
+    <div class="institution-info" style="
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+    ">
+    <h1 style="
+    margin: 0;
+    font-size: 20px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    ">${sInstitution}</h1>
 
-                    <div style="
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    ">
-                        <div style="
-                            border: 1px solid #000;
-                            padding: 2px 20px;
-                            background-color: #f0f0f0;
-                        ">${sExam}</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div style="
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    ">
+    <div style="
+    border: 1px solid #000;
+    padding: 2px 20px;
+    background-color: #f0f0f0;
+    ">${sExam}</div>
+    </div>
+    </div>
+    </div>
+    </div>
     `;
 
     const sectionHeaderHTML = `
-        <div class="section-header" style="
-            background-color: #000;
-            color: #fff;
-            text-align: center;
-            padding: 8px;
-            margin: 0;
-            font-weight: bold;
-            font-size: 14px;
-            letter-spacing: 1px;
-        ">
-            Answer Key
-        </div>
+    <div class="section-header" style="
+    background-color: #000;
+    color: #fff;
+    text-align: center;
+    padding: 8px;
+    margin: 0;
+    font-weight: bold;
+    font-size: 14px;
+    letter-spacing: 1px;
+    ">
+    Answer Key
+    </div>
     `;
 
     // Generate watermark if logo provided
     const watermarkCSS = logo ? `
-        body::before {
-            content: '';
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 200px;
-            height: 200px;
-            background-image: url('${logo}');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            opacity: ${watermarkOpacity};
-            pointer-events: none;
-            z-index: -1;
-        }
-    ` : '';
+body::before {
+    content: '';
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200px;
+    height: 200px;
+    background-image: url('${logo}');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: ${watermarkOpacity};
+    pointer-events: none;
+    z-index: -1;
+}
+` : '';
 
     return `
-        <!DOCTYPE html>
-        <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>${sInstitution} - Answer Key</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${sInstitution} - Answer Key</title>
 
-                <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
-                <style>
-                    * {
-                        box-sizing: border-box;
-                    }
+<style>
+* {
+    box-sizing: border-box;
+}
 
-                    body {
-                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                        line-height: ${lineHeight};
-                        color: #1f2937;
-                        background-color: #ffffff;
-                        margin: 0;
-                        font-size: ${fontSize}px;
-                    }
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: ${lineHeight};
+    color: #1f2937;
+    background-color: #ffffff;
+    margin: 0;
+    font-size: ${fontSize}px;
+}
 
-                    @page {
-                        size: ${pageSize} ${orientation};
-                        margin: ${margin}mm;
-                    }
+@page {
+    size: ${pageSize} ${orientation};
+    margin: ${margin}mm;
+}
 
-                    /* MathJax styles for LaTeX rendering */
-                    .math-inline {
-                        display: inline;
-                        font-weight: normal;
-                    }
-                    .math-display {
-                        display: block;
-                        text-align: left;
-                        margin: 10px 0;
-                        font-weight: normal;
-                    }
+/* MathJax styles for LaTeX rendering */
+.math-inline {
+    display: inline;
+    font-weight: normal;
+}
+.math-display {
+    display: block;
+    text-align: left;
+    margin: 10px 0;
+    font-weight: normal;
+}
 
-                    /* Ensure MathJax-rendered elements are not bold in HTML and PDF */
-                    mjx-container, mjx-math, mjx-mrow, mjx-mi, mjx-mn, mjx-mo {
-                        font-weight: normal !important;
-                    }
+/* Ensure MathJax-rendered elements are not bold in HTML and PDF */
+mjx-container, mjx-math, mjx-mrow, mjx-mi, mjx-mn, mjx-mo {
+    font-weight: normal !important;
+}
 
-                    @media print {
-                        body {
-                            -webkit-print-color-adjust: exact;
-                            print-color-adjust: exact;
-                        }
-                        mjx-container, mjx-math, mjx-mrow, mjx-mi, mjx-mn, mjx-mo {
-                            font-weight: normal !important;
-                        }
-                        .math-display {
-                            text-align: left;
-                        }
-                    }
+@media print {
+    body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    mjx-container, mjx-math, mjx-mrow, mjx-mi, mjx-mn, mjx-mo {
+        font-weight: normal !important;
+    }
+    .math-display {
+        text-align: left;
+    }
+}
 
-                    ${watermarkCSS}
-                </style>
-            </head>
+${watermarkCSS}
+</style>
+</head>
 
-            <body>
-                ${headerHTML}
-                ${sectionHeaderHTML}
+<body>
+${headerHTML}
+${sectionHeaderHTML}
 
-                <div class="answers-container">
-                    ${answersHTML}
-                </div>
-            </body>
-        </html>
-  `;
+<div class="answers-container">
+${answersHTML}
+</div>
+</body>
+</html>
+`;
 }
