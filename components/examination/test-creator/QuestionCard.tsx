@@ -6,6 +6,17 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TestCreatorAction } from '@/hooks/reducer/useTestCreatorReducer';
 import Image from 'next/image';
 
+// Helper function to safely decode image URLs (handles double-encoding)
+const safeDecodeImageUrl = (url: string): string => {
+    if (!url) return url;
+    try {
+        const decoded = decodeURIComponent(url);
+        return decoded !== url ? decoded : url;
+    } catch {
+        return url;
+    }
+};
+
 interface QuestionCardProps {
     question: QuestionForCreateTestData;
     index: number;
@@ -72,11 +83,12 @@ export default function QuestionCard({ question, index, dispatch }: QuestionCard
                     {question.question_image &&
                         <div className="mt-2 flex justify-center sm:justify-start">
                             <Image
-                                src={question.question_image}
+                                src={safeDecodeImageUrl(question.question_image)}
                                 alt='Question image'
                                 width={200}
                                 height={200}
                                 className="max-w-full h-auto"
+                                unoptimized={question.question_image.includes('supabase.co')}
                             />
                         </div>
                     }

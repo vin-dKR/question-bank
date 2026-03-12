@@ -2,6 +2,17 @@
 
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+
+// Helper function to safely decode image URLs (handles double-encoding)
+const safeDecodeImageUrl = (url: string): string => {
+    if (!url) return url;
+    try {
+        const decoded = decodeURIComponent(url);
+        return decoded !== url ? decoded : url;
+    } catch {
+        return url;
+    }
+};
 import {
     Dialog,
     DialogClose,
@@ -101,11 +112,12 @@ export function QuestionItem({
             </span>
             {question.question_image && (
                 <Image
-                    src={question.question_image}
+                    src={safeDecodeImageUrl(question.question_image)}
                     alt="Question"
                     className="mt-2 w-full max-w-[200px] sm:max-w-[300px] h-auto rounded-md"
                     width={300}
                     height={300}
+                    unoptimized={question.question_image.includes('supabase.co')}
                 />
             )}
         </li>

@@ -22,6 +22,20 @@ interface QuestionProps {
     userRole?: 'coaching' | 'teacher' | 'student';
 }
 
+// Helper function to safely decode image URLs (handles double-encoding)
+const safeDecodeImageUrl = (url: string): string => {
+    if (!url) return url;
+    try {
+        // Try decoding - if already decoded or invalid, it will throw
+        const decoded = decodeURIComponent(url);
+        // Check if decoding actually changed something (was encoded)
+        return decoded !== url ? decoded : url;
+    } catch {
+        // If decoding fails, return original URL
+        return url;
+    }
+};
+
 const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, toggleQuestionFlag }: QuestionProps) => {
     const { updateQuestion } = useQuestionBankContext();
     const [isFlagging, setIsFlagging] = useState(false);
@@ -235,7 +249,13 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                         </h3>
                         {question.question_image?.startsWith('https') && (
                             <div>
-                                <Image src={question.question_image} width={300} height={300} alt="question" />
+                                <Image 
+                                    src={safeDecodeImageUrl(question.question_image)} 
+                                    width={300} 
+                                    height={300} 
+                                    alt="question"
+                                    unoptimized={question.question_image.includes('supabase.co')}
+                                />
                             </div>
                         )}
                     </div>
@@ -244,17 +264,20 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                         <div className="grid grid-cols-2 gap-4 mb-4">
                             {question.option_images.map((imageUrl, index) => {
                                 const optionLetter = String.fromCharCode(65 + index);
+                                // Decode URL to fix double-encoding issues (e.g., %2520 -> %20)
+                                const decodedUrl = safeDecodeImageUrl(imageUrl);
                                 return (
                                     <div key={index} className="relative flex justify-center items-center">
                                         <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 z-10 bg-slate-800/40 text-white px-2 py-1 rounded-md text-[9px] font-medium">
                                             {optionLetter}
                                         </div>
                                         <Image
-                                            src={imageUrl}
+                                            src={decodedUrl}
                                             alt={`Option ${optionLetter}`}
                                             width={100}
                                             height={100}
                                             className="object-contain rounded-md"
+                                            unoptimized={decodedUrl.includes('supabase.co')}
                                         />
                                     </div>
                                 );
