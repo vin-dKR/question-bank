@@ -28,6 +28,20 @@ const Header = () => {
                             preload="auto"
                             width={60}
                             height={60}
+                            className="block"
+                            style={{ display: 'block' }}
+                            onError={(e) => {
+                                console.error('Video failed to load:', e);
+                                // Fallback to text logo if video fails
+                                const videoElement = e.currentTarget;
+                                if (videoElement.parentElement) {
+                                    videoElement.style.display = 'none';
+                                    const fallback = document.createElement('h1');
+                                    fallback.className = 'text-xl md:text-2xl font-bold text-primary font-inter tracking-1';
+                                    fallback.textContent = 'Eduents';
+                                    videoElement.parentElement.appendChild(fallback);
+                                }
+                            }}
                         />
                     </div>
 

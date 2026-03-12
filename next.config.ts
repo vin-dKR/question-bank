@@ -21,6 +21,11 @@ const nextConfig: NextConfig = {
             },
             {
                 protocol: 'https',
+                hostname: 'jrekcngltfkghrgzgvju.supabase.co',
+                pathname: '/storage/v1/object/public/images/**',
+            },
+            {
+                protocol: 'https',
                 hostname: 'question-banks.netlify.app',
                 pathname: '/**',
             },
