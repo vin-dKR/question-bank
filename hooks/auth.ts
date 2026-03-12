@@ -15,10 +15,34 @@ interface ClerkError {
     [key: string]: unknown;
 }
 
-function getClerkError(err: ClerkError): string {
+function getClerkError(err: ClerkError | Error | unknown): string {
+    // Handle different error types
+    let errorMessage = '';
+    let errorCode = '';
+    
+    // Check if it's a standard Error object
+    if (err instanceof Error) {
+        errorMessage = err.message;
+    }
+    // Check if it's a ClerkError with message
+    else if (typeof err === 'object' && err !== null) {
+        const clerkErr = err as ClerkError;
+        errorMessage = clerkErr.message || '';
+        errorCode = clerkErr.errors?.[0]?.code || '';
+        
+        // Also check for message in nested properties
+        if (!errorMessage && clerkErr.errors?.[0]?.message) {
+            errorMessage = clerkErr.errors[0].message;
+        }
+    }
+    // Handle string errors
+    else if (typeof err === 'string') {
+        errorMessage = err;
+    }
+    
     // Handle specific OAuth/authentication errors
-    if (err.message) {
-        const message = err.message.toLowerCase();
+    if (errorMessage) {
+        const message = errorMessage.toLowerCase();
 
         // Common OAuth errors
         if (message.includes('access_denied')) {
@@ -42,25 +66,42 @@ function getClerkError(err: ClerkError): string {
         if (message.includes('account not found') || message.includes('user not found')) {
             return 'No account found with these credentials. Please sign up first.';
         }
+        if (message.includes('verification strategy is not valid') || message.includes('verification strategy')) {
+            return 'This account was created with Google or Apple sign-in. Please use the same method you used to create your account.';
+        }
         if (message.includes('webhook') || message.includes('database')) {
             return 'Account creation failed. Please try again or contact support.';
         }
 
-        return err.message;
+        return errorMessage;
     }
 
-    if (err.errors && err.errors.length > 0) {
-        const firstError = err.errors[0].message || 'An error occurred';
+    // Check errors array
+    if (typeof err === 'object' && err !== null) {
+        const clerkErr = err as ClerkError;
+        if (clerkErr.errors && clerkErr.errors.length > 0) {
+            const firstError = clerkErr.errors[0].message || 'An error occurred';
+            const errCode = clerkErr.errors[0].code || errorCode || '';
+            const errMsg = firstError.toLowerCase();
 
-        // Handle common Clerk error codes
-        if (firstError.toLowerCase().includes('password')) {
-            return 'Invalid password. Please check your password and try again.';
-        }
-        if (firstError.toLowerCase().includes('email')) {
-            return 'Invalid email address. Please check your email and try again.';
-        }
+            // Handle verification strategy errors
+            if (errMsg.includes('verification strategy is not valid') || 
+                errMsg.includes('verification strategy') ||
+                errCode === 'verification_strategy_not_valid' ||
+                errCode.toLowerCase().includes('verification')) {
+                return 'This account was created with Google or Apple sign-in. Please use the same method you used to create your account.';
+            }
 
-        return firstError;
+            // Handle common Clerk error codes
+            if (errMsg.includes('password')) {
+                return 'Invalid password. Please check your password and try again.';
+            }
+            if (errMsg.includes('email')) {
+                return 'Invalid email address. Please check your email and try again.';
+            }
+
+            return firstError;
+        }
     }
 
     return 'An unexpected error occurred. Please try again.';
@@ -192,12 +233,23 @@ export const useCustomAuth = (mode: AuthMode) => {
         } catch (err: unknown) {
             console.error("Error in handleEmailPasswordSubmit try catch:", err);
             const clerkErr = err as ClerkError;
+            
+            // Log full error structure for debugging
+            if (process.env.NODE_ENV === 'development') {
+                console.error("Full error object:", JSON.stringify(clerkErr, null, 2));
+            }
+            
             if (clerkErr?.errors?.[0]?.code === 'single_session_mode') {
                 await signOut();
                 setError('You can only be signed in on one device at a time. Please sign out elsewhere first.');
                 console.log("Single session mode error handled");
             } else {
-                setError(getClerkError(clerkErr));
+                const errorMessage = getClerkError(clerkErr);
+                setError(errorMessage);
+                toast.error('Sign In Error', {
+                    description: errorMessage,
+                    duration: 6000,
+                });
             }
         } finally {
             setLoading(false);

@@ -20,28 +20,36 @@ export function useOnboardingForm<T extends OnboardingData>(
 
         const error = validateForm();
         if (error) {
-            toast("Sorry there is an Error", { description: error });
+            toast.error("Validation Error", { description: error });
             setLoading(false);
             return;
         }
 
-
-        // Simulate successful submission for testing
-        toast("Success", { description: `${role.charAt(0).toUpperCase() + role.slice(1)} profile submitted successfully!` });
-
         const formData = createFormData(data);
 
-        const res = await completeOnboarding(formData);
+        try {
+            const res = await completeOnboarding(formData);
 
-        if (res?.message) {
-            console.log("passed")
-            await user?.reload();
-            router.push("/dashboard");
-        } else if (res?.error) {
-            toast("Sorry, Please try again...", { description: res.error });
+            if (res?.message) {
+                console.log("Onboarding completed successfully");
+                toast.success("Success", { 
+                    description: `${role.charAt(0).toUpperCase() + role.slice(1)} profile submitted successfully!` 
+                });
+                await user?.reload();
+                router.push("/dashboard");
+            } else if (res?.error) {
+                toast.error("Onboarding Error", { description: res.error });
+            } else {
+                toast.error("Unknown Error", { description: "An unexpected error occurred. Please try again." });
+            }
+        } catch (err) {
+            console.error("Error in handleSubmit:", err);
+            toast.error("Submission Error", { 
+                description: err instanceof Error ? err.message : "Failed to submit. Please try again." 
+            });
+        } finally {
+            setLoading(false);
         }
-
-        setLoading(false);
     };
 
     return { loading, handleSubmit };
