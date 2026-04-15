@@ -1,4 +1,4 @@
-import { BarChart, Book, Home, Layers, Settings, TestTube } from "lucide-react";
+import { BarChart, Book, GraduationCap, Home, Layers, Settings, TestTube } from "lucide-react";
 
 export const sidebarItems: (SidebarItem | SidebarGroup)[] = [
     { name: "Dashboard", description: "View overview and metrics", href: "/dashboard", icon: <Home className="h-5 w-5" /> },
@@ -6,6 +6,7 @@ export const sidebarItems: (SidebarItem | SidebarGroup)[] = [
     { name: "Paper History", description: "Organize question categories", href: "/history", icon: <Layers className="h-5 w-5" /> },
     { name: "Drats Questions", description: "Analyze performance data", href: "/drafts", icon: <BarChart className="h-5 w-5" /> },
     { name: "Question Templates", description: "Configure account settings", href: "/templates", icon: <Settings className="h-5 w-5" /> },
+    { name: "School Test", description: "Extract questions from an image or PDF", href: "/school-test", icon: <GraduationCap className="h-5 w-5" /> },
     {
         name: "Examination",
         description: "Manage examinations",

@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
             bodySizeLimit: '10mb'
         }
     },
+    serverExternalPackages: ['@napi-rs/canvas', 'pdfjs-dist'],
     images: {
         remotePatterns: [
             {
