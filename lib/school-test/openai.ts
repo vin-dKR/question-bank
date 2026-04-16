@@ -29,6 +29,7 @@ export async function callVision(
     imagePngBuffer: Buffer,
     prompt: string,
     model: string = DEFAULT_MODEL,
+    jsonMode = false,
 ): Promise<string> {
     const dataUrl = `data:image/png;base64,${imagePngBuffer.toString("base64")}`;
     const res = await client().chat.completions.create({
@@ -44,37 +45,69 @@ export async function callVision(
         ],
         max_completion_tokens: 4096,
         temperature: 0.1,
+        // JSON mode forces a valid JSON object and handles backslash escaping.
+        // Only available on chat-completions models (gpt-4o does; detection's
+        // gpt-5.4 and the array output of the detector can't use it).
+        ...(jsonMode ? { response_format: { type: "json_object" as const } } : {}),
     });
     return res.choices[0]?.message?.content ?? "";
 }
 
 /**
- * Parse JSON that may be wrapped in ```json fences or contain prose.
- * Both upstream Python parsers tolerate markdown, so we do the same.
+ * Models often emit LaTeX with single backslashes inside JSON strings — e.g.
+ * `"\( \sqrt{3} \)"` — which is invalid JSON because `\(`, `\ `, `\,` etc.
+ * are not valid JSON escape sequences. Double every invalid backslash so the
+ * parser treats them as literal backslash-char pairs.
+ *
+ * Valid JSON escapes after `\`: " \ / b f n r t u
+ * Everything else gets promoted to `\\X`.
+ */
+function fixInvalidBackslashEscapes(text: string): string {
+    return text.replace(/\\([^"\\/bfnrtu\n])/g, "\\\\$1");
+}
+
+/**
+ * Parse JSON that may be wrapped in ```json fences, contain prose, or include
+ * raw LaTeX backslashes that aren't valid JSON escapes. Tries each strategy
+ * in order and falls through on failure.
  */
 export function parseJsonLoose<T>(text: string): T {
     const trimmed = text.trim();
 
     const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
-    if (fenced) {
-        return JSON.parse(fenced[1].trim()) as T;
-    }
+    const candidates: string[] = [];
+    if (fenced) candidates.push(fenced[1].trim());
+    candidates.push(trimmed);
 
-    try {
-        return JSON.parse(trimmed) as T;
-    } catch {
-        // Fall back to the first balanced JSON array or object in the string.
-        const firstArr = trimmed.indexOf("[");
-        const firstObj = trimmed.indexOf("{");
-        const start =
-            firstArr === -1 ? firstObj :
-                firstObj === -1 ? firstArr :
-                    Math.min(firstArr, firstObj);
-        if (start === -1) throw new Error("No JSON found in model response");
+    // Also try slicing from the first { or [ to the last matching bracket.
+    const firstArr = trimmed.indexOf("[");
+    const firstObj = trimmed.indexOf("{");
+    const start =
+        firstArr === -1 ? firstObj :
+            firstObj === -1 ? firstArr :
+                Math.min(firstArr, firstObj);
+    if (start !== -1) {
         const open = trimmed[start];
         const close = open === "[" ? "]" : "}";
         const end = trimmed.lastIndexOf(close);
-        if (end === -1 || end <= start) throw new Error("Unbalanced JSON in model response");
-        return JSON.parse(trimmed.slice(start, end + 1)) as T;
+        if (end > start) candidates.push(trimmed.slice(start, end + 1));
     }
+
+    let lastError: unknown = null;
+    for (const cand of candidates) {
+        try {
+            return JSON.parse(cand) as T;
+        } catch (e) {
+            lastError = e;
+            try {
+                return JSON.parse(fixInvalidBackslashEscapes(cand)) as T;
+            } catch (e2) {
+                lastError = e2;
+            }
+        }
+    }
+
+    throw new Error(
+        `No valid JSON in model response: ${(lastError as Error)?.message ?? "unknown"}`,
+    );
 }

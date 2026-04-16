@@ -37,13 +37,17 @@ export default function TestCreator() {
         session: '',
     });
 
-    // Initialize testData.questions from sessionStorage or selectedQuestions
+    // Initialize testData.questions from sessionStorage or selectedQuestions.
+    // sessionStorage wins when present so freshly-handed-off questions (e.g. from
+    // /school-test) don't get clobbered by stale picks left in QuestionBankContext
+    // from an earlier visit to /questions.
     useEffect(() => {
         const storedQuestions = sessionStorage.getItem('selectedQuestionsForTest');
         if (storedQuestions) {
             try {
                 const questions = JSON.parse(storedQuestions);
                 dispatch({ type: 'LOAD_QUESTIONS', questions });
+                return;
             } catch (error) {
                 console.error('Error parsing sessionStorage questions:', error);
                 toast.error('Failed to load selected questions from session');

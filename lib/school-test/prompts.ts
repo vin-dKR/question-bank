@@ -98,57 +98,30 @@ RESPOND WITH ONLY THE JSON ARRAY. NOTHING ELSE.`;
 }
 
 export function extractionPrompt(): string {
-    return `You are given an image of a question paper page.
-Extract ONLY the core information for each question in the simplified JSON format below.
+    return `You are given an image of a question paper page. Find EVERY numbered question on this page and return them in the JSON format below. This covers subjective / numerical problems as well as multiple-choice questions — all question types are valid.
 
+OUTPUT FORMAT (return exactly this shape, nothing else):
 {
   "questions": [
     {
-      "question_number": 1,
-      "question_text": "Extract the complete question text here",
-      "options": ["(A) Option A text", "(B) Option B text", "(C) Option C text", "(D) Option D text"]
+      "question_number": 17,
+      "question_text": "The full prompt the student reads, including sub-parts (i), (ii), (iii), any given values, conditions, references to figures (\\"as shown in the figure\\"), and the final ask.",
+      "options": ["(A) ...", "(B) ...", "(C) ...", "(D) ..."]
     }
   ]
 }
 
-EXTRACTION RULES:
-1. ONLY extract these 3 fields: question_number, question_text, options
-2. question_number: Extract the question number from the image (e.g., 1, 2, 3, etc.)
-3. question_text: Extract the complete question text including any mathematical expressions or diagrams descriptions
-4. options: Extract all answer options as an array of strings with proper formatting
-5. CRITICAL: Format options with labels: "(A) option text", "(B) option text", "(C) option text", "(D) option text"
-6. For multiple choice questions, always include the (A), (B), (C), (D) prefixes
-7. If the image contains a comprehension passage, include the passage text at the beginning of question_text
-8. For mathematical expressions, use LaTeX formatting when possible (e.g., "\\( \\sqrt{3} \\)" for square root)
-9. If a question spans multiple lines, include the complete text
-10. Do not include any other fields or metadata - only these 3 core fields
-11. Do not add placeholders or null values for other fields
+HARD RULES — read all of these:
 
-JSON FORMATTING REQUIREMENTS:
-11. CRITICAL: Always return valid, complete JSON that can be parsed by JSON.parse()
-12. Use double quotes for all string values and keys
-13. Escape special characters in strings (quotes, backslashes, etc.)
-14. Do not include trailing commas in arrays or objects
-15. Ensure all opening braces/brackets have matching closing braces/brackets
-16. If a string contains quotes, escape them with backslashes: \\"
-17. For mathematical expressions, use LaTeX formatting without breaking JSON
-18. Never truncate the JSON response - always complete the structure
-19. If text contains line breaks, use \\n instead of actual line breaks
-20. Return only the JSON structure above - no additional text or explanations
-
-FOCUS ON ACCURACY:
-- Extract question text exactly as it appears
-- Don't miss any options - include all available options
-- MANDATORY: Always format options as "(A) text", "(B) text", "(C) text", "(D) text"
-- Preserve mathematical notation and formatting (use LaTeX when needed)
-- Don't add interpretations or assumptions
-- For subjective questions with no options, use empty array []
-
-AUTO-DETECT QUESTION TYPE:
-- Single correct: exactly 4 options (A)(B)(C)(D). Normalize any (1)(2)(3)(4) into (A)(B)(C)(D).
-- Multiple correct: same 4-option shape, usually flagged by "select all that apply" or "more than one option is correct".
-- Matrix match: two columns (Column I/II). Put the full table structure in question_text and the combination choices in options.
-- Comprehension: prepend "PASSAGE: <passage>\\n\\nQUESTION: " to question_text for every question sharing the passage; 4 options.
-- Subjective: no options — options array MUST be [].
-- If the type is ambiguous, prefer the base shape above and leave options empty when no MCQ is visible.`;
+1. Extract EVERY numbered question that is at least partially visible on the page. Do not return an empty list if numbered questions are present; a near-empty or truncated question is still a question.
+2. question_number is the numeric label of the question itself (e.g., 17, 18). Ignore reference codes printed alongside the question such as "CP0017", "[IIT-JEE 2005]", header text, or page numbers — those are NEVER the question number.
+3. question_text must contain the complete problem statement: setup, sub-parts, given data, what to find. Do NOT summarise. Copy the wording.
+4. options rules:
+   - If the question shows lettered / numbered multiple-choice options such as (A)(B)(C)(D), (a)(b)(c)(d), or (1)(2)(3)(4), extract all of them and normalise every entry to the form "(A) ...", "(B) ...", "(C) ...", "(D) ...".
+   - If the question is subjective / numerical / derivation / matrix-match / proof and has NO lettered choice list, return an empty array [].
+   - Never invent options that are not printed on the page.
+5. For comprehension / passage-based questions, prepend "PASSAGE: <full passage>\\n\\nQUESTION: " to the question_text of every question that belongs to that passage.
+6. For mathematical expressions use LaTeX wrapped in \\( ... \\) delimiters. Inside JSON strings, escape every backslash as \\\\.
+7. Inside any JSON string, represent line breaks as \\n (two characters). Never emit a raw newline inside a string.
+8. Return ONLY the JSON object above. No markdown fences, no prose, no leading or trailing commentary.`;
 }

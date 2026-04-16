@@ -54,7 +54,7 @@ export function QuestionCard({
                         onClick={() => setShowPreview((s) => !s)}
                         className="font-medium text-neutral-500 underline-offset-4 hover:text-neutral-900 hover:underline"
                     >
-                        {showPreview ? "Hide preview" : "LaTeX preview"}
+                        {showPreview ? "Edit" : "Preview"}
                     </button>
                     <button
                         type="button"
@@ -66,44 +66,52 @@ export function QuestionCard({
                 </div>
             </div>
 
-            <AutoTextarea
-                value={question.question_text}
-                onChange={(v) => onChange({ question_text: v })}
-                placeholder="Question text"
-            />
-
-            {showPreview && question.question_text && (
-                <div className="mt-2 rounded-md bg-neutral-50 px-3 py-2 text-[13px] leading-relaxed text-neutral-800">
-                    {renderMixedLatex(question.question_text)}
-                </div>
+            {showPreview ? (
+                <RenderedBlock value={question.question_text} onEdit={() => setShowPreview(false)} />
+            ) : (
+                <AutoTextarea
+                    value={question.question_text}
+                    onChange={(v) => onChange({ question_text: v })}
+                    placeholder="Question text"
+                />
             )}
 
             <div className="mt-4 space-y-2">
-                {question.options.map((opt, i) => (
-                    <OptionRow
-                        key={i}
-                        value={opt}
-                        onChange={(v) => {
-                            const next = [...question.options];
-                            next[i] = v;
-                            onChange({ options: next });
+                {question.options.map((opt, i) =>
+                    showPreview ? (
+                        <RenderedOption
+                            key={i}
+                            value={opt}
+                            onEdit={() => setShowPreview(false)}
+                        />
+                    ) : (
+                        <OptionRow
+                            key={i}
+                            value={opt}
+                            onChange={(v) => {
+                                const next = [...question.options];
+                                next[i] = v;
+                                onChange({ options: next });
+                            }}
+                            onRemove={() => {
+                                const next = question.options.filter((_, idx) => idx !== i);
+                                onChange({ options: next });
+                            }}
+                        />
+                    ),
+                )}
+                {!showPreview && (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            const letter = String.fromCharCode(65 + question.options.length);
+                            onChange({ options: [...question.options, `(${letter}) `] });
                         }}
-                        onRemove={() => {
-                            const next = question.options.filter((_, idx) => idx !== i);
-                            onChange({ options: next });
-                        }}
-                    />
-                ))}
-                <button
-                    type="button"
-                    onClick={() => {
-                        const letter = String.fromCharCode(65 + question.options.length);
-                        onChange({ options: [...question.options, `(${letter}) `] });
-                    }}
-                    className="text-[12px] font-medium text-neutral-500 underline-offset-4 hover:text-neutral-900 hover:underline"
-                >
-                    Add option
-                </button>
+                        className="text-[12px] font-medium text-neutral-500 underline-offset-4 hover:text-neutral-900 hover:underline"
+                    >
+                        Add option
+                    </button>
+                )}
             </div>
 
             <div className="mt-4 border-t border-neutral-100 pt-3">
@@ -196,5 +204,39 @@ function AutoTextarea({
             rows={3}
             className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-[13px] leading-relaxed text-neutral-900 focus:border-neutral-900 focus:outline-none"
         />
+    );
+}
+
+function RenderedBlock({ value, onEdit }: { value: string; onEdit: () => void }) {
+    return (
+        <button
+            type="button"
+            onClick={onEdit}
+            title="Click to edit"
+            className="block w-full rounded-md border border-transparent bg-neutral-50 px-3 py-2 text-left text-[13px] leading-relaxed text-neutral-900 transition-colors hover:border-neutral-200"
+        >
+            {value.trim().length > 0 ? (
+                renderMixedLatex(value)
+            ) : (
+                <span className="italic text-neutral-400">Empty question text — click to edit</span>
+            )}
+        </button>
+    );
+}
+
+function RenderedOption({ value, onEdit }: { value: string; onEdit: () => void }) {
+    return (
+        <button
+            type="button"
+            onClick={onEdit}
+            title="Click to edit"
+            className="flex w-full items-start rounded-md border border-transparent bg-neutral-50 px-3 py-1.5 text-left text-[13px] leading-relaxed text-neutral-900 transition-colors hover:border-neutral-200"
+        >
+            {value.trim().length > 0 ? (
+                renderMixedLatex(value)
+            ) : (
+                <span className="italic text-neutral-400">Empty option</span>
+            )}
+        </button>
     );
 }

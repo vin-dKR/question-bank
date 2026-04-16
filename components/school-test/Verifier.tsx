@@ -1,11 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import type { Crop, PageResult, QuestionDraft } from "@/lib/school-test/types";
 import { cn } from "@/lib/utils";
+import { saveExtractedQuestions } from "@/actions/school-test/saveExtractedQuestions";
 import { QuestionCard } from "./QuestionCard";
 import { CropEditor } from "./CropEditor";
+import { PreviewDialog } from "./PreviewDialog";
 
 type EditablePage = {
     pageNumber: number;
@@ -27,10 +31,13 @@ export function Verifier({
     fileName: string | null;
     onReset: () => void;
 }) {
+    const router = useRouter();
     const [pages, setPages] = useState<EditablePage[]>(() => results.map(hydrate));
     const [activeIdx, setActiveIdx] = useState(0);
     const [hoverCrop, setHoverCrop] = useState<string | null>(null);
     const [cropTarget, setCropTarget] = useState<CropTarget | null>(null);
+    const [previewOpen, setPreviewOpen] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     const page = pages[activeIdx];
 
@@ -112,30 +119,52 @@ export function Verifier({
         [updatePage],
     );
 
-    const exportJson = useCallback(() => {
-        const payload = pages.map((p) => ({
-            page_number: p.pageNumber,
-            source_dimensions: { width: p.sourceWidth, height: p.sourceHeight },
-            questions: p.questions.map((q) => {
-                const crop = p.crops[q.id];
-                return {
-                    question_number: q.question_number,
-                    question_text: q.question_text,
-                    options: q.options,
-                    diagram: crop
-                        ? { bbox: crop.bbox, data_url: crop.dataUrl }
-                        : null,
-                };
-            }),
-        }));
-        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${(fileName ?? "school-test").replace(/\.[^.]+$/, "")}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-    }, [pages, fileName]);
+    const confirmCreateTest = useCallback(async () => {
+        if (isSaving) return;
+        setIsSaving(true);
+        try {
+            const payload = pages.flatMap((p) =>
+                p.questions.map((q) => {
+                    const crop = p.crops[q.id];
+                    return {
+                        question_number: q.question_number,
+                        question_text: q.question_text,
+                        options: q.options,
+                        diagram_data_url: crop ? crop.dataUrl : null,
+                    };
+                }),
+            );
+
+            const result = await saveExtractedQuestions(payload);
+            if (!result.success) {
+                toast.error(result.error);
+                setIsSaving(false);
+                return;
+            }
+
+            // Match the shape TestCreator reads from sessionStorage (see
+            // components/examination/TestCreator.tsx and the
+            // QuestionForCreateTestData type in types/index.d.ts).
+            const sessionPayload = result.questions.map((q, i) => ({
+                id: q.id,
+                question_text: q.question_text,
+                question_number: q.question_number || i + 1,
+                options: q.options,
+                answer: q.answer,
+                question_image: q.question_image ?? null,
+                marks: q.marks,
+                negativeMark: 0,
+            }));
+            sessionStorage.setItem(
+                "selectedQuestionsForTest",
+                JSON.stringify(sessionPayload),
+            );
+            router.push("/examination/create");
+        } catch (e) {
+            toast.error((e as Error).message || "Failed to save.");
+            setIsSaving(false);
+        }
+    }, [isSaving, pages, router]);
 
     const totalQuestions = useMemo(
         () => pages.reduce((sum, p) => sum + p.questions.length, 0),
@@ -151,7 +180,7 @@ export function Verifier({
                 pages={pages.length}
                 totalQuestions={totalQuestions}
                 onReset={onReset}
-                onExport={exportJson}
+                onPreview={() => setPreviewOpen(true)}
             />
 
             {pages.length > 1 && (
@@ -207,7 +236,7 @@ export function Verifier({
             </div>
 
             <div className="border-t border-neutral-200 bg-white px-6 py-3 text-[11px] text-neutral-400">
-                Nothing is saved to the database yet. Use Export JSON to keep a copy.
+                Questions are saved to the question bank when you press Preview Test &rarr; Create test.
             </div>
 
             {cropTarget && (
@@ -218,6 +247,21 @@ export function Verifier({
                     onSave={(bbox, dataUrl) =>
                         saveCrop(cropTarget.pageIndex, cropTarget.questionId, bbox, dataUrl)
                     }
+                />
+            )}
+
+            {previewOpen && (
+                <PreviewDialog
+                    pages={pages.map((p) => ({
+                        pageNumber: p.pageNumber,
+                        questions: p.questions,
+                        crops: p.crops,
+                    }))}
+                    isSaving={isSaving}
+                    onCancel={() => {
+                        if (!isSaving) setPreviewOpen(false);
+                    }}
+                    onConfirm={confirmCreateTest}
                 />
             )}
         </div>
@@ -245,13 +289,13 @@ function TopBar({
     pages,
     totalQuestions,
     onReset,
-    onExport,
+    onPreview,
 }: {
     fileName: string | null;
     pages: number;
     totalQuestions: number;
     onReset: () => void;
-    onExport: () => void;
+    onPreview: () => void;
 }) {
     return (
         <div className="flex items-center justify-between border-b border-neutral-200 bg-white px-6 py-4">
@@ -276,10 +320,11 @@ function TopBar({
                 </button>
                 <button
                     type="button"
-                    onClick={onExport}
-                    className="rounded-lg bg-neutral-900 px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-neutral-800"
+                    onClick={onPreview}
+                    disabled={totalQuestions === 0}
+                    className="rounded-lg bg-neutral-900 px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-neutral-800 disabled:bg-neutral-300"
                 >
-                    Export JSON
+                    Preview Test
                 </button>
             </div>
         </div>

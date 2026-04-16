@@ -8,12 +8,14 @@ export type RasterizedPage = {
 
 /**
  * Rasterize every page of a PDF to PNG buffers using pdfjs-dist + @napi-rs/canvas.
- * DPI defaults to 200 — plenty for GPT-4o vision without blowing up memory for long PDFs.
+ * DPI defaults to 300 to match the Python question-extractor-tool
+ * (backend/app/services/pdf_processor.py). 300 DPI keeps small text legible
+ * for vision OCR on dense multi-column layouts.
  *
  * We dynamic-import the legacy build so Next.js does not try to bundle pdfjs into edge
  * runtimes. The route that calls this must pin `runtime = "nodejs"`.
  */
-export async function rasterizePdf(pdfBuffer: Buffer, dpi = 200): Promise<RasterizedPage[]> {
+export async function rasterizePdf(pdfBuffer: Buffer, dpi = 300): Promise<RasterizedPage[]> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pdfjs: any = await import("pdfjs-dist/legacy/build/pdf.mjs");
     // pdfjs v5 supports Node natively; no worker needed when using the legacy build.
