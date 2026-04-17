@@ -18,7 +18,7 @@ function client(): OpenAI {
  * The detector path overrides this with "gpt-5.4" to match
  * image-auto-cropper/backend/services/openai_detector.py.
  */
-const DEFAULT_MODEL = "gpt-4o";
+const DEFAULT_MODEL = "gpt-5.4";
 
 /**
  * Send a single-image vision request and return the raw text response.

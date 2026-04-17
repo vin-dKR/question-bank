@@ -3,7 +3,7 @@ import { detectDiagrams } from "./detect";
 import { extractQuestions } from "./extract";
 import { cropDetections } from "./crop";
 import { rasterizePdf } from "./pdf";
-import type { PageResult, ProcessEvent, Provider } from "./types";
+import type { Detection, PageResult, ProcessEvent, Provider } from "./types";
 
 type PageImage = {
     pageNumber: number;
@@ -11,6 +11,14 @@ type PageImage = {
     width: number;
     height: number;
 };
+
+// Cap for the image we send to the diagram DETECTOR. OpenAI's `detail: "high"`
+// mode tiles images into 512 px squares; large pages (PDFs rasterized at 300
+// DPI are ~2500 × 3500 px) span many tiles and the model loses global spatial
+// context, returning bboxes that swallow question text. Shrinking the detection
+// input to fit near a single high-detail pass dramatically tightens the bboxes.
+// Cropping still happens on the full-res buffer, so output quality is unchanged.
+const DETECTION_MAX_DIM = 1600;
 
 async function pageImagesFromInput(
     fileBuffer: Buffer,
@@ -45,6 +53,43 @@ function bufferToDataUrl(buf: Buffer): string {
     return `data:image/png;base64,${buf.toString("base64")}`;
 }
 
+async function detectionImage(
+    pagePng: Buffer,
+    width: number,
+    height: number,
+): Promise<{ buffer: Buffer; width: number; height: number }> {
+    const longest = Math.max(width, height);
+    if (longest <= DETECTION_MAX_DIM) {
+        return { buffer: pagePng, width, height };
+    }
+    const scale = DETECTION_MAX_DIM / longest;
+    const w = Math.max(1, Math.round(width * scale));
+    const h = Math.max(1, Math.round(height * scale));
+    const buffer = await sharp(pagePng).resize(w, h, { fit: "fill" }).png().toBuffer();
+    return { buffer, width: w, height: h };
+}
+
+function rescaleDetections(
+    detections: Detection[],
+    fromW: number,
+    fromH: number,
+    toW: number,
+    toH: number,
+): Detection[] {
+    if (fromW === toW && fromH === toH) return detections;
+    const sx = toW / fromW;
+    const sy = toH / fromH;
+    return detections.map((d) => {
+        if (!d.has_image || !d.bbox) return d;
+        const [x, y, w, h] = d.bbox;
+        const nx = Math.max(0, Math.min(toW - 1, Math.round(x * sx)));
+        const ny = Math.max(0, Math.min(toH - 1, Math.round(y * sy)));
+        const nw = Math.max(10, Math.min(toW - nx, Math.round(w * sx)));
+        const nh = Math.max(10, Math.min(toH - ny, Math.round(h * sy)));
+        return { ...d, bbox: [nx, ny, nw, nh] };
+    });
+}
+
 /**
  * Run the full pipeline and yield ProcessEvents in order.
  * Pages are processed sequentially so the UI timeline reads naturally and so
@@ -69,7 +114,20 @@ export async function* runPipeline(
         yield { type: "page-start", page: page.pageNumber };
 
         try {
-            const detections = await detectDiagrams(page.buffer, page.width, page.height, provider);
+            const detectPage = await detectionImage(page.buffer, page.width, page.height);
+            const detectionsRaw = await detectDiagrams(
+                detectPage.buffer,
+                detectPage.width,
+                detectPage.height,
+                provider,
+            );
+            const detections = rescaleDetections(
+                detectionsRaw,
+                detectPage.width,
+                detectPage.height,
+                page.width,
+                page.height,
+            );
             yield {
                 type: "page-detected",
                 page: page.pageNumber,
