@@ -28,8 +28,12 @@ export default function SchoolTestApp() {
         setResults([]);
     }, []);
 
-    const start = useCallback(async (file: File, selectedProvider: Provider) => {
-        setFileName(file.name);
+    const start = useCallback(async (files: File[], selectedProvider: Provider) => {
+        if (files.length === 0) return;
+        const label = files.length === 1
+            ? files[0].name
+            : `${files[0].name} + ${files.length - 1} more`;
+        setFileName(label);
         setPageStatuses([]);
         setResults([]);
         setPhase("processing");
@@ -38,7 +42,7 @@ export default function SchoolTestApp() {
         abortRef.current = controller;
 
         const body = new FormData();
-        body.append("file", file);
+        for (const f of files) body.append("file", f);
         body.append("provider", selectedProvider);
 
         let response: Response;
@@ -190,7 +194,7 @@ export default function SchoolTestApp() {
                         <IdleView
                             provider={provider}
                             onProviderChange={setProvider}
-                            onFile={(file) => start(file, provider)}
+                            onFiles={(files) => start(files, provider)}
                         />
                     </motion.div>
                 )}
@@ -226,11 +230,11 @@ export default function SchoolTestApp() {
 function IdleView({
     provider,
     onProviderChange,
-    onFile,
+    onFiles,
 }: {
     provider: Provider;
     onProviderChange: (p: Provider) => void;
-    onFile: (file: File) => void;
+    onFiles: (files: File[]) => void;
 }) {
     return (
         <div className="flex h-full items-center justify-center px-6 py-12">
@@ -244,7 +248,7 @@ function IdleView({
                         each question so you can review and edit them before saving.
                     </p>
                 </div>
-                <UploadZone onFile={onFile} />
+                <UploadZone onFiles={onFiles} />
                 <ProviderSelect value={provider} onChange={onProviderChange} />
                 <p className="mt-6 text-xs text-neutral-400">
                     Nothing is saved to the database in this step &mdash; you&rsquo;ll review the result on

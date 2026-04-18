@@ -5,18 +5,20 @@ import { cn } from "@/lib/utils";
 
 const ACCEPTED = "image/*,application/pdf";
 
-export function UploadZone({ onFile }: { onFile: (file: File) => void }) {
+export function UploadZone({ onFiles }: { onFiles: (files: File[]) => void }) {
     const inputRef = useRef<HTMLInputElement>(null);
     const [dragging, setDragging] = useState(false);
 
     const handle = useCallback(
-        (file: File | undefined | null) => {
-            if (!file) return;
-            const ok = file.type === "application/pdf" || file.type.startsWith("image/");
-            if (!ok) return;
-            onFile(file);
+        (list: FileList | undefined | null) => {
+            if (!list || list.length === 0) return;
+            const valid = Array.from(list).filter(
+                (f) => f.type === "application/pdf" || f.type.startsWith("image/"),
+            );
+            if (valid.length === 0) return;
+            onFiles(valid);
         },
-        [onFile],
+        [onFiles],
     );
 
     return (
@@ -30,7 +32,7 @@ export function UploadZone({ onFile }: { onFile: (file: File) => void }) {
             onDrop={(e) => {
                 e.preventDefault();
                 setDragging(false);
-                handle(e.dataTransfer.files?.[0]);
+                handle(e.dataTransfer.files);
             }}
             className={cn(
                 "group flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed px-8 py-16 text-center transition-colors",
@@ -44,8 +46,9 @@ export function UploadZone({ onFile }: { onFile: (file: File) => void }) {
                 id="school-test-file"
                 type="file"
                 accept={ACCEPTED}
+                multiple
                 className="sr-only"
-                onChange={(e) => handle(e.target.files?.[0])}
+                onChange={(e) => handle(e.target.files)}
             />
             <div className="flex size-10 items-center justify-center rounded-full border border-neutral-200 bg-neutral-50 text-neutral-500 transition-colors group-hover:border-neutral-400 group-hover:text-neutral-800">
                 <svg
@@ -64,10 +67,10 @@ export function UploadZone({ onFile }: { onFile: (file: File) => void }) {
                 </svg>
             </div>
             <p className="mt-5 text-[15px] font-medium text-neutral-900">
-                Drop a question paper here
+                Drop question papers here
             </p>
             <p className="mt-1 text-[13px] text-neutral-500">
-                or click to choose &mdash; image or PDF, up to 20 MB
+                or click to choose &mdash; one PDF or multiple images, up to 20 MB each
             </p>
         </label>
     );

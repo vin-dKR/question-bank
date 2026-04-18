@@ -16,8 +16,8 @@ export async function POST(req: NextRequest) {
     }
 
     const form = await req.formData();
-    const file = form.get("file");
-    if (!(file instanceof File)) {
+    const files = form.getAll("file").filter((v): v is File => v instanceof File);
+    if (files.length === 0) {
         return new Response("Missing file", { status: 400 });
     }
 
@@ -25,15 +25,21 @@ export async function POST(req: NextRequest) {
     const provider: Provider =
         rawProvider === "gemini" ? "gemini" : "openai";
 
-    const mime = file.type;
-    if (mime !== "application/pdf" && !mime.startsWith("image/")) {
-        return new Response("Unsupported file type", { status: 415 });
-    }
-    if (file.size > MAX_SIZE) {
-        return new Response("File too large", { status: 413 });
+    for (const f of files) {
+        if (f.type !== "application/pdf" && !f.type.startsWith("image/")) {
+            return new Response("Unsupported file type", { status: 415 });
+        }
+        if (f.size > MAX_SIZE) {
+            return new Response("File too large", { status: 413 });
+        }
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const inputs = await Promise.all(
+        files.map(async (f) => ({
+            buffer: Buffer.from(await f.arrayBuffer()),
+            mime: f.type,
+        })),
+    );
     const encoder = new TextEncoder();
 
     const stream = new ReadableStream({
@@ -42,7 +48,7 @@ export async function POST(req: NextRequest) {
                 controller.enqueue(encoder.encode(JSON.stringify(event) + "\n"));
             };
             try {
-                for await (const event of runPipeline(buffer, mime, provider)) {
+                for await (const event of runPipeline(inputs, provider)) {
                     write(event);
                 }
             } catch (e) {
