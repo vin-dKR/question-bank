@@ -110,6 +110,21 @@ function rescaleDetections(
     });
 }
 
+// Wrap an async stage so a thrown error carries which step it came from
+// (preview/detect/extract/crop). The outer per-page catch and the client toast
+// then surface `[detect] 429 Too Many Requests` instead of a bare `429`.
+async function runStage<T>(stage: string, fn: () => Promise<T>): Promise<T> {
+    try {
+        return await fn();
+    } catch (e) {
+        const err = e instanceof Error ? e : new Error(String(e));
+        const wrapped = new Error(`[${stage}] ${err.message}`);
+        wrapped.name = err.name || "Error";
+        wrapped.stack = err.stack;
+        throw wrapped;
+    }
+}
+
 function rescaleBbox(
     bbox: [number, number, number, number],
     fromW: number,
@@ -142,7 +157,10 @@ export async function* runPipeline(
     try {
         pages = await pageImagesFromInputs(inputs);
     } catch (e) {
-        yield { type: "error", message: `Failed to read input: ${(e as Error).message}` };
+        const err = e instanceof Error ? e : new Error(String(e));
+        console.error("[school-test] input read failed:", err);
+        const name = err.name && err.name !== "Error" ? `${err.name}: ` : "";
+        yield { type: "error", message: `Failed to read input — ${name}${err.message || "unknown error"}` };
         return;
     }
 
@@ -152,13 +170,12 @@ export async function* runPipeline(
         yield { type: "page-start", page: page.pageNumber };
 
         try {
-            const preview = await previewImage(page.buffer, page.width, page.height);
+            const preview = await runStage("preview", () =>
+                previewImage(page.buffer, page.width, page.height),
+            );
 
-            const detectionsPreview = await detectDiagrams(
-                preview.buffer,
-                preview.width,
-                preview.height,
-                provider,
+            const detectionsPreview = await runStage("detect", () =>
+                detectDiagrams(preview.buffer, preview.width, preview.height, provider),
             );
             // Scale bboxes up to full-res so server-side cropping operates on
             // the high-DPI buffer and auto-crops stay sharp.
@@ -175,19 +192,17 @@ export async function* runPipeline(
                 detectionCount: detectionsFull.filter((d) => d.has_image).length,
             };
 
-            const questions = await extractQuestions(preview.buffer, page.pageNumber);
+            const questions = await runStage("extract", () =>
+                extractQuestions(preview.buffer, page.pageNumber),
+            );
             yield {
                 type: "page-extracted",
                 page: page.pageNumber,
                 questionCount: questions.length,
             };
 
-            const cropsFull = await cropDetections(
-                page.buffer,
-                page.width,
-                page.height,
-                detectionsFull,
-                page.pageNumber,
+            const cropsFull = await runStage("crop", () =>
+                cropDetections(page.buffer, page.width, page.height, detectionsFull, page.pageNumber),
             );
             // Crop image data stays full-res, but the bbox in the response is
             // in preview coords — the Verifier renders overlays as percentages
@@ -207,12 +222,13 @@ export async function* runPipeline(
             };
             yield { type: "page-done", page: page.pageNumber, result };
         } catch (e) {
-            const err = e as Error;
+            const err = e instanceof Error ? e : new Error(String(e));
             console.error(`[school-test] page ${page.pageNumber} failed:`, err);
+            const name = err.name && err.name !== "Error" ? `${err.name}: ` : "";
             yield {
                 type: "error",
                 page: page.pageNumber,
-                message: `Page ${page.pageNumber}: ${err.message || String(err)}`,
+                message: `Page ${page.pageNumber} ${name}${err.message || "unknown error"}`,
             };
         }
     }

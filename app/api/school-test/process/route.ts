@@ -52,7 +52,17 @@ export async function POST(req: NextRequest) {
                     write(event);
                 }
             } catch (e) {
-                write({ type: "error", message: (e as Error).message });
+                // runPipeline normally yields its own error events; this catch
+                // only fires for unexpected throws that escape the generator.
+                // Log with full stack server-side and ship a named, non-empty
+                // message to the client so toasts are actionable.
+                const err = e instanceof Error ? e : new Error(String(e));
+                console.error("[school-test] pipeline crashed:", err);
+                const name = err.name && err.name !== "Error" ? `${err.name}: ` : "";
+                write({
+                    type: "error",
+                    message: `Pipeline crashed — ${name}${err.message || "unknown error"}`,
+                });
             } finally {
                 controller.close();
             }

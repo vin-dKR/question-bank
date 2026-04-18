@@ -53,15 +53,21 @@ export default function SchoolTestApp() {
                 signal: controller.signal,
             });
         } catch (e) {
-            if ((e as Error).name === "AbortError") return;
-            toast.error(`Upload failed: ${(e as Error).message}`);
+            const err = e as Error;
+            if (err.name === "AbortError") return;
+            // TypeError from fetch means the request never reached the server
+            // (DNS, offline, CORS, connection reset). Distinguish that from
+            // server-reported errors so the user knows where to look.
+            const hint = err.name === "TypeError" ? "Network error — the request never reached the server. " : "";
+            toast.error(`Upload failed: ${hint}${err.name}: ${err.message}`);
             setPhase("idle");
             return;
         }
 
         if (!response.ok || !response.body) {
-            const msg = await response.text().catch(() => "Request failed");
-            toast.error(msg || `Request failed (${response.status})`);
+            const text = await response.text().catch(() => "");
+            const detail = text.trim() || response.statusText || "no response body";
+            toast.error(`Request failed (HTTP ${response.status}): ${detail}`);
             setPhase("idle");
             return;
         }
@@ -135,6 +141,7 @@ export default function SchoolTestApp() {
             }
         };
 
+        let sawComplete = false;
         try {
             while (true) {
                 const { value, done } = await reader.read();
@@ -146,36 +153,72 @@ export default function SchoolTestApp() {
                     buffered = buffered.slice(newlineAt + 1);
                     if (!line) continue;
                     try {
-                        handleEvent(JSON.parse(line) as ProcessEvent);
-                    } catch {
-                        // ignore malformed line; server controls output
+                        const ev = JSON.parse(line) as ProcessEvent;
+                        if (ev.type === "complete") sawComplete = true;
+                        handleEvent(ev);
+                    } catch (parseErr) {
+                        // Malformed line usually means the server wrote partial
+                        // bytes before dying. Surface it so the user sees the
+                        // raw tail instead of silently continuing.
+                        console.warn("[school-test] bad event line:", line, parseErr);
                     }
                 }
             }
         } catch (e) {
-            if ((e as Error).name !== "AbortError") {
-                toast.error(`Stream error: ${(e as Error).message}`);
+            const err = e as Error;
+            if (err.name !== "AbortError") {
+                toast.error(`Stream read failed — ${err.name}: ${err.message}`);
             }
             setPhase("idle");
             return;
         }
 
-        if (collected.length === 0) {
-            // Don't bounce back to idle — we'd lose the per-page error badges the
-            // user needs to actually diagnose the failure. Stay on the processing
-            // view and surface the first real error in the toast.
-            setPageStatuses((current) => {
-                const firstError = current.find((p) => p.stage === "error");
-                if (firstError?.error) {
-                    toast.error(firstError.error);
+        // Ask React for the latest pageStatuses snapshot so we can describe what
+        // actually happened. The server sent "complete" only if runPipeline ran
+        // to the end; missing that flag means the stream was cut off (Lambda
+        // timeout, response-size cap, proxy killed us, etc.).
+        setPageStatuses((current) => {
+            const errored = current.filter((p) => p.stage === "error");
+            const stuck = current.filter(
+                (p) => p.stage !== "done" && p.stage !== "error",
+            );
+
+            if (collected.length === 0) {
+                // Nothing to show in the Verifier. Stay on the processing view
+                // so per-page badges remain visible.
+                if (errored.length > 0 && errored[0].error) {
+                    toast.error(errored[0].error);
+                } else if (!sawComplete && current.length > 0) {
+                    toast.error(
+                        `Stream ended before any page finished (${stuck.length} of ${current.length} still in progress). ` +
+                        `Usually a server timeout or response-size cap — check server logs.`,
+                    );
+                } else if (!sawComplete) {
+                    toast.error(
+                        "Stream closed before any data arrived. Check server logs for the underlying error.",
+                    );
                 } else {
-                    toast.error("Processing finished but no pages were returned. Check the server logs.");
+                    toast.error("Processing finished but no pages were returned. Check server logs.");
                 }
                 return current;
-            });
-            return;
-        }
+            }
 
+            // We have at least one completed page — move to verify, but don't
+            // let errored / stuck pages disappear silently.
+            if (errored.length > 0) {
+                toast.error(
+                    `${errored.length} page${errored.length === 1 ? "" : "s"} failed: ${errored[0].error ?? "unknown"}${errored.length > 1 ? " (…)" : ""}`,
+                );
+            }
+            if (!sawComplete && stuck.length > 0) {
+                toast.error(
+                    `Stream ended with ${stuck.length} page${stuck.length === 1 ? "" : "s"} still in progress. Only completed pages are shown.`,
+                );
+            }
+            return current;
+        });
+
+        if (collected.length === 0) return;
         setPhase("verify");
     }, []);
 
