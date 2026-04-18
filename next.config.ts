@@ -13,6 +13,16 @@ const nextConfig: NextConfig = {
         }
     },
     serverExternalPackages: ['@napi-rs/canvas', 'pdfjs-dist'],
+    // pdfjs-dist's `pdf.mjs` uses a dynamic `import("./pdf.worker.mjs")` to boot
+    // the same-thread fake worker in Node. Next.js's tracer can't see that
+    // dynamic specifier, so without this include the worker file is absent from
+    // the serverless bundle and PDF parsing fails in prod with
+    // "Cannot find module '/var/task/.../pdf.worker.mjs'".
+    outputFileTracingIncludes: {
+        '/api/school-test/process': [
+            './node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
+        ],
+    },
     images: {
         remotePatterns: [
             {
