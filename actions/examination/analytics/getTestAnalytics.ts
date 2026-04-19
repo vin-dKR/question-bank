@@ -3,6 +3,12 @@
 import prisma from '@/lib/prisma';
 import { auth } from '@clerk/nextjs/server';
 
+/**
+ * @deprecated Use `getTestAnalyticsSummary` for overview metrics and
+ * `getTestAnalyticsDetail` for paginated per-student detail. This function
+ * pulls the entire response graph in one round-trip and does not scale past
+ * a few hundred students. Scheduled for removal in a later cleanup phase.
+ */
 export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> => {
     try {
         const { userId: clerkUserId } = await auth();
