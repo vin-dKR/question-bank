@@ -3,6 +3,7 @@ import "./globals.css";
 import { ClerkProvider } from '@clerk/nextjs';
 import { Inter } from 'next/font/google';
 import { Toaster } from "@/components/ui/sonner";
+import { QueryProvider } from "@/provider/QueryProvider";
 
 const inter = Inter({
     subsets: ['latin'],
@@ -28,10 +29,12 @@ export default function RootLayout({
             </head>
             <body className={inter.variable}>
                 <ClerkProvider>
-                    <main className="min-h-screen bg-gray-50">
-                        {children}
-                    </main>
-                    <Toaster closeButton={true} />
+                    <QueryProvider>
+                        <main className="min-h-screen bg-gray-50">
+                            {children}
+                        </main>
+                        <Toaster closeButton={true} />
+                    </QueryProvider>
                 </ClerkProvider>
             </body>
         </html>
