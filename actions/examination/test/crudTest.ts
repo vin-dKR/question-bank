@@ -121,7 +121,33 @@ export const createTest = async (data: CreateTestData): Promise<Partial<Examinat
     }
 };
 
-export const getTests = async (): Promise<Partial<ExaminationTest>[]> => {
+export interface GetTestsArgs {
+    skip?: number;
+    take?: number;
+}
+
+export interface GetTestsResult {
+    items: Partial<ExaminationTest>[];
+    total: number;
+    hasMore: boolean;
+}
+
+/**
+ * Fetch tests owned by the current user with optional pagination.
+ *
+ * Backwards compatibility: when called with no args (or empty object), the
+ * result shape is still `{ items, total, hasMore }`. Old callers that expected
+ * an array should use `result.items`. Verified at migration time that the only
+ * caller was `components/examination/TestDashboard.tsx`, which has been
+ * updated in the same change set.
+ *
+ * Defaults: `take = 20`, `skip = 0`.
+ */
+export const getTests = async (
+    args: GetTestsArgs = {},
+): Promise<GetTestsResult> => {
+    const { skip = 0, take = 20 } = args;
+
     try {
         const { userId: clerkUserId } = await auth();
         if (!clerkUserId) {
@@ -137,38 +163,45 @@ export const getTests = async (): Promise<Partial<ExaminationTest>[]> => {
             throw new Error('User not found');
         }
 
-        const tests = await prisma.test.findMany({
-            where: { createdBy: user.id },
-            include: {
-                questions: {
-                    orderBy: { questionNumber: 'asc' },
-                    include: {
-                        question: {
-                            select: {
-                                id: true,
-                                question_text: true,
-                                options: true,
-                                answer: true,
+        const where = { createdBy: user.id } as const;
+
+        const [tests, total] = await Promise.all([
+            prisma.test.findMany({
+                where,
+                include: {
+                    questions: {
+                        orderBy: { questionNumber: 'asc' },
+                        include: {
+                            question: {
+                                select: {
+                                    id: true,
+                                    question_text: true,
+                                    options: true,
+                                    answer: true,
+                                },
                             },
-                        },
-                        schoolTestQuestion: {
-                            select: {
-                                id: true,
-                                question_text: true,
-                                options: true,
-                                answer: true,
+                            schoolTestQuestion: {
+                                select: {
+                                    id: true,
+                                    question_text: true,
+                                    options: true,
+                                    answer: true,
+                                },
                             },
                         },
                     },
+                    _count: {
+                        select: { responses: true },
+                    },
                 },
-                _count: {
-                    select: { responses: true },
-                },
-            },
-            orderBy: { createdAt: 'desc' },
-        });
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take,
+            }),
+            prisma.test.count({ where }),
+        ]);
 
-        return tests.map((test) => ({
+        const items = tests.map((test) => ({
             ...test,
             description: test.description,
             questions: test.questions.map((tq) => {
@@ -184,6 +217,12 @@ export const getTests = async (): Promise<Partial<ExaminationTest>[]> => {
             }),
             _count: test._count,
         }));
+
+        return {
+            items,
+            total,
+            hasMore: skip + items.length < total,
+        };
     } catch (error) {
         console.error('Error fetching tests:', error);
         throw error instanceof Error ? error : new Error('Failed to fetch tests');

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useMemo } from 'react';
 import { toast } from 'sonner';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -12,30 +13,58 @@ import ChapterPerformance from './analytics/ChapterPerformance';
 import StudentPerformance from './analytics/StudentPerformance';
 import QuestionPerformance from './analytics/QuestionPerformance';
 import { useTestAnalytics } from '@/hooks/analytics/useTestAnalytics';
+import { useTestAnalyticsSummary } from '@/hooks/queries/useTestAnalyticsSummary';
+import { useTestAnalyticsDetail } from '@/hooks/queries/useTestAnalyticsDetail';
 import { buildAnalyticsHTML } from '@/lib/analytics/analyticsHtmlTemplate';
 import { generateStudentAnalyticsPdf } from '@/actions/examination/analytics/generateStudentAnalyticsPdf';
 
 
 export default function TestAnalytics() {
     const { testId } = useParams();
-    const { analytics, loading } = useTestAnalytics(testId as string);
+    const testIdStr = testId as string | undefined;
 
-    const computeDerived = (data: TestAnalytics) => {
-        const scores = data.studentAnalytics.map((s) => s.score).slice().sort((a, b) => a - b);
+    // Overview card — cheap, cacheable.
+    const { data: summary } = useTestAnalyticsSummary(testIdStr);
+
+    // Paginated student drill-down — infinite query.
+    const {
+        data: detailPages,
+        hasNextPage,
+        isFetchingNextPage,
+        fetchNextPage,
+    } = useTestAnalyticsDetail(testIdStr, { take: 25 });
+
+    // Full analytics graph — still needed by the question-level aggregations
+    // (QuestionPerformance, ChapterPerformance, TopicPerformance,
+    // ScoreDistribution histogram). Uses the deprecated hook for now;
+    // migrating these to dedicated aggregate endpoints is out of scope for
+    // Phase 8 (see JSDoc on getTestAnalytics).
+    const { analytics, loading } = useTestAnalytics(testIdStr ?? '');
+
+    const studentDetail = useMemo(
+        () => detailPages?.pages.flatMap((p) => p.items) ?? [],
+        [detailPages],
+    );
+
+    const derivedFromFull = useMemo(() => {
+        if (!analytics) {
+            return { medianScore: 0, passPercentage: 0, histogram: new Array(10).fill(0) as number[], difficultyLabel: '' };
+        }
+        const scores = analytics.studentAnalytics.map((s) => s.score).slice().sort((a, b) => a - b);
         const medianScore = scores.length === 0 ? 0 : scores.length % 2 === 1 ? scores[(scores.length - 1) / 2] : (scores[scores.length / 2 - 1] + scores[scores.length / 2]) / 2;
         const passThreshold = 40; // percentage
-        const passCount = data.studentAnalytics.filter((s) => s.percentage >= passThreshold).length;
-        const passPercentage = data.studentAnalytics.length > 0 ? (passCount / data.studentAnalytics.length) * 100 : 0;
+        const passCount = analytics.studentAnalytics.filter((s) => s.percentage >= passThreshold).length;
+        const passPercentage = analytics.studentAnalytics.length > 0 ? (passCount / analytics.studentAnalytics.length) * 100 : 0;
         const histogram = new Array(10).fill(0) as number[];
-        for (const s of data.studentAnalytics) {
+        for (const s of analytics.studentAnalytics) {
             let idx = Math.floor(s.percentage / 10);
             if (idx > 9) idx = 9;
             if (idx < 0) idx = 0;
             histogram[idx]++;
         }
-        const difficultyLabel = data.averagePercentage >= 75 ? 'Easy' : data.averagePercentage >= 50 ? 'Moderate' : data.averagePercentage >= 30 ? 'Challenging' : 'Hard';
+        const difficultyLabel = analytics.averagePercentage >= 75 ? 'Easy' : analytics.averagePercentage >= 50 ? 'Moderate' : analytics.averagePercentage >= 30 ? 'Challenging' : 'Hard';
         return { medianScore, passPercentage, histogram, difficultyLabel };
-    };
+    }, [analytics]);
 
     const computeChapterAnalytics = (questionAnalytics: QuestionAnalytics[]) => {
         const chapterMap: Record<string, { correct: number; attempts: number; questions: number }> = {};
@@ -114,7 +143,7 @@ export default function TestAnalytics() {
         return 'bg-red-100 text-red-800';
     };
 
-    if (loading) {
+    if (loading || !summary) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
@@ -157,16 +186,27 @@ export default function TestAnalytics() {
                 </Button>
             </div>
 
-            <OverallStatistics analytics={analytics} computeDerived={computeDerived} />
+            <OverallStatistics
+                summary={summary}
+                derived={{
+                    medianScore: derivedFromFull.medianScore,
+                    passPercentage: derivedFromFull.passPercentage,
+                    difficultyLabel: derivedFromFull.difficultyLabel,
+                }}
+                attemptedCount={analytics.studentAnalytics.length}
+            />
             <div className="flex flex-col lg:flex-row gap-6">
                 <div className="flex-1 flex flex-col gap-6">
-                    <ScoreDistribution histogram={computeDerived(analytics).histogram} />
+                    <ScoreDistribution histogram={derivedFromFull.histogram} />
                     <QuestionPerformance questions={analytics.questionAnalytics} getAccuracyColor={getAccuracyColor} />
                 </div>
                 <div className="flex-1 flex flex-col gap-6">
                     <StudentPerformance
-                        students={analytics.studentAnalytics}
+                        students={studentDetail}
                         getPerformanceColor={getPerformanceColor}
+                        hasNextPage={hasNextPage}
+                        isFetchingNextPage={isFetchingNextPage}
+                        onLoadMore={() => fetchNextPage()}
                         downloadStudentPdf={async (studentId: string, studentName: string) => {
                             try {
                                 if (!testId) return;

@@ -11,8 +11,17 @@ import Select, { StylesConfig } from 'react-select';
 import { useUserRole } from '@/hooks/auth/useUserRole';
 import { useUserSubject } from '@/hooks/auth/useUserSubject';
 import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
+import { useFilterOptions } from '@/hooks/queries/useFilterOptions';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Funnel } from 'lucide-react';
+
+const EMPTY_FILTER_OPTIONS: FilterOptions = {
+    exams: [],
+    subjects: [],
+    chapters: [],
+    section_names: [],
+    question_type: [],
+};
 
 interface FilterUpdate {
     [key: string]: string | boolean | undefined;
@@ -24,8 +33,7 @@ interface FilterUpdate {
 }
 
 export default function FilterControls() {
-    const { setFilters, filterOptions, optionsLoading } = useQuestionBankContext();
-    // console.log("FILTEROPTION: =-------------------", filterOptions)
+    const { setFilters, filters: activeFilters } = useQuestionBankContext();
     const [localFilters, setLocalFilters] = useState({
         exam_name: '',
         subject: '',
@@ -35,10 +43,25 @@ export default function FilterControls() {
         question_type: ''
     });
 
-    const { isTeacher, isLoading: roleLoading } = useUserRole();
+    const { role, isTeacher, isLoading: roleLoading } = useUserRole();
     const { subject, isLoading: subjectLoading } = useUserSubject();
     const hasSetTeacherSubject = useRef(false);
     const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
+
+    // TanStack-Query-backed filter options: replaces the old 5-parallel-query
+    // useFetchFilterOptions hook. Cached by active filters + role + subject,
+    // so rapid filter clicks hit the cache (15 min staleTime).
+    const {
+        data: filterOptionsData,
+        isLoading: filterOptionsLoading,
+    } = useFilterOptions({
+        filters: activeFilters,
+        userRole: role ?? 'student',
+        userSubject: isTeacher ? subject : undefined,
+    });
+
+    const filterOptions = filterOptionsData ?? EMPTY_FILTER_OPTIONS;
+    const optionsLoading = filterOptionsLoading;
 
     useEffect(() => {
         if (isTeacher && subject && !hasSetTeacherSubject.current) {

@@ -3,6 +3,8 @@ import "./globals.css";
 import { ClerkProvider } from '@clerk/nextjs';
 import { Inter } from 'next/font/google';
 import { Toaster } from "@/components/ui/sonner";
+import WebVitalsReporter from "@/components/perf/WebVitalsReporter";
+import { QueryProvider } from "@/provider/QueryProvider";
 
 const inter = Inter({
     subsets: ['latin'],
@@ -22,16 +24,15 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <head>
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js" async></script>
-                <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-            </head>
             <body className={inter.variable}>
                 <ClerkProvider>
-                    <main className="min-h-screen bg-gray-50">
-                        {children}
-                    </main>
-                    <Toaster closeButton={true} />
+                    <QueryProvider>
+                        <main className="min-h-screen bg-gray-50">
+                            {children}
+                        </main>
+                        <Toaster closeButton={true} />
+                        <WebVitalsReporter />
+                    </QueryProvider>
                 </ClerkProvider>
             </body>
         </html>

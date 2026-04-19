@@ -2,14 +2,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import type { ResponseDetailEntry } from '@/actions/examination/analytics/getTestAnalyticsDetail';
 
 interface StudentPerformanceProps {
-    students: StudentAnalytics[];
+    students: ResponseDetailEntry[];
     getPerformanceColor: (percentage: number) => string;
     downloadStudentPdf: (studentId: string, studentName: string) => void;
+    hasNextPage?: boolean;
+    isFetchingNextPage?: boolean;
+    onLoadMore?: () => void;
 }
 
-export default function StudentPerformance({ students, getPerformanceColor, downloadStudentPdf }: StudentPerformanceProps) {
+export default function StudentPerformance({
+    students,
+    getPerformanceColor,
+    downloadStudentPdf,
+    hasNextPage,
+    isFetchingNextPage,
+    onLoadMore,
+}: StudentPerformanceProps) {
     return (
         <Card>
             <CardHeader>
@@ -80,6 +91,18 @@ export default function StudentPerformance({ students, getPerformanceColor, down
                         </div>
                     ))}
                 </div>
+
+                {hasNextPage && (
+                    <div className="flex items-center justify-center pt-4">
+                        <Button
+                            onClick={() => onLoadMore?.()}
+                            disabled={isFetchingNextPage}
+                            className="bg-black text-white"
+                        >
+                            {isFetchingNextPage ? 'Loading…' : 'Load more'}
+                        </Button>
+                    </div>
+                )}
             </CardContent>
         </Card>
     );

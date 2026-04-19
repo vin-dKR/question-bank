@@ -1,13 +1,36 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, TrendingUp, Target, Clock } from 'lucide-react';
+import type { TestAnalyticsSummary } from '@/actions/examination/analytics/getTestAnalyticsSummary';
 
-interface OverallStatisticsProps {
-    analytics: TestAnalytics;
-    computeDerived: (data: TestAnalytics) => { medianScore: number; passPercentage: number; difficultyLabel: string };
+interface DerivedStats {
+    medianScore: number;
+    passPercentage: number;
+    difficultyLabel: string;
 }
 
-export default function OverallStatistics({ analytics, computeDerived }: OverallStatisticsProps) {
-    const { medianScore, passPercentage, difficultyLabel } = computeDerived(analytics);
+interface OverallStatisticsProps {
+    /**
+     * Lightweight overview — counts, averages, extrema. Produced by
+     * `useTestAnalyticsSummary`.
+     */
+    summary: TestAnalyticsSummary;
+    /**
+     * Second-row cards (median / pass % / difficulty / attempted) derived
+     * from the full response list. Computed at the parent because those
+     * values need the whole detail graph.
+     */
+    derived: DerivedStats;
+    /**
+     * Total responses actually loaded into the drill-down. Shown in the
+     * "Attempted" card — kept separate from `summary.totalStudents` so the
+     * caller can distinguish "total registered" vs "paginated-loaded" when
+     * we wire attendance in future. For now, same value.
+     */
+    attemptedCount: number;
+}
+
+export default function OverallStatistics({ summary, derived, attemptedCount }: OverallStatisticsProps) {
+    const { medianScore, passPercentage, difficultyLabel } = derived;
 
     return (
         <>
@@ -18,7 +41,7 @@ export default function OverallStatistics({ analytics, computeDerived }: Overall
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{analytics.totalStudents}</div>
+                        <div className="text-2xl font-bold">{summary.totalStudents}</div>
                     </CardContent>
                 </Card>
                 <Card>
@@ -27,8 +50,8 @@ export default function OverallStatistics({ analytics, computeDerived }: Overall
                         <TrendingUp className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{analytics.averageScore.toFixed(1)}</div>
-                        <p className="text-xs text-muted-foreground">{analytics.averagePercentage.toFixed(1)}% average</p>
+                        <div className="text-2xl font-bold">{summary.averageScore.toFixed(1)}</div>
+                        <p className="text-xs text-muted-foreground">{summary.averagePercentage.toFixed(1)}% average</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -37,7 +60,7 @@ export default function OverallStatistics({ analytics, computeDerived }: Overall
                         <Target className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-green-600">{analytics.highestScore}</div>
+                        <div className="text-2xl font-bold text-green-600">{summary.highestScore}</div>
                     </CardContent>
                 </Card>
                 <Card>
@@ -46,7 +69,7 @@ export default function OverallStatistics({ analytics, computeDerived }: Overall
                         <Clock className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-red-600">{analytics.lowestScore}</div>
+                        <div className="text-2xl font-bold text-red-600">{summary.lowestScore}</div>
                     </CardContent>
                 </Card>
             </div>
@@ -81,7 +104,7 @@ export default function OverallStatistics({ analytics, computeDerived }: Overall
                         <CardTitle className="text-sm font-medium">Attempted</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{analytics.studentAnalytics.length}</div>
+                        <div className="text-2xl font-bold">{attemptedCount}</div>
                         <p className="text-xs text-muted-foreground">Out of registered: N/A</p>
                     </CardContent>
                 </Card>

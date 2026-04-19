@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useCollaboration } from '@/lib/context/CollaborationContext';
-import { inviteCollaborator, getFolderCollaborators, removeCollaborator, generateInviteLink } from '@/actions/collaboration/folder';
+import { inviteCollaborator, removeCollaborator, generateInviteLink } from '@/actions/collaboration/folder';
+import { useFolderCollaborators, folderCollaboratorsKey } from '@/hooks/queries/useFolderCollaborators';
 import { Users, UserPlus, UserMinus, Crown, Edit, Eye, Link, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -17,25 +19,19 @@ interface CollaborationPanelProps {
     userRole: 'owner' | 'editor' | 'viewer';
 }
 
-interface Collaborator {
-    id: string;
-    role: string;
-    user: {
-        id: string;
-        name: string | null;
-        email: string;
-    };
-}
-
 export function CollaborationPanel({ folderId, folderName, userRole }: CollaborationPanelProps) {
     const { connectedUsers, isConnected } = useCollaboration();
+    const queryClient = useQueryClient();
     const [inviteEmail, setInviteEmail] = useState('');
     const [inviteRole, setInviteRole] = useState<'editor' | 'viewer'>('editor');
-    const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [inviteLink, setInviteLink] = useState<string>('');
     const [showInviteLink, setShowInviteLink] = useState(false);
-    const reloadTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Collaborator list now lives in TanStack Query. WS presence + mutation
+    // callbacks invalidate the key; the query refetches with dedupe/SWR.
+    const { data: collaboratorsData } = useFolderCollaborators(folderId);
+    const collaborators = collaboratorsData ?? [];
 
     // Dedupe connected users by userId to avoid duplicate keys and incorrect counts
     const uniqueConnectedUsers = useMemo(() => {
@@ -44,16 +40,8 @@ export function CollaborationPanel({ folderId, folderName, userRole }: Collabora
         return Array.from(map.values());
     }, [connectedUsers]);
 
-    const loadCollaborators = async () => {
-        try {
-            const result = await getFolderCollaborators(folderId);
-            if (result.success) {
-                setCollaborators(result.data || []);
-            }
-        } catch {
-            console.error('Failed to load collaborators');
-        }
-    };
+    const invalidateCollaborators = () =>
+        queryClient.invalidateQueries({ queryKey: folderCollaboratorsKey(folderId) });
 
     const handleInvite = async () => {
         if (!inviteEmail.trim()) {
@@ -80,7 +68,7 @@ export function CollaborationPanel({ folderId, folderName, userRole }: Collabora
                 }
 
                 setInviteEmail('');
-                await loadCollaborators();
+                await invalidateCollaborators();
             } else {
                 toast.error(result.error || 'Failed to send invitation');
             }
@@ -117,35 +105,22 @@ export function CollaborationPanel({ folderId, folderName, userRole }: Collabora
         }
     };
 
-    // Load collaborators on mount
-    useEffect(() => {
-        loadCollaborators();
-    }, [folderId]);
-
-    // Auto-refresh collaborators when presence changes to reflect new joiners without full reload
-    useEffect(() => {
-        if (!isConnected) return;
-        if (reloadTimerRef.current) {
-            clearTimeout(reloadTimerRef.current);
-        }
-        // Debounce to avoid rapid reloads on burst join events
-        reloadTimerRef.current = setTimeout(() => {
-            loadCollaborators();
-        }, 600);
-        return () => {
-            if (reloadTimerRef.current) {
-                clearTimeout(reloadTimerRef.current);
-                reloadTimerRef.current = null;
-            }
-        };
-    }, [uniqueConnectedUsers.length, isConnected, folderId]);
+    // NOTE: previous versions of this component ran two effects here — one
+    // to load collaborators on mount, another to debounce-reload on WS
+    // presence churn. Both are obsolete:
+    //   - Initial load is handled by `useFolderCollaborators` (staleTime
+    //     60s, auto-fetches on mount when `folderId` changes).
+    //   - WS presence/update messages now call `queryClient.invalidateQueries`
+    //     in `lib/context/CollaborationContext.tsx`, which triggers the
+    //     refetch with TanStack's built-in dedupe (no manual debounce
+    //     needed).
 
     const handleRemoveCollaborator = async (collaboratorId: string) => {
         try {
             const result = await removeCollaborator(folderId, collaboratorId);
             if (result.success) {
                 toast.success('Collaborator removed');
-                await loadCollaborators();
+                await invalidateCollaborators();
             } else {
                 toast.error(result.error || 'Failed to remove collaborator');
             }

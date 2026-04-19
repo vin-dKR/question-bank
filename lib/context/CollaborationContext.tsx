@@ -2,11 +2,15 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useUser } from '@clerk/nextjs';
+import { useQueryClient } from '@tanstack/react-query';
+import { folderCollaboratorsKey } from '@/hooks/queries/useFolderCollaborators';
+import { folderChangeLogKey } from '@/hooks/queries/useFolderChangeLog';
 
 const CollaborationContext = createContext<CollaborationContextType | undefined>(undefined);
 
 export function CollaborationProvider({ children }: { children: React.ReactNode }) {
     const { user } = useUser();
+    const queryClient = useQueryClient();
     const wsRef = useRef<WebSocket | null>(null);
     const [connectedUsers, setConnectedUsers] = useState<CollaborationUser[]>([]);
     const [isConnected, setIsConnected] = useState(false);
@@ -130,6 +134,41 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
     }, [user, currentFolderId, isConnected]);
 
     const handleMessage = useCallback((message: CollaborationMessage) => {
+        // Invalidate TanStack Query caches rather than imperatively refetching.
+        // The WS is the signal; TanStack owns the fetch lifecycle (dedupe,
+        // SWR, retry). See Phase 10 in `eduents/REFACTOR_PLAN.md`.
+        //
+        // Mapping of WS message shapes → query keys (best-effort, given the
+        // WS protocol is a pure broadcast hub — collaborator membership
+        // changes are driven by server actions, not dedicated WS events):
+        //
+        //   presence/room_state | joined | left  → collaborators (online
+        //                                           status + roster refresh)
+        //   presence/reorder                      → changeLog (audit row was
+        //                                           just written server-side)
+        //   update                                → changeLog (any folder
+        //                                           mutation broadcasts this)
+        //   cursor                                → neither (ephemeral)
+        //
+        // TODO Phase 10 follow-up: if the WS protocol grows explicit
+        // `collaborator_added` / `collaborator_removed` / `role_changed`
+        // event types, switch `presence` handling to invalidate
+        // `collaborators` only on those, and drop the roster-refresh on
+        // raw join/leave.
+        const folderIdForInvalidation = message.folderId || currentFolderId;
+        const invalidateCollaborators = () => {
+            if (!folderIdForInvalidation) return;
+            queryClient.invalidateQueries({
+                queryKey: folderCollaboratorsKey(folderIdForInvalidation),
+            });
+        };
+        const invalidateChangeLog = () => {
+            if (!folderIdForInvalidation) return;
+            queryClient.invalidateQueries({
+                queryKey: folderChangeLogKey(folderIdForInvalidation),
+            });
+        };
+
         switch (message.type) {
             case 'presence': {
                 const action = message.data?.action;
@@ -143,6 +182,7 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
                     const unique = new Map<string, CollaborationUser>();
                     mapped.forEach((u) => unique.set(u.userId, u));
                     setConnectedUsers(Array.from(unique.values()));
+                    invalidateCollaborators();
                 } else if (action === 'joined') {
                     setConnectedUsers(prev => {
                         const existing = prev.find(u => u.userId === message.userId);
@@ -156,19 +196,33 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
                         next.forEach((u) => unique.set(u.userId, u));
                         return Array.from(unique.values());
                     });
+                    invalidateCollaborators();
                 } else if (action === 'left') {
                     console.log("user left -----------------------------------------------------")
                     setConnectedUsers(prev => prev.filter(u => u.userId !== message.userId));
+                    invalidateCollaborators();
+                } else if (action === 'reorder') {
+                    // Reorder writes a FolderChangeLog row via the server
+                    // action; refetch the log so any open audit view updates.
+                    invalidateChangeLog();
                 }
                 break;
             }
             case 'update':
                 console.log('Folder updated by:', message.userName);
+                // A generic folder-level broadcast. Almost all write paths
+                // append to FolderChangeLog, so treat `update` as a log
+                // invalidation signal.
+                invalidateChangeLog();
+                break;
+            case 'cursor':
+                // Ephemeral — no server-state side effect. Deliberately not
+                // invalidating anything.
                 break;
             default:
                 console.log('Unknown message type:', message.type);
         }
-    }, []);
+    }, [queryClient, currentFolderId]);
 
     const sendMessage = useCallback((message: CollaborationMessage) => {
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {

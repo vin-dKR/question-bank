@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, BarChart3, Users, Clock, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { getTests } from '@/actions/examination/test/crudTest';
+import { useTests } from '@/hooks/queries/useTests';
+
+const PAGE_SIZE = 20;
 
 interface Test {
     id: string;
@@ -23,24 +25,18 @@ interface Test {
 }
 
 export default function TestDashboard() {
-    const [tests, setTests] = useState<Test[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [take, setTake] = useState(PAGE_SIZE);
+    const { data, isLoading, isError, isFetching } = useTests({ skip: 0, take });
 
-    useEffect(() => {
-        fetchTests();
-    }, []);
+    // Surface errors through toast — match the behaviour of the previous
+    // effect-based implementation.
+    if (isError) {
+        toast.error('Failed to load tests');
+    }
 
-    const fetchTests = async () => {
-        try {
-            const data = await getTests();
-            setTests(data as Test[]);
-        } catch (error) {
-            console.error('Error fetching tests:', error);
-            toast.error('Failed to load tests');
-        } finally {
-            setLoading(false);
-        }
-    };
+    const tests = (data?.items ?? []) as Test[];
+    const total = data?.total ?? 0;
+    const hasMore = data?.hasMore ?? false;
 
     const getSubjectColor = (subject: string) => {
         const colors: { [key: string]: string } = {
@@ -63,7 +59,7 @@ export default function TestDashboard() {
         });
     };
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
@@ -106,58 +102,72 @@ export default function TestDashboard() {
                     </CardContent>
                 </Card>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {tests.map((test) => (
-                        <Card key={test.id} className="hover:shadow-lg transition-shadow">
-                            <CardHeader>
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                        <CardTitle className="text-lg mb-2">{test.title}</CardTitle>
-                                        <Badge className={getSubjectColor(test.subject)}>
-                                            {test.subject}
-                                        </Badge>
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {tests.map((test) => (
+                            <Card key={test.id} className="hover:shadow-lg transition-shadow">
+                                <CardHeader>
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                            <CardTitle className="text-lg mb-2">{test.title}</CardTitle>
+                                            <Badge className={getSubjectColor(test.subject)}>
+                                                {test.subject}
+                                            </Badge>
+                                        </div>
                                     </div>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {test.description && (
-                                    <p className="text-sm text-gray-600 line-clamp-2">
-                                        {test.description}
-                                    </p>
-                                )}
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    {test.description && (
+                                        <p className="text-sm text-gray-600 line-clamp-2">
+                                            {test.description}
+                                        </p>
+                                    )}
 
-                                <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <Clock className="w-4 h-4 text-gray-500" />
-                                        <span>{test.duration} min</span>
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <Clock className="w-4 h-4 text-gray-500" />
+                                            <span>{test.duration} min</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <BarChart3 className="w-4 h-4 text-gray-500" />
+                                            <span>{test.totalMarks} marks</span>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <BarChart3 className="w-4 h-4 text-gray-500" />
-                                        <span>{test.totalMarks} marks</span>
+
+                                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                                        <Users className="w-4 h-4" />
+                                        <span>{test._count.responses} responses</span>
                                     </div>
-                                </div>
 
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                    <Users className="w-4 h-4" />
-                                    <span>{test._count.responses} responses</span>
-                                </div>
+                                    <div className="text-xs text-gray-500">
+                                        Created {formatDate(test.createdAt.toISOString())}
+                                    </div>
 
-                                <div className="text-xs text-gray-500">
-                                    Created {formatDate(test.createdAt.toISOString())}
-                                </div>
+                                    <div className="flex gap-2 pt-2">
+                                        <Link href={`/examination/analytics/${test.id}`} className="flex-1">
+                                            <Button className="w-full bg-black text-white">
+                                                <BarChart3 className="w-4 h-4 mr-2" />
+                                                View Analytics
+                                            </Button>
+                                        </Link>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
 
-                                <div className="flex gap-2 pt-2">
-                                    <Link href={`/examination/analytics/${test.id}`} className="flex-1">
-                                        <Button className="w-full bg-black text-white">
-                                            <BarChart3 className="w-4 h-4 mr-2" />
-                                            View Analytics
-                                        </Button>
-                                    </Link>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
+                    {hasMore && (
+                        <div className="flex items-center justify-center pt-4">
+                            <Button
+                                onClick={() => setTake((t) => t + PAGE_SIZE)}
+                                disabled={isFetching}
+                                className="bg-black text-white"
+                            >
+                                {isFetching ? 'Loading…' : `Load more (${tests.length} of ${total})`}
+                            </Button>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );

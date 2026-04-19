@@ -1,13 +1,18 @@
+'use client';
+
 import SearchBar from "@/components/question/SearchBar"
 import EmptyState from "@/components/question/EmptyState";
 import QuestionList from "@/components/question/QuestionList";
 import FilterControls from "@/components/question/FilterControls"
 import FoldersControls from "@/components/question/FoldersControls"
 import SelectedQuestionsActions from "@/components/question/SelectedQuestionsActions";
-import { useQuestionBankContext } from "@/lib/context/QuestionBankContext";
+import { useQuestionBankContext, useQuestionsList } from "@/lib/context/QuestionBankContext";
 
 const QuestionBankViewerContent = () => {
-    const { questions, loading, error, selectedQuestions } = useQuestionBankContext();
+    // UI-only state (selection) stays on the context; the server list comes
+    // from TanStack Query via the `useQuestionsList` wrapper (Phase 6).
+    const { selectedQuestions } = useQuestionBankContext();
+    const { questions, loading, error, initialFetchDone } = useQuestionsList();
 
     return (
         <div className="relative">
@@ -37,7 +42,7 @@ const QuestionBankViewerContent = () => {
                             </div>
                         )}
                         {!loading && questions.length > 0 && <QuestionList />}
-                        {!loading && questions.length === 0 && <EmptyState />}
+                        {!loading && initialFetchDone && questions.length === 0 && <EmptyState />}
                     </main>
                 </div>
             </div>
