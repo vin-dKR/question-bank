@@ -191,66 +191,110 @@ export async function getFilterOptions(
     userSubject?: string
 ) {
     try {
-        let whereClause: QuestionWhereClause = {};
+        // Escape regex metacharacters so user input is treated as a literal substring
+        const escapeRegex = (value: string) =>
+            value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+        const match: Record<string, unknown> = {};
 
         if (filters.exam_name) {
-            whereClause.exam_name = { contains: filters.exam_name, mode: "insensitive" };
-        }
-
-        if (filters.subject) {
-            whereClause.subject = { contains: filters.subject, mode: "insensitive" };
+            match.exam_name = { $regex: escapeRegex(filters.exam_name), $options: "i" };
         }
 
         if (filters.chapter) {
-            whereClause.chapter = { contains: filters.chapter, mode: "insensitive" };
+            match.chapter = { $regex: escapeRegex(filters.chapter), $options: "i" };
         }
 
         if (filters.questionType) {
-            whereClause.question_type = { contains: filters.questionType, mode: "insensitive" }
+            match.question_type = { $regex: escapeRegex(filters.questionType), $options: "i" };
         }
 
-        // Enforce teacher subject restriction
-        if (userRole === "teacher" && userSubject) {
-            whereClause.subject = { contains: userSubject, mode: "insensitive" };
+        // Teacher subject restriction takes precedence over the caller-provided subject.
+        const effectiveSubject =
+            userRole === "teacher" && userSubject ? userSubject : filters.subject;
+
+        if (effectiveSubject) {
+            match.subject = { $regex: escapeRegex(effectiveSubject), $options: "i" };
         }
 
-        const [exams, subjects, chapters, sections, questionTypes] = await Promise.all([
-            prisma.question.findMany({
-                where: whereClause,
-                select: { exam_name: true },
-                distinct: ["exam_name"],
-            }),
-            prisma.question.findMany({
-                where: whereClause,
-                select: { subject: true },
-                distinct: ["subject"],
-            }),
-            prisma.question.findMany({
-                where: whereClause,
-                select: { chapter: true },
-                distinct: ["chapter"],
-            }),
-            prisma.question.findMany({
-                where: whereClause,
-                select: { section_name: true },
-                distinct: ["section_name"],
-            }),
-            prisma.question.findMany({
-                where: whereClause,
-                select: { question_type: true },
-                distinct: ["question_type"],
-            }),
-        ]);
+        // One $group stage emits all five distinct value sets in a single pass;
+        // $project drops null/empty-string entries so the client never sees them.
+        const pipeline = [
+            { $match: match },
+            {
+                $group: {
+                    _id: null,
+                    exams: { $addToSet: "$exam_name" },
+                    subjects: { $addToSet: "$subject" },
+                    chapters: { $addToSet: "$chapter" },
+                    section_names: { $addToSet: "$section_name" },
+                    question_type: { $addToSet: "$question_type" },
+                },
+            },
+            {
+                $project: {
+                    _id: 0,
+                    exams: {
+                        $filter: {
+                            input: "$exams",
+                            as: "v",
+                            cond: { $and: [{ $ne: ["$$v", null] }, { $ne: ["$$v", ""] }] },
+                        },
+                    },
+                    subjects: {
+                        $filter: {
+                            input: "$subjects",
+                            as: "v",
+                            cond: { $and: [{ $ne: ["$$v", null] }, { $ne: ["$$v", ""] }] },
+                        },
+                    },
+                    chapters: {
+                        $filter: {
+                            input: "$chapters",
+                            as: "v",
+                            cond: { $and: [{ $ne: ["$$v", null] }, { $ne: ["$$v", ""] }] },
+                        },
+                    },
+                    section_names: {
+                        $filter: {
+                            input: "$section_names",
+                            as: "v",
+                            cond: { $and: [{ $ne: ["$$v", null] }, { $ne: ["$$v", ""] }] },
+                        },
+                    },
+                    question_type: {
+                        $filter: {
+                            input: "$question_type",
+                            as: "v",
+                            cond: { $and: [{ $ne: ["$$v", null] }, { $ne: ["$$v", ""] }] },
+                        },
+                    },
+                },
+            },
+        ];
 
-        const filterOptions = {
-            exams: exams.map((e) => e.exam_name).filter(Boolean) as string[],
-            subjects: subjects.map((s) => s.subject).filter(Boolean) as string[],
-            chapters: chapters.map((c) => c.chapter).filter(Boolean) as string[],
-            section_names: sections.map((s) => s.section_name).filter(Boolean) as string[],
-            question_type: questionTypes.map((s) => s.question_type).filter(Boolean) as string[]
+        type AggregatedFilterOptions = {
+            exams?: (string | null)[];
+            subjects?: (string | null)[];
+            chapters?: (string | null)[];
+            section_names?: (string | null)[];
+            question_type?: (string | null)[];
         };
 
-        // console.log("filterOptions in questionBank actions", filterOptions)
+        const result = (await prisma.question.aggregateRaw({
+            pipeline: pipeline as unknown as Prisma.InputJsonValue[],
+        })) as unknown as AggregatedFilterOptions[];
+
+        const row: AggregatedFilterOptions = result?.[0] ?? {};
+
+        const filterOptions = {
+            exams: (row.exams ?? []).filter((v): v is string => typeof v === "string" && v.length > 0),
+            subjects: (row.subjects ?? []).filter((v): v is string => typeof v === "string" && v.length > 0),
+            chapters: (row.chapters ?? []).filter((v): v is string => typeof v === "string" && v.length > 0),
+            section_names: (row.section_names ?? []).filter((v): v is string => typeof v === "string" && v.length > 0),
+            question_type: (row.question_type ?? []).filter((v): v is string => typeof v === "string" && v.length > 0),
+        };
+
         return { success: true, data: filterOptions };
     } catch (error) {
         console.error("Error fetching filter options:", error);
