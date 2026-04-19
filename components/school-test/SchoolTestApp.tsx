@@ -3,8 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
-import type { PageResult, ProcessEvent, Provider } from "@/lib/school-test/types";
-import { cn } from "@/lib/utils";
+import type { PageResult, ProcessEvent } from "@/lib/school-test/types";
 import { UploadZone } from "./UploadZone";
 import { ProcessingPanel, type PageStatus } from "./ProcessingPanel";
 import { Verifier } from "./Verifier";
@@ -16,7 +15,6 @@ export default function SchoolTestApp() {
     const [fileName, setFileName] = useState<string | null>(null);
     const [pageStatuses, setPageStatuses] = useState<PageStatus[]>([]);
     const [results, setResults] = useState<PageResult[]>([]);
-    const [provider, setProvider] = useState<Provider>("openai");
     const abortRef = useRef<AbortController | null>(null);
 
     const reset = useCallback(() => {
@@ -28,7 +26,7 @@ export default function SchoolTestApp() {
         setResults([]);
     }, []);
 
-    const start = useCallback(async (files: File[], selectedProvider: Provider) => {
+    const start = useCallback(async (files: File[]) => {
         if (files.length === 0) return;
         const label = files.length === 1
             ? files[0].name
@@ -43,7 +41,6 @@ export default function SchoolTestApp() {
 
         const body = new FormData();
         for (const f of files) body.append("file", f);
-        body.append("provider", selectedProvider);
 
         let response: Response;
         try {
@@ -234,11 +231,7 @@ export default function SchoolTestApp() {
                         transition={{ duration: 0.2 }}
                         className="h-full"
                     >
-                        <IdleView
-                            provider={provider}
-                            onProviderChange={setProvider}
-                            onFiles={(files) => start(files, provider)}
-                        />
+                        <IdleView onFiles={start} />
                     </motion.div>
                 )}
                 {phase === "processing" && (
@@ -270,15 +263,7 @@ export default function SchoolTestApp() {
     );
 }
 
-function IdleView({
-    provider,
-    onProviderChange,
-    onFiles,
-}: {
-    provider: Provider;
-    onProviderChange: (p: Provider) => void;
-    onFiles: (files: File[]) => void;
-}) {
+function IdleView({ onFiles }: { onFiles: (files: File[]) => void }) {
     return (
         <div className="flex h-full items-center justify-center px-6 py-12">
             <div className="w-full max-w-2xl">
@@ -292,52 +277,10 @@ function IdleView({
                     </p>
                 </div>
                 <UploadZone onFiles={onFiles} />
-                <ProviderSelect value={provider} onChange={onProviderChange} />
                 <p className="mt-6 text-xs text-neutral-400">
                     Nothing is saved to the database in this step &mdash; you&rsquo;ll review the result on
                     the next screen.
                 </p>
-            </div>
-        </div>
-    );
-}
-
-function ProviderSelect({
-    value,
-    onChange,
-}: {
-    value: Provider;
-    onChange: (p: Provider) => void;
-}) {
-    const options: { id: Provider; label: string; hint: string }[] = [
-        { id: "openai", label: "GPT-5.4", hint: "OpenAI" },
-        { id: "gemini", label: "Gemini 2.0 Flash", hint: "Google" },
-    ];
-    return (
-        <div className="mt-5 flex items-center justify-between">
-            <span className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-400">
-                Detection model
-            </span>
-            <div className="inline-flex rounded-full border border-neutral-200 bg-white p-0.5">
-                {options.map((opt) => {
-                    const active = value === opt.id;
-                    return (
-                        <button
-                            key={opt.id}
-                            type="button"
-                            onClick={() => onChange(opt.id)}
-                            className={cn(
-                                "relative rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors",
-                                active
-                                    ? "bg-neutral-900 text-white"
-                                    : "text-neutral-500 hover:text-neutral-900",
-                            )}
-                        >
-                            {opt.label}
-                            <span className="ml-1.5 text-[10px] opacity-60">{opt.hint}</span>
-                        </button>
-                    );
-                })}
             </div>
         </div>
     );
