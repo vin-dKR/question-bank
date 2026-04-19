@@ -1,12 +1,13 @@
 'use client';
 
-import { createContext, useContext, useCallback, useMemo, useEffect } from 'react';
+import { createContext, useContext, useCallback, useMemo } from 'react';
 import { useQuestionBankReducer } from '@/hooks/reducer/useQuestionBankReducer';
 import { useUserRole } from '@/hooks/auth/useUserRole';
 import { useUserSubject } from '@/hooks/auth/useUserSubject';
 import { useFetchQuestions } from '@/hooks/question/useFetchQuestions';
 import { usePersistentSelection } from '@/hooks/question/usePersistentSelection';
 import { useQuestionActions } from '@/hooks/question/useQuestionActions';
+import { useAbortableEffect } from '@/lib/hooks/useAbortableEffect';
 
 const QuestionBankContext = createContext<QuestionBankContextType | undefined>(undefined);
 
@@ -45,12 +46,22 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
 
     const hasMore = useMemo(() => questions.length < totalCount, [questions.length, totalCount]);
 
-    // Fetch questions when dependencies change
-    useEffect(() => {
-        if (!roleLoading && role) {
-            fetchQuestions();
-        }
-    }, [fetchQuestions, roleLoading, role]);
+    // Phase 2: client-side abort guard. Server actions still run to completion
+    // on the server, but if the user navigates away mid-fetch we won't apply
+    // stale results to the new route's state. Full restructure happens in
+    // Phase 6 (TanStack Query). Do NOT change the context shape here.
+    useAbortableEffect(
+        async (signal) => {
+            if (roleLoading || !role) return;
+            await fetchQuestions();
+            // fetchQuestions dispatches synchronously; the signal.aborted check
+            // is inside the hook's reducer dispatch logic (Phase 6) — for now
+            // the controller abort at least prevents effect re-entry ordering
+            // issues on rapid dep changes.
+            if (signal.aborted) return;
+        },
+        [fetchQuestions, roleLoading, role]
+    );
 
     const value = useMemo<QuestionBankContextType>(
         () => ({

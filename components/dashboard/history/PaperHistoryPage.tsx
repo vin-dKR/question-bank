@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import {
     getPaperHistories,
@@ -11,9 +11,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import PaperHistoryViewer from './PaperHistoryViewer';
 import { Trash2, Eye, Calendar, FileText, Users, Clock } from 'lucide-react';
+import { useAbortableEffect } from '@/lib/hooks/useAbortableEffect';
 
 const PaperHistory = () => {
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [showViewer, setShowViewer] = useState(false);
     const [paperHistories, setPaperHistories] = useState<PaperHistoryWithQuestions[]>([]);
     const [selectedHistory, setSelectedHistory] = useState<PaperHistoryWithQuestions | null>(null);
@@ -30,22 +31,27 @@ const PaperHistory = () => {
         []
     );
 
-    const fetchPaperHistories = useCallback(async () => {
-        try {
-            setLoading(true);
-            const histories = await getPaperHistories(50);
-            setPaperHistories(histories);
-        } catch (error) {
-            console.error(error);
-            toast.error('Failed to load paper history');
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchPaperHistories();
-    }, [fetchPaperHistories]);
+    // Phase 2: wrap the initial fetch in useAbortableEffect so that if the user
+    // navigates away mid-load we don't stomp state on the next page. Server
+    // actions can't be aborted server-side — this is a client-side guard only,
+    // but it is enough to kill the "nav click feels stuck" symptom.
+    useAbortableEffect(
+        async (signal) => {
+            try {
+                setLoading(true);
+                const histories = await getPaperHistories(50);
+                if (signal.aborted) return;
+                setPaperHistories(histories);
+            } catch (error) {
+                if (signal.aborted) return;
+                console.error(error);
+                toast.error('Failed to load paper history');
+            } finally {
+                if (!signal.aborted) setLoading(false);
+            }
+        },
+        []
+    );
 
     const handleDelete = useCallback(async (id: string) => {
         if (!confirm('Are you sure you want to delete this paper history?')) return;
