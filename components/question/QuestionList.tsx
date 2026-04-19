@@ -3,7 +3,8 @@
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { Flag, FlagOff } from 'lucide-react';
-import { memo, useMemo, useState, useCallback } from 'react';
+import { memo, useMemo, useState, useCallback, useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { Button } from '@/components/ui/button';
 import { renderMixedLatex } from '@/lib/render-tex';
 import { refineTextWithAI } from '@/lib/ai/aiService';
@@ -43,9 +44,21 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
     const [originalQuestionText, setOriginalQuestionText] = useState<string | null>(null);
     const [originalOptions, setOriginalOptions] = useState<string[] | null>(null);
 
-    const questionText = useMemo(() => renderMixedLatex(question.question_text), [question.question_text]);
-    const answerText = useMemo(() => renderMixedLatex(question.answer), [question.answer]);
-    const renderedOptions = useMemo(() => question.options.map((option) => renderMixedLatex(option)), [question.options]);
+    // Memoize LaTeX renders keyed by (question.id, source text). This keeps the
+    // expensive react-katex JSX trees stable across re-renders triggered by
+    // sibling state changes (selection toggles, virtualization re-renders, etc).
+    const questionText = useMemo(
+        () => renderMixedLatex(question.question_text),
+        [question.id, question.question_text],
+    );
+    const answerText = useMemo(
+        () => renderMixedLatex(question.answer),
+        [question.id, question.answer],
+    );
+    const renderedOptions = useMemo(
+        () => question.options.map((option) => renderMixedLatex(option)),
+        [question.id, question.options],
+    );
 
     const handleFlagToggle = async () => {
         setIsFlagging(true);
@@ -249,10 +262,10 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                         </h3>
                         {question.question_image?.startsWith('https') && (
                             <div>
-                                <Image 
-                                    src={safeDecodeImageUrl(question.question_image)} 
-                                    width={300} 
-                                    height={300} 
+                                <Image
+                                    src={safeDecodeImageUrl(question.question_image)}
+                                    width={300}
+                                    height={300}
                                     alt="question"
                                     unoptimized={question.question_image.includes('supabase.co')}
                                 />
@@ -371,6 +384,14 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
 });
 QuestionItem.displayName = 'QuestionItem';
 
+// Spacer between virtual rows. Matches the visual `space-y-4` (16px) used by
+// the original non-virtualized list so card spacing is preserved.
+const ROW_GAP_PX = 16;
+// Initial estimated row height before measurement kicks in. Cards vary because
+// of LaTeX/MathJax content, so this is just a starting point — the virtualizer
+// re-measures every mounted row via `measureElement`.
+const ESTIMATED_ROW_HEIGHT_PX = 200;
+
 const QuestionList = memo(() => {
     const {
         error,
@@ -398,6 +419,25 @@ const QuestionList = memo(() => {
         totalCount,
     ]);
 
+    // O(1) selected lookup so each row's `isSelected` prop is cheap to derive
+    // without scanning `selectedQuestions` (which was the original O(n*m) hit).
+    const selectedIdSet = useMemo(
+        () => new Set(selectedQuestions.map((q) => q.id)),
+        [selectedQuestions],
+    );
+
+    // Stable callback identities → child `memo` short-circuits when a row's
+    // own props haven't changed (selection toggles only invalidate the row
+    // whose `isSelected` flipped).
+    const handleToggleQuestionSelection = useCallback(
+        (id: string) => toggleQuestionSelection(id),
+        [toggleQuestionSelection],
+    );
+    const handleToggleQuestionFlag = useCallback(
+        (id: string) => toggleQuestionFlag(id),
+        [toggleQuestionFlag],
+    );
+
     const handlePrevious = useCallback(() => {
         if (pagination.page > 1) {
             setPagination({ ...pagination, page: pagination.page - 1 });
@@ -413,6 +453,25 @@ const QuestionList = memo(() => {
     const handleLoadMore = useCallback(() => {
         setPagination({ ...pagination, limit: pagination.limit + 20 });
     }, [pagination, setPagination]);
+
+    // Virtualization: window the rendered question rows so we don't pay React
+    // / react-katex render cost for the off-screen ~99% of a 2000-question list.
+    const scrollParentRef = useRef<HTMLDivElement | null>(null);
+    const rowVirtualizer = useVirtualizer({
+        count: displayedQuestions.length,
+        getScrollElement: () => scrollParentRef.current,
+        estimateSize: () => ESTIMATED_ROW_HEIGHT_PX + ROW_GAP_PX,
+        overscan: 5,
+        // Stable key so React reconciles the same row across scroll/resize and
+        // the inner LaTeX `useMemo` cache isn't trashed.
+        getItemKey: (index) => displayedQuestions[index]?.id ?? index,
+        // Dynamic measurement is handled by passing `rowVirtualizer.measureElement`
+        // as the row ref below; TanStack Virtual then auto-measures via its
+        // internal ResizeObserver and updates the layout as cards settle.
+    });
+
+    const virtualItems = rowVirtualizer.getVirtualItems();
+    const totalSize = rowVirtualizer.getTotalSize();
 
     return (
         <div className="min-h-screen bg-gray-100">
@@ -430,16 +489,50 @@ const QuestionList = memo(() => {
                 )}
 
                 {displayedQuestions.length > 0 && (
-                    <div className="space-y-4">
-                        {displayedQuestions.map((question) => (
-                            <QuestionItem
-                                key={question.id}
-                                question={question}
-                                isSelected={selectedQuestions.some((q) => q.id === question.id)}
-                                toggleQuestionSelection={toggleQuestionSelection}
-                                toggleQuestionFlag={toggleQuestionFlag}
-                            />
-                        ))}
+                    // Scroll container for the virtualized list. Using window-relative
+                    // overflow keeps the visual layout (no nested scrollbar look) close
+                    // to the original `space-y-4` stack while still giving the virtualizer
+                    // a measurable scroll element.
+                    <div
+                        ref={scrollParentRef}
+                        className="relative max-h-[calc(100vh-8rem)] overflow-y-auto"
+                    >
+                        <div
+                            style={{
+                                height: `${totalSize}px`,
+                                width: '100%',
+                                position: 'relative',
+                            }}
+                        >
+                            {virtualItems.map((virtualItem) => {
+                                const question = displayedQuestions[virtualItem.index];
+                                if (!question) return null;
+                                return (
+                                    <div
+                                        key={virtualItem.key}
+                                        data-index={virtualItem.index}
+                                        ref={rowVirtualizer.measureElement}
+                                        style={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            width: '100%',
+                                            transform: `translateY(${virtualItem.start}px)`,
+                                            // Bottom padding emulates the original `space-y-4` gap
+                                            // between cards without changing card styling.
+                                            paddingBottom: `${ROW_GAP_PX}px`,
+                                        }}
+                                    >
+                                        <QuestionItem
+                                            question={question}
+                                            isSelected={selectedIdSet.has(question.id)}
+                                            toggleQuestionSelection={handleToggleQuestionSelection}
+                                            toggleQuestionFlag={handleToggleQuestionFlag}
+                                        />
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 )}
 
