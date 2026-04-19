@@ -42,7 +42,10 @@ export function questionToHTML(question: Question, index: number, options: Quest
     const questionNumber = index + 1;
     const questionText = textToHtmlWithLatex(question.question_text);
 
-    // Render question image if present
+    // Render question image if present. `height: auto` + `width: auto` (implicit)
+    // preserves the crop's intrinsic pixel width in the PDF — a 400 px crop
+    // renders at 400 px, not a squished fixed-height box. `max-width: 100%`
+    // scales down only when the crop is wider than the column.
     const questionImageHTML = question.question_image ? `
         <div class="question-image" style="
             margin-top: 12px;
@@ -52,7 +55,7 @@ export function questionToHTML(question: Question, index: number, options: Quest
         ">
             <img src="${question.question_image}" alt="Question Image" style="
                 max-width: 100%;
-                height: 140px;
+                height: auto;
                 border-radius: 6px;
             ">
         </div>

@@ -31,6 +31,9 @@ export const generateStudentAnalyticsPdf = async (
                     question: {
                         select: { id: true, question_text: true, options: true, answer: true, topic: true },
                     },
+                    schoolTestQuestion: {
+                        select: { id: true, question_text: true, options: true, answer: true, topic: true },
+                    },
                 },
             },
             responses: {
@@ -57,22 +60,25 @@ export const generateStudentAnalyticsPdf = async (
     let calculatedScore = 0;
 
     const perQuestion: PerQuestion[] = test.questions.map((q: TestQuestionWithQuestion) => {
-        // console.log('q -----------------', q);
+        // After the school-test split, q.question may be null when the row
+        // points at a SchoolTestQuestion. Fall back so analytics still shows
+        // the question text/answer for either source.
+        const src = q.question ?? q.schoolTestQuestion ?? null;
         const ans = response.answers?.find((a: ResponseAnswerSelect) => a.questionId === q.questionId);
-        const isCorrect = ans && ans.selectedAnswer === q.question.answer;
+        const isCorrect = ans && src && ans.selectedAnswer === src.answer;
         if (isCorrect) {
             correctAnswers += 1;
             calculatedScore += q.marks;
         }
         return {
             questionNumber: q.questionNumber,
-            questionText: q.question.question_text,
+            questionText: src?.question_text ?? '',
             selectedAnswer: ans?.selectedAnswer ?? null,
-            correctAnswer: q.question.answer ?? null,
+            correctAnswer: src?.answer ?? null,
             isCorrect: Boolean(isCorrect),
             marks: q.marks,
             timeSpent: null,
-            topic: q.question.topic ?? 'General',
+            topic: src?.topic ?? 'General',
         };
     });
 

@@ -123,17 +123,27 @@ export function Verifier({
         if (isSaving) return;
         setIsSaving(true);
         try {
-            const payload = pages.flatMap((p) =>
-                p.questions.map((q) => {
+            // Per-page payload — baseImage is uploaded once per page and
+            // reused across every question, with the crop bbox sitting in
+            // baseImage's pixel coord system so the create-test editor can
+            // re-crop later without needing the original PDF.
+            const payload = pages.map((p) => ({
+                pageNumber: p.pageNumber,
+                baseImageDataUrl: p.sourceDataUrl,
+                sourceWidth: p.sourceWidth,
+                sourceHeight: p.sourceHeight,
+                sourceFileName: fileName,
+                questions: p.questions.map((q) => {
                     const crop = p.crops[q.id];
                     return {
                         question_number: q.question_number,
                         question_text: q.question_text,
                         options: q.options,
                         diagram_data_url: crop ? crop.dataUrl : null,
+                        crop_bbox: crop ? crop.bbox : null,
                     };
                 }),
-            );
+            }));
 
             const result = await saveExtractedQuestions(payload);
             if (!result.success) {
@@ -142,9 +152,10 @@ export function Verifier({
                 return;
             }
 
-            // Match the shape TestCreator reads from sessionStorage (see
-            // components/examination/TestCreator.tsx and the
-            // QuestionForCreateTestData type in types/index.d.ts).
+            // Shape TestCreator reads from sessionStorage. Extra school-test
+            // fields (base_image / crop_bbox / source dims / source flag)
+            // travel alongside so the create-test QuestionCard can show and
+            // re-crop the original page region.
             const sessionPayload = result.questions.map((q, i) => ({
                 id: q.id,
                 question_text: q.question_text,
@@ -154,6 +165,11 @@ export function Verifier({
                 question_image: q.question_image ?? null,
                 marks: q.marks,
                 negativeMark: 0,
+                source: "school-test" as const,
+                base_image: q.base_image ?? null,
+                crop_bbox: q.crop_bbox ?? null,
+                source_width: q.source_width ?? null,
+                source_height: q.source_height ?? null,
             }));
             sessionStorage.setItem(
                 "selectedQuestionsForTest",
@@ -164,7 +180,7 @@ export function Verifier({
             toast.error((e as Error).message || "Failed to save.");
             setIsSaving(false);
         }
-    }, [isSaving, pages, router]);
+    }, [isSaving, pages, fileName, router]);
 
     const totalQuestions = useMemo(
         () => pages.reduce((sum, p) => sum + p.questions.length, 0),

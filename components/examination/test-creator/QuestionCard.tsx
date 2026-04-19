@@ -1,10 +1,14 @@
+import { useState } from 'react';
+import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
+import { Crop as CropIcon, Trash2 } from 'lucide-react';
 import { renderMixedLatex } from '@/lib/render-tex';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TestCreatorAction } from '@/hooks/reducer/useTestCreatorReducer';
 import Image from 'next/image';
+import { CropEditor } from '@/components/school-test/CropEditor';
+import { updateSchoolTestCrop } from '@/actions/school-test/updateSchoolTestCrop';
 
 // Helper function to safely decode image URLs (handles double-encoding)
 const safeDecodeImageUrl = (url: string): string => {
@@ -24,6 +28,45 @@ interface QuestionCardProps {
 }
 
 export default function QuestionCard({ question, index, dispatch }: QuestionCardProps) {
+    const [cropOpen, setCropOpen] = useState(false);
+    const [isSavingCrop, setIsSavingCrop] = useState(false);
+
+    const canEditCrop =
+        question.source === 'school-test' &&
+        !!question.base_image &&
+        !!question.source_width &&
+        !!question.source_height;
+
+    const handleCropSave = async (
+        bbox: [number, number, number, number],
+        dataUrl: string,
+    ) => {
+        if (isSavingCrop) return;
+        setIsSavingCrop(true);
+        try {
+            const res = await updateSchoolTestCrop({
+                schoolTestQuestionId: question.id,
+                dataUrl,
+                bbox,
+            });
+            if (!res.success) {
+                toast.error(res.error);
+                return;
+            }
+            dispatch({
+                type: 'UPDATE_QUESTION_CROP',
+                index,
+                question_image: res.question_image,
+                crop_bbox: res.crop_bbox,
+            });
+            setCropOpen(false);
+        } catch (e) {
+            toast.error((e as Error).message || 'Failed to update crop');
+        } finally {
+            setIsSavingCrop(false);
+        }
+    };
+
     return (
         <Card className="gap-2">
             <CardHeader>
@@ -81,7 +124,7 @@ export default function QuestionCard({ question, index, dispatch }: QuestionCard
                         </div>
                     </div>
                     {question.question_image &&
-                        <div className="mt-2 flex justify-center sm:justify-start">
+                        <div className="mt-2 flex flex-col items-start gap-2">
                             <Image
                                 src={safeDecodeImageUrl(question.question_image)}
                                 alt='Question image'
@@ -90,8 +133,57 @@ export default function QuestionCard({ question, index, dispatch }: QuestionCard
                                 className="max-w-full h-auto"
                                 unoptimized={question.question_image.includes('supabase.co')}
                             />
+                            {canEditCrop && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCropOpen(true)}
+                                    disabled={isSavingCrop}
+                                    className="border border-black/30"
+                                >
+                                    <CropIcon className="w-4 h-4 mr-1" />
+                                    {isSavingCrop ? 'Saving…' : 'Edit crop'}
+                                </Button>
+                            )}
                         </div>
                     }
+                    {!question.question_image && canEditCrop && (
+                        <div className="mt-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCropOpen(true)}
+                                disabled={isSavingCrop}
+                                className="border border-black/30"
+                            >
+                                <CropIcon className="w-4 h-4 mr-1" />
+                                Add crop from source page
+                            </Button>
+                        </div>
+                    )}
+                    {cropOpen && canEditCrop && (
+                        <CropEditor
+                            page={{
+                                sourceDataUrl: question.base_image!,
+                                sourceWidth: question.source_width!,
+                                sourceHeight: question.source_height!,
+                            }}
+                            existing={
+                                question.crop_bbox
+                                    ? {
+                                          id: `q-${question.id}`,
+                                          q_no: question.question_number,
+                                          bbox: question.crop_bbox,
+                                          dataUrl: question.question_image ?? '',
+                                      }
+                                    : undefined
+                            }
+                            onSave={handleCropSave}
+                            onCancel={() => setCropOpen(false)}
+                        />
+                    )}
                 </div>
                 <div>
                     <label className="block text-sm font-medium mb-2">Options</label>

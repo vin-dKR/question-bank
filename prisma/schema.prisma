@@ -112,6 +112,48 @@ model Question {
   @@index([question_text])
 }
 
+// School-test extracted questions live in their own collection so the shared
+// question-bank Question model stays scoped to the question-bank flow. Fields
+// mirror Question, plus a baseImage + crop bbox so the create-test editor can
+// re-crop from the original source page without re-uploading the PDF.
+model SchoolTestQuestion {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  question_number  Int
+  file_name        String?
+  question_text    String
+  isQuestionImage  Boolean  @default(false)
+  question_image   String?
+  isOptionImage    Boolean  @default(false)
+  options          String[]
+  option_images    String[]
+  section_name     String?
+  question_type    String?
+  topic            String?
+  exam_name        String?
+  subject          String?
+  chapter          String?
+  answer           String?
+  flagged          Boolean?
+
+  // The source page image the crop was drawn from (public Supabase URL).
+  baseImage        String?
+  // [x, y, w, h] in baseImage's pixel coord system.
+  cropBbox         Int[]
+  sourceWidth      Int?
+  sourceHeight     Int?
+  sourceFileName   String?
+
+  createdBy        String   @db.ObjectId
+  testRelations    TestQuestion[] @relation("SchoolTestQuestionToTestQuestion")
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([createdBy])
+  @@index([question_number])
+  @@index([createdAt])
+}
+
 model Folder {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
   name        String
@@ -254,8 +296,13 @@ model TestQuestion {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   testId       String   @db.ObjectId
   test         Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
-  questionId   String   @db.ObjectId
-  question     Question @relation("QuestionToTestQuestion", fields: [questionId], references: [id], onDelete: Cascade)
+  // A test question points at EITHER the shared Question bank or the
+  // school-test collection — never both. Exactly one of the two id fields
+  // should be set per row; createTest enforces this at the action layer.
+  questionId           String?             @db.ObjectId
+  question             Question?           @relation("QuestionToTestQuestion", fields: [questionId], references: [id], onDelete: Cascade)
+  schoolTestQuestionId String?             @db.ObjectId
+  schoolTestQuestion   SchoolTestQuestion? @relation("SchoolTestQuestionToTestQuestion", fields: [schoolTestQuestionId], references: [id], onDelete: Cascade)
   marks        Int      @default(1)
   questionNumber Int
 
@@ -264,6 +311,7 @@ model TestQuestion {
 
   @@index([testId])
   @@index([questionNumber])
+  @@index([schoolTestQuestionId])
 }
 
 model Student {

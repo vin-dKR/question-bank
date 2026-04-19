@@ -37,6 +37,15 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
                                 chapter: true,
                             },
                         },
+                        schoolTestQuestion: {
+                            select: {
+                                id: true,
+                                question_text: true,
+                                answer: true,
+                                topic: true,
+                                chapter: true,
+                            },
+                        },
                     },
                 },
                 responses: {
@@ -68,16 +77,19 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
                 highestScore: 0,
                 lowestScore: 0,
                 averagePercentage: 0,
-                questionAnalytics: test.questions.map((q) => ({
-                    questionId: q.id,
-                    questionNumber: q.questionNumber,
-                    questionText: q.question.question_text,
-                    correctAnswers: 0,
-                    totalAttempts: 0,
-                    accuracy: 0,
-                    chapter: q.question.chapter ?? 'Unknown',
-                    topic: q.question.topic ?? 'Unknown',
-                })),
+                questionAnalytics: test.questions.map((q) => {
+                    const src = q.question ?? q.schoolTestQuestion;
+                    return {
+                        questionId: q.id,
+                        questionNumber: q.questionNumber,
+                        questionText: src?.question_text ?? '',
+                        correctAnswers: 0,
+                        totalAttempts: 0,
+                        accuracy: 0,
+                        chapter: src?.chapter ?? 'Unknown',
+                        topic: src?.topic ?? 'Unknown',
+                    };
+                }),
                 studentAnalytics: [],
             };
         }
@@ -91,6 +103,7 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
         const averagePercentage = percentages.reduce((a, b) => a + b, 0) / totalStudents;
 
         const questionAnalytics: QuestionAnalytics[] = test.questions.map((question) => {
+            const src = question.question ?? question.schoolTestQuestion;
             let correctAnswers = 0;
             let totalAttempts = 0;
 
@@ -98,7 +111,7 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
                 const answer = response.answers?.find((a) => a.questionId === question.questionId);
                 if (answer) {
                     totalAttempts++;
-                    if (answer.selectedAnswer === question.question.answer) {
+                    if (src && answer.selectedAnswer === src.answer) {
                         correctAnswers++;
                     }
                 }
@@ -109,12 +122,12 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
             return {
                 questionId: question.id,
                 questionNumber: question.questionNumber,
-                questionText: question.question.question_text,
+                questionText: src?.question_text ?? '',
                 correctAnswers,
                 totalAttempts,
                 accuracy,
-                chapter: question.question.chapter ?? 'Unknown',
-                topic: question.question.topic ?? 'Unknown',
+                chapter: src?.chapter ?? 'Unknown',
+                topic: src?.topic ?? 'Unknown',
             };
         });
 
@@ -127,19 +140,20 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
             for (const answer of response.answers || []) {
                 const question = test.questions.find((q) => q.questionId === answer.questionId);
                 if (question) {
-                    const chapter = question.question.chapter ?? 'Unknown Chapter';
+                    const src = question.question ?? question.schoolTestQuestion;
+                    const chapter = src?.chapter ?? 'Unknown Chapter';
                     if (!chapterMap[chapter]) {
                         chapterMap[chapter] = { total: 0, correct: 0 };
                     }
                     chapterMap[chapter].total += 1;
 
-                    const topic = question.question.topic ?? 'Unknown Topic';
+                    const topic = src?.topic ?? 'Unknown Topic';
                     if (!topicMap[topic]) {
                         topicMap[topic] = { total: 0, correct: 0 };
                     }
                     topicMap[topic].total += 1;
 
-                    if (answer.selectedAnswer === question.question.answer) {
+                    if (src && answer.selectedAnswer === src.answer) {
                         correctAnswers++;
                         calculatedScore += question.marks;
                         chapterMap[chapter].correct += 1;

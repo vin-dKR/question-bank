@@ -23,6 +23,12 @@ export type TestCreatorAction =
         field: keyof Omit<QuestionForCreateTestData, 'id' | 'question_number'>;
         value: string | number;
     }
+    | {
+        type: 'UPDATE_QUESTION_CROP';
+        index: number;
+        question_image: string;
+        crop_bbox: [number, number, number, number];
+    }
     | { type: 'REMOVE_QUESTION'; index: number }
     | { type: 'APPLY_BULK_MARKS'; marks: number }
     | { type: 'APPLY_BULK_NEGATIVE_MARKS'; negativeMarks: number }
@@ -72,6 +78,17 @@ const reducer = (state: TestCreatorState, action: TestCreatorAction): TestCreato
                     questions: updatedQuestions,
                     totalMarks: updatedQuestions.reduce((total, q) => total + q.marks, 0),
                 },
+            };
+        }
+        case 'UPDATE_QUESTION_CROP': {
+            const updatedQuestions = state.testData.questions.map((q, i) =>
+                i === action.index
+                    ? { ...q, question_image: action.question_image, crop_bbox: action.crop_bbox }
+                    : q,
+            );
+            return {
+                ...state,
+                testData: { ...state.testData, questions: updatedQuestions },
             };
         }
         case 'REMOVE_QUESTION': {

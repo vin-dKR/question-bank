@@ -24,6 +24,13 @@ async function main() {
                             options: true,
                         },
                     },
+                    schoolTestQuestion: {
+                        select: {
+                            id: true,
+                            answer: true,
+                            options: true,
+                        },
+                    },
                 },
                 orderBy: { questionNumber: 'asc' },
             },
@@ -39,13 +46,21 @@ async function main() {
         throw new Error(`Test ${testId} has no questions`);
     }
 
-    // Define correct answers based on the provided answer sheet
-    const correctAnswers = test.questions.map((tq) => ({
-        questionId: tq.questionId,
-        answer: tq.question.answer ?? 'A',
-        options: Array.isArray(tq.question.options) && tq.question.options.length > 0 ? tq.question.options : ['A', 'B', 'C', 'D'],
-        marks: tq.marks,
-    }));
+    // Define correct answers based on the provided answer sheet.
+    // After the school-test split, tq.question can be null when the row points
+    // at a SchoolTestQuestion instead. Fall back accordingly.
+    const correctAnswers = test.questions.map((tq) => {
+        const q = tq.question ?? tq.schoolTestQuestion;
+        const options = Array.isArray(q?.options) && q.options.length > 0
+            ? q.options
+            : ['A', 'B', 'C', 'D'];
+        return {
+            questionId: tq.questionId ?? tq.schoolTestQuestionId,
+            answer: q?.answer ?? 'A',
+            options,
+            marks: tq.marks,
+        };
+    });
 
     // Define possible answer options for multiple-choice questions
     const defaultOptions = ['A', 'B', 'C', 'D'];

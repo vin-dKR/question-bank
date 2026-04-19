@@ -536,6 +536,14 @@ declare global {
         answer: string;
         marks: number;
         negativeMark?: number;
+        // School-test-sourced questions carry their origin + source-page
+        // metadata so the test creator can surface a re-crop UI. Bank
+        // questions omit these fields entirely.
+        source?: "bank" | "school-test";
+        base_image?: string | null;
+        crop_bbox?: [number, number, number, number] | null;
+        source_width?: number | null;
+        source_height?: number | null;
     }
 
     interface CreateTestData {
@@ -626,18 +634,23 @@ declare global {
         accuracy: number;
     }
 
+    interface TestQuestionSourceFields {
+        id: string;
+        question_text: string;
+        options: string[];
+        answer: string | null;
+        topic: string | null;
+        chapter?: string | null;
+    }
     interface TestQuestionWithQuestion {
         id: string;
-        questionId: string;
+        // Nullable since the row may point at a SchoolTestQuestion instead.
+        questionId: string | null;
+        schoolTestQuestionId?: string | null;
         marks: number;
         questionNumber: number;
-        question: {
-            id: string;
-            question_text: string;
-            options: string[];
-            answer: string | null;
-            topic: string | null;
-        };
+        question: TestQuestionSourceFields | null;
+        schoolTestQuestion?: TestQuestionSourceFields | null;
     }
     interface ResponseAnswerSelect { questionId: string; selectedAnswer: string }
     interface StudentMinimal { id: string; name: string; rollNumber: string; className: string }

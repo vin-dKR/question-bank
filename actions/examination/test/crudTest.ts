@@ -30,13 +30,22 @@ export const createTest = async (data: CreateTestData): Promise<Partial<Examinat
                 totalMarks: data.totalMarks,
                 createdBy: user.id,
                 questions: {
-                    create: data.questions.map(q => ({
-                        question: {
-                            connect: { id: q.id },
-                        },
-                        marks: q.marks,
-                        questionNumber: q.question_number,
-                    })),
+                    // School-test questions live in a separate collection; route
+                    // the `connect` to the right relation based on the source
+                    // flag that travelled with the question through sessionStorage.
+                    create: data.questions.map(q =>
+                        q.source === 'school-test'
+                            ? {
+                                schoolTestQuestion: { connect: { id: q.id } },
+                                marks: q.marks,
+                                questionNumber: q.question_number,
+                            }
+                            : {
+                                question: { connect: { id: q.id } },
+                                marks: q.marks,
+                                questionNumber: q.question_number,
+                            },
+                    ),
                 },
             },
             include: {
@@ -57,6 +66,25 @@ export const createTest = async (data: CreateTestData): Promise<Partial<Examinat
                                 chapter: true,
                             },
                         },
+                        schoolTestQuestion: {
+                            select: {
+                                id: true,
+                                question_text: true,
+                                options: true,
+                                answer: true,
+                                topic: true,
+                                question_type: true,
+                                section_name: true,
+                                exam_name: true,
+                                subject: true,
+                                chapter: true,
+                                question_image: true,
+                                baseImage: true,
+                                cropBbox: true,
+                                sourceWidth: true,
+                                sourceHeight: true,
+                            },
+                        },
                     },
                 },
                 _count: {
@@ -68,20 +96,23 @@ export const createTest = async (data: CreateTestData): Promise<Partial<Examinat
         return {
             ...test,
             description: test.description,
-            questions: test.questions.map((tq) => ({
-                id: tq.id,
-                questionText: tq.question.question_text,
-                options: tq.question.options,
-                answer: tq.question.answer || '',
-                marks: tq.marks,
-                questionNumber: tq.questionNumber,
-                topic: tq.question.topic,
-                questionType: tq.question.question_type,
-                sectionName: tq.question.section_name,
-                examName: tq.question.exam_name,
-                subject: tq.question.subject,
-                chapter: tq.question.chapter,
-            })),
+            questions: test.questions.map((tq) => {
+                const q = tq.question ?? tq.schoolTestQuestion;
+                return {
+                    id: tq.id,
+                    questionText: q?.question_text ?? '',
+                    options: q?.options ?? [],
+                    answer: q?.answer || '',
+                    marks: tq.marks,
+                    questionNumber: tq.questionNumber,
+                    topic: q?.topic ?? null,
+                    questionType: q?.question_type ?? null,
+                    sectionName: q?.section_name ?? null,
+                    examName: q?.exam_name ?? null,
+                    subject: q?.subject ?? null,
+                    chapter: q?.chapter ?? null,
+                };
+            }),
             _count: test._count,
         };
     } catch (error) {
@@ -120,6 +151,14 @@ export const getTests = async (): Promise<Partial<ExaminationTest>[]> => {
                                 answer: true,
                             },
                         },
+                        schoolTestQuestion: {
+                            select: {
+                                id: true,
+                                question_text: true,
+                                options: true,
+                                answer: true,
+                            },
+                        },
                     },
                 },
                 _count: {
@@ -132,14 +171,17 @@ export const getTests = async (): Promise<Partial<ExaminationTest>[]> => {
         return tests.map((test) => ({
             ...test,
             description: test.description,
-            questions: test.questions.map((tq) => ({
-                id: tq.id,
-                questionText: tq.question.question_text,
-                options: tq.question.options,
-                answer: tq.question.answer || '',
-                marks: tq.marks,
-                questionNumber: tq.questionNumber,
-            })),
+            questions: test.questions.map((tq) => {
+                const q = tq.question ?? tq.schoolTestQuestion;
+                return {
+                    id: tq.id,
+                    questionText: q?.question_text ?? '',
+                    options: q?.options ?? [],
+                    answer: q?.answer || '',
+                    marks: tq.marks,
+                    questionNumber: tq.questionNumber,
+                };
+            }),
             _count: test._count,
         }));
     } catch (error) {
@@ -196,14 +238,17 @@ export const getTestById = async (testId: string): Promise<Partial<ExaminationTe
         return {
             ...test,
             description: test.description,
-            questions: test.questions.map((tq) => ({
-                id: tq.id,
-                questionText: tq.question.question_text,
-                options: tq.question.options,
-                answer: tq.question.answer || '',
-                marks: tq.marks,
-                questionNumber: tq.questionNumber,
-            })),
+            questions: test.questions.map((tq) => {
+                const q = tq.question ?? tq.schoolTestQuestion;
+                return {
+                    id: tq.id,
+                    questionText: q?.question_text ?? '',
+                    options: q?.options ?? [],
+                    answer: q?.answer || '',
+                    marks: tq.marks,
+                    questionNumber: tq.questionNumber,
+                };
+            }),
             _count: test._count,
         };
     } catch (error) {
