@@ -2,6 +2,11 @@ import type { NextConfig } from 'next';
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 import fs from 'fs';
 import path from 'path';
+import withBundleAnalyzer from '@next/bundle-analyzer';
+
+const bundleAnalyzer = withBundleAnalyzer({
+    enabled: process.env.ANALYZE === 'true',
+});
 
 const queryEnginePath = path.resolve('generated/prisma/query-engine-rhel-openssl-3.0.x');
 const hasQueryEngine = fs.existsSync(queryEnginePath);
@@ -86,4 +91,4 @@ const nextConfig: NextConfig = {
     },
 };
 
-export default nextConfig;
+export default bundleAnalyzer(nextConfig);

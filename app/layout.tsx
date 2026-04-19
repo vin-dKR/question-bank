@@ -3,6 +3,7 @@ import "./globals.css";
 import { ClerkProvider } from '@clerk/nextjs';
 import { Inter } from 'next/font/google';
 import { Toaster } from "@/components/ui/sonner";
+import WebVitalsReporter from "@/components/perf/WebVitalsReporter";
 
 const inter = Inter({
     subsets: ['latin'],
@@ -32,6 +33,7 @@ export default function RootLayout({
                         {children}
                     </main>
                     <Toaster closeButton={true} />
+                    <WebVitalsReporter />
                 </ClerkProvider>
             </body>
         </html>
