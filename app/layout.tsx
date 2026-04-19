@@ -22,10 +22,6 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <head>
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js" async></script>
-                <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-            </head>
             <body className={inter.variable}>
                 <ClerkProvider>
                     <main className="min-h-screen bg-gray-50">
