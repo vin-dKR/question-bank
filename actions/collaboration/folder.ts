@@ -426,7 +426,19 @@ export async function getFolderCollaborators(folderId: string): Promise<Collabor
     }
 }
 
-// Get folder change log
+/**
+ * Get folder change log (legacy, unpaginated).
+ *
+ * @deprecated Phase 10 refactor: this returns the last 50 entries in a single
+ * call, which is (a) unbounded in practice because it hits MongoDB on every
+ * folder open and (b) incompatible with the TanStack Query infinite-scroll UI
+ * we're moving towards. Prefer {@link getFolderChangeLogPage} which exposes a
+ * `createdAt` cursor + `take` window and returns `{ items, nextCursor }`.
+ *
+ * Kept for now because other UI paths may still call the non-paginated shape;
+ * remove once all callers have migrated to the paginated hook
+ * (`hooks/queries/useFolderChangeLog.ts`).
+ */
 export async function getFolderChangeLog(folderId: string): Promise<CollaborationResponse> {
     try {
         const { userId: clerkUserId } = await auth();
@@ -463,6 +475,104 @@ export async function getFolderChangeLog(folderId: string): Promise<Collaboratio
         return { success: true, data: changeLogs };
     } catch (error) {
         console.error('Error getting change log:', error);
+        return { success: false, error: 'Failed to get change log' };
+    }
+}
+
+export interface GetFolderChangeLogPageOptions {
+    /**
+     * Exclusive cursor (ISO string of the last item's `createdAt` from the
+     * previous page, or `null` for the first page). Newest-first ordering.
+     */
+    cursor?: string | null;
+    /** Page size. Defaults to 30. Capped at 100 to avoid accidental blow-ups. */
+    take?: number;
+}
+
+export interface FolderChangeLogPage {
+    items: Array<{
+        id: string;
+        folderId: string;
+        userId: string;
+        action: string;
+        details: string;
+        createdAt: Date;
+        user: {
+            id: string;
+            name: string | null;
+            email: string;
+        };
+    }>;
+    /**
+     * Cursor to pass as `cursor` on the next request. `null` when the last
+     * page has been reached.
+     */
+    nextCursor: string | null;
+}
+
+/**
+ * Paginated, newest-first read of a folder's change log. Designed to be
+ * consumed by {@link https://tanstack.com/query `useInfiniteQuery`}.
+ *
+ * Uses `FolderChangeLog.createdAt` as the cursor (indexed in
+ * `prisma/schema.prisma`). We take `take + 1` rows so we can tell whether
+ * there's a next page without a second round-trip.
+ *
+ * Kept separate from the legacy {@link getFolderChangeLog} so that any
+ * lingering consumers of the unpaginated shape keep working until fully
+ * migrated.
+ */
+export async function getFolderChangeLogPage(
+    folderId: string,
+    options: GetFolderChangeLogPageOptions = {}
+): Promise<CollaborationResponse> {
+    try {
+        const { cursor = null, take: rawTake = 30 } = options;
+        const take = Math.max(1, Math.min(rawTake ?? 30, 100));
+
+        const { userId: clerkUserId } = await auth();
+        if (!clerkUserId) {
+            return { success: false, error: 'Unauthorized' };
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { clerkUserId },
+            select: { id: true },
+        });
+
+        if (!user) {
+            return { success: false, error: 'User not found' };
+        }
+
+        // Check access
+        const accessCheck = await checkFolderAccess(folderId, 'viewer');
+        if (!accessCheck.success) {
+            return accessCheck;
+        }
+
+        // Fetch one extra to determine whether another page exists.
+        const rows = await prisma.folderChangeLog.findMany({
+            where: {
+                folderId,
+                ...(cursor ? { createdAt: { lt: new Date(cursor) } } : {}),
+            },
+            include: {
+                user: {
+                    select: { id: true, name: true, email: true },
+                },
+            },
+            orderBy: { createdAt: 'desc' },
+            take: take + 1,
+        });
+
+        const hasMore = rows.length > take;
+        const items = hasMore ? rows.slice(0, take) : rows;
+        const nextCursor = hasMore ? items[items.length - 1].createdAt.toISOString() : null;
+
+        const page: FolderChangeLogPage = { items, nextCursor };
+        return { success: true, data: page };
+    } catch (error) {
+        console.error('Error getting change log page:', error);
         return { success: false, error: 'Failed to get change log' };
     }
 }
