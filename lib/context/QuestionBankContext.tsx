@@ -1,78 +1,76 @@
 'use client';
 
-import { createContext, useContext, useCallback, useMemo, useEffect } from 'react';
+import { createContext, useContext, useCallback, useMemo } from 'react';
 import { useQuestionBankReducer } from '@/hooks/reducer/useQuestionBankReducer';
 import { useUserRole } from '@/hooks/auth/useUserRole';
 import { useUserSubject } from '@/hooks/auth/useUserSubject';
-import { useFetchQuestions } from '@/hooks/question/useFetchQuestions';
-import { useFetchFilterOptions } from '@/hooks/question/useFetchFilterOptions';
 import { usePersistentSelection } from '@/hooks/question/usePersistentSelection';
 import { useQuestionActions } from '@/hooks/question/useQuestionActions';
+import { useQuestions } from '@/hooks/queries/useQuestions';
+
+/**
+ * QuestionBankContext — UI state only (Phase 6).
+ *
+ * Server state (the list of questions, loading flags, cursor/pagination,
+ * total counts, filter-options metadata) has moved to TanStack Query:
+ *   - The list itself: `useQuestions(...)` in `hooks/queries/useQuestions.ts`,
+ *     exposed here as the thin `useQuestionsList()` wrapper so consumers don't
+ *     have to re-derive role/subject/filters arguments from scratch.
+ *   - Filter options: `useFilterOptions(...)` in `hooks/queries/useFilterOptions.ts`
+ *     (wired directly by FilterControls).
+ *
+ * What stays on the context:
+ *   - `filters` / `setFilters` — the active filter set. It drives both the
+ *     `useQuestions` cache key and the `useFilterOptions` cascading options.
+ *   - `searchQuery` / `setSearchQuery` — debounced input from SearchBar.
+ *     Also fed into `useQuestions` as a query key component so list ↔ search
+ *     have distinct cache buckets.
+ *   - `selectedQuestions` / `setSelectedQuestions` + `showOnlySelected` —
+ *     pure client state with localStorage persistence.
+ *   - `toggleQuestionFlag` / `toggleQuestionSelection` / `updateQuestion` /
+ *     `getAllSelectedQuestions` — action helpers that still need role/subject.
+ *     (Phase 7 will replace the server-side writes with `useMutation`.)
+ */
 
 const QuestionBankContext = createContext<QuestionBankContextType | undefined>(undefined);
 
 export const QuestionBankProvider = ({ children }: { children: React.ReactNode }) => {
     const [state, dispatch] = useQuestionBankReducer();
-    const { questions, loading, error, filters, pagination, filterOptions, optionsLoading, searchQuery, totalCount, showOnlySelected, selectedQuestions, initialFetchDone } = state;
-    // console.log("filters ----------", filters)
+    const { filters, searchQuery, showOnlySelected, selectedQuestions } = state;
 
-
-    const { role, isTeacher, isLoading: roleLoading } = useUserRole();
+    const { role, isTeacher } = useUserRole();
     const { subject } = useUserSubject();
-
-    const fetchQuestions = useFetchQuestions(filters, pagination, searchQuery, role || 'student', isTeacher, dispatch, subject || '');
-
-    const fetchFilterOptions = useFetchFilterOptions(filters, role || 'student', isTeacher, dispatch, subject || filters.subject?.toLowerCase() || '');
 
     usePersistentSelection(selectedQuestions, showOnlySelected, dispatch);
 
-    const { toggleQuestionFlag, updateQuestion, toggleQuestionSelection, getAllSelectedQuestions } = useQuestionActions(questions, role || 'student', isTeacher, new Set(selectedQuestions.map(q => q.id)), dispatch, subject || '');
+    const selectedIdSet = useMemo(
+        () => new Set(selectedQuestions.map((q) => q.id)),
+        [selectedQuestions]
+    );
 
-    const loadMore = useCallback(() => {
-        dispatch({ type: 'SET_PAGINATION', pagination: { ...pagination, limit: pagination.limit + 20 } });
-    }, [pagination, dispatch]);
-
-    const refreshQuestions = useCallback(() => {
-        fetchQuestions();
-    }, [fetchQuestions]);
+    const {
+        toggleQuestionFlag,
+        updateQuestion,
+        toggleQuestionSelection,
+        getAllSelectedQuestions,
+    } = useQuestionActions(
+        role || 'student',
+        isTeacher,
+        selectedIdSet,
+        dispatch,
+        subject || ''
+    );
 
     const setSelectedQuestions = useCallback((questions: Question[]) => {
         dispatch({ type: 'SET_SELECTED_QUESTIONS', questions });
     }, [dispatch]);
 
-    const hasMore = useMemo(() => questions.length < totalCount, [questions.length, totalCount]);
-
-    // Fetch questions when dependencies change
-    useEffect(() => {
-        if (!roleLoading && role) {
-            fetchQuestions();
-        }
-    }, [fetchQuestions, roleLoading, role]);
-
-    // Fetch filter options when dependencies change
-    useEffect(() => {
-        if (!roleLoading && role) {
-            fetchFilterOptions();
-        }
-    }, [fetchFilterOptions, roleLoading, role]);
-
     const value = useMemo<QuestionBankContextType>(
         () => ({
-            questions,
-            loading,
-            error,
             filters,
             setFilters: (newFilters) => dispatch({ type: 'SET_FILTERS', filters: newFilters }),
-            pagination,
-            setPagination: (pagination) => dispatch({ type: 'SET_PAGINATION', pagination }),
-            filterOptions,
-            optionsLoading,
             searchQuery,
             setSearchQuery: (query) => dispatch({ type: 'SET_SEARCH_QUERY', query }),
-            totalCount,
-            hasMore,
-            loadMore,
-            refreshQuestions,
             toggleQuestionFlag,
             toggleQuestionSelection,
             getAllSelectedQuestions,
@@ -81,21 +79,10 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
             setShowOnlySelected: (show) => dispatch({ type: 'SET_SHOW_ONLY_SELECTED', show }),
             selectedQuestions,
             setSelectedQuestions,
-            initialFetchDone,
         }),
         [
-            questions,
-            loading,
-            error,
             filters,
-            pagination,
-            filterOptions,
-            optionsLoading,
             searchQuery,
-            totalCount,
-            hasMore,
-            loadMore,
-            refreshQuestions,
             toggleQuestionFlag,
             toggleQuestionSelection,
             getAllSelectedQuestions,
@@ -103,7 +90,7 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
             showOnlySelected,
             selectedQuestions,
             setSelectedQuestions,
-            initialFetchDone,
+            dispatch,
         ]
     );
 
@@ -116,4 +103,56 @@ export const useQuestionBankContext = () => {
         throw new Error('useQuestionBankContext must be used within a QuestionBankProvider');
     }
     return context;
+};
+
+/**
+ * Thin ergonomic wrapper around `useQuestions` that reads filters + searchQuery
+ * from the context and role/subject from the auth hooks. Components inside
+ * `QuestionBankProvider` can call this without having to re-plumb those args.
+ *
+ * Returns the full TanStack `useInfiniteQuery` result plus a pre-flattened
+ * `questions` array and a `loadMore` helper that mirrors the old context
+ * API's ergonomics (`hasMore` / `loadMore`). Components that want more
+ * granular control (isFetchingNextPage, refetch, etc.) can destructure from
+ * `query` directly.
+ */
+export const useQuestionsList = () => {
+    const { filters, searchQuery } = useQuestionBankContext();
+    const { role, isTeacher, isLoading: roleLoading } = useUserRole();
+    const { subject, isLoading: subjectLoading } = useUserSubject();
+
+    const query = useQuestions({
+        filters,
+        role: role ?? 'student',
+        isTeacher,
+        subject: subject ?? undefined,
+        searchQuery,
+    });
+
+    const questions = useMemo<Question[]>(
+        () => query.data?.pages.flatMap((page) => page.items) ?? [],
+        [query.data]
+    );
+
+    const hasMore = Boolean(query.hasNextPage);
+    const loadMore = useCallback(() => {
+        if (query.hasNextPage && !query.isFetchingNextPage) {
+            query.fetchNextPage();
+        }
+    }, [query]);
+
+    return {
+        questions,
+        // True on first-ever load (no data yet). Use `isFetchingNextPage` to
+        // differentiate "loading another page" from "initial empty load".
+        loading: query.isPending || roleLoading || subjectLoading,
+        isFetchingNextPage: query.isFetchingNextPage,
+        error: query.error ? (query.error as Error).message : null,
+        hasMore,
+        loadMore,
+        refetch: query.refetch,
+        // `initialFetchDone` parity for components that guard EmptyState on it.
+        initialFetchDone: !query.isPending,
+        query,
+    };
 };

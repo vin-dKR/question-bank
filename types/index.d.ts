@@ -41,31 +41,27 @@ declare global {
         flagged?: boolean
     }
 
+    /**
+     * Phase 6: server-state (questions / loading / hasMore / loadMore /
+     * refreshQuestions / pagination / totalCount / initialFetchDone / filterOptions /
+     * optionsLoading) has moved out of this context. Components that need the
+     * list call `useQuestions(...)` (or the `useQuestionsList` wrapper in
+     * `lib/context/QuestionBankContext`) directly. Everything left on the
+     * context is UI state driven by user interaction.
+     */
     interface QuestionBankContextType {
-        questions: Question[];
-        loading: boolean;
-        error: string | null;
         filters: Filters;
         setFilters: (filters: Partial<Filters>) => void;
-        pagination: Pagination;
-        setPagination: (newPagination: Pagination) => void;
-        filterOptions: FilterOptions;
-        optionsLoading: boolean;
         searchQuery: string;
         setSearchQuery: (query: string) => void;
-        totalCount: number;
-        hasMore: boolean;
-        loadMore: () => void;
-        refreshQuestions: () => void;
         toggleQuestionFlag: (id: string) => Promise<void>;
-        toggleQuestionSelection: (id: string) => void;
+        toggleQuestionSelection: (id: string, question?: Question) => void;
         getAllSelectedQuestions: () => Promise<Question[]>;
         updateQuestion: (updatedQuestion: Question) => void;
         showOnlySelected: boolean;
         setShowOnlySelected: (show: boolean) => void;
         selectedQuestions: Question[];
-        setSelectedQuestions: (questions: Question[]) => void
-        initialFetchDone: boolean
+        setSelectedQuestions: (questions: Question[]) => void;
     }
 
 

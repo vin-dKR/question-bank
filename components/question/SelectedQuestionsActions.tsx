@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { DialogCloseButton } from '../DialogCloseButton';
-import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
+import { useQuestionBankContext, useQuestionsList } from '@/lib/context/QuestionBankContext';
 import { usePDFGeneratorContext } from '@/lib/context/PDFGeneratorContext';
 import PDFGenerator from '../pdf/pdfPreview';
 
@@ -14,7 +14,11 @@ interface SelectedQuestionsActionsProps {
 export default function SelectedQuestionsActions({ showPrintBtn }: SelectedQuestionsActionsProps) {
     const router = useRouter();
     const { institution, options } = usePDFGeneratorContext();
-    const { questions, showOnlySelected, setShowOnlySelected, selectedQuestions, setSelectedQuestions } = useQuestionBankContext();
+    // Selection lives on the context (UI state); the currently-loaded list
+    // comes from TanStack Query (Phase 6). `Select All` still only selects
+    // what is currently on screen — same behavior as before the refactor.
+    const { showOnlySelected, setShowOnlySelected, selectedQuestions, setSelectedQuestions } = useQuestionBankContext();
+    const { questions } = useQuestionsList();
 
     const selectedCount = selectedQuestions.length;
 
