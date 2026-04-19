@@ -4,6 +4,7 @@ import { ClerkProvider } from '@clerk/nextjs';
 import { Inter } from 'next/font/google';
 import { Toaster } from "@/components/ui/sonner";
 import WebVitalsReporter from "@/components/perf/WebVitalsReporter";
+import { QueryProvider } from "@/provider/QueryProvider";
 
 const inter = Inter({
     subsets: ['latin'],
@@ -29,11 +30,13 @@ export default function RootLayout({
             </head>
             <body className={inter.variable}>
                 <ClerkProvider>
-                    <main className="min-h-screen bg-gray-50">
-                        {children}
-                    </main>
-                    <Toaster closeButton={true} />
-                    <WebVitalsReporter />
+                    <QueryProvider>
+                        <main className="min-h-screen bg-gray-50">
+                            {children}
+                        </main>
+                        <Toaster closeButton={true} />
+                        <WebVitalsReporter />
+                    </QueryProvider>
                 </ClerkProvider>
             </body>
         </html>
