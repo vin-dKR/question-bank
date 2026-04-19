@@ -335,7 +335,12 @@ Filled in as each phase merges into `main`. Numbers come from `bun run build` ou
 
 | Phase | Status | Notes |
 |---|---|---|
-| 7 — question mutations | 🚧 in flight | Scoped to question-bank writes (`updateQuestion`, `toggleFlag`, refine, etc.) — drafts/templates/examination mutations are follow-ups |
+| 7 — question mutations | ✅ merged | Question-bank slice: `useUpdateQuestion`, `useUpdateQuestionForm`, `useToggleQuestionFlag` (optimistic flip), `useCreateQuestion` (no optimistic — server-assigned id), `useDeleteQuestion` (optimistic remove), `useRefineQuestionText` (no DB write); all under `hooks/queries/mutations/`. `useQuestionActions` rewritten internally to compose the new hooks while keeping its 4-callback external API stable (zero churn at consumers). Reducer dispatches `TOGGLE_FLAG` / `UPDATE_QUESTION` alongside the mutation so `selectedQuestions` overlay flips in lock-step with the cache. **Follow-ups**: drafts, templates, examination, paperHistory mutations + `selectFlagged` orphan + `QuestionList`'s direct `refineTextWithAI` Promise.all callsite all left for later PRs |
+
+### Follow-up TS fixes after Phase 7 merge
+
+- `useUpdateQuestionForm`: guard `data.answer` / `data.flagged` against `null` (form input shape wider than `Question` cache shape).
+- `QuestionBankContextType`: `toggleQuestionFlag` is now `(id) => void` (mutation is fire-and-forget); `updateQuestion` narrowed to `Pick<Question, 'id' | 'question_text' | 'options'>` to match the actual signature.
 
 ### Measured wins (so far)
 
