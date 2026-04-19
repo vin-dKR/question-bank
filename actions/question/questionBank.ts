@@ -6,6 +6,58 @@ import { Prisma } from "@/generated/prisma";
 // Define proper types for Prisma where clauses
 type QuestionWhereClause = Prisma.QuestionWhereInput;
 
+/**
+ * Builds the shared `where` clause used by `getQuestions` and `getQuestionCount`.
+ * Keeps the two surfaces in lock-step so the count can never drift from the
+ * list. Teacher subject restriction is applied here (overrides caller-supplied
+ * `filters.subject`).
+ */
+function buildQuestionWhere(
+    filters: {
+        exam_name?: string;
+        subject?: string;
+        chapter?: string;
+        section_name?: string;
+        question_type?: string;
+        flagged?: boolean;
+    },
+    userRole: UserRole,
+    userSubject?: string
+): QuestionWhereClause {
+    const whereClause: QuestionWhereClause = {};
+
+    if (filters.exam_name) {
+        whereClause.exam_name = { contains: filters.exam_name, mode: "insensitive" };
+    }
+
+    if (filters.subject) {
+        whereClause.subject = { equals: filters.subject, mode: "insensitive" };
+    }
+
+    if (filters.chapter) {
+        whereClause.chapter = { contains: filters.chapter, mode: "insensitive" };
+    }
+
+    if (filters.section_name) {
+        whereClause.section_name = { equals: filters.section_name };
+    }
+
+    if (filters.question_type) {
+        whereClause.question_type = { contains: filters.question_type, mode: "insensitive" };
+    }
+
+    if (filters.flagged !== undefined) {
+        whereClause.flagged = filters.flagged;
+    }
+
+    // Enforce teacher subject restriction (overrides any caller-provided subject).
+    if (userRole === "teacher" && userSubject) {
+        whereClause.subject = { contains: userSubject, mode: "insensitive" };
+    }
+
+    return whereClause;
+}
+
 export async function getQuestions(
     filters: {
         exam_name?: string;
@@ -14,6 +66,13 @@ export async function getQuestions(
         section_name?: string;
         question_type?: string;
         flagged?: boolean;
+        // Cursor pagination (Phase 6). When `cursor` is provided, results start
+        // AFTER that id. `take` defaults to 20 and is the page size.
+        cursor?: string | null;
+        take?: number;
+        // Legacy skip/limit — kept for backwards compatibility with the
+        // `app/api/questions/get-all` route and any other non-migrated caller.
+        // When set, cursor/take are ignored.
         limit?: number;
         skip?: number;
     },
@@ -21,38 +80,42 @@ export async function getQuestions(
     userSubject?: string
 ) {
     try {
-        let whereClause: QuestionWhereClause = {};
+        const whereClause = buildQuestionWhere(filters, userRole, userSubject);
 
-        if (filters.exam_name) {
-            whereClause.exam_name = { contains: filters.exam_name, mode: "insensitive" };
+        // Legacy skip/limit branch — preserves the old `{ data }` shape so
+        // existing callers (e.g. /api/questions/get-all) don't break.
+        if (filters.skip !== undefined || filters.limit !== undefined) {
+            const questions = await prisma.question.findMany({
+                where: whereClause,
+                select: {
+                    id: true,
+                    question_text: true,
+                    question_image: true,
+                    options: true,
+                    option_images: true,
+                    answer: true,
+                    isOptionImage: true,
+                    exam_name: true,
+                    subject: true,
+                    chapter: true,
+                    section_name: true,
+                    flagged: true,
+                },
+                take: filters.limit ?? 20,
+                skip: filters.skip ?? 0,
+                orderBy: { question_number: "asc" },
+            });
+
+            return { success: true, data: questions };
         }
 
-        if (filters.subject) {
-            whereClause.subject = { equals: filters.subject, mode: "insensitive" };
-        }
+        // Cursor-paginated branch (Phase 6). Fetches `take + 1` rows so we can
+        // tell whether another page exists; the extra row becomes the cursor
+        // for the next fetch and is NOT returned in `items`.
+        const take = filters.take ?? 20;
+        const cursor = filters.cursor ?? null;
 
-        if (filters.chapter) {
-            whereClause.chapter = { contains: filters.chapter, mode: "insensitive" };
-        }
-
-        if (filters.section_name) {
-            whereClause.section_name = { equals: filters.section_name };
-        }
-
-        if (filters.question_type) {
-            whereClause.question_type = { contains: filters.question_type, mode: "insensitive" }
-        }
-
-        if (filters.flagged !== undefined) {
-            whereClause.flagged = filters.flagged;
-        }
-
-        // Enforce teacher subject restriction
-        if (userRole === "teacher" && userSubject) {
-            whereClause.subject = { contains: userSubject, mode: "insensitive" };
-        }
-
-        const questions = await prisma.question.findMany({
+        const rows = await prisma.question.findMany({
             where: whereClause,
             select: {
                 id: true,
@@ -68,12 +131,26 @@ export async function getQuestions(
                 section_name: true,
                 flagged: true,
             },
-            take: filters.limit || 20,
-            skip: filters.skip || 0,
-            orderBy: { question_number: "asc" },
+            take: take + 1,
+            skip: cursor ? 1 : 0,
+            cursor: cursor ? { id: cursor } : undefined,
+            orderBy: { id: "asc" },
         });
 
-        return { success: true, data: questions };
+        let nextCursor: string | null = null;
+        if (rows.length > take) {
+            const nextRow = rows.pop();
+            nextCursor = nextRow?.id ?? null;
+        }
+
+        // Keep a `data` alias so any legacy code path that destructures
+        // `{ data }` from the response keeps working during the migration.
+        return {
+            success: true,
+            items: rows,
+            nextCursor,
+            data: rows,
+        };
     } catch (error) {
         console.error("Error fetching questions:", error);
 
@@ -96,7 +173,7 @@ export async function getQuestions(
             userSubject
         });
 
-        return { success: false, data: [], error: errorMessage };
+        return { success: false, data: [], items: [], nextCursor: null, error: errorMessage };
     }
 }
 
@@ -106,52 +183,20 @@ export async function getQuestionCount(
         subject?: string;
         chapter?: string;
         section_name?: string;
+        question_type?: string;
         flagged?: boolean;
-        limit: number | undefined
-        skip: number | undefined
+        limit?: number | undefined;
+        skip?: number | undefined;
     },
     userRole: UserRole,
     userSubject?: string
 ) {
     try {
-        let whereClause: QuestionWhereClause = {};
-
-        if (filters.exam_name) {
-            whereClause.exam_name = { contains: filters.exam_name, mode: "insensitive" };
-        }
-
-        if (filters.subject) {
-            whereClause.subject = { contains: filters.subject, mode: "insensitive" };
-        }
-
-        if (filters.chapter) {
-            whereClause.chapter = { contains: filters.chapter, mode: "insensitive" };
-        }
-
-        if (filters.section_name) {
-            whereClause.section_name = { equals: filters.section_name };
-        }
-
-        if (filters.flagged !== undefined) {
-            whereClause.flagged = filters.flagged;
-        }
-
-        // Enforce teacher subject restriction
-        if (userRole === "teacher" && userSubject) {
-            whereClause.subject = { contains: userSubject, mode: "insensitive" };
-        }
-
-        {/*
-        console.log('getQuestionCount - Filters received:', filters);
-        console.log('getQuestionCount - User role:', userRole, 'userSubject:', userSubject);
-        console.log('getQuestionCount - Final whereClause:', JSON.stringify(whereClause, null, 2));
-        */}
+        const whereClause = buildQuestionWhere(filters, userRole, userSubject);
 
         const count = await prisma.question.count({
             where: whereClause,
         });
-
-        // console.log('getQuestionCount - Count result:', count);
 
         return { success: true, data: count };
     } catch (error) {

@@ -8,17 +8,16 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { Button } from '@/components/ui/button';
 import { renderMixedLatex } from '@/lib/render-tex';
 import { refineTextWithAI } from '@/lib/ai/aiService';
-import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
+import { useQuestionBankContext, useQuestionsList } from '@/lib/context/QuestionBankContext';
 import LoadingState from './question-list/LoadingState';
 import ErrorState from './question-list/ErrorState';
 import EmptyState from './question-list/EmptyState';
 import SelectedQuestionsBanner from './question-list/SelectedQuestionsBanner';
-import PaginationControls from './question-list/PaginationControls';
 
 interface QuestionProps {
     question: Question;
     isSelected: boolean;
-    toggleQuestionSelection: (id: string) => void;
+    toggleQuestionSelection: (id: string, question?: Question) => void;
     toggleQuestionFlag: (id: string) => void;
     userRole?: 'coaching' | 'teacher' | 'student';
 }
@@ -174,7 +173,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                 <input
                     type="checkbox"
                     checked={isSelected}
-                    onChange={() => toggleQuestionSelection(question.id)}
+                    onChange={() => toggleQuestionSelection(question.id, question)}
                     className="mt-1 mr-2 sm:mr-3 h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
                 />
                 <div className="flex-1 w-full text-wrap">
@@ -393,31 +392,28 @@ const ROW_GAP_PX = 16;
 const ESTIMATED_ROW_HEIGHT_PX = 200;
 
 const QuestionList = memo(() => {
+    // UI state from context, server list from TanStack Query (Phase 6).
     const {
-        error,
-        loading,
-        questions,
         showOnlySelected,
         toggleQuestionFlag,
         toggleQuestionSelection,
-        totalCount,
-        pagination,
-        setPagination,
-        hasMore,
         selectedQuestions,
-        initialFetchDone,
     } = useQuestionBankContext();
+
+    const {
+        questions,
+        loading,
+        error,
+        hasMore,
+        loadMore,
+        isFetchingNextPage,
+        initialFetchDone,
+    } = useQuestionsList();
 
     const displayedQuestions = useMemo(
         () => (showOnlySelected ? selectedQuestions : questions),
         [showOnlySelected, selectedQuestions, questions]
     );
-
-    const displayedTotal = useMemo(() => (showOnlySelected ? selectedQuestions.length : totalCount), [
-        showOnlySelected,
-        selectedQuestions.length,
-        totalCount,
-    ]);
 
     // O(1) selected lookup so each row's `isSelected` prop is cheap to derive
     // without scanning `selectedQuestions` (which was the original O(n*m) hit).
@@ -430,29 +426,13 @@ const QuestionList = memo(() => {
     // own props haven't changed (selection toggles only invalidate the row
     // whose `isSelected` flipped).
     const handleToggleQuestionSelection = useCallback(
-        (id: string) => toggleQuestionSelection(id),
+        (id: string, question?: Question) => toggleQuestionSelection(id, question),
         [toggleQuestionSelection],
     );
     const handleToggleQuestionFlag = useCallback(
         (id: string) => toggleQuestionFlag(id),
         [toggleQuestionFlag],
     );
-
-    const handlePrevious = useCallback(() => {
-        if (pagination.page > 1) {
-            setPagination({ ...pagination, page: pagination.page - 1 });
-        }
-    }, [pagination, setPagination]);
-
-    const handleNext = useCallback(() => {
-        if (pagination.page * pagination.limit < totalCount) {
-            setPagination({ ...pagination, page: pagination.page + 1 });
-        }
-    }, [pagination, totalCount, setPagination]);
-
-    const handleLoadMore = useCallback(() => {
-        setPagination({ ...pagination, limit: pagination.limit + 20 });
-    }, [pagination, setPagination]);
 
     // Virtualization: window the rendered question rows so we don't pay React
     // / react-katex render cost for the off-screen ~99% of a 2000-question list.
@@ -536,18 +516,19 @@ const QuestionList = memo(() => {
                     </div>
                 )}
 
-                {!showOnlySelected && displayedQuestions.length > 0 && (
-                    <PaginationControls
-                        currentPage={pagination.page}
-                        limit={pagination.limit}
-                        totalCount={displayedTotal}
-                        hasMore={hasMore}
-                        onPrevious={handlePrevious}
-                        onNext={handleNext}
-                        onLoadMore={handleLoadMore}
-                        showOnlySelected={showOnlySelected}
-                        pagination={pagination}
-                    />
+                {!showOnlySelected && displayedQuestions.length > 0 && hasMore && (
+                    // Cursor-paginated infinite scroll (Phase 6). The previous
+                    // `pagination.page` / "Previous" / "Next" model is gone — all
+                    // navigation forward now happens through this Load More.
+                    <div className="flex justify-center bg-white p-3 sm:p-4 rounded-xl shadow-md border border-slate-200">
+                        <button
+                            onClick={loadMore}
+                            disabled={isFetchingNextPage}
+                            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm sm:text-base hover:bg-indigo-700 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isFetchingNextPage ? 'Loading...' : 'Load More'}
+                        </button>
+                    </div>
                 )}
             </div>
         </div>
