@@ -5,7 +5,6 @@ import { useQuestionBankReducer } from '@/hooks/reducer/useQuestionBankReducer';
 import { useUserRole } from '@/hooks/auth/useUserRole';
 import { useUserSubject } from '@/hooks/auth/useUserSubject';
 import { useFetchQuestions } from '@/hooks/question/useFetchQuestions';
-import { useFetchFilterOptions } from '@/hooks/question/useFetchFilterOptions';
 import { usePersistentSelection } from '@/hooks/question/usePersistentSelection';
 import { useQuestionActions } from '@/hooks/question/useQuestionActions';
 
@@ -22,7 +21,11 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
 
     const fetchQuestions = useFetchQuestions(filters, pagination, searchQuery, role || 'student', isTeacher, dispatch, subject || '');
 
-    const fetchFilterOptions = useFetchFilterOptions(filters, role || 'student', isTeacher, dispatch, subject || filters.subject?.toLowerCase() || '');
+    // Filter-option fetching has moved to the TanStack Query hook
+    // `hooks/queries/useFilterOptions.ts`, consumed directly by FilterControls.
+    // The `filterOptions` / `optionsLoading` fields on this context now hold
+    // the reducer's initial empty defaults; Phase 6 removes them from the
+    // context shape entirely.
 
     usePersistentSelection(selectedQuestions, showOnlySelected, dispatch);
 
@@ -48,13 +51,6 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
             fetchQuestions();
         }
     }, [fetchQuestions, roleLoading, role]);
-
-    // Fetch filter options when dependencies change
-    useEffect(() => {
-        if (!roleLoading && role) {
-            fetchFilterOptions();
-        }
-    }, [fetchFilterOptions, roleLoading, role]);
 
     const value = useMemo<QuestionBankContextType>(
         () => ({

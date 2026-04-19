@@ -33,8 +33,6 @@ export type QuestionBankAction =
     | { type: 'SET_ERROR'; error: string | null }
     | { type: 'SET_FILTERS'; filters: Partial<Filters> }
     | { type: 'SET_PAGINATION'; pagination: Pagination }
-    | { type: 'SET_FILTER_OPTIONS'; options: FilterOptions }
-    | { type: 'SET_OPTIONS_LOADING'; loading: boolean }
     | { type: 'SET_SEARCH_QUERY'; query: string }
     | { type: 'TOGGLE_FLAG'; id: string }
     | { type: 'UPDATE_QUESTION'; updatedQuestion: Pick<Question, 'id' | 'question_text' | 'options'> }
@@ -78,10 +76,6 @@ const reducer = (state: QuestionBankState, action: QuestionBankAction): Question
             return { ...state, filters: { ...state.filters, ...action.filters } };
         case 'SET_PAGINATION':
             return { ...state, pagination: action.pagination };
-        case 'SET_FILTER_OPTIONS':
-            return { ...state, filterOptions: action.options };
-        case 'SET_OPTIONS_LOADING':
-            return { ...state, optionsLoading: action.loading };
         case 'SET_SEARCH_QUERY':
             return { ...state, searchQuery: action.query };
         case 'TOGGLE_FLAG':
