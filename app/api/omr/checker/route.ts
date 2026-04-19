@@ -63,7 +63,7 @@ export async function POST(req: Request) {
 
         for (const answer of answers) {
             const question = test.questions.find((q) => q.questionId === answer.questionId);
-            if (question && question.question.answer === answer.selectedAnswer) {
+            if (question && question.question?.answer === answer.selectedAnswer) {
                 score += question.marks;
             }
         }

@@ -118,10 +118,12 @@ async function main() {
                 percentage: response.percentage,
                 timeTaken: response.timeTaken,
                 answers: {
-                    create: response.answers.map(answer => ({
-                        questionId: answer.questionId,
-                        selectedAnswer: answer.selectedAnswer,
-                    })),
+                    create: response.answers
+                        .filter((answer): answer is { questionId: string; selectedAnswer: string } => answer.questionId !== null)
+                        .map(answer => ({
+                            questionId: answer.questionId,
+                            selectedAnswer: answer.selectedAnswer,
+                        })),
                 },
             },
         });

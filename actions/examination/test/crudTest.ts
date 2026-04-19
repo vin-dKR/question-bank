@@ -223,6 +223,14 @@ export const getTestById = async (testId: string): Promise<Partial<ExaminationTe
                                 answer: true,
                             },
                         },
+                        schoolTestQuestion: {
+                            select: {
+                                id: true,
+                                question_text: true,
+                                options: true,
+                                answer: true,
+                            },
+                        },
                     },
                 },
                 _count: {
