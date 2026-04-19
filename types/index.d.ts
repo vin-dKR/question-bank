@@ -54,10 +54,10 @@ declare global {
         setFilters: (filters: Partial<Filters>) => void;
         searchQuery: string;
         setSearchQuery: (query: string) => void;
-        toggleQuestionFlag: (id: string) => Promise<void>;
+        toggleQuestionFlag: (id: string) => void;
         toggleQuestionSelection: (id: string, question?: Question) => void;
         getAllSelectedQuestions: () => Promise<Question[]>;
-        updateQuestion: (updatedQuestion: Question) => void;
+        updateQuestion: (updatedQuestion: Pick<Question, 'id' | 'question_text' | 'options'>) => void;
         showOnlySelected: boolean;
         setShowOnlySelected: (show: boolean) => void;
         selectedQuestions: Question[];

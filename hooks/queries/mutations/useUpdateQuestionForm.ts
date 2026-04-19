@@ -75,14 +75,16 @@ export function useUpdateQuestionForm() {
                                     next.question_image = data.question_image;
                                 if (data.isOptionImage !== undefined)
                                     next.isOptionImage = data.isOptionImage;
-                                if (data.answer !== undefined) next.answer = data.answer;
+                                if (data.answer !== undefined && data.answer !== null)
+                                    next.answer = data.answer;
                                 if (data.exam_name !== undefined)
                                     next.exam_name = data.exam_name;
                                 if (data.subject !== undefined) next.subject = data.subject;
                                 if (data.chapter !== undefined) next.chapter = data.chapter;
                                 if (data.section_name !== undefined)
                                     next.section_name = data.section_name;
-                                if (data.flagged !== undefined) next.flagged = data.flagged;
+                                if (data.flagged !== undefined && data.flagged !== null)
+                                    next.flagged = data.flagged;
                                 return next;
                             }),
                         })),
