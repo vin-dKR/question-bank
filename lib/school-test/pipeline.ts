@@ -31,9 +31,12 @@ const PREVIEW_MAX_DIM = 1600;
 
 export type PipelineInput = { buffer: Buffer; mime: string };
 
-async function pagesFromSingle(input: PipelineInput): Promise<Omit<PageImage, "pageNumber">[]> {
+export async function pagesFromSingle(
+    input: PipelineInput,
+    { dpi }: { dpi?: number } = {},
+): Promise<Omit<PageImage, "pageNumber">[]> {
     if (input.mime === "application/pdf") {
-        const pages = await rasterizePdf(input.buffer);
+        const pages = await rasterizePdf(input.buffer, dpi);
         return pages.map((p) => ({ buffer: p.buffer, width: p.width, height: p.height }));
     }
 
@@ -63,7 +66,7 @@ async function pageImagesFromInputs(inputs: PipelineInput[]): Promise<PageImage[
     return out;
 }
 
-async function previewImage(
+export async function previewImage(
     pagePng: Buffer,
     width: number,
     height: number,
@@ -145,9 +148,62 @@ function rescaleBbox(
 }
 
 /**
- * Run the full pipeline and yield ProcessEvents in order.
- * Pages are processed sequentially so the UI timeline reads naturally and so
- * we don't hit OpenAI rate limits on long PDFs. If needed, bump concurrency later.
+ * Process one already-rasterized page: detect diagrams, extract questions,
+ * crop. This is the single-page entry point used by the Netlify-friendly
+ * `/api/school-test/process-page` route — each invocation stays under the 30 s
+ * sync-function cap because it only does work for one page.
+ *
+ * The input buffer is expected to already be at preview resolution (≤ 1600 px
+ * longest side); both detection and cropping operate on it directly.
+ */
+export async function processPage(
+    pagePng: Buffer,
+    width: number,
+    height: number,
+    pageNumber: number,
+    provider: Provider = "openai",
+): Promise<PageResult> {
+    const preview = await runStage("preview", () =>
+        previewImage(pagePng, width, height),
+    );
+
+    const detectionsPreview = await runStage("detect", () =>
+        detectDiagrams(preview.buffer, preview.width, preview.height, provider),
+    );
+    const detectionsFull = rescaleDetections(
+        detectionsPreview,
+        preview.width,
+        preview.height,
+        width,
+        height,
+    );
+
+    const questions = await runStage("extract", () =>
+        extractQuestions(preview.buffer, pageNumber),
+    );
+
+    const cropsFull = await runStage("crop", () =>
+        cropDetections(pagePng, width, height, detectionsFull, pageNumber),
+    );
+    const crops = cropsFull.map((c) => ({
+        ...c,
+        bbox: rescaleBbox(c.bbox, width, height, preview.width, preview.height),
+    }));
+
+    return {
+        pageNumber,
+        sourceDataUrl: preview.dataUrl,
+        sourceWidth: preview.width,
+        sourceHeight: preview.height,
+        questions,
+        crops,
+    };
+}
+
+/**
+ * Legacy streaming entry point. Kept for completeness but no longer wired up —
+ * the whole-document run easily exceeds Netlify's 30 s sync-function cap for
+ * multi-page PDFs. New code should call `processPage` per page instead.
  */
 export async function* runPipeline(
     inputs: PipelineInput[],

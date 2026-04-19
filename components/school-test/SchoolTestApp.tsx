@@ -3,7 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
-import type { PageResult, ProcessEvent } from "@/lib/school-test/types";
+import type { PageResult, PreparedPage } from "@/lib/school-test/types";
 import { UploadZone } from "./UploadZone";
 import { ProcessingPanel, type PageStatus } from "./ProcessingPanel";
 import { Verifier } from "./Verifier";
@@ -39,177 +39,156 @@ export default function SchoolTestApp() {
         const controller = new AbortController();
         abortRef.current = controller;
 
-        const body = new FormData();
-        for (const f of files) body.append("file", f);
+        // Step 1 — prepare: rasterize PDFs / normalize images on the server.
+        // Stays well under Netlify's 30 s sync-function cap because no vision
+        // calls happen here.
+        const prepareBody = new FormData();
+        for (const f of files) prepareBody.append("file", f);
 
-        let response: Response;
+        let prepared: PreparedPage[];
         try {
-            response = await fetch("/api/school-test/process", {
+            const resp = await fetch("/api/school-test/prepare", {
                 method: "POST",
-                body,
+                body: prepareBody,
                 signal: controller.signal,
             });
+            if (!resp.ok) {
+                const text = await resp.text().catch(() => "");
+                const detail = text.trim() || resp.statusText || "no response body";
+                toast.error(`Prepare failed (HTTP ${resp.status}): ${detail}`);
+                setPhase("idle");
+                return;
+            }
+            const data = (await resp.json()) as { pages?: PreparedPage[] };
+            if (!Array.isArray(data.pages) || data.pages.length === 0) {
+                toast.error("Prepare returned no pages.");
+                setPhase("idle");
+                return;
+            }
+            prepared = data.pages;
         } catch (e) {
             const err = e as Error;
             if (err.name === "AbortError") return;
-            // TypeError from fetch means the request never reached the server
-            // (DNS, offline, CORS, connection reset). Distinguish that from
-            // server-reported errors so the user knows where to look.
-            const hint = err.name === "TypeError" ? "Network error — the request never reached the server. " : "";
-            toast.error(`Upload failed: ${hint}${err.name}: ${err.message}`);
+            const hint = err.name === "TypeError"
+                ? "Network error — the request never reached the server. "
+                : "";
+            toast.error(`Prepare failed: ${hint}${err.name}: ${err.message}`);
             setPhase("idle");
             return;
         }
 
-        if (!response.ok || !response.body) {
-            const text = await response.text().catch(() => "");
-            const detail = text.trim() || response.statusText || "no response body";
-            toast.error(`Request failed (HTTP ${response.status}): ${detail}`);
-            setPhase("idle");
-            return;
-        }
+        setPageStatuses(
+            prepared.map((p) => ({
+                page: p.pageNumber,
+                stage: "pending",
+                detections: 0,
+                questions: 0,
+            })),
+        );
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffered = "";
+        // Step 2 — process each page in its own request. One vision-pipeline
+        // cycle per invocation fits comfortably in the 30 s cap.
         const collected: PageResult[] = [];
+        let stoppedEarly = false;
 
-        const handleEvent = (event: ProcessEvent) => {
-            switch (event.type) {
-                case "page-count": {
-                    setPageStatuses(
-                        Array.from({ length: event.total }, (_, i) => ({
-                            page: i + 1,
-                            stage: "pending",
-                            detections: 0,
-                            questions: 0,
-                        })),
-                    );
-                    return;
-                }
-                case "page-start": {
-                    setPageStatuses((prev) =>
-                        prev.map((p) => (p.page === event.page ? { ...p, stage: "detecting" } : p)),
-                    );
-                    return;
-                }
-                case "page-detected": {
-                    setPageStatuses((prev) =>
-                        prev.map((p) =>
-                            p.page === event.page
-                                ? { ...p, stage: "extracting", detections: event.detectionCount }
-                                : p,
-                        ),
-                    );
-                    return;
-                }
-                case "page-extracted": {
-                    setPageStatuses((prev) =>
-                        prev.map((p) =>
-                            p.page === event.page
-                                ? { ...p, stage: "cropping", questions: event.questionCount }
-                                : p,
-                        ),
-                    );
-                    return;
-                }
-                case "page-done": {
-                    collected.push(event.result);
-                    setPageStatuses((prev) =>
-                        prev.map((p) => (p.page === event.page ? { ...p, stage: "done" } : p)),
-                    );
-                    setResults([...collected].sort((a, b) => a.pageNumber - b.pageNumber));
-                    return;
-                }
-                case "error": {
-                    if (event.page) {
-                        setPageStatuses((prev) =>
-                            prev.map((p) =>
-                                p.page === event.page ? { ...p, stage: "error", error: event.message } : p,
-                            ),
-                        );
-                    } else {
-                        toast.error(event.message);
-                    }
-                    return;
-                }
-                case "complete":
-                    return;
+        for (const page of prepared) {
+            if (controller.signal.aborted) {
+                stoppedEarly = true;
+                break;
             }
-        };
 
-        let sawComplete = false;
-        try {
-            while (true) {
-                const { value, done } = await reader.read();
-                if (done) break;
-                buffered += decoder.decode(value, { stream: true });
-                let newlineAt: number;
-                while ((newlineAt = buffered.indexOf("\n")) !== -1) {
-                    const line = buffered.slice(0, newlineAt).trim();
-                    buffered = buffered.slice(newlineAt + 1);
-                    if (!line) continue;
-                    try {
-                        const ev = JSON.parse(line) as ProcessEvent;
-                        if (ev.type === "complete") sawComplete = true;
-                        handleEvent(ev);
-                    } catch (parseErr) {
-                        // Malformed line usually means the server wrote partial
-                        // bytes before dying. Surface it so the user sees the
-                        // raw tail instead of silently continuing.
-                        console.warn("[school-test] bad event line:", line, parseErr);
-                    }
-                }
-            }
-        } catch (e) {
-            const err = e as Error;
-            if (err.name !== "AbortError") {
-                toast.error(`Stream read failed — ${err.name}: ${err.message}`);
-            }
-            setPhase("idle");
-            return;
-        }
-
-        // Ask React for the latest pageStatuses snapshot so we can describe what
-        // actually happened. The server sent "complete" only if runPipeline ran
-        // to the end; missing that flag means the stream was cut off (Lambda
-        // timeout, response-size cap, proxy killed us, etc.).
-        setPageStatuses((current) => {
-            const errored = current.filter((p) => p.stage === "error");
-            const stuck = current.filter(
-                (p) => p.stage !== "done" && p.stage !== "error",
+            setPageStatuses((prev) =>
+                prev.map((p) => (p.page === page.pageNumber ? { ...p, stage: "detecting" } : p)),
             );
 
+            let resp: Response;
+            try {
+                resp = await fetch("/api/school-test/process-page", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(page),
+                    signal: controller.signal,
+                });
+            } catch (e) {
+                const err = e as Error;
+                if (err.name === "AbortError") {
+                    stoppedEarly = true;
+                    break;
+                }
+                const hint = err.name === "TypeError"
+                    ? "Network error — the request never reached the server."
+                    : `${err.name}: ${err.message}`;
+                setPageStatuses((prev) =>
+                    prev.map((p) =>
+                        p.page === page.pageNumber ? { ...p, stage: "error", error: hint } : p,
+                    ),
+                );
+                continue;
+            }
+
+            if (!resp.ok) {
+                const text = await resp.text().catch(() => "");
+                const detail = text.trim() || resp.statusText || `HTTP ${resp.status}`;
+                setPageStatuses((prev) =>
+                    prev.map((p) =>
+                        p.page === page.pageNumber ? { ...p, stage: "error", error: detail } : p,
+                    ),
+                );
+                continue;
+            }
+
+            let result: PageResult;
+            try {
+                const data = (await resp.json()) as { result?: PageResult };
+                if (!data.result) throw new Error("Missing result field in response");
+                result = data.result;
+            } catch (e) {
+                const err = e as Error;
+                setPageStatuses((prev) =>
+                    prev.map((p) =>
+                        p.page === page.pageNumber
+                            ? { ...p, stage: "error", error: `Bad response: ${err.message}` }
+                            : p,
+                    ),
+                );
+                continue;
+            }
+
+            collected.push(result);
+            setPageStatuses((prev) =>
+                prev.map((p) =>
+                    p.page === page.pageNumber
+                        ? {
+                              ...p,
+                              stage: "done",
+                              detections: result.crops.length,
+                              questions: result.questions.length,
+                          }
+                        : p,
+                ),
+            );
+            setResults([...collected].sort((a, b) => a.pageNumber - b.pageNumber));
+        }
+
+        // Final reconciliation — identical UX to before: if anything errored /
+        // was skipped, surface it so it doesn't vanish when we jump to verify.
+        setPageStatuses((current) => {
+            const errored = current.filter((p) => p.stage === "error");
+
             if (collected.length === 0) {
-                // Nothing to show in the Verifier. Stay on the processing view
-                // so per-page badges remain visible.
                 if (errored.length > 0 && errored[0].error) {
                     toast.error(errored[0].error);
-                } else if (!sawComplete && current.length > 0) {
-                    toast.error(
-                        `Stream ended before any page finished (${stuck.length} of ${current.length} still in progress). ` +
-                        `Usually a server timeout or response-size cap — check server logs.`,
-                    );
-                } else if (!sawComplete) {
-                    toast.error(
-                        "Stream closed before any data arrived. Check server logs for the underlying error.",
-                    );
+                } else if (stoppedEarly) {
+                    // Aborted before anything finished — silent, user clicked cancel.
                 } else {
-                    toast.error("Processing finished but no pages were returned. Check server logs.");
+                    toast.error("No pages were processed. Check server logs.");
                 }
                 return current;
             }
 
-            // We have at least one completed page — move to verify, but don't
-            // let errored / stuck pages disappear silently.
             if (errored.length > 0) {
                 toast.error(
                     `${errored.length} page${errored.length === 1 ? "" : "s"} failed: ${errored[0].error ?? "unknown"}${errored.length > 1 ? " (…)" : ""}`,
-                );
-            }
-            if (!sawComplete && stuck.length > 0) {
-                toast.error(
-                    `Stream ended with ${stuck.length} page${stuck.length === 1 ? "" : "s"} still in progress. Only completed pages are shown.`,
                 );
             }
             return current;

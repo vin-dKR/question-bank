@@ -23,6 +23,15 @@ export type Crop = {
     dataUrl: string;
 };
 
+/** Output of the `/api/school-test/prepare` route — one entry per page. */
+export type PreparedPage = {
+    pageNumber: number;
+    /** base64 data URL, image/png at preview resolution */
+    dataUrl: string;
+    width: number;
+    height: number;
+};
+
 export type PageResult = {
     pageNumber: number;
     /** base64 data URL of the source page image (PNG) */
