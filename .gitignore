@@ -14,6 +14,9 @@
 .vscode
 .kiro
 
+# Claude Code worktrees + session cache
+.claude/
+
 # testing
 /coverage
 
