@@ -1,10 +1,9 @@
 'use client';
 
-import { FileText, Eye } from 'lucide-react';
+import { FileText, Download, AlertCircle, Loader2, FileQuestion, FileCheck2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
 
 import PDFBlobViewer from './PDFBlobViewer';
 
@@ -17,15 +16,16 @@ interface RealTimePDFPreviewProps {
     selectedQuestions: QuestionForCreateTestData[];
 }
 
+type Tab = 'questions' | 'answers';
+
 export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: RealTimePDFPreviewProps) {
-    const [activeTab, setActiveTab] = useState<'questions' | 'answers'>('questions');
+    const [activeTab, setActiveTab] = useState<Tab>('questions');
     const [questionHtml, setQuestionHtml] = useState<string | null>(null);
     const [answerHtml, setAnswerHtml] = useState<string | null>(null);
-    const [isGeneratingPdf, setIsGeneratingPdf] = useState<'questions' | 'answers' | null>(null);
+    const [isGeneratingPdf, setIsGeneratingPdf] = useState<Tab | null>(null);
     const [error, setError] = useState<string | null>(null);
     const generationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    // PDF options for downloads
     const pdfOptions = useMemo(
         () => ({
             includeAnswers: false,
@@ -46,7 +46,6 @@ export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: R
         []
     );
 
-    // Generate HTML for questions preview
     const questionHtmlContent = useMemo(() => {
         if (selectedQuestions.length === 0 || !pdfFormData.exam || !pdfFormData.subject) {
             return null;
@@ -78,7 +77,6 @@ export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: R
         pdfOptions,
     ]);
 
-    // Generate HTML for answers preview
     const answerHtmlContent = useMemo(() => {
         if (selectedQuestions.length === 0 || !pdfFormData.exam || !pdfFormData.subject) {
             return null;
@@ -104,7 +102,6 @@ export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: R
         pdfOptions,
     ]);
 
-    // Update HTML content on state changes
     useEffect(() => {
         if (generationTimeoutRef.current) {
             clearTimeout(generationTimeoutRef.current);
@@ -112,7 +109,7 @@ export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: R
         generationTimeoutRef.current = setTimeout(() => {
             setQuestionHtml(questionHtmlContent);
             setAnswerHtml(answerHtmlContent);
-        }, 300); // 300ms debounce for smooth updates
+        }, 300);
 
         return () => {
             if (generationTimeoutRef.current) {
@@ -121,7 +118,6 @@ export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: R
         };
     }, [questionHtmlContent, answerHtmlContent]);
 
-    // Generate PDF for download (questions)
     const generateQuestionPDF = useCallback(async () => {
         if (selectedQuestions.length === 0) {
             setError('No questions available for download');
@@ -156,7 +152,7 @@ export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: R
                 link.href = pdfUrl;
                 link.download = `${pdfFormData.exam}_questions.pdf`;
                 link.click();
-                URL.revokeObjectURL(pdfUrl); // Clean up immediately after download
+                URL.revokeObjectURL(pdfUrl);
             } else {
                 setError('Failed to generate question PDF: ' + blob.errorMessage);
             }
@@ -168,7 +164,6 @@ export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: R
         }
     }, [selectedQuestions, pdfFormData, pdfOptions]);
 
-    // Generate PDF for download (answers)
     const generateAnswerPDF = useCallback(async () => {
         if (selectedQuestions.length === 0) {
             setError('No questions available for download');
@@ -203,7 +198,7 @@ export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: R
                 link.href = pdfUrl;
                 link.download = `${pdfFormData.exam}_answers.pdf`;
                 link.click();
-                URL.revokeObjectURL(pdfUrl); // Clean up immediately after download
+                URL.revokeObjectURL(pdfUrl);
             } else {
                 setError('Failed to generate answer PDF: ' + blob.errorMessage);
             }
@@ -215,84 +210,111 @@ export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: R
         }
     }, [selectedQuestions, pdfFormData, pdfOptions]);
 
+    const isGenerating = isGeneratingPdf === activeTab;
+    const currentHtml = activeTab === 'questions' ? questionHtml : answerHtml;
+    const currentDownload = activeTab === 'questions' ? generateQuestionPDF : generateAnswerPDF;
+    const hasContent = selectedQuestions.length > 0 && pdfFormData.exam && pdfFormData.subject;
+
     return (
-        <Card className="h-full overflow-auto">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <FileText className="w-5 h-5" />
-                    Preview
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="h-full flex flex-col">
-                <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'questions' | 'answers')} className="flex-1 flex flex-col">
-                    <TabsList className="grid w-full grid-cols-2 rounded-none border-b">
-                        <TabsTrigger value="questions" className={`flex items-center gap-2 rounded-xl ${activeTab === 'questions'
-                            ? 'bg-black text-white shadow-lg'
-                            : 'bg-white text-gray-700 hover:bg-gray-200'}`}>
-                            <Eye className="w-4 h-4" />
-                            Questions
-                        </TabsTrigger>
-                        <TabsTrigger value="answers" className={`flex items-center gap-2 rounded-xl ${activeTab === 'answers'
-                            ? 'bg-black text-white shadow-lg'
-                            : 'bg-white text-gray-700 hover:bg-gray-200'}`}>
-                            <Eye className="w-4 h-4" />
-                            Answers
-                        </TabsTrigger>
-                    </TabsList>
+        <div className="flex h-full flex-col overflow-hidden rounded-xl border border-black/5 bg-white shadow-xs">
+            {/* Header */}
+            <div className="flex items-center justify-between gap-3 border-b border-black/5 px-4 py-3">
+                <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-md bg-indigo-50 text-indigo-600">
+                        <FileText className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-sm font-semibold tracking-tight text-zinc-900">Live Preview</p>
+                        <p className="text-[11px] text-zinc-500 truncate">
+                            {hasContent
+                                ? `${selectedQuestions.length} question${selectedQuestions.length === 1 ? '' : 's'} · updates live`
+                                : 'Fill in test details to preview'}
+                        </p>
+                    </div>
+                </div>
+                <Button
+                    onClick={currentDownload}
+                    disabled={isGenerating || selectedQuestions.length === 0}
+                    size="sm"
+                    className="flex-shrink-0"
+                >
+                    {isGenerating ? (
+                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                    ) : (
+                        <Download className="w-3.5 h-3.5 mr-1.5" />
+                    )}
+                    <span className="hidden sm:inline">
+                        {isGenerating ? 'Generating…' : 'Download'}
+                    </span>
+                    <span className="sm:hidden">
+                        {isGenerating ? '…' : 'PDF'}
+                    </span>
+                </Button>
+            </div>
 
-                    <TabsContent value="questions" className="flex-1 mt-4">
-                        <div className="h-full flex flex-col pb-2">
-                            <div className="flex justify-between items-center mb-4 border-b pb-2">
-                                <h3 className="text-lg font-semibold">Question Paper Preview</h3>
-                                <div className="flex gap-2">
-                                    <Button
-                                        onClick={generateQuestionPDF}
-                                        disabled={isGeneratingPdf === 'questions' || selectedQuestions.length === 0}
-                                        size="sm"
-                                        className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                                    >
-                                        Download
-                                    </Button>
-                                </div>
-                            </div>
+            {/* Segmented tabs */}
+            <div className="border-b border-black/5 px-3 py-2">
+                <div className="inline-flex items-center rounded-lg bg-zinc-100 p-0.5 w-full sm:w-auto">
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('questions')}
+                        className={cn(
+                            "inline-flex flex-1 sm:flex-none items-center justify-center gap-1.5 rounded-md px-3 h-7 text-xs font-medium transition-all",
+                            activeTab === 'questions'
+                                ? 'bg-white text-zinc-900 shadow-xs'
+                                : 'text-zinc-500 hover:text-zinc-900'
+                        )}
+                    >
+                        <FileQuestion className="w-3 h-3" />
+                        Questions
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('answers')}
+                        className={cn(
+                            "inline-flex flex-1 sm:flex-none items-center justify-center gap-1.5 rounded-md px-3 h-7 text-xs font-medium transition-all",
+                            activeTab === 'answers'
+                                ? 'bg-white text-zinc-900 shadow-xs'
+                                : 'text-zinc-500 hover:text-zinc-900'
+                        )}
+                    >
+                        <FileCheck2 className="w-3 h-3" />
+                        Answer Key
+                    </button>
+                </div>
+            </div>
 
-                            {error && (
-                                <div className="text-red-600 text-center p-4 bg-red-50 rounded-lg mb-4">
-                                    <p>{error}</p>
-                                </div>
-                            )}
+            {/* Error */}
+            {error && (
+                <div className="mx-3 mt-3 flex items-start gap-2 rounded-lg border border-rose-100 bg-rose-50/60 px-3 py-2.5">
+                    <AlertCircle className="w-3.5 h-3.5 text-rose-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-rose-700 flex-1">{error}</p>
+                    <button
+                        type="button"
+                        onClick={() => setError(null)}
+                        className="text-xs text-rose-500 hover:text-rose-700 flex-shrink-0"
+                    >
+                        ×
+                    </button>
+                </div>
+            )}
 
-                            <PDFBlobViewer htmlContent={questionHtml} className="flex-1 min-h-[600px]" />
+            {/* Body */}
+            <div className="flex-1 min-h-0 bg-zinc-50/40 p-3">
+                {!hasContent ? (
+                    <div className="flex h-full min-h-[400px] flex-col items-center justify-center rounded-lg border border-dashed border-zinc-200 bg-white text-center px-6">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-100 text-zinc-400 mb-3">
+                            <FileText className="w-4 h-4" />
                         </div>
-                    </TabsContent>
-
-                    <TabsContent value="answers" className="flex-1 mt-4">
-                        <div className="h-full flex flex-col">
-                            <div className="flex justify-between items-center mb-4 border-b pb-2">
-                                <h3 className="text-lg font-semibold">Answer Key Preview</h3>
-                                <div className="flex gap-2">
-                                    <Button
-                                        onClick={generateAnswerPDF}
-                                        disabled={isGeneratingPdf === 'answers' || selectedQuestions.length === 0}
-                                        size="sm"
-                                        className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                                    >
-                                        Download
-                                    </Button>
-                                </div>
-                            </div>
-
-                            {error && (
-                                <div className="text-red-600 text-center p-4 bg-red-50 rounded-lg mb-4">
-                                    <p>{error}</p>
-                                </div>
-                            )}
-
-                            <PDFBlobViewer htmlContent={answerHtml} className="flex-1 min-h-[600px]" />
-                        </div>
-                    </TabsContent>
-                </Tabs>
-            </CardContent>
-        </Card>
+                        <p className="text-sm font-medium text-zinc-900">Preview not ready</p>
+                        <p className="text-xs text-zinc-500 mt-1 max-w-xs">
+                            Add a test title, subject, and at least one question to see the live PDF preview.
+                        </p>
+                    </div>
+                ) : (
+                    <PDFBlobViewer htmlContent={currentHtml} className="h-full min-h-[500px]" />
+                )}
+            </div>
+        </div>
     );
 }

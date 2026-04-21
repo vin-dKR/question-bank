@@ -165,50 +165,72 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
         }
     };
 
+    const subjectColors: Record<string, string> = {
+        Mathematics: 'bg-indigo-50 text-indigo-700 border-indigo-100',
+        Math: 'bg-indigo-50 text-indigo-700 border-indigo-100',
+        Physics: 'bg-violet-50 text-violet-700 border-violet-100',
+        Chemistry: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+        Biology: 'bg-teal-50 text-teal-700 border-teal-100',
+        English: 'bg-amber-50 text-amber-700 border-amber-100',
+    };
+    const subjectClass = question.subject
+        ? subjectColors[question.subject] || 'bg-zinc-100 text-zinc-700 border-zinc-200'
+        : 'bg-zinc-100 text-zinc-700 border-zinc-200';
+
     return (
         <div
-            className={`p-3 sm:p-4 bg-white rounded-xl shadow-md border transition-all duration-200 ${isSelected ? 'border-amber-500 bg-amber-50' : 'border-slate-200 hover:shadow-md'}`}
+            className={`group p-4 sm:p-5 bg-white rounded-xl border transition-all duration-150 ${isSelected
+                ? 'border-indigo-200 bg-indigo-50/30 shadow-xs ring-1 ring-indigo-100'
+                : 'border-black/5 shadow-xs hover:border-black/10'
+                }`}
         >
-            <div className="flex items-start">
-                <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => toggleQuestionSelection(question.id, question)}
-                    className="mt-1 mr-2 sm:mr-3 h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
-                />
-                <div className="flex-1 w-full text-wrap">
-                    <div className="flex flex-wrap gap-2 mb-2 items-center">
-                        <div>
-                            {question.exam_name && (
-                                <span className="text-xs font-medium px-2 py-1 bg-slate-100 text-slate-700 rounded-full text-center">
-                                    {question.exam_name}
-                                </span>
-                            )}
-                            {question.subject && (
-                                <span className="text-xs font-medium px-2 py-1 bg-slate-100 text-slate-700 rounded-full">
-                                    {question.subject}
-                                </span>
-                            )}
-                            {question.chapter && (
-                                <span className="text-xs font-medium px-2 py-1 bg-slate-100 text-slate-700 rounded-full">
-                                    {question.chapter}
-                                </span>
-                            )}
-                            <button
-                                onClick={handleFlagToggle}
-                                disabled={isFlagging}
-                                className={`ml-2 p-1 text-slate-600 hover:text-amber-600 transition ${isFlagging ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                title={question.flagged ? 'Unflag question' : 'Flag question'}
-                            >
-                                {question.flagged ? <Flag className="h-4 w-4 text-amber-600" /> : <FlagOff className="h-4 w-4" />}
-                            </button>
-                        </div>
-
-                        <div className="flex items-center gap-2">
+            <div className="flex items-start gap-3">
+                <button
+                    type="button"
+                    onClick={() => toggleQuestionSelection(question.id, question)}
+                    className={`mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-[4px] border transition-colors ${isSelected
+                        ? 'border-indigo-600 bg-indigo-600'
+                        : 'border-zinc-300 bg-white hover:border-zinc-400'
+                        }`}
+                    aria-label={isSelected ? 'Deselect question' : 'Select question'}
+                >
+                    {isSelected && (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 text-white">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                    )}
+                </button>
+                <div className="flex-1 w-full text-wrap min-w-0">
+                    <div className="flex flex-wrap gap-1.5 mb-3 items-center">
+                        {question.exam_name && (
+                            <span className="inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 border border-zinc-200/60">
+                                {question.exam_name}
+                            </span>
+                        )}
+                        {question.subject && (
+                            <span className={`inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-md border ${subjectClass}`}>
+                                {question.subject}
+                            </span>
+                        )}
+                        {question.chapter && (
+                            <span className="inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-md bg-zinc-50 text-zinc-500 border border-zinc-200/60">
+                                {question.chapter}
+                            </span>
+                        )}
+                        <button
+                            onClick={handleFlagToggle}
+                            disabled={isFlagging}
+                            className={`ml-auto p-1 rounded-md hover:bg-zinc-100 transition-colors ${isFlagging ? 'opacity-50 cursor-not-allowed' : ''
+                                } ${question.flagged ? 'text-amber-500' : 'text-zinc-400 hover:text-amber-500'}`}
+                            title={question.flagged ? 'Unflag question' : 'Flag question'}
+                        >
+                            {question.flagged ? <Flag className="h-3.5 w-3.5" /> : <FlagOff className="h-3.5 w-3.5" />}
+                        </button>
+                        <div className="flex items-center gap-2 mb-2">
                             <Button
                                 onClick={() => handleRefineField('question_text', null)}
                                 disabled={refiningField === 'question_text'}
-                                className="p-1 text-blue-500 hover:text-blue-700 transition-colors disabled:text-gray-400 disabled:cursor-not-allowed"
+                                className="px-3 text-white transition-colors disabled:text-gray-400 disabled:cursor-not-allowed"
                                 title="Refine Question with AI"
                             >
                                 {refiningField === 'question_text' ? (
@@ -255,9 +277,10 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                         </div>
                     </div>
 
+
                     <div>
-                        <h3 className="text-base font-semibold mb-2 text-slate-800 sm:text-lg">
-                            Q: {questionText}
+                        <h3 className="text-sm md:text-base font-medium mb-2 text-zinc-900 leading-relaxed">
+                            {questionText}
                         </h3>
                         {question.question_image?.startsWith('https') && (
                             <div>
@@ -303,7 +326,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                                 <Button
                                     onClick={() => handleRefineField('options', null)}
                                     disabled={refiningField === 'options'}
-                                    className="p-1 text-blue-500 hover:text-blue-700 transition-colors disabled:text-gray-400 disabled:cursor-not-allowed"
+                                    className="px-3 text-white transition-colors disabled:text-gray-400 disabled:cursor-not-allowed"
                                     title="Refine All Options with AI"
                                 >
                                     {refiningField === 'options' ? (
@@ -362,9 +385,21 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                                 return (
                                     <div
                                         key={index}
-                                        className={`pl-3 border-l-4 py-1 rounded-r-md ${isCorrect ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200'}`}
+                                        className={`flex items-start gap-2.5 pl-3 pr-2 py-2 rounded-md border ${isCorrect
+                                            ? 'border-emerald-100 bg-emerald-50/50'
+                                            : 'border-black/5 bg-zinc-50/40'
+                                            }`}
                                     >
-                                        <span className="text-sm sm:text-base">{renderedOptions[index]}</span>
+                                        <span className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded font-mono text-[11px] font-medium ${isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-white border border-black/5 text-zinc-500'
+                                            }`}>
+                                            {optionLetter}
+                                        </span>
+                                        <span className="text-sm text-zinc-800 leading-relaxed flex-1 min-w-0">{renderedOptions[index]}</span>
+                                        {isCorrect && (
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0 mt-0.5">
+                                                <polyline points="20 6 9 17 4 12" />
+                                            </svg>
+                                        )}
                                     </div>
                                 );
                             })}
@@ -372,7 +407,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                     )}
 
                     {question.answer && (
-                        <div className="text-sm text-green-600">
+                        <div className="mt-2 text-xs text-emerald-700 inline-flex items-center gap-1.5 px-2 py-1 bg-emerald-50 border border-emerald-100 rounded-md">
                             <span className="font-medium">Answer:</span> {answerText}
                         </div>
                     )}
@@ -454,8 +489,8 @@ const QuestionList = memo(() => {
     const totalSize = rowVirtualizer.getTotalSize();
 
     return (
-        <div className="min-h-screen bg-gray-100">
-            <div className="w-full mx-auto space-y-6">
+        <div className="w-full">
+            <div className="w-full mx-auto space-y-4">
                 {showOnlySelected && (
                     <SelectedQuestionsBanner displayedCount={displayedQuestions.length} totalCount={selectedQuestions.length} />
                 )}
@@ -517,16 +552,13 @@ const QuestionList = memo(() => {
                 )}
 
                 {!showOnlySelected && displayedQuestions.length > 0 && hasMore && (
-                    // Cursor-paginated infinite scroll (Phase 6). The previous
-                    // `pagination.page` / "Previous" / "Next" model is gone — all
-                    // navigation forward now happens through this Load More.
-                    <div className="flex justify-center bg-white p-3 sm:p-4 rounded-xl shadow-md border border-slate-200">
+                    <div className="flex justify-center pt-2">
                         <button
                             onClick={loadMore}
                             disabled={isFetchingNextPage}
-                            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm sm:text-base hover:bg-indigo-700 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="h-9 px-5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {isFetchingNextPage ? 'Loading...' : 'Load More'}
+                            {isFetchingNextPage ? 'Loading…' : 'Load more'}
                         </button>
                     </div>
                 )}

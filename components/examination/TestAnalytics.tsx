@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 import { toast } from 'sonner';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Download } from 'lucide-react';
 import TopicPerformance from './analytics/TopicPerformance';
 import OverallStatistics from './analytics/OverallStatistics';
@@ -145,11 +146,20 @@ export default function TestAnalytics() {
 
     if (loading || !summary) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading analytics...</p>
+            <div className="max-w-7xl mx-auto space-y-6">
+                <div className="flex items-center gap-4">
+                    <Skeleton className="h-9 w-24" />
+                    <Skeleton className="h-8 w-64" />
                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="rounded-xl border border-black/5 bg-white p-5 space-y-3">
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-8 w-32" />
+                        </div>
+                    ))}
+                </div>
+                <Skeleton className="h-64 w-full rounded-xl" />
             </div>
         );
     }
@@ -180,7 +190,7 @@ export default function TestAnalytics() {
                     </div>
                 </div>
 
-                <Button onClick={exportToPDF} className="bg-black text-white">
+                <Button onClick={exportToPDF}>
                     <span>Export PDF</span>
                     <Download className="w-4 h-4 ml-2" />
                 </Button>

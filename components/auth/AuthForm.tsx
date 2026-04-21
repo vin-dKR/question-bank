@@ -41,23 +41,23 @@ export default function AuthForm({ mode }: AuthFormProps) {
     if (!isLoaded) return <LoadingOverlay />;
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 tracking-3">
+        <div className="min-h-screen flex items-center justify-center p-4 bg-zinc-50">
             <div className="w-full max-w-md mx-auto">
                 {!showOtpInput ? (
                     <Card>
                         <CardHeader className="space-y-1">
-                            <CardTitle className="text-2xl text-center">{title}</CardTitle>
-                            <CardDescription className="text-center text-black/50">{description}</CardDescription>
+                            <CardTitle className="text-xl tracking-tight text-center">{title}</CardTitle>
+                            <CardDescription className="text-center text-zinc-500">{description}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <SocialSignInButtons signInWith={signInWith} loading={loading} isLoaded={isLoaded} />
 
                             <div className="relative">
                                 <div className="absolute inset-0 flex items-center">
-                                    <div className="w-full border-t border-black/10" />
+                                    <div className="w-full border-t border-black/5" />
                                 </div>
-                                <div className="relative flex justify-center text-xs uppercase">
-                                    <span className="bg-white px-2 text-muted-foreground text-black/30">Or continue with</span>
+                                <div className="relative flex justify-center text-xs">
+                                    <span className="bg-white px-2 text-zinc-400">Or continue with</span>
                                 </div>
                             </div>
 
@@ -77,9 +77,9 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
                         </CardContent>
                         <CardFooter>
-                            <p className="text-center text-sm text-muted-foreground w-full">
+                            <p className="text-center text-sm text-zinc-500 w-full">
                                 {alternativeActionText}{' '}
-                                <Link href={alternativeActionLink} className="text-primary hover:underline font-bold">
+                                <Link href={alternativeActionLink} className="text-indigo-600 hover:text-indigo-700 font-medium">
                                     {alternativeActionLabel}
                                 </Link>
                             </p>

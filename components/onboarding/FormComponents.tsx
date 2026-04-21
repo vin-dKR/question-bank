@@ -116,7 +116,7 @@ export function SubmitButton({ loading }: SubmitButtonProps) {
         <Button
             type="submit"
             size="lg"
-            className="bg-black text-white rounded-xl disabled:opacity-50"
+            className="rounded-xl disabled:opacity-50"
             disabled={loading}
         >
             Complete Setup

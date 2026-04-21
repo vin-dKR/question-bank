@@ -204,39 +204,44 @@ export default function FilterControls() {
 
     // Update selectStyles to use correct types
     const selectStyles = useMemo<StylesConfig<{ value: string; label: string }, false>>(() => ({
-        control: (base) => ({
+        control: (base, state) => ({
             ...base,
-            borderColor: '#e2e8f0',
-            '&:hover': { borderColor: '#f59e0b' },
-            boxShadow: 'none',
-            borderRadius: '10px',
+            borderColor: state.isFocused ? '#6366f1' : '#e4e4e7',
+            '&:hover': { borderColor: '#a1a1aa' },
+            boxShadow: state.isFocused ? '0 0 0 3px rgb(99 102 241 / 0.15)' : 'none',
+            borderRadius: '8px',
+            minHeight: '36px',
         }),
         menu: (base) => ({
             ...base,
-            borderRadius: "10px",
+            borderRadius: "8px",
             overflow: "hidden",
+            boxShadow: '0 10px 24px -4px rgb(0 0 0 / 0.08)',
         }),
         menuList: (base) => ({
             ...base,
-            borderRadius: "10px",
+            borderRadius: "8px",
+            padding: 4,
         }),
         option: (base, state) => ({
             ...base,
-            backgroundColor: state.isSelected ? '#f59e0b' : state.isFocused ? '#fef3c7' : 'white',
-            color: state.isSelected ? 'white' : '#1e293b',
+            backgroundColor: state.isSelected ? '#4f46e5' : state.isFocused ? '#eef2ff' : 'white',
+            color: state.isSelected ? 'white' : '#18181b',
+            borderRadius: '6px',
+            fontSize: '14px',
         }),
     }), []);
 
     // Show loading state while fetching role and subject
     if (roleLoading || subjectLoading) {
         return (
-            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-slate-200">
+            <div className="bg-white p-4 sm:p-5 rounded-xl shadow-xs border border-black/5">
                 <div className="animate-pulse">
-                    <div className="h-6 bg-slate-200 rounded mb-4"></div>
-                    <div className="space-y-4">
-                        <div className="h-10 bg-slate-200 rounded"></div>
-                        <div className="h-10 bg-slate-200 rounded"></div>
-                        <div className="h-10 bg-slate-200 rounded"></div>
+                    <div className="h-5 w-28 bg-zinc-200 rounded mb-4"></div>
+                    <div className="space-y-3">
+                        <div className="h-10 bg-zinc-100 rounded-lg"></div>
+                        <div className="h-10 bg-zinc-100 rounded-lg"></div>
+                        <div className="h-10 bg-zinc-100 rounded-lg"></div>
                     </div>
                 </div>
             </div>
@@ -244,11 +249,11 @@ export default function FilterControls() {
     }
 
     const renderFilterControls = () => (
-        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-slate-200 tracking-3">
-            <h2 className="text-lg font-semibold mb-3 text-slate-700 sm:text-xl">Filter Questions</h2>
-            <div className="space-y-4 mb-4 sm:mb-6">
+        <div className="bg-white p-4 sm:p-5 rounded-xl shadow-xs border border-black/5 tracking-3">
+            <h2 className="text-sm font-medium mb-3 text-zinc-500 uppercase tracking-wide">Filter Questions</h2>
+            <div className="space-y-3 mb-4 sm:mb-5">
                 <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Exam</label>
+                    <label className="block text-xs font-medium text-zinc-600 mb-1.5">Exam</label>
                     <Select
                         name="exam_name"
                         options={examOptions}
@@ -262,7 +267,7 @@ export default function FilterControls() {
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Subject</label>
+                    <label className="block text-xs font-medium text-zinc-600 mb-1.5">Subject</label>
                     <Select
                         name="subject"
                         options={subjectOptions}
@@ -281,7 +286,7 @@ export default function FilterControls() {
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Chapter</label>
+                    <label className="block text-xs font-medium text-zinc-600 mb-1.5">Chapter</label>
                     <Select
                         name="chapter"
                         options={chapterOptions}
@@ -295,7 +300,7 @@ export default function FilterControls() {
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Section</label>
+                    <label className="block text-xs font-medium text-zinc-600 mb-1.5">Section</label>
                     <Select
                         name="section_name"
                         options={sectionNameOptions}
@@ -309,7 +314,7 @@ export default function FilterControls() {
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Question Type</label>
+                    <label className="block text-xs font-medium text-zinc-600 mb-1.5">Question Type</label>
                     <Select
                         name="question_type"
                         options={questionTypeOptions}
@@ -323,7 +328,7 @@ export default function FilterControls() {
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Flagged Status</label>
+                    <label className="block text-xs font-medium text-zinc-600 mb-1.5">Flagged Status</label>
                     <Select
                         name="flagged"
                         options={flaggedOptions}
@@ -336,16 +341,16 @@ export default function FilterControls() {
                     />
                 </div>
             </div>
-            <div className="flex flex-col space-y-2">
+            <div className="flex flex-col gap-2">
                 <button
                     onClick={applyFilters}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition shadow-sm text-sm sm:text-base border border-black/20 font-semibold"
+                    className="h-9 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm font-medium"
                 >
                     Apply Filters
                 </button>
                 <button
                     onClick={clearFilters}
-                    className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition shadow-sm text-sm sm:text-base border border-black/4 font-semibold"
+                    className="h-9 px-4 bg-zinc-100 text-zinc-700 rounded-lg hover:bg-zinc-200 transition text-sm font-medium"
                 >
                     Clear Filters
                 </button>
@@ -365,9 +370,9 @@ export default function FilterControls() {
                 type="button"
                 aria-label="Open filters"
                 onClick={() => setIsMobileModalOpen(true)}
-                className="sm:hidden fixed bottom-4 right-4 z-40 rounded-full bg-indigo-600 text-white shadow-lg p-3 font-semibold border border-black/20"
+                className="sm:hidden fixed bottom-4 right-4 z-40 rounded-full bg-indigo-600 text-white shadow-lg p-3 hover:bg-indigo-700 transition-colors"
             >
-                <Funnel className="h-8 w-8 text-white" />
+                <Funnel className="h-6 w-6" />
             </button>
 
             {/* Mobile modal with same controls (state is shared) */}

@@ -179,7 +179,7 @@ export function CollaborationPanel({ folderId, folderName, userRole }: Collabora
                 <div className="space-y-2">
                     <Dialog>
                         <DialogTrigger asChild>
-                            <Button size="sm" className="w-full bg-black text-white">
+                            <Button size="sm" className="w-full">
                                 <UserPlus className="h-4 w-4 mr-2" />
                                 Invite by Email
                             </Button>

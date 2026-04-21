@@ -190,7 +190,7 @@ export function Verifier({
     if (!page) return null;
 
     return (
-        <div className="flex h-full flex-col">
+        <div className="flex min-h-full flex-col lg:h-full">
             <TopBar
                 fileName={fileName}
                 pages={pages.length}
@@ -208,7 +208,7 @@ export function Verifier({
                 />
             )}
 
-            <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 px-6 py-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+            <div className="grid grid-cols-1 gap-4 px-3 py-4 sm:gap-5 sm:px-5 sm:py-5 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-6 lg:px-6 lg:py-6">
                 <SourcePane
                     page={page}
                     hoverCrop={hoverCrop}
@@ -220,8 +220,13 @@ export function Verifier({
                         })
                     }
                 />
-                <div className="min-h-0 overflow-y-auto pr-1">
-                    <div className="space-y-4">
+                <div className="lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+                    <div className="space-y-3 sm:space-y-4">
+                        <div className="flex items-center justify-between lg:hidden">
+                            <p className="text-xs font-medium text-zinc-500">
+                                <span className="text-zinc-900 font-semibold">{page.questions.length}</span> question{page.questions.length === 1 ? "" : "s"} on this page
+                            </p>
+                        </div>
                         {page.questions.map((q) => (
                             <QuestionCard
                                 key={q.id}
@@ -243,15 +248,16 @@ export function Verifier({
                         <button
                             type="button"
                             onClick={() => addQuestion(activeIdx)}
-                            className="flex w-full items-center justify-center rounded-xl border border-dashed border-neutral-300 px-4 py-4 text-[13px] font-medium text-neutral-500 transition-colors hover:border-neutral-500 hover:text-neutral-900"
+                            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-zinc-300 px-4 py-3.5 text-[13px] font-medium text-zinc-500 transition-colors hover:border-indigo-400 hover:bg-indigo-50/30 hover:text-indigo-600"
                         >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
                             Add question
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div className="border-t border-neutral-200 bg-white px-6 py-3 text-[11px] text-neutral-400">
+            <div className="border-t border-black/5 bg-white px-4 py-3 text-[11px] text-zinc-400 sm:px-6">
                 Questions are saved to the question bank when you press Preview Test &rarr; Create test.
             </div>
 
@@ -314,23 +320,23 @@ function TopBar({
     onPreview: () => void;
 }) {
     return (
-        <div className="flex items-center justify-between border-b border-neutral-200 bg-white px-6 py-4">
+        <div className="flex items-start justify-between gap-3 border-b border-black/5 bg-white px-4 py-3 sm:items-center sm:px-6 sm:py-4">
             <div className="min-w-0">
-                <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-400">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-indigo-700">
                     Review
-                </p>
-                <h1 className="mt-0.5 truncate text-[17px] font-semibold tracking-tight text-neutral-900">
+                </div>
+                <h1 className="mt-1 truncate text-base font-semibold tracking-tight text-zinc-900 sm:text-lg">
                     {fileName ?? "Untitled"}
                 </h1>
-                <p className="mt-0.5 text-[11px] text-neutral-400">
-                    {pages} {pages === 1 ? "page" : "pages"} · {totalQuestions} questions
+                <p className="mt-0.5 text-[11px] text-zinc-500">
+                    <span className="font-medium text-zinc-700">{pages}</span> {pages === 1 ? "page" : "pages"} · <span className="font-medium text-zinc-700">{totalQuestions}</span> questions
                 </p>
             </div>
             <div className="flex items-center gap-2">
                 <button
                     type="button"
                     onClick={onReset}
-                    className="rounded-lg px-3 py-2 text-[13px] font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
+                    className="h-9 rounded-lg px-3 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
                 >
                     Start over
                 </button>
@@ -338,7 +344,7 @@ function TopBar({
                     type="button"
                     onClick={onPreview}
                     disabled={totalQuestions === 0}
-                    className="rounded-lg bg-neutral-900 px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-neutral-800 disabled:bg-neutral-300"
+                    className="h-9 rounded-lg bg-indigo-600 px-4 text-sm font-medium text-white shadow-xs transition-colors hover:bg-indigo-700 disabled:bg-zinc-200 disabled:text-zinc-400"
                 >
                     Preview Test
                 </button>
@@ -359,20 +365,23 @@ function PageTabs({
     perPageQuestions: number[];
 }) {
     return (
-        <div className="flex gap-1 border-b border-neutral-200 bg-white px-6 pb-2 pt-1">
+        <div className="flex gap-1 overflow-x-auto border-b border-black/5 bg-white px-4 pb-2 pt-1.5 sm:px-6">
             {Array.from({ length: count }, (_, i) => (
                 <button
                     key={i}
                     onClick={() => onChange(i)}
                     className={cn(
-                        "rounded-md px-3 py-1.5 text-[12px] font-medium transition-colors",
+                        "rounded-md px-3 py-1.5 text-xs font-medium transition-colors whitespace-nowrap",
                         i === active
-                            ? "bg-neutral-900 text-white"
-                            : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900",
+                            ? "bg-indigo-600 text-white"
+                            : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900",
                     )}
                 >
                     Page {i + 1}
-                    <span className="ml-1.5 text-[10px] opacity-60">{perPageQuestions[i]}</span>
+                    <span className={cn(
+                        "ml-1.5 text-[10px] font-mono",
+                        i === active ? "opacity-70" : "opacity-50"
+                    )}>{perPageQuestions[i]}</span>
                 </button>
             ))}
         </div>
@@ -414,7 +423,7 @@ function SourcePane({
     return (
         <div
             ref={containerRef}
-            className="relative flex min-h-0 items-start justify-center overflow-hidden rounded-xl border border-neutral-200 bg-white p-4"
+            className="relative flex max-h-[55vh] items-start justify-center overflow-auto rounded-xl border border-black/5 bg-white p-3 shadow-xs lg:max-h-none lg:min-h-0 lg:overflow-hidden lg:p-4"
         >
             <div
                 className="relative"
@@ -440,10 +449,10 @@ function SourcePane({
                             type="button"
                             onClick={() => onAdjustCrop(questionId)}
                             className={cn(
-                                "absolute rounded-[2px] border transition-colors",
+                                "absolute rounded-[3px] border-2 transition-colors",
                                 isHovered
-                                    ? "border-neutral-900 bg-neutral-900/5"
-                                    : "border-neutral-500/60 hover:border-neutral-900",
+                                    ? "border-indigo-600 bg-indigo-500/10"
+                                    : "border-indigo-400/70 hover:border-indigo-600",
                             )}
                             style={{
                                 left: `${left}%`,
@@ -455,7 +464,7 @@ function SourcePane({
                             animate={{ opacity: 1 }}
                             transition={{ duration: 0.25 }}
                         >
-                            <span className="absolute -top-5 left-0 rounded bg-neutral-900 px-1.5 py-[2px] text-[10px] font-medium text-white">
+                            <span className="absolute -top-5 left-0 rounded-md bg-indigo-600 px-1.5 py-[2px] text-[10px] font-semibold text-white shadow-sm">
                                 Q{crop.q_no}
                             </span>
                         </motion.button>

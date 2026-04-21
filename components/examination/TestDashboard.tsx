@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, BarChart3, Users, Clock, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -40,15 +41,15 @@ export default function TestDashboard() {
 
     const getSubjectColor = (subject: string) => {
         const colors: { [key: string]: string } = {
-            Mathematics: 'bg-blue-100 text-blue-800',
-            Physics: 'bg-purple-100 text-purple-800',
-            Chemistry: 'bg-green-100 text-green-800',
-            Biology: 'bg-emerald-100 text-emerald-800',
-            English: 'bg-orange-100 text-orange-800',
-            History: 'bg-red-100 text-red-800',
-            Geography: 'bg-indigo-100 text-indigo-800',
+            Mathematics: 'bg-blue-50 text-blue-700 border border-blue-100',
+            Physics: 'bg-violet-50 text-violet-700 border border-violet-100',
+            Chemistry: 'bg-emerald-50 text-emerald-700 border border-emerald-100',
+            Biology: 'bg-teal-50 text-teal-700 border border-teal-100',
+            English: 'bg-amber-50 text-amber-700 border border-amber-100',
+            History: 'bg-rose-50 text-rose-700 border border-rose-100',
+            Geography: 'bg-indigo-50 text-indigo-700 border border-indigo-100',
         };
-        return colors[subject] || 'bg-gray-100 text-gray-800';
+        return colors[subject] || 'bg-zinc-100 text-zinc-700 border border-zinc-200';
     };
 
     const formatDate = (dateString: string) => {
@@ -61,10 +62,25 @@ export default function TestDashboard() {
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading tests...</p>
+            <div className="w-full mx-auto space-y-6">
+                <div className="flex items-center justify-between">
+                    <Skeleton className="h-8 w-48" />
+                    <Skeleton className="h-9 w-36" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                        <Card key={i}>
+                            <CardHeader>
+                                <Skeleton className="h-5 w-3/4 mb-2" />
+                                <Skeleton className="h-4 w-20" />
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <Skeleton className="h-3 w-full" />
+                                <Skeleton className="h-3 w-2/3" />
+                                <Skeleton className="h-8 w-full mt-2" />
+                            </CardContent>
+                        </Card>
+                    ))}
                 </div>
             </div>
         );
@@ -74,11 +90,11 @@ export default function TestDashboard() {
         <div className="w-full mx-auto space-y-6">
             <div className="flex flex-row items-start sm:items-center justify-between">
                 <div>
-                    <h1 className="text-xl md:text-3xl font-bold">Test Dashboard</h1>
-                    <p className="text-gray-600 mb-2 sm:mb-0">Manage and analyze your examination tests</p>
+                    <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-zinc-900">Test Dashboard</h1>
+                    <p className="text-zinc-500 text-sm mb-2 sm:mb-0">Manage and analyze your examination tests</p>
                 </div>
                 <Link href="/examination/create">
-                    <Button className='bg-black text-white items-center justify-center'>
+                    <Button className='items-center justify-center'>
                         <Plus className="w-4 h-4 mr-0 sm:mr-2" />
                         <span className='hidden sm:block'>
                             Create New Test
@@ -90,9 +106,9 @@ export default function TestDashboard() {
             {tests.length === 0 ? (
                 <Card>
                     <CardContent className="text-center py-12">
-                        <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No tests created yet</h3>
-                        <p className="text-gray-600 mb-6">Get started by creating your first examination test</p>
+                        <BookOpen className="w-10 h-10 text-zinc-300 mx-auto mb-4" />
+                        <h3 className="text-base font-semibold text-zinc-900 mb-2">No tests created yet</h3>
+                        <p className="text-sm text-zinc-500 mb-6">Get started by creating your first examination test</p>
                         <Link href="/examination/create">
                             <Button>
                                 <Plus className="w-4 h-4 mr-2" />
@@ -118,34 +134,34 @@ export default function TestDashboard() {
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     {test.description && (
-                                        <p className="text-sm text-gray-600 line-clamp-2">
+                                        <p className="text-sm text-zinc-500 line-clamp-2">
                                             {test.description}
                                         </p>
                                     )}
 
-                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div className="grid grid-cols-2 gap-4 text-sm text-zinc-600">
                                         <div className="flex items-center gap-2">
-                                            <Clock className="w-4 h-4 text-gray-500" />
+                                            <Clock className="w-4 h-4 text-zinc-400" />
                                             <span>{test.duration} min</span>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <BarChart3 className="w-4 h-4 text-gray-500" />
+                                            <BarChart3 className="w-4 h-4 text-zinc-400" />
                                             <span>{test.totalMarks} marks</span>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                                        <Users className="w-4 h-4" />
+                                    <div className="flex items-center gap-2 text-sm text-zinc-600">
+                                        <Users className="w-4 h-4 text-zinc-400" />
                                         <span>{test._count.responses} responses</span>
                                     </div>
 
-                                    <div className="text-xs text-gray-500">
+                                    <div className="text-xs text-zinc-400">
                                         Created {formatDate(test.createdAt.toISOString())}
                                     </div>
 
                                     <div className="flex gap-2 pt-2">
                                         <Link href={`/examination/analytics/${test.id}`} className="flex-1">
-                                            <Button className="w-full bg-black text-white">
+                                            <Button className="w-full">
                                                 <BarChart3 className="w-4 h-4 mr-2" />
                                                 View Analytics
                                             </Button>
@@ -161,7 +177,6 @@ export default function TestDashboard() {
                             <Button
                                 onClick={() => setTake((t) => t + PAGE_SIZE)}
                                 disabled={isFetching}
-                                className="bg-black text-white"
                             >
                                 {isFetching ? 'Loading…' : `Load more (${tests.length} of ${total})`}
                             </Button>

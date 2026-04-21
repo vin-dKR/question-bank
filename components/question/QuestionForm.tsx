@@ -3,6 +3,13 @@
 import { useQuestionForm } from "@/hooks/question/insert";
 import { useState } from 'react';
 
+const inputClass =
+    "w-full h-10 px-3 text-sm rounded-lg border border-black/10 bg-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500";
+const selectClass = inputClass;
+const textareaClass =
+    "w-full px-3 py-2 text-sm rounded-lg border border-black/10 bg-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500";
+const labelClass = "block text-xs font-medium text-zinc-600 mb-1.5";
+
 const QuestionForm = ({ initialData }: { initialData?: Question }) => {
     const { submitQuestion, loading, error, success } = useQuestionForm();
     const [formData, setFormData] = useState(initialData || {
@@ -32,19 +39,19 @@ const QuestionForm = ({ initialData }: { initialData?: Question }) => {
     };
 
     return (
-        <div className="max-w-4xl text-black mx-auto p-6 bg-white rounded-lg shadow-md">
-            <h2 className="text-2xl font-bold mb-6">
+        <div className="max-w-2xl mx-auto p-6 rounded-xl border border-black/5 bg-white shadow-xs">
+            <h2 className="text-xl font-semibold tracking-tight text-zinc-900 mb-6">
                 {initialData ? 'Edit Question' : 'Add New Question'}
             </h2>
 
             {error && (
-                <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+                <div className="mb-4 p-3 text-sm bg-rose-50 text-rose-700 rounded-lg border border-rose-100">
                     {error}
                 </div>
             )}
 
             {success && (
-                <div className="mb-4 p-3 bg-green-100 text-green-700 rounded">
+                <div className="mb-4 p-3 text-sm bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-100">
                     Question {initialData ? 'updated' : 'created'} successfully!
                 </div>
             )}
@@ -52,28 +59,24 @@ const QuestionForm = ({ initialData }: { initialData?: Question }) => {
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Question Number
-                        </label>
+                        <label className={labelClass}>Question Number</label>
                         <input
                             type="number"
                             name="question_number"
                             value={formData.question_number}
                             onChange={handleChange}
-                            className="w-full p-2 border rounded"
+                            className={inputClass}
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Exam Name
-                        </label>
+                        <label className={labelClass}>Exam Name</label>
                         <select
                             name="exam_name"
                             value={formData.exam_name || ''}
                             onChange={handleChange}
-                            className="w-full p-2 border rounded"
+                            className={selectClass}
                         >
                             <option value="">Select Exam</option>
                             <option value="JEE">JEE</option>
@@ -84,14 +87,12 @@ const QuestionForm = ({ initialData }: { initialData?: Question }) => {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Subject
-                    </label>
+                    <label className={labelClass}>Subject</label>
                     <select
                         name="subject"
                         value={formData.subject || ''}
                         onChange={handleChange}
-                        className="w-full p-2 border rounded"
+                        className={selectClass}
                     >
                         <option value="">Select Subject</option>
                         <option value="Chemistry">Chemistry</option>
@@ -101,61 +102,53 @@ const QuestionForm = ({ initialData }: { initialData?: Question }) => {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Chapter
-                    </label>
+                    <label className={labelClass}>Chapter</label>
                     <input
                         type="text"
                         name="chapter"
                         value={formData.chapter || ''}
                         onChange={handleChange}
-                        className="w-full p-2 border rounded"
+                        className={inputClass}
                     />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Question Text
-                    </label>
+                    <label className={labelClass}>Question Text</label>
                     <textarea
                         name="question_text"
                         value={formData.question_text}
                         onChange={handleChange}
-                        className="w-full p-2 border rounded"
+                        className={textareaClass}
                         rows={3}
                         required
                     />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Options (one per line)
-                    </label>
+                    <label className={labelClass}>Options (one per line)</label>
                     <textarea
                         name="options"
                         value={formData.options}
                         onChange={handleChange}
-                        className="w-full p-2 border rounded"
+                        className={textareaClass}
                         rows={4}
                         required
                     />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Correct Answer (e.g., &quot;A&quot;, &quot;B&quot;, etc.)
-                    </label>
+                    <label className={labelClass}>Correct Answer (e.g., &quot;A&quot;, &quot;B&quot;, etc.)</label>
                     <input
                         type="text"
                         name="answer"
                         value={formData.answer}
                         onChange={handleChange}
-                        className="w-full p-2 border rounded"
+                        className={inputClass}
                         required
                     />
                 </div>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-2">
                     <input
                         type="checkbox"
                         id="isQuestionImage"
@@ -168,33 +161,31 @@ const QuestionForm = ({ initialData }: { initialData?: Question }) => {
                             }
                             // eslint-disable-next-line
                         } as any)}
-                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-zinc-300 rounded"
                     />
-                    <label htmlFor="isQuestionImage" className="text-sm font-medium text-gray-700">
+                    <label htmlFor="isQuestionImage" className="text-sm text-zinc-700">
                         Question has an image
                     </label>
                 </div>
 
                 {formData.isQuestionImage && (
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Question Image URL
-                        </label>
+                        <label className={labelClass}>Question Image URL</label>
                         <input
                             type="text"
                             name="question_image"
                             value={formData.question_image || ''}
                             onChange={handleChange}
-                            className="w-full p-2 border rounded"
+                            className={inputClass}
                         />
                     </div>
                 )}
 
-                <div className="pt-4">
+                <div className="pt-2">
                     <button
                         type="submit"
                         disabled={loading}
-                        className={`px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className="inline-flex items-center justify-center h-10 px-5 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {loading ? 'Processing...' : (initialData ? 'Update Question' : 'Add Question')}
                     </button>

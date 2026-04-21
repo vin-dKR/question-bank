@@ -15,14 +15,14 @@ export default function Dashboard() {
             <Suspense fallback={<QuestionsCountSkeleton />}>
                 <QuestionsCountCard />
             </Suspense>
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                <h3 className="text-lg font-medium text-gray-700">Active Users</h3>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{activeUsers}</p>
+            <div className="rounded-xl border border-black/5 bg-white p-6 shadow-xs">
+                <h3 className="text-sm font-medium text-zinc-500">Active Users</h3>
+                <p className="mt-2 text-3xl font-semibold tracking-tight text-zinc-900">{activeUsers}</p>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                <h3 className="text-lg font-medium text-gray-700">Quick Actions</h3>
-                <p className="text-gray-600 mt-2">Add new question or category</p>
-                <Button className="mt-4 bg-black text-white">Add Question</Button>
+            <div className="rounded-xl border border-black/5 bg-white p-6 shadow-xs">
+                <h3 className="text-sm font-medium text-zinc-500">Quick Actions</h3>
+                <p className="mt-1 text-sm text-zinc-600">Add a new question or category</p>
+                <Button className="mt-4">Add Question</Button>
             </div>
             <Suspense fallback={<RecentPapersSkeleton />}>
                 <RecentPapersCard />

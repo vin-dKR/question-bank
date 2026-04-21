@@ -9,6 +9,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import PaperHistoryViewer from './PaperHistoryViewer';
 import { Trash2, Eye, Calendar, FileText, Users, Clock } from 'lucide-react';
 import { useAbortableEffect } from '@/lib/hooks/useAbortableEffect';
@@ -77,10 +78,19 @@ const PaperHistory = () => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading paper history...</p>
+            <div className="w-full mx-auto p-1 space-y-6">
+                <div className="flex items-center justify-between">
+                    <Skeleton className="h-8 w-48" />
+                    <Skeleton className="h-6 w-24" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="rounded-xl border border-black/5 bg-white p-5 space-y-3">
+                            <Skeleton className="h-5 w-3/4" />
+                            <Skeleton className="h-3 w-1/2" />
+                            <Skeleton className="h-3 w-2/3" />
+                        </div>
+                    ))}
                 </div>
             </div>
         );
@@ -94,10 +104,10 @@ const PaperHistory = () => {
         <div className="w-full mx-auto p-1 space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-bold">Paper History</h1>
-                    <p className="text-gray-600 mt-1 text-xs md:text-sm">View and manage your previously generated papers</p>
+                    <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-zinc-900">Paper History</h1>
+                    <p className="text-zinc-500 mt-1 text-xs md:text-sm">View and manage your previously generated papers</p>
                 </div>
-                <Badge className="text-sm bg-black text-white text-nowrap">
+                <Badge variant="secondary" className="text-nowrap">
                     {paperHistories.length} Papers
                 </Badge>
             </div>
@@ -105,9 +115,9 @@ const PaperHistory = () => {
             {paperHistories.length === 0 ? (
                 <Card>
                     <CardContent className="flex flex-col items-center justify-center py-12">
-                        <FileText className="h-12 w-12 text-gray-400 mb-4" />
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No Paper History</h3>
-                        <p className="text-gray-600 text-center">
+                        <FileText className="h-10 w-10 text-zinc-300 mb-4" />
+                        <h3 className="text-base font-semibold text-zinc-900 mb-2">No Paper History</h3>
+                        <p className="text-zinc-500 text-sm text-center">
                             Your generated papers will appear here. Start by creating and downloading a PDF from the Questions page.
                         </p>
                     </CardContent>
@@ -121,7 +131,7 @@ const PaperHistory = () => {
                                     <div className="flex-1">
                                         <CardTitle className="text-lg line-clamp-2">{history.title}</CardTitle>
                                         {history.description && (
-                                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">{history.description}</p>
+                                            <p className="text-sm text-zinc-500 mt-1 line-clamp-2">{history.description}</p>
                                         )}
                                     </div>
                                     <Button
@@ -139,10 +149,10 @@ const PaperHistory = () => {
                                 <div className="flex flex-wrap gap-2">
                                     {history.subject && <Badge variant="outline" className="text-xs">{history.subject}</Badge>}
                                     {history.exam && <Badge variant="outline" className="text-xs bg-black/10">{history.exam}</Badge>}
-                                    {history.standard && <Badge variant="outline" className="text-xs bg-black text-white">{history.standard}</Badge>}
+                                    {history.standard && <Badge variant="secondary" className="text-xs">{history.standard}</Badge>}
                                 </div>
 
-                                <div className="space-y-2 text-sm text-gray-600">
+                                <div className="space-y-2 text-sm text-zinc-500">
                                     <div className="flex items-center gap-2">
                                         <FileText className="h-4 w-4" />
                                         <span>{history.questions.length} Questions</span>
@@ -165,7 +175,7 @@ const PaperHistory = () => {
                                     </div>
                                 </div>
 
-                                <Button onClick={() => handleView(history)} className="w-full bg-black text-white">
+                                <Button onClick={() => handleView(history)} className="w-full">
                                     <Eye className="h-4 w-4 mr-2" />
                                     View Questions
                                 </Button>

@@ -351,8 +351,8 @@ export function CropEditor({
         : "Click and drag on the image to draw a rectangle.";
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/60 p-6">
-            <div className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/60 p-2 sm:p-6">
+            <div className="flex max-h-[95vh] w-full max-w-[95vw] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:max-h-[92vh] sm:max-w-4xl">
                 <div className="flex items-center justify-between border-b border-neutral-200 px-5 py-4">
                     <div>
                         <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-400">

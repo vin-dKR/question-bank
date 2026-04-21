@@ -35,19 +35,18 @@ export function EmailPasswordForm({
         <form className="space-y-6" onSubmit={handleSubmit} noValidate>
             <div className="space-y-4">
                 <div className="relative">
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="email" className="block text-xs font-medium text-zinc-600 mb-1.5">
                         Email
                     </label>
-                    {/* Icon positioned absolutely */}
-                    <div className='relative'>
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                    <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
                         <input
                             id="email"
                             name="email"
                             type="email"
                             required
                             autoComplete="email"
-                            className="w-full pl-10 pr-4 py-3 text-gray-700 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition duration-200"
+                            className="w-full h-10 pl-9 pr-3 text-sm text-zinc-900 rounded-lg border border-black/10 bg-white placeholder:text-zinc-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition"
                             placeholder="your@email.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
@@ -74,14 +73,14 @@ export function EmailPasswordForm({
                             id="remember-me"
                             name="remember-me"
                             type="checkbox"
-                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-zinc-300 rounded"
                         />
-                        <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                        <label htmlFor="remember-me" className="ml-2 block text-sm text-zinc-600">
                             Remember me
                         </label>
                     </div>
                     <div className="text-sm">
-                        <Link href="/auth/forgot-pass" className="font-medium text-indigo-600 hover:text-indigo-500">
+                        <Link href="/auth/forgot-pass" className="font-medium text-indigo-600 hover:text-indigo-700">
                             Forgot password?
                         </Link>
                     </div>
@@ -91,7 +90,7 @@ export function EmailPasswordForm({
             <button
                 type="submit"
                 disabled={loading || !isLoaded}
-                className="w-full bg-black/80 hover:bg-black text-white font-medium py-3 px-4 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
                 {loading ? (
                     <span className="flex items-center justify-center gap-2">

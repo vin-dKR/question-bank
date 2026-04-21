@@ -199,7 +199,7 @@ export default function SchoolTestApp() {
     }, []);
 
     return (
-        <div className="h-full w-full bg-neutral-50 text-neutral-900">
+        <div className="h-full w-full overflow-hidden rounded-xl border border-black/5 bg-white text-zinc-900 shadow-xs">
             <AnimatePresence mode="wait">
                 {phase === "idle" && (
                     <motion.div
@@ -244,21 +244,23 @@ export default function SchoolTestApp() {
 
 function IdleView({ onFiles }: { onFiles: (files: File[]) => void }) {
     return (
-        <div className="flex h-full items-center justify-center px-6 py-12">
+        <div className="flex h-full items-center justify-center px-4 py-8 sm:px-6 sm:py-12">
             <div className="w-full max-w-2xl">
-                <div className="mb-10 space-y-2">
-                    <h1 className="text-[28px] font-semibold leading-tight tracking-tight text-neutral-900">
-                        School Test
+                <div className="mb-8 sm:mb-10 space-y-2.5">
+                    <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-indigo-700">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.9 4.5 4.9.4-3.7 3.3 1.1 4.8L12 13.8l-4.2 2.2 1.1-4.8-3.7-3.3 4.9-.4z"/></svg>
+                        AI-powered
+                    </div>
+                    <h1 className="text-2xl sm:text-3xl font-semibold leading-tight tracking-tight text-zinc-900">
+                        Extract questions from any paper
                     </h1>
-                    <p className="text-[15px] leading-relaxed text-neutral-500">
-                        Upload a question paper image or PDF. We&rsquo;ll auto-detect diagrams and extract
-                        each question so you can review and edit them before saving.
+                    <p className="text-sm sm:text-base leading-relaxed text-zinc-500">
+                        Upload a question paper image or PDF. We&rsquo;ll auto-detect diagrams and extract each question so you can review and edit them before saving.
                     </p>
                 </div>
                 <UploadZone onFiles={onFiles} />
-                <p className="mt-6 text-xs text-neutral-400">
-                    Nothing is saved to the database in this step &mdash; you&rsquo;ll review the result on
-                    the next screen.
+                <p className="mt-4 text-xs text-zinc-400">
+                    Nothing is saved yet — you&rsquo;ll review the result on the next screen.
                 </p>
             </div>
         </div>

@@ -48,26 +48,28 @@ export function SidebarItem({ item, isSidebarOpen, isSubItem = false, isActive }
             href={item.href}
             onClick={handleClick}
             className={`
-        flex items-center truncate
-        ${isSidebarOpen ? "px-4 justify-start" : "justify-center mx-2"}
-        py-2 my-1 rounded-lg
-        text-gray-700 transition
-        ${isActive ? "bg-gray-100 font-semibold text-gray-900" : ""}
-        ${isSubItem ? "pl-8" : ""}
+        flex items-center truncate relative
+        ${isSidebarOpen ? "px-3 justify-start" : "justify-center mx-2"}
+        py-2 my-0.5 rounded-md text-sm
+        transition-colors duration-150
+        ${isActive
+                    ? isSubItem
+                        ? "bg-white text-indigo-700 font-medium shadow-xs"
+                        : "bg-indigo-50 text-indigo-700 font-medium"
+                    : "text-zinc-600 hover:bg-indigo-500/20 hover:text-zinc-900"}
+        ${isSubItem ? "pl-4" : ""}
         ${isPending ? "opacity-60" : ""}
       `}
             title={!isSidebarOpen ? item.name : ""}
             aria-busy={isPending || undefined}
         >
-            <div className="flex-shrink-0 relative">
-                {item.icon}
-                {isPending && (
-                    <span
-                        className="absolute -right-1 -top-1 h-2 w-2 rounded-full border border-gray-400 border-t-transparent animate-spin"
-                        aria-hidden="true"
-                    />
-                )}
-            </div>
+            {isActive && isSidebarOpen && (
+                <span
+                    aria-hidden="true"
+                    className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-sm bg-indigo-600"
+                />
+            )}
+            <div className="flex-shrink-0">{item.icon}</div>
             {isSidebarOpen && <span className="ml-3 text-sm truncate">{item.name}</span>}
         </Link>
     );

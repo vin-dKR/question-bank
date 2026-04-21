@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -179,20 +180,26 @@ const QuestionTemplate = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 px-0 sm:px-2">
+        <div className="px-0 sm:px-2">
             <div className="w-full mx-auto">
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-xl md:text-3xl font-bold">PDF Templates</h1>
-                    <Button onClick={handleCreateTemplate} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                    <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-zinc-900">PDF Templates</h1>
+                    <Button onClick={handleCreateTemplate}>
                         <CirclePlus className="w-4 h-4 mr-0 md:mr-2" />
                         {!isMobile && "Create Template"}
                     </Button>
                 </div>
 
                 {templatesLoading ? (
-                    <div className="text-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-                        <p className="mt-2 text-gray-600">Loading templates...</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                            <div key={i} className="rounded-xl border border-black/5 bg-white p-5 space-y-3">
+                                <Skeleton className="h-5 w-3/4" />
+                                <Skeleton className="h-3 w-full" />
+                                <Skeleton className="h-3 w-5/6" />
+                                <Skeleton className="h-8 w-24 mt-3" />
+                            </div>
+                        ))}
                     </div>
                 ) : templates.length === 0 ? (
                     <div className="text-center py-12">
@@ -406,7 +413,7 @@ const QuestionTemplate = () => {
                         <Button className='bg-black/20' onClick={() => setEditModalOpen(false)}>
                             Cancel
                         </Button>
-                        <Button onClick={handleSaveTemplate} className='bg-black text-white'>
+                        <Button onClick={handleSaveTemplate}>
                             {isCreatingTemplate ? 'Create Template' : 'Update Template'}
                         </Button>
                     </DialogFooter>

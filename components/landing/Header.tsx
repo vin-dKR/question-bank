@@ -4,21 +4,19 @@ import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 
+const navItems = ["Home", "Features", "Pricing", "Contact"];
+
 const Header = () => {
-    const { user } = useUser()
+    const { user } = useUser();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-black/10 border-b border-border">
-            <nav className="md:flex justify-center max-w-[1000px] px-4 lg:px-0 mx-auto">
-                <div className="flex w-full items-center justify-between h-16">
-                    {/* Logo */}
+        <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-black/5">
+            <nav className="mx-auto flex max-w-[1100px] justify-center px-4 lg:px-6">
+                <div className="flex w-full items-center justify-between h-14 md:h-16">
                     <div className="flex items-center">
-                        {/*
-                        <h1 className="text-xl md:text-2xl font-bold text-primary font-inter tracking-1">Eduents</h1>
-                        */}
                         <video
                             src="/output.mp4"
                             autoPlay
@@ -26,18 +24,17 @@ const Header = () => {
                             muted
                             playsInline
                             preload="auto"
-                            width={60}
-                            height={60}
+                            width={52}
+                            height={52}
                             className="block"
                             style={{ display: 'block' }}
                             onError={(e) => {
                                 console.error('Video failed to load:', e);
-                                // Fallback to text logo if video fails
                                 const videoElement = e.currentTarget;
                                 if (videoElement.parentElement) {
                                     videoElement.style.display = 'none';
                                     const fallback = document.createElement('h1');
-                                    fallback.className = 'text-xl md:text-2xl font-bold text-primary font-inter tracking-1';
+                                    fallback.className = 'text-xl font-semibold tracking-tight text-zinc-900';
                                     fallback.textContent = 'Eduents';
                                     videoElement.parentElement.appendChild(fallback);
                                 }
@@ -45,66 +42,48 @@ const Header = () => {
                         />
                     </div>
 
-                    {/* Desktop Navigation */}
-                    <div className="hidden md:flex items-center space-x-8">
-                        <Button variant="navigation" className="font-medium">
-                            Home
-                        </Button>
-                        <Button variant="navigation" className="font-medium">
-                            Features
-                        </Button>
-                        <Button variant="navigation" className="font-medium">
-                            Pricing
-                        </Button>
-                        <Button variant="navigation" className="font-medium">
-                            Contact
-                        </Button>
-                        <Button variant="default" size="sm" className="ml-4 bg-black text-white cursor-pointer">
-                            {user ? (
-                                <Link href='/dashboard'>
-                                    Dashboard
-                                </Link>
-                            ) : (
-                                <Link href='/auth/signup'>
-                                    Get Started
-                                </Link>
-                            )}
+                    <div className="hidden md:flex items-center gap-1">
+                        {navItems.map((item) => (
+                            <Button
+                                key={item}
+                                variant="ghost"
+                                size="sm"
+                                className="text-sm font-medium text-zinc-600 hover:text-zinc-900"
+                            >
+                                {item}
+                            </Button>
+                        ))}
+                        <Button size="sm" className="ml-3" asChild>
+                            <Link href={user ? '/dashboard' : '/auth/signup'}>
+                                {user ? 'Dashboard' : 'Get Started'}
+                            </Link>
                         </Button>
                     </div>
 
-                    {/* Mobile menu button */}
                     <div className="md:hidden">
-                        <Button variant="ghost" size="icon" onClick={toggleMenu}>
-                            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                        <Button variant="ghost" size="icon" onClick={toggleMenu} aria-label="Toggle menu">
+                            {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
                         </Button>
                     </div>
                 </div>
 
-                {/* Mobile Navigation */}
                 {isMenuOpen && (
-                    <div className="md:hidden">
-                        <div className="px-2 pt-2 pb-3 space-y-1 bg-background border-t border-border">
-                            <Button variant="navigation" className="block w-full text-center px-3 py-2 font-medium">
-                                Home
-                            </Button>
-                            <Button variant="navigation" className="block w-full text-center px-3 py-2 font-medium">
-                                Features
-                            </Button>
-                            <Button variant="navigation" className="block w-full text-center px-3 py-2 font-medium">
-                                Pricing
-                            </Button>
-                            <Button variant="navigation" className="block w-full text-center px-3 py-2 font-medium">
-                                Contact
-                            </Button>
-                            <div className="pt-4">
-                                <Button variant="default" className="w-full bg-black text-white">
-                                    <Link href='/auth/signup'>
-                                        {user ? (
-                                            "Dashboard"
-                                        ) : (
-                                            "Get Started"
-                                        )}
-
+                    <div className="md:hidden absolute left-0 right-0 top-14 bg-white border-t border-black/5 shadow-sm">
+                        <div className="px-4 py-3 space-y-1 max-w-[1100px] mx-auto">
+                            {navItems.map((item) => (
+                                <Button
+                                    key={item}
+                                    variant="ghost"
+                                    className="w-full justify-start text-sm font-medium text-zinc-600"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    {item}
+                                </Button>
+                            ))}
+                            <div className="pt-2">
+                                <Button className="w-full" asChild>
+                                    <Link href={user ? '/dashboard' : '/auth/signup'}>
+                                        {user ? 'Dashboard' : 'Get Started'}
                                     </Link>
                                 </Button>
                             </div>

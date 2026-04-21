@@ -4,7 +4,7 @@ import { Check } from "lucide-react";
 import Link from "next/link";
 
 const Pricing = () => {
-    const { user } = useUser()
+    const { user } = useUser();
 
     const plans = [
         {
@@ -48,68 +48,59 @@ const Pricing = () => {
     ];
 
     return (
-        <section className="py-20 bg-muted relative">
-
-            <div className="max-w-[1000px] mx-auto px-8 relative">
-                <div className="absolute -left-8 top-0 w-px h-full bg-border"></div>
-                <div className="absolute -right-8 top-0 w-px h-full bg-border"></div>
-
-                <div className="text-center mb-16">
-                    <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-2 font-inter tracking-2">
-                        Simple, Transparent Pricing
+        <section className="py-20 md:py-28 bg-white">
+            <div className="mx-auto max-w-[1100px] px-4 sm:px-6">
+                <div className="text-center mb-14">
+                    <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-zinc-900">
+                        Simple, transparent pricing
                     </h2>
-                    <p style={{ lineHeight: "normal" }} className="text-md md:text-lg text-black/60 tracking-1 leading-relaxed max-w-3xl mx-auto px-8 w-full md:w-100 text-center">
-                        Choose the plan that fits your needs
+                    <p className="mt-3 text-base md:text-lg text-zinc-500">
+                        Choose the plan that fits your needs.
                     </p>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-8">
+                <div className="grid md:grid-cols-3 gap-6">
                     {plans.map((plan, index) => (
                         <div
                             key={index}
-                            className={`p-8 border rounded-3xl bg-[#F5F5F5] ${plan.popular
-                                ? 'border-black/20'
-                                : 'border-none'
-                                } relative`}
+                            className={`relative rounded-2xl p-7 bg-white flex flex-col ${plan.popular
+                                ? 'border-2 border-indigo-500 shadow-lg'
+                                : 'border border-black/5 shadow-xs'
+                                }`}
                         >
                             {plan.popular && (
-                                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                                    <span className="bg-black text-white px-3 py-1 text-sm font-medium rounded-lg">
-                                        Popular
+                                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                                    <span className="bg-indigo-600 text-white px-3 py-1 text-xs font-medium rounded-full shadow-sm">
+                                        Most Popular
                                     </span>
                                 </div>
                             )}
 
-                            <div className="text-center mb-8">
-                                <h3 className="text-xl font-semibold text-foreground mb-2 font-inter tracking-1">
+                            <div className="mb-6">
+                                <h3 className="text-base font-semibold text-zinc-900 tracking-tight">
                                     {plan.name}
                                 </h3>
-                                <div className="mb-4">
-                                    <span className="text-3xl font-bold text-foreground">{plan.price}</span>
-                                    <span className="text-muted-foreground ml-1">/{plan.period}</span>
+                                <div className="mt-4 flex items-baseline">
+                                    <span className="text-4xl font-semibold tracking-tight text-zinc-900">{plan.price}</span>
+                                    <span className="text-sm text-zinc-500 ml-1.5">/{plan.period}</span>
                                 </div>
-                                <Button
-                                    variant={plan.popular ? "default" : "outline"}
-                                    className={`w-full tracking-2 ${plan.popular
-                                        ? 'bg-black text-white'
-                                        : 'bg-white border-black/10'}
-                                    `}
-                                >
-                                    <Link href='/auth/signup'>
-                                        {user ? (
-                                            "Dashboard"
-                                        ) : (
-                                            "Get Started"
-                                        )}
-                                    </Link>
-                                </Button>
                             </div>
 
-                            <ul className="space-y-3">
+                            <Button
+                                variant={plan.popular ? "default" : "outline"}
+                                className="w-full"
+                                asChild
+                            >
+                                <Link href={user ? '/dashboard' : '/auth/signup'}>
+                                    {user ? "Dashboard" : "Get Started"}
+                                </Link>
+                            </Button>
+
+                            <ul className="mt-7 space-y-3">
                                 {plan.features.map((feature, featureIndex) => (
-                                    <li key={featureIndex} className="flex items-center text-sm">
-                                        <Check size={16} className="text-foreground mr-3 flex-shrink-0" />
-                                        <span className="text-muted-foreground tracking-3">{feature}</span>
+                                    <li key={featureIndex} className="flex items-start text-sm text-zinc-600">
+                                        <Check size={16} className={`mr-2.5 mt-0.5 flex-shrink-0 ${plan.popular ? 'text-indigo-600' : 'text-emerald-500'}`} />
+                                        <span>{feature}</span>
                                     </li>
                                 ))}
                             </ul>

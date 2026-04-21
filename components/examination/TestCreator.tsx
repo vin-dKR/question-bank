@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Save, FolderOpen, Plus, AlertCircle } from 'lucide-react';
+import { Save, FolderOpen, Plus, CheckCircle2, Loader2 } from 'lucide-react';
 import QuestionCard from './test-creator/QuestionCard';
 import UnifiedTestDetailsForm from './test-creator/UnifiedTestDetailsForm';
 import EmptyQuestionsCard from './test-creator/EmptyQuestionsCard';
@@ -37,10 +36,6 @@ export default function TestCreator() {
         session: '',
     });
 
-    // Initialize testData.questions from sessionStorage or selectedQuestions.
-    // sessionStorage wins when present so freshly-handed-off questions (e.g. from
-    // /school-test) don't get clobbered by stale picks left in QuestionBankContext
-    // from an earlier visit to /questions.
     useEffect(() => {
         const storedQuestions = sessionStorage.getItem('selectedQuestionsForTest');
         if (storedQuestions) {
@@ -76,7 +71,6 @@ export default function TestCreator() {
         setPdfFormData(template);
     };
 
-    // Sync pdfFormData with testData changes
     useEffect(() => {
         setPdfFormData((prev) => ({
             ...prev,
@@ -146,110 +140,112 @@ export default function TestCreator() {
     };
 
     return (
-        <div className="min-h-screen">
-            <div className="w-full mx-auto">
-                <div className="flex flex-row items-center justify-between tracking-2 mb-6">
-                    <h1 className="text-xl md:text-3xl font-bold">Create New Test</h1>
+        <div className="pb-6 space-y-5">
+            {/* Page header */}
+            <div className="flex items-end justify-between gap-4 flex-wrap">
+                <div className="min-w-0">
+                    <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-indigo-700">
+                        New Test
+                    </div>
+                    <h1 className="mt-1.5 text-xl md:text-2xl font-semibold tracking-tight text-zinc-900">
+                        Create Test
+                    </h1>
+                    <p className="text-sm text-zinc-500 mt-0.5">
+                        Configure details, attach questions, and preview your paper.
+                    </p>
+                </div>
+                <div className="flex items-center gap-2">
+                    {testData.questions.length > 0 && (
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-100 border border-black/5 text-xs font-medium text-zinc-600">
+                            <span>{testData.questions.length}</span>
+                            <span className="text-zinc-400">questions</span>
+                        </div>
+                    )}
                     <Button
                         onClick={handleSubmit}
                         disabled={isSubmitting}
-                        className="bg-gray-200 border border-gray-300 rounded-xl"
+                        size="sm"
                     >
-                        <Save className="w-4 h-4 mr-2" />
-                        {isSubmitting ? 'Creating...' : 'Create Test'}
+                        {isSubmitting ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                            <Save className="w-4 h-4 mr-2" />
+                        )}
+                        {isSubmitting ? 'Creating…' : 'Create Test'}
                     </Button>
                 </div>
+            </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="space-y-6">
-                        {hasLoadedQuestions && (
-                            <Card className="border-green-200 bg-green-50">
-                                <CardContent className="pt-1">
-                                    <div className="flex items-center gap-2 text-green-800">
-                                        <AlertCircle className="w-4 h-4" />
-                                        <span className="font-medium">Questions loaded from selection</span>
-                                    </div>
-                                    <p className="text-sm text-green-700 mt-1">
-                                        {testData.questions.length} questions have been loaded. You can modify marks and test details below.
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        )}
-
-                        <UnifiedTestDetailsForm
-                            testData={testData}
-                            dispatch={dispatch}
-                            onTemplateSelect={handleTemplateSelect}
-                            selectedTemplate={selectedTemplate}
-                        />
-
-                        <div className="flex flex-col sm:flex-row items-start md:items-center justify-between">
-                            <h2 className="text-2xl font-semibold tracking-2 mb-2 md:mb-0">Questions ({testData.questions.length})</h2>
-                            <div className="flex items-right justify-between sm:justify-right gap-2">
-                                <Link href="/drafts">
-                                    <Button className="bg-yellow-300 border border-yellow-400">
-                                        <FolderOpen className="w-4 h-4 mr-1" />
-                                        <span className='text-xs md:text-sm text-nowrap'>
-                                            Add from Drafts
-                                        </span>
-                                    </Button>
-                                </Link>
-                                <Link href="/questions">
-                                    <Button className="bg-green-500 border border-green-600">
-                                        <Plus className="w-4 h-4 mr-1" />
-                                        <span className='text-xs md:text-sm text-nowrap'>
-                                            Add From Questions
-                                        </span>
-                                    </Button>
-                                </Link>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-6">
+                <div className="space-y-5">
+                    {hasLoadedQuestions && (
+                        <div className="flex items-start gap-3 p-3.5 rounded-xl border border-indigo-100 bg-indigo-50/50">
+                            <CheckCircle2 className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
+                            <div className="min-w-0">
+                                <p className="text-sm font-medium text-indigo-900">
+                                    Questions loaded from selection
+                                </p>
+                                <p className="text-xs text-indigo-700/80 mt-0.5">
+                                    {testData.questions.length} questions have been loaded. Modify marks and details below.
+                                </p>
                             </div>
                         </div>
+                    )}
 
-                        <BulkMarksAssignment
-                            bulkMarks={bulkMarks}
-                            bulkNegativeMarks={bulkNegativeMarks}
-                            dispatch={dispatch}
-                            questionCount={testData.questions.length}
-                        />
+                    <UnifiedTestDetailsForm
+                        testData={testData}
+                        dispatch={dispatch}
+                        onTemplateSelect={handleTemplateSelect}
+                        selectedTemplate={selectedTemplate}
+                    />
 
-                        <div className="space-y-6">
-                            {testData.questions.length > 0 ? (
-                                testData.questions.map((question, index) => (
-                                    <QuestionCard key={question.id} question={question} index={index} dispatch={dispatch} />
-                                ))
-                            ) : (
-                                <EmptyQuestionsCard />
-                            )}
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                        <div className="flex items-baseline gap-2">
+                            <h2 className="text-base md:text-lg font-semibold tracking-tight text-zinc-900">Questions</h2>
+                            <span className="text-sm text-zinc-400 font-mono">
+                                {testData.questions.length}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button variant="secondary" size="sm" asChild>
+                                <Link href="/drafts" className="inline-flex items-center">
+                                    <FolderOpen className="w-3.5 h-3.5 mr-1.5" />
+                                    <span className="text-xs sm:text-sm whitespace-nowrap">From Drafts</span>
+                                </Link>
+                            </Button>
+                            <Button size="sm" asChild>
+                                <Link href="/questions" className="inline-flex items-center">
+                                    <Plus className="w-3.5 h-3.5 mr-1.5" />
+                                    <span className="text-xs sm:text-sm whitespace-nowrap">From Bank</span>
+                                </Link>
+                            </Button>
                         </div>
                     </div>
 
-                    <div className="lg:sticky lg:top-2 lg:h-[calc(100vh-3rem)]">
-                        <RealTimePDFPreview
-                            pdfFormData={pdfFormData}
-                            selectedQuestions={testData.questions}
-                        />
+                    <BulkMarksAssignment
+                        bulkMarks={bulkMarks}
+                        bulkNegativeMarks={bulkNegativeMarks}
+                        dispatch={dispatch}
+                        questionCount={testData.questions.length}
+                    />
+
+                    <div className="space-y-4">
+                        {testData.questions.length > 0 ? (
+                            testData.questions.map((question, index) => (
+                                <QuestionCard key={question.id} question={question} index={index} dispatch={dispatch} />
+                            ))
+                        ) : (
+                            <EmptyQuestionsCard />
+                        )}
                     </div>
                 </div>
 
-                {/*
-                <div className="mt-8 flex justify-center">
-                    <PDFGenerator
-                        saveToHistory={true}
-                        institution={pdfFormData.institution || institution}
+                <div className="lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)]">
+                    <RealTimePDFPreview
+                        pdfFormData={pdfFormData}
                         selectedQuestions={testData.questions}
-                        options={options}
-                        showInPDFPreview={false}
-                        marks={pdfFormData.marks}
-                        time={pdfFormData.time}
-                        exam={pdfFormData.exam}
-                        subject={pdfFormData.subject}
-                        logo={pdfFormData.logo}
-                        standard={pdfFormData.standard}
-                        session={pdfFormData.session}
-                        institutionAddress={pdfFormData.institutionAddress}
                     />
                 </div>
-                */}
             </div>
         </div>
     );

@@ -2,15 +2,13 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Crop as CropIcon, Trash2 } from 'lucide-react';
+import { Crop as CropIcon, Trash2, CheckCircle2 } from 'lucide-react';
 import { renderMixedLatex } from '@/lib/render-tex';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TestCreatorAction } from '@/hooks/reducer/useTestCreatorReducer';
 import Image from 'next/image';
 import { CropEditor } from '@/components/school-test/CropEditor';
 import { updateSchoolTestCrop } from '@/actions/school-test/updateSchoolTestCrop';
 
-// Helper function to safely decode image URLs (handles double-encoding)
 const safeDecodeImageUrl = (url: string): string => {
     if (!url) return url;
     try {
@@ -68,69 +66,74 @@ export default function QuestionCard({ question, index, dispatch }: QuestionCard
     };
 
     return (
-        <Card className="gap-2">
-            <CardHeader>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="flex items-center justify-between w-full sm:w-auto">
-                        <CardTitle className="text-lg text-nowrap">Question {question.question_number}</CardTitle>
-                        <Button
-                            onClick={() => dispatch({ type: 'REMOVE_QUESTION', index })}
-                            variant="outline"
-                            size="sm"
-                            className="text-red-600 hover:text-red-700 sm:hidden"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </Button>
-                    </div>
-                    <div className="flex items-center gap-3 sm:gap-4">
-                        <div className="flex items-center gap-2">
-                            <label className="text-sm font-medium whitespace-nowrap hidden sm:block">Marks:</label>
-                            <label className="text-xs font-medium whitespace-nowrap sm:hidden">M:</label>
-                            <Input
-                                className="w-12 sm:w-16 border border-black/30 text-sm"
-                                type="number"
-                                value={question.marks}
-                                onChange={(e) => dispatch({ type: 'UPDATE_QUESTION', index, field: 'marks', value: parseInt(e.target.value) || 1 })}
-                                min="1"
-                            />
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <label className="text-sm font-medium whitespace-nowrap hidden sm:block">Negative:</label>
-                            <label className="text-xs font-medium whitespace-nowrap sm:hidden">N:</label>
-                            <Input
-                                className="w-12 sm:w-16 border border-black/30 text-sm"
-                                type="number"
-                                value={question.negativeMark ?? 0}
-                                onChange={(e) => dispatch({ type: 'UPDATE_QUESTION', index, field: 'negativeMark', value: parseInt(e.target.value) || 0 })}
-                                min="0"
-                            />
-                        </div>
-                        <Button
-                            onClick={() => dispatch({ type: 'REMOVE_QUESTION', index })}
-                            size="sm"
-                            className="text-red-600 bg-red-50 hover:text-red-700 hover:bg-red-200 border border-red-300 hidden"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </Button>
-                    </div>
+        <div className="rounded-xl border border-black/5 bg-white shadow-xs overflow-hidden">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-black/5 px-4 py-3">
+                <div className="flex items-center gap-2">
+                    <span className="inline-flex h-6 items-center rounded-md bg-indigo-50 px-2 font-mono text-[11px] font-semibold text-indigo-700">
+                        Q{question.question_number}
+                    </span>
+                    <Button
+                        onClick={() => dispatch({ type: 'REMOVE_QUESTION', index })}
+                        size="sm"
+                        variant="ghost"
+                        className="ml-auto sm:hidden h-7 w-7 text-zinc-400 hover:text-rose-600 hover:bg-rose-50"
+                        aria-label="Remove question"
+                    >
+                        <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
                 </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div>
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Question Text</label>
-                        <div className="p-3 bg-gray-50 rounded-xl border border-black/40 overflow-x-auto">
-                            {renderMixedLatex(question.question_text)}
-                        </div>
+
+                <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="flex items-center gap-1.5">
+                        <label className="text-[11px] font-medium text-zinc-500 whitespace-nowrap">Marks</label>
+                        <Input
+                            className="w-14 h-7 text-sm tabular-nums"
+                            type="number"
+                            value={question.marks}
+                            onChange={(e) => dispatch({ type: 'UPDATE_QUESTION', index, field: 'marks', value: parseInt(e.target.value) || 1 })}
+                            min="1"
+                        />
                     </div>
-                    {question.question_image &&
-                        <div className="mt-2 flex flex-col items-start gap-2">
+                    <div className="flex items-center gap-1.5">
+                        <label className="text-[11px] font-medium text-zinc-500 whitespace-nowrap">Neg.</label>
+                        <Input
+                            className="w-14 h-7 text-sm tabular-nums"
+                            type="number"
+                            value={question.negativeMark ?? 0}
+                            onChange={(e) => dispatch({ type: 'UPDATE_QUESTION', index, field: 'negativeMark', value: parseInt(e.target.value) || 0 })}
+                            min="0"
+                        />
+                    </div>
+                    <Button
+                        onClick={() => dispatch({ type: 'REMOVE_QUESTION', index })}
+                        size="sm"
+                        variant="ghost"
+                        className="hidden sm:inline-flex h-7 w-7 text-zinc-400 hover:text-rose-600 hover:bg-rose-50"
+                        aria-label="Remove question"
+                    >
+                        <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                </div>
+            </div>
+
+            {/* Body */}
+            <div className="p-4 space-y-4">
+                <div>
+                    <label className="block text-[11px] font-medium uppercase tracking-wide text-zinc-400 mb-1.5">
+                        Question
+                    </label>
+                    <div className="rounded-lg bg-zinc-50/70 border border-black/5 p-3 text-sm text-zinc-900 leading-relaxed overflow-x-auto">
+                        {renderMixedLatex(question.question_text)}
+                    </div>
+                    {question.question_image && (
+                        <div className="mt-3 flex flex-col items-start gap-2">
                             <Image
                                 src={safeDecodeImageUrl(question.question_image)}
-                                alt='Question image'
+                                alt="Question image"
                                 width={200}
                                 height={200}
-                                className="max-w-full h-auto"
+                                className="max-w-full h-auto rounded-md border border-black/5"
                                 unoptimized={question.question_image.includes('supabase.co')}
                             />
                             {canEditCrop && (
@@ -140,26 +143,24 @@ export default function QuestionCard({ question, index, dispatch }: QuestionCard
                                     size="sm"
                                     onClick={() => setCropOpen(true)}
                                     disabled={isSavingCrop}
-                                    className="border border-black/30"
                                 >
-                                    <CropIcon className="w-4 h-4 mr-1" />
+                                    <CropIcon className="w-3.5 h-3.5 mr-1.5" />
                                     {isSavingCrop ? 'Saving…' : 'Edit crop'}
                                 </Button>
                             )}
                         </div>
-                    }
+                    )}
                     {!question.question_image && canEditCrop && (
-                        <div className="mt-2">
+                        <div className="mt-3">
                             <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setCropOpen(true)}
                                 disabled={isSavingCrop}
-                                className="border border-black/30"
                             >
-                                <CropIcon className="w-4 h-4 mr-1" />
-                                Add crop from source page
+                                <CropIcon className="w-3.5 h-3.5 mr-1.5" />
+                                Add crop from source
                             </Button>
                         </div>
                     )}
@@ -185,30 +186,63 @@ export default function QuestionCard({ question, index, dispatch }: QuestionCard
                         />
                     )}
                 </div>
+
                 <div>
-                    <label className="block text-sm font-medium mb-2">Options</label>
-                    <div className="space-y-2">
-                        {question.options.map((option, optionIndex) => (
-                            <div key={optionIndex} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-2 bg-gray-50 rounded-xl border border-black/40">
-                                <div className="flex-1 p-2 min-w-0 overflow-x-auto w-full">
-                                    {renderMixedLatex(option)}
-                                </div>
-                                <div className="flex items-center gap-2 self-end sm:self-auto">
-                                    <input
-                                        type="radio"
-                                        name={`correct-${index}`}
-                                        value={option}
-                                        checked={question.answer === option || String.fromCharCode(optionIndex + 65) === question.answer}
-                                        onChange={(e) => dispatch({ type: 'UPDATE_QUESTION', index, field: 'answer', value: e.target.value })}
-                                        className="w-4 h-4"
-                                    />
-                                    <span className="text-sm text-gray-600 whitespace-nowrap">Correct</span>
-                                </div>
-                            </div>
-                        ))}
+                    <label className="block text-[11px] font-medium uppercase tracking-wide text-zinc-400 mb-1.5">
+                        Options
+                    </label>
+                    <div className="space-y-1.5">
+                        {question.options.map((option, optionIndex) => {
+                            const letter = String.fromCharCode(65 + optionIndex);
+                            const isCorrect =
+                                question.answer === option || letter === question.answer;
+                            return (
+                                <label
+                                    key={optionIndex}
+                                    className={`flex items-start gap-2.5 rounded-lg border p-2.5 cursor-pointer transition-colors ${
+                                        isCorrect
+                                            ? 'border-emerald-200 bg-emerald-50/50'
+                                            : 'border-black/5 bg-white hover:border-zinc-200 hover:bg-zinc-50/60'
+                                    }`}
+                                >
+                                    <span
+                                        className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded font-mono text-[10px] font-semibold ${
+                                            isCorrect
+                                                ? 'bg-emerald-100 text-emerald-700'
+                                                : 'bg-zinc-100 text-zinc-500'
+                                        }`}
+                                    >
+                                        {letter}
+                                    </span>
+                                    <div className="flex-1 min-w-0 text-sm text-zinc-800 leading-relaxed overflow-x-auto">
+                                        {renderMixedLatex(option)}
+                                    </div>
+                                    <div className="flex items-center gap-1.5 self-center">
+                                        <input
+                                            type="radio"
+                                            name={`correct-${index}`}
+                                            value={option}
+                                            checked={isCorrect}
+                                            onChange={(e) =>
+                                                dispatch({
+                                                    type: 'UPDATE_QUESTION',
+                                                    index,
+                                                    field: 'answer',
+                                                    value: e.target.value,
+                                                })
+                                            }
+                                            className="w-3.5 h-3.5 accent-indigo-600"
+                                        />
+                                        {isCorrect && (
+                                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                        )}
+                                    </div>
+                                </label>
+                            );
+                        })}
                     </div>
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }

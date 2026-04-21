@@ -13,7 +13,7 @@ export function SocialSignInButtons({ signInWith, loading, isLoaded }: SocialSig
                 type="button"
                 onClick={() => signInWith('oauth_google')}
                 disabled={loading || !isLoaded}
-                className="w-full font-medium flex items-center justify-center gap-2 bg-white border border-gray-300/40 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200 disabled:opacity-50 py-2 "
+                className="w-full h-10 text-sm font-medium flex items-center justify-center gap-2 bg-white border border-black/10 text-zinc-800 rounded-lg hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition disabled:opacity-50"
                 aria-label="Continue with Google"
             >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

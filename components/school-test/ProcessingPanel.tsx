@@ -36,7 +36,7 @@ export function ProcessingPanel({
     const progress = total > 0 ? completed / total : 0;
 
     return (
-        <div className="flex h-full items-center justify-center px-6 py-12">
+        <div className="flex h-full items-center justify-center px-4 py-8 sm:px-6 sm:py-12">
             <div className="w-full max-w-xl">
                 <div className="mb-8 space-y-1">
                     <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-400">

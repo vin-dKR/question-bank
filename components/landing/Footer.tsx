@@ -3,80 +3,69 @@ import { Twitter, Linkedin, Instagram, Mail, Phone, MapPin } from 'lucide-react'
 
 const Footer = () => {
     return (
-        <footer className="py-12 relative border-t border-black/20">
-            <div className="absolute top-0 left-0 w-full h-px bg-border"></div>
-
-            <div className="max-w-[1000px] px-8 lg:px-0 mx-auto relative">
-                <div className="absolute -left-8 top-0 w-px h-full bg-border"></div>
-                <div className="absolute -right-8 top-0 w-px h-full bg-border"></div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
-                    {/* App Description */}
-                    <div className="space-y-4 lg:col-span-2">
-                        <h3 className="text-2xl font-bold text-foreground font-inter tracking-2">Eduents</h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed tracking-3">
-                            Eduents is your platform for seamless learning and community engagement. Discover courses, join events, and connect with a global community of learners and educators.
+        <footer className="bg-white border-t border-black/5 py-12 md:py-16">
+            <div className="mx-auto max-w-[1100px] px-4 sm:px-6">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+                    <div className="col-span-2 space-y-4">
+                        <h3 className="text-lg font-semibold tracking-tight text-zinc-900">Eduents</h3>
+                        <p className="text-sm text-zinc-500 leading-relaxed max-w-xs">
+                            Your platform for seamless learning and community engagement. Discover courses, join events, and connect globally.
                         </p>
-                        <div className="flex gap-4">
-                            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                                <Twitter size={20} />
+                        <div className="flex gap-3">
+                            <a href="#" className="text-zinc-400 hover:text-zinc-900 transition-colors">
+                                <Twitter size={18} />
                             </a>
-                            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                                <Linkedin size={20} />
+                            <a href="#" className="text-zinc-400 hover:text-zinc-900 transition-colors">
+                                <Linkedin size={18} />
                             </a>
-                            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                                <Instagram size={20} />
+                            <a href="#" className="text-zinc-400 hover:text-zinc-900 transition-colors">
+                                <Instagram size={18} />
                             </a>
                         </div>
                     </div>
 
-                    {/* Company Links */}
-                    <div className="space-y-4">
-                        <h4 className="text-lg font-semibold text-foreground font-inter tracking-2">Company</h4>
-                        <div className="flex flex-col gap-2 text-sm tracking-3">
-                            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">About Us</a>
-                            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Careers</a>
-                            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Blog</a>
-                            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</a>
-                            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Terms of Service</a>
+                    <div className="space-y-3">
+                        <h4 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Company</h4>
+                        <div className="flex flex-col gap-2 text-sm">
+                            <a href="#" className="text-zinc-600 hover:text-zinc-900 transition-colors">About</a>
+                            <a href="#" className="text-zinc-600 hover:text-zinc-900 transition-colors">Careers</a>
+                            <a href="#" className="text-zinc-600 hover:text-zinc-900 transition-colors">Blog</a>
+                            <a href="#" className="text-zinc-600 hover:text-zinc-900 transition-colors">Privacy</a>
+                            <a href="#" className="text-zinc-600 hover:text-zinc-900 transition-colors">Terms</a>
                         </div>
                     </div>
 
-                    {/* Resources Links */}
-                    <div className="space-y-4">
-                        <h4 className="text-lg font-semibold text-foreground font-inter tracking-2">Resources</h4>
-                        <div className="flex flex-col gap-2 text-sm tracking-3">
-                            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Help Center</a>
-                            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Community</a>
-                            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Tutorials</a>
-                            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">FAQ</a>
+                    <div className="space-y-3">
+                        <h4 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Resources</h4>
+                        <div className="flex flex-col gap-2 text-sm">
+                            <a href="#" className="text-zinc-600 hover:text-zinc-900 transition-colors">Help Center</a>
+                            <a href="#" className="text-zinc-600 hover:text-zinc-900 transition-colors">Community</a>
+                            <a href="#" className="text-zinc-600 hover:text-zinc-900 transition-colors">Tutorials</a>
+                            <a href="#" className="text-zinc-600 hover:text-zinc-900 transition-colors">FAQ</a>
                         </div>
                     </div>
 
-                    {/* Contact and Newsletter */}
-                    <div className="space-y-4 tracking-3">
-                        <h4 className="text-lg font-semibold text-foreground font-inter tracking-2">Get in Touch</h4>
-                        <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+                    <div className="space-y-3">
+                        <h4 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Contact</h4>
+                        <div className="flex flex-col gap-2 text-sm text-zinc-600">
                             <div className="flex items-center gap-2">
-                                <Mail size={16} />
+                                <Mail size={14} className="text-zinc-400" />
                                 <span>support@eduents.com</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Phone size={16} />
+                                <Phone size={14} className="text-zinc-400" />
                                 <span>+1 (000) 123-4567</span>
                             </div>
                             <div className="flex items-start gap-2">
-                                <MapPin size={16} className='w-4 md:w-7' />
-                                <span>123 Learning St, Education City, EC 12345</span>
+                                <MapPin size={14} className="text-zinc-400 mt-0.5 flex-shrink-0" />
+                                <span>123 Learning St, Education City</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="mt-8 text-center tracking-2">
-                    <div className="flex flex-col sm:flex-row justify-center items-center gap-8 text-sm mb-4">
-                    </div>
-                    <p className="text-sm text-muted-foreground">
+                <div className="mt-12 pt-6 border-t border-black/5 text-center">
+                    <p className="text-xs text-zinc-400">
                         © 2025 Eduents. All rights reserved.
                     </p>
                 </div>

@@ -46,7 +46,6 @@ export default function StudentPerformance({
                                     </div>
                                     <Button
                                         size="sm"
-                                        className="bg-black text-white"
                                         onClick={() => downloadStudentPdf(student.studentId, student.studentName)}
                                     >
                                         <Download className="w-3 h-3 mr-1" /> PDF
@@ -97,7 +96,6 @@ export default function StudentPerformance({
                         <Button
                             onClick={() => onLoadMore?.()}
                             disabled={isFetchingNextPage}
-                            className="bg-black text-white"
                         >
                             {isFetchingNextPage ? 'Loading…' : 'Load more'}
                         </Button>

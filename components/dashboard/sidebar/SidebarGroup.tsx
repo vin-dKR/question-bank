@@ -23,10 +23,12 @@ export function SidebarGroup({ group, isSidebarOpen, expandedGroups, toggleGroup
     return (
         <div
             className={`
-        flex truncate cursor-pointer
-        ${isSidebarOpen ? "px-4 justify-start" : "justify-center px-0 items-center mx-2"}
-        py-2 my-1 rounded-lg 
-        ${hasActiveChild ? "bg-gray-200 font-semibold text-gray-900" : "hover:bg-gray-100"}
+        flex truncate cursor-pointer text-sm
+        ${isSidebarOpen ? "px-3 justify-start" : "justify-center px-0 items-center mx-2"}
+        py-2 my-0.5 rounded-md transition-colors duration-150
+        ${hasActiveChild
+                    ? "bg-indigo-50 text-indigo-700 font-medium"
+                    : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"}
         ${isSidebarOpen && isExpanded ? "flex-col" : ""}
       `}
         >

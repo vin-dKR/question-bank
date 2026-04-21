@@ -1,6 +1,7 @@
 'use client';
 
 import SearchBar from "@/components/question/SearchBar"
+import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/question/EmptyState";
 import QuestionList from "@/components/question/QuestionList";
 import FilterControls from "@/components/question/FilterControls"
@@ -9,36 +10,44 @@ import SelectedQuestionsActions from "@/components/question/SelectedQuestionsAct
 import { useQuestionBankContext, useQuestionsList } from "@/lib/context/QuestionBankContext";
 
 const QuestionBankViewerContent = () => {
-    // UI-only state (selection) stays on the context; the server list comes
-    // from TanStack Query via the `useQuestionsList` wrapper (Phase 6).
     const { selectedQuestions } = useQuestionBankContext();
     const { questions, loading, error, initialFetchDone } = useQuestionsList();
 
     return (
         <div className="relative">
-            <div className="w-full mx-auto pb-6">
+            <div className="w-full mx-auto pb-6 space-y-5">
                 <div className="grid grid-cols-1 lg:grid-cols-6 xl:grid-cols-8 gap-4 sm:gap-6">
                     {/* Sidebar */}
-                    <aside className="col-span-1 lg:col-span-2 xl:col-span-2 lg:sticky lg:top-1 self-start h-fit">
-                        <div className="space-y-4 sm:space-y-6">
+                    <aside className="col-span-1 lg:col-span-2 xl:col-span-2 lg:sticky lg:top-0 self-start h-fit">
+                        <div className="space-y-4">
                             <FilterControls />
                         </div>
                     </aside>
 
                     {/* Main Content */}
-                    <main className="col-span-1 lg:col-span-4 xl:col-span-6 space-y-4 pt-1">
+                    <main className="col-span-1 lg:col-span-4 xl:col-span-6 space-y-4">
                         <FoldersControls />
                         <SearchBar />
                         {selectedQuestions.length > 0 && <SelectedQuestionsActions showPrintBtn={true} />}
                         {error && (
-                            <div className="p-3 sm:p-4 bg-rose-50 text-rose-700 rounded-lg shadow-sm text-sm sm:text-base">
+                            <div className="flex items-start gap-3 p-4 rounded-xl border border-rose-100 bg-rose-50/50 text-sm text-rose-700">
                                 {error}
                             </div>
                         )}
                         {loading && (
-                            <div className="p-3 sm:p-4 bg-indigo-50 text-indigo-700 rounded-xl shadow-sm flex items-center justify-center text-sm sm:text-base font-semibold border border-black/5">
-                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-700 mr-2"></div>
-                                Loading questions...
+                            <div className="space-y-3">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                    <div key={i} className="rounded-xl border border-black/5 bg-white p-4 sm:p-5 shadow-xs space-y-3">
+                                        <div className="flex gap-1.5">
+                                            <Skeleton className="h-4 w-14" />
+                                            <Skeleton className="h-4 w-20" />
+                                            <Skeleton className="h-4 w-16" />
+                                        </div>
+                                        <Skeleton className="h-4 w-3/4" />
+                                        <Skeleton className="h-3 w-full" />
+                                        <Skeleton className="h-3 w-5/6" />
+                                    </div>
+                                ))}
                             </div>
                         )}
                         {!loading && questions.length > 0 && <QuestionList />}

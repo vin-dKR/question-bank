@@ -223,7 +223,6 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                             <Button
                                 onClick={() => setShowTemplateModal(true)}
                                 size="sm"
-                                className='bg-black text-white'
                             >
                                 <CirclePlus className="w-4 h-4 mr-2" />
                                 Templates
@@ -242,7 +241,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                                 onChange={handleInputChange}
                                 placeholder="Enter test title"
                                 required
-                                className='border border-black/30'
+                               
                             />
                         </div>
                         <div>
@@ -254,7 +253,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                                 onChange={handleInputChange}
                                 placeholder="Enter subject"
                                 required
-                                className='border border-black/30'
+                               
                             />
                         </div>
                         <div>
@@ -267,7 +266,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                                 onChange={handleInputChange}
                                 placeholder="Enter duration in minutes"
                                 required
-                                className='border border-black/30'
+                               
                             />
                         </div>
                         <div>
@@ -280,7 +279,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                                 onChange={handleInputChange}
                                 placeholder="Enter total marks"
                                 required
-                                className='border border-black/30'
+                               
                             />
                         </div>
                         <div>
@@ -292,7 +291,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                                 onChange={handleInputChange}
                                 placeholder="Enter institution name"
                                 required
-                                className='border border-black/30'
+                               
                             />
                         </div>
                         <div>
@@ -303,7 +302,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                                 value={formData.institutionAddress || ''}
                                 onChange={handleInputChange}
                                 placeholder="Enter institution address"
-                                className='border border-black/30'
+                               
                             />
                         </div>
                         <div>
@@ -314,7 +313,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                                 value={formData.standard || ''}
                                 onChange={handleInputChange}
                                 placeholder="Enter class/standard"
-                                className='border border-black/30'
+                               
                             />
                         </div>
                         <div>
@@ -325,7 +324,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                                 value={formData.session || ''}
                                 onChange={handleInputChange}
                                 placeholder="Enter session"
-                                className='border border-black/30'
+                               
                             />
                         </div>
                         <div>
@@ -336,7 +335,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                                 type="file"
                                 accept="image/*"
                                 onChange={handleLogoChange}
-                                className='border border-black/30'
+                               
                             />
                         </div>
                     </div>
@@ -446,7 +445,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                                 onChange={(e) => setFormData(prev => ({ ...prev, templateName: e.target.value }))}
                                 placeholder="Enter template name"
                                 required
-                                className='border border-black/30'
+                               
                             />
                         </div>
                         <div>
@@ -458,7 +457,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                                 onChange={(e) => setFormData(prev => ({ ...prev, institution: e.target.value }))}
                                 placeholder="Enter institution name"
                                 required
-                                className='border border-black/30'
+                               
                             />
                         </div>
                         <div>
@@ -469,7 +468,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                                 value={formData.institutionAddress}
                                 onChange={(e) => setFormData(prev => ({ ...prev, institutionAddress: e.target.value }))}
                                 placeholder="Enter institution address"
-                                className='border border-black/30'
+                               
                             />
                         </div>
                         <div>
@@ -480,7 +479,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                                 value={formData.session}
                                 onChange={(e) => setFormData(prev => ({ ...prev, session: e.target.value }))}
                                 placeholder="Enter session"
-                                className='border border-black/30'
+                               
                             />
                         </div>
                         <div>
@@ -491,7 +490,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                                 value={formData.standard}
                                 onChange={(e) => setFormData(prev => ({ ...prev, standard: e.target.value }))}
                                 placeholder="Enter class/standard"
-                                className='border border-black/30'
+                               
                             />
                         </div>
                         <div>
@@ -504,7 +503,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                                 onChange={(e) => setFormData(prev => ({ ...prev, marks: e.target.value }))}
                                 placeholder="Enter total marks"
                                 required
-                                className='border border-black/30'
+                               
                             />
                         </div>
                         <div>
@@ -516,7 +515,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                                 onChange={(e) => setFormData(prev => ({ ...prev, time: e.target.value }))}
                                 placeholder="e.g., 2 hours"
                                 required
-                                className='border border-black/30'
+                               
                             />
                         </div>
                         <div>
@@ -528,7 +527,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                                 onChange={(e) => setFormData(prev => ({ ...prev, exam: e.target.value }))}
                                 placeholder="Enter exam name"
                                 required
-                                className='border border-black/30'
+                               
                             />
                         </div>
                         <div>
@@ -540,7 +539,7 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                                 onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
                                 placeholder="Enter subject"
                                 required
-                                className='border border-black/30'
+                               
                             />
                         </div>
                         <div>
@@ -551,16 +550,16 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                                 type="file"
                                 accept="image/*"
                                 onChange={handleLogoChange}
-                                className='border border-black/30'
+                               
                             />
                         </div>
                     </div>
 
                     <DialogFooter>
-                        <Button className='bg-gray-300' onClick={() => { setIsEditingTemplate(false); setIsCreatingTemplate(false); }}>
+                        <Button variant="secondary" onClick={() => { setIsEditingTemplate(false); setIsCreatingTemplate(false); }}>
                             Cancel
                         </Button>
-                        <Button onClick={handleSaveTemplate} disabled={isCreatingTemplate} className='bg-black text-white'>
+                        <Button onClick={handleSaveTemplate} disabled={isCreatingTemplate}>
                             {isCreatingTemplate ? 'Saving...' : 'Save Template'}
                         </Button>
                     </DialogFooter>

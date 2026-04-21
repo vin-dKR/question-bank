@@ -25,15 +25,15 @@ export default function ResetPasswordPage() {
 
     if (success) {
         return (
-            <div className="min-h-screen flex items-center justify-center p-4">
-                <div className="w-full max-w-md bg-white rounded-xl shadow-xl overflow-hidden p-8 text-center">
+            <div className="min-h-screen flex items-center justify-center p-4 bg-zinc-50">
+                <div className="w-full max-w-md bg-white rounded-xl border border-black/5 shadow-sm p-8 text-center">
                     <div className="mb-6">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-green-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-emerald-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
-                    <h1 className="text-2xl font-bold text-gray-800 mb-4">Password Reset Successful!</h1>
-                    <p className="text-gray-600 mb-6">
+                    <h1 className="text-xl font-semibold tracking-tight text-zinc-900 mb-2">Password Reset Successful</h1>
+                    <p className="text-sm text-zinc-500">
                         Your password has been updated. Redirecting to dashboard...
                     </p>
                 </div>
@@ -42,14 +42,14 @@ export default function ResetPasswordPage() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 border border-black/20">
-            <div className="w-full max-w-md bg-white rounded-xl border border-black/10 overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center p-4 bg-zinc-50">
+            <div className="w-full max-w-md bg-white rounded-xl border border-black/5 shadow-sm">
                 <div className="p-8">
                     <div className="text-center mb-8">
-                        <h1 className="text-2xl font-bold text-gray-800 tracking-3">
+                        <h1 className="text-xl font-semibold tracking-tight text-zinc-900">
                             {otpSent ? 'Enter OTP & New Password' : 'Reset Your Password'}
                         </h1>
-                        <p className="text-sm text-black/50 mt-2 tracking-3">
+                        <p className="text-sm text-zinc-500 mt-1.5">
                             {otpSent
                                 ? `We've sent a 6-digit OTP to ${email}`
                                 : 'Enter your email to receive an OTP'}
@@ -57,20 +57,20 @@ export default function ResetPasswordPage() {
                     </div>
 
                     {!otpSent ? (
-                        <form className="space-y-6" onSubmit={handleRequestOTP}>
+                        <form className="space-y-5" onSubmit={handleRequestOTP}>
                             <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1 tracking-3">
+                                <label htmlFor="email" className="block text-xs font-medium text-zinc-600 mb-1.5">
                                     Email Address
                                 </label>
 
-                                <div className='relative'>
-                                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                                <div className="relative">
+                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
                                     <input
                                         id="email"
                                         name="email"
                                         type="email"
                                         required
-                                        className="w-full pl-10 px-4 py-3 text-gray-700 tracking-3 rounded-lg border border-gray-300 focus:border-black focus:ring-2 focus:ring-black outline-none transition duration-200"
+                                        className="w-full h-10 pl-9 pr-3 text-sm text-zinc-900 rounded-lg border border-black/10 bg-white placeholder:text-zinc-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition"
                                         placeholder="your@email.com"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
@@ -79,7 +79,7 @@ export default function ResetPasswordPage() {
                             </div>
 
                             {error && (
-                                <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
+                                <div className="bg-rose-50 text-rose-700 border border-rose-100 p-3 rounded-lg text-sm">
                                     {error}
                                 </div>
                             )}
@@ -87,7 +87,7 @@ export default function ResetPasswordPage() {
                             <LoadingButton
                                 type="submit"
                                 isLoading={loading}
-                                className="w-full bg-black/80 hover:bg-black text-white font-medium py-3 px-4 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition duration-200"
+                                className="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition"
                             >
                                 {loading ? (
                                     <span className="flex items-center justify-center gap-2">
@@ -100,9 +100,9 @@ export default function ResetPasswordPage() {
                             </LoadingButton>
                         </form>
                     ) : (
-                        <form className="space-y-6" onSubmit={handleVerifyOTP}>
+                        <form className="space-y-5" onSubmit={handleVerifyOTP}>
                             <div>
-                                <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-1">
+                                <label htmlFor="otp" className="block text-xs font-medium text-zinc-600 mb-1.5">
                                     6-Digit OTP
                                 </label>
                                 <input
@@ -113,7 +113,7 @@ export default function ResetPasswordPage() {
                                     pattern="[0-9]{6}"
                                     required
                                     maxLength={6}
-                                    className="w-full px-4 py-3 text-gray-700 rounded-lg border border-gray-300 focus:border-black focus:ring-2 focus:ring-black outline-none transition duration-200 text-center tracking-widest text-2xl"
+                                    className="w-full h-12 px-4 text-zinc-900 rounded-lg border border-black/10 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition text-center tracking-widest text-xl"
                                     placeholder="• • • • • •"
                                     value={otp}
                                     onChange={(e) => {
@@ -124,7 +124,7 @@ export default function ResetPasswordPage() {
                             </div>
 
                             <div>
-                                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1 tracking-3">
+                                <label htmlFor="password" className="block text-xs font-medium text-zinc-600 mb-1.5">
                                     New Password
                                 </label>
                                 <input
@@ -133,18 +133,18 @@ export default function ResetPasswordPage() {
                                     type="password"
                                     required
                                     minLength={8}
-                                    className="w-full px-4 py-3 text-gray-700 rounded-lg border border-gray-300 focus:border-black focus:ring-2 focus:ring-black outline-none transition duration-200"
+                                    className="w-full h-10 px-3 text-sm text-zinc-900 rounded-lg border border-black/10 bg-white placeholder:text-zinc-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition"
                                     placeholder="••••••••"
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
                                 />
-                                <p className="mt-1 text-xs text-gray-500">
+                                <p className="mt-1.5 text-xs text-zinc-500">
                                     Must be at least 8 characters
                                 </p>
                             </div>
 
                             {error && (
-                                <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
+                                <div className="bg-rose-50 text-rose-700 border border-rose-100 p-3 rounded-lg text-sm">
                                     {error}
                                 </div>
                             )}
@@ -152,7 +152,7 @@ export default function ResetPasswordPage() {
                             <LoadingButton
                                 type="submit"
                                 isLoading={loading}
-                                className="w-full bg-black/80 hover:bg-black text-white font-medium py-3 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition duration-200"
+                                className="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition"
                             >
                                 {loading ? (
                                     <span className="flex items-center justify-center gap-2">
@@ -169,7 +169,7 @@ export default function ResetPasswordPage() {
                                     type="button"
                                     onClick={handleResendOTP}
                                     disabled={loading}
-                                    className="text-black/60 hover:text-black font-medium text-sm disabled:opacity-50 tracking-3"
+                                    className="text-indigo-600 hover:text-indigo-700 font-medium text-sm disabled:opacity-50"
                                 >
                                     {`Didn't receive OTP? Resend`}
                                 </button>
@@ -180,9 +180,9 @@ export default function ResetPasswordPage() {
                     <div className="mt-6 text-center">
                         <Link
                             href="/auth/signin"
-                            className="text-black/60 hover:underline font-medium text-sm tracking-3"
+                            className="text-zinc-500 hover:text-zinc-900 text-sm"
                         >
-                            Remember your password? Sign in
+                            Remember your password? <span className="text-indigo-600 hover:text-indigo-700 font-medium">Sign in</span>
                         </Link>
                     </div>
                 </div>

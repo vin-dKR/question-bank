@@ -52,50 +52,39 @@ export default function SelectedQuestionsActions({ showPrintBtn }: SelectedQuest
     };
 
     return (
-        <div className="sticky top-[-20px] z-10 flex flex-wrap justify-between items-center gap-3 bg-white p-3 md:p-4 rounded-xl shadow-md border border-slate-200">
+        <div className="sticky top-[-20px] z-10 flex flex-wrap justify-between items-center gap-3 bg-white p-3 md:p-4 rounded-xl shadow-xs border border-black/5">
             <div className="flex flex-row w-full justify-between items-center">
-                <span className="text-xs md:text-sm font-bold font-medium text-slate-700">
-                    {selectedCount} {selectedCount !== 1 ? 's' : ''} Selected
+                <span className="text-xs md:text-sm font-medium text-zinc-700">
+                    {selectedCount} Selected
                 </span>
-                {selectedCount > 0 ? (
-                    <button
-                        onClick={() => setShowOnlySelected(!showOnlySelected)}
-                        className="text-blue-600 hover:text-blue-800 underline cursor-pointer"
-                    >
-                        <span className='text-xs sm:text-sm text-nowrap font-bold'>
-                            {showOnlySelected ? 'Show All Questions' : 'See All Selected Questions'}
-                        </span>
-                    </button>
-                ) : (
-                    <button
-                        onClick={() => setShowOnlySelected(false)}
-                        className="text-xs text-blue-600 hover:text-blue-800 underline mt-1 text-right"
-                    >
-                        Show All Questions
-                    </button>
-                )}
+                <button
+                    onClick={() => setShowOnlySelected(selectedCount > 0 ? !showOnlySelected : false)}
+                    className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-700 font-medium cursor-pointer text-nowrap"
+                >
+                    {selectedCount > 0 && showOnlySelected ? 'Show All Questions' : selectedCount > 0 ? 'See Selected Only' : 'Show All'}
+                </button>
             </div>
 
             <div className="flex flex-col w-full gap-3 md:w-auto md:flex-row md:items-center md:justify-between">
-                {/* First row - becomes first column on desktop */}
-                <div className="flex flex-row w-full gap-2 md:flex-row md:flex-1 md:gap-3">
+                <div className="flex flex-row w-full gap-2 md:flex-row md:flex-1 md:gap-2">
                     <Button
                         size="sm"
                         onClick={selectAllQuestions}
                         disabled={showOnlySelected}
-                        className="bg-indigo-600 w-full md:flex-1 text-white hover:bg-indigo-700 transition border border-black/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full md:flex-1"
                     >
-                        <span className='text-xs sm:text-sm text-nowrap font-bold'>
+                        <span className="text-xs sm:text-sm text-nowrap">
                             Select All
                         </span>
                     </Button>
 
                     <Button
                         size="sm"
+                        variant="secondary"
                         onClick={unselectAllQuestions}
-                        className="px-3 py-1 w-full md:flex-1 bg-slate-200 text-slate-700 hover:bg-slate-300 transition text-md border border-black/5"
+                        className="w-full md:flex-1"
                     >
-                        <span className='text-xs sm:text-sm text-nowrap font-bold'>
+                        <span className="text-xs sm:text-sm text-nowrap">
                             Unselect All
                         </span>
                     </Button>
@@ -104,9 +93,9 @@ export default function SelectedQuestionsActions({ showPrintBtn }: SelectedQuest
                         size="sm"
                         onClick={createTestFromSelected}
                         disabled={selectedCount === 0}
-                        className="bg-green-600 w-full md:flex-1 text-white hover:bg-green-700 transition text-md border border-black/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full md:flex-1 bg-emerald-600 text-white hover:bg-emerald-700"
                     >
-                        <span className='text-xs sm:text-sm text-nowrap font-bold'>
+                        <span className="text-xs sm:text-sm text-nowrap">
                             Create Test
                         </span>
                     </Button>

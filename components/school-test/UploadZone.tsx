@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { Upload, FileUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ACCEPTED = "image/*,application/pdf";
@@ -35,10 +36,10 @@ export function UploadZone({ onFiles }: { onFiles: (files: File[]) => void }) {
                 handle(e.dataTransfer.files);
             }}
             className={cn(
-                "group flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed px-8 py-16 text-center transition-colors",
+                "group flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-12 sm:py-16 text-center transition-all",
                 dragging
-                    ? "border-neutral-900 bg-neutral-100"
-                    : "border-neutral-300 bg-white hover:border-neutral-500 hover:bg-neutral-50",
+                    ? "border-indigo-500 bg-indigo-50/50 scale-[1.01]"
+                    : "border-zinc-200 bg-white hover:border-indigo-300 hover:bg-indigo-50/30",
             )}
         >
             <input
@@ -50,28 +51,27 @@ export function UploadZone({ onFiles }: { onFiles: (files: File[]) => void }) {
                 className="sr-only"
                 onChange={(e) => handle(e.target.files)}
             />
-            <div className="flex size-10 items-center justify-center rounded-full border border-neutral-200 bg-neutral-50 text-neutral-500 transition-colors group-hover:border-neutral-400 group-hover:text-neutral-800">
-                <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.75"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                >
-                    <path d="M12 3v12" />
-                    <path d="m7 8 5-5 5 5" />
-                    <path d="M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" />
-                </svg>
+            <div
+                className={cn(
+                    "flex h-12 w-12 items-center justify-center rounded-xl transition-all",
+                    dragging
+                        ? "bg-indigo-600 text-white"
+                        : "bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100",
+                )}
+            >
+                {dragging ? <FileUp className="h-5 w-5" /> : <Upload className="h-5 w-5" />}
             </div>
-            <p className="mt-5 text-[15px] font-medium text-neutral-900">
-                Drop question papers here
+            <p className="mt-5 text-sm sm:text-base font-medium text-zinc-900">
+                {dragging ? "Drop to upload" : "Drop question papers here"}
             </p>
-            <p className="mt-1 text-[13px] text-neutral-500">
-                or click to choose &mdash; one PDF or multiple images, up to 20 MB each
+            <p className="mt-1 text-xs sm:text-sm text-zinc-500">
+                or click to choose — one PDF or multiple images, up to 20 MB each
             </p>
+            <div className="mt-4 flex items-center gap-2 text-[10px] text-zinc-400">
+                <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 font-mono">PDF</span>
+                <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 font-mono">PNG</span>
+                <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 font-mono">JPG</span>
+            </div>
         </label>
     );
 }

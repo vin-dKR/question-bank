@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { Image as ImageIcon, Pencil, Eye, Trash2, Plus } from "lucide-react";
 import type { Crop, QuestionDraft } from "@/lib/school-test/types";
 import { renderMixedLatex } from "@/lib/render-tex";
 import { cn } from "@/lib/utils";
@@ -23,7 +24,7 @@ export function QuestionCard({
     onRemoveCrop: () => void;
     onHoverCrop: (hover: boolean) => void;
 }) {
-    const [showPreview, setShowPreview] = useState(false);
+    const [showPreview, setShowPreview] = useState(true);
 
     return (
         <motion.div
@@ -32,12 +33,12 @@ export function QuestionCard({
             transition={{ duration: 0.2 }}
             onMouseEnter={() => onHoverCrop(true)}
             onMouseLeave={() => onHoverCrop(false)}
-            className="group rounded-xl border border-neutral-200 bg-white p-4 transition-colors hover:border-neutral-300"
+            className="group rounded-xl border border-black/5 bg-white p-4 shadow-xs transition-all hover:border-indigo-100 hover:shadow-sm"
         >
-            <div className="mb-3 flex items-center justify-between">
+            <div className="mb-3 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-neutral-400">
-                        Question
+                    <span className="inline-flex h-6 items-center rounded-md bg-indigo-50 px-2 font-mono text-[11px] font-semibold text-indigo-700">
+                        Q
                     </span>
                     <input
                         type="number"
@@ -45,23 +46,25 @@ export function QuestionCard({
                         onChange={(e) =>
                             onChange({ question_number: Number(e.target.value) || 0 })
                         }
-                        className="w-14 rounded-md border border-neutral-200 bg-transparent px-2 py-1 text-[13px] font-semibold text-neutral-900 tabular-nums focus:border-neutral-900 focus:outline-none"
+                        className="w-14 h-7 rounded-md border border-black/10 bg-white px-2 text-[13px] font-semibold text-zinc-900 tabular-nums focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition"
                     />
                 </div>
-                <div className="flex items-center gap-3 text-[11px]">
+                <div className="flex items-center gap-1">
                     <button
                         type="button"
                         onClick={() => setShowPreview((s) => !s)}
-                        className="font-medium text-neutral-500 underline-offset-4 hover:text-neutral-900 hover:underline"
+                        className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-[11px] font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
                     >
+                        {showPreview ? <Pencil className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                         {showPreview ? "Edit" : "Preview"}
                     </button>
                     <button
                         type="button"
                         onClick={onDelete}
-                        className="font-medium text-neutral-400 underline-offset-4 hover:text-red-500 hover:underline"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                        aria-label="Delete question"
                     >
-                        Delete
+                        <Trash2 className="h-3.5 w-3.5" />
                     </button>
                 </div>
             </div>
@@ -72,21 +75,23 @@ export function QuestionCard({
                 <AutoTextarea
                     value={question.question_text}
                     onChange={(v) => onChange({ question_text: v })}
-                    placeholder="Question text"
+                    placeholder="Question text — supports LaTeX \(…\)"
                 />
             )}
 
-            <div className="mt-4 space-y-2">
+            <div className="mt-3 space-y-1.5">
                 {question.options.map((opt, i) =>
                     showPreview ? (
                         <RenderedOption
                             key={i}
+                            letter={String.fromCharCode(65 + i)}
                             value={opt}
                             onEdit={() => setShowPreview(false)}
                         />
                     ) : (
                         <OptionRow
                             key={i}
+                            letter={String.fromCharCode(65 + i)}
                             value={opt}
                             onChange={(v) => {
                                 const next = [...question.options];
@@ -107,35 +112,38 @@ export function QuestionCard({
                             const letter = String.fromCharCode(65 + question.options.length);
                             onChange({ options: [...question.options, `(${letter}) `] });
                         }}
-                        className="text-[12px] font-medium text-neutral-500 underline-offset-4 hover:text-neutral-900 hover:underline"
+                        className="inline-flex items-center gap-1 rounded-md border border-dashed border-zinc-200 px-2.5 py-1 text-[11px] font-medium text-zinc-500 hover:border-indigo-200 hover:bg-indigo-50/50 hover:text-indigo-600 transition-colors"
                     >
-                        Add option
+                        <Plus className="h-3 w-3" /> Add option
                     </button>
                 )}
             </div>
 
-            <div className="mt-4 border-t border-neutral-100 pt-3">
+            <div className="mt-3 border-t border-black/5 pt-3">
                 {crop ? (
                     <div className="flex items-start gap-3">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                             src={crop.dataUrl}
                             alt={`Q${question.question_number} diagram`}
-                            className="max-h-24 rounded border border-neutral-200 bg-white object-contain"
+                            className="max-h-20 rounded-md border border-black/5 bg-white object-contain"
                         />
-                        <div className="flex flex-col gap-1 text-[12px]">
-                            <span className="font-medium text-neutral-500">Diagram</span>
+                        <div className="flex flex-col gap-1 text-[11px]">
+                            <span className="inline-flex items-center gap-1 font-medium text-zinc-500">
+                                <ImageIcon className="h-3 w-3" />
+                                Diagram
+                            </span>
                             <button
                                 type="button"
                                 onClick={onEditCrop}
-                                className="text-left font-medium text-neutral-700 underline-offset-4 hover:underline"
+                                className="text-left font-medium text-indigo-600 hover:text-indigo-700"
                             >
                                 Adjust crop
                             </button>
                             <button
                                 type="button"
                                 onClick={onRemoveCrop}
-                                className="text-left font-medium text-neutral-400 underline-offset-4 hover:text-red-500 hover:underline"
+                                className="text-left font-medium text-zinc-400 hover:text-rose-600"
                             >
                                 Remove
                             </button>
@@ -145,8 +153,9 @@ export function QuestionCard({
                     <button
                         type="button"
                         onClick={onEditCrop}
-                        className="text-[12px] font-medium text-neutral-500 underline-offset-4 hover:text-neutral-900 hover:underline"
+                        className="inline-flex items-center gap-1.5 text-[11px] font-medium text-zinc-500 hover:text-indigo-600 transition-colors"
                     >
+                        <ImageIcon className="h-3 w-3" />
                         Attach diagram crop
                     </button>
                 )}
@@ -156,32 +165,37 @@ export function QuestionCard({
 }
 
 function OptionRow({
+    letter,
     value,
     onChange,
     onRemove,
 }: {
+    letter: string;
     value: string;
     onChange: (v: string) => void;
     onRemove: () => void;
 }) {
     return (
-        <div className="flex items-start gap-2">
+        <div className="flex items-center gap-2">
+            <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-zinc-100 font-mono text-[11px] font-semibold text-zinc-600">
+                {letter}
+            </span>
             <input
                 type="text"
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 className={cn(
-                    "flex-1 rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-[13px] text-neutral-900",
-                    "focus:border-neutral-900 focus:outline-none",
+                    "flex-1 h-7 rounded-md border border-black/10 bg-white px-2.5 text-[13px] text-zinc-900",
+                    "focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition",
                 )}
             />
             <button
                 type="button"
                 onClick={onRemove}
-                className="px-1 py-1 text-[11px] font-medium text-neutral-300 hover:text-red-500"
+                className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-zinc-300 hover:bg-rose-50 hover:text-rose-500 transition-colors"
                 aria-label="Remove option"
             >
-                ×
+                <Trash2 className="h-3 w-3" />
             </button>
         </div>
     );
@@ -202,7 +216,7 @@ function AutoTextarea({
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
             rows={3}
-            className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-[13px] leading-relaxed text-neutral-900 focus:border-neutral-900 focus:outline-none"
+            className="w-full resize-y rounded-md border border-black/10 bg-white px-3 py-2 text-[13px] leading-relaxed text-zinc-900 placeholder:text-zinc-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition"
         />
     );
 }
@@ -213,29 +227,40 @@ function RenderedBlock({ value, onEdit }: { value: string; onEdit: () => void })
             type="button"
             onClick={onEdit}
             title="Click to edit"
-            className="block w-full rounded-md border border-transparent bg-neutral-50 px-3 py-2 text-left text-[13px] leading-relaxed text-neutral-900 transition-colors hover:border-neutral-200"
+            className="block w-full rounded-md border border-transparent bg-zinc-50 px-3 py-2 text-left text-[13px] leading-relaxed text-zinc-900 transition-colors hover:border-indigo-100 hover:bg-indigo-50/40"
         >
             {value.trim().length > 0 ? (
                 renderMixedLatex(value)
             ) : (
-                <span className="italic text-neutral-400">Empty question text — click to edit</span>
+                <span className="italic text-zinc-400">Empty question text — click to edit</span>
             )}
         </button>
     );
 }
 
-function RenderedOption({ value, onEdit }: { value: string; onEdit: () => void }) {
+function RenderedOption({
+    letter,
+    value,
+    onEdit,
+}: {
+    letter: string;
+    value: string;
+    onEdit: () => void;
+}) {
     return (
         <button
             type="button"
             onClick={onEdit}
             title="Click to edit"
-            className="flex w-full items-start rounded-md border border-transparent bg-neutral-50 px-3 py-1.5 text-left text-[13px] leading-relaxed text-neutral-900 transition-colors hover:border-neutral-200"
+            className="flex w-full items-start gap-2 rounded-md border border-transparent bg-zinc-50 px-2 py-1.5 text-left text-[13px] leading-relaxed text-zinc-900 transition-colors hover:border-indigo-100 hover:bg-indigo-50/40"
         >
+            <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded bg-white font-mono text-[10px] font-medium text-zinc-500 border border-black/5">
+                {letter}
+            </span>
             {value.trim().length > 0 ? (
-                renderMixedLatex(value)
+                <span className="flex-1 min-w-0">{renderMixedLatex(value)}</span>
             ) : (
-                <span className="italic text-neutral-400">Empty option</span>
+                <span className="italic text-zinc-400">Empty option</span>
             )}
         </button>
     );

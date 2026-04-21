@@ -4,9 +4,9 @@ export async function QuestionsCountCard() {
     const { totalQuestions } = await getQuestionsData();
 
     return (
-        <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-lg font-medium text-gray-700">Total Questions</h3>
-            <p className="text-3xl font-bold text-gray-900 mt-2">{totalQuestions}</p>
+        <div className="rounded-xl border border-black/5 bg-white p-6 shadow-xs">
+            <h3 className="text-sm font-medium text-zinc-500">Total Questions</h3>
+            <p className="mt-2 text-3xl font-semibold tracking-tight text-zinc-900">{totalQuestions}</p>
         </div>
     );
 }

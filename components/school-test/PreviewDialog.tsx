@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { motion } from "framer-motion";
 import type { Crop, QuestionDraft } from "@/lib/school-test/types";
 import { renderMixedLatex } from "@/lib/render-tex";
+import { X, CheckCircle2, Loader2 } from "lucide-react";
 
 type PreviewPage = {
     pageNumber: number;
@@ -34,54 +35,71 @@ export function PreviewDialog({
     const totalDiagrams = pages.reduce((sum, p) => sum + Object.keys(p.crops).length, 0);
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/60 p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/50 backdrop-blur-sm p-2 sm:p-6">
             <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ duration: 0.2 }}
-                className="flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+                className="flex max-h-[95vh] w-full max-w-[95vw] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 sm:max-h-[88vh] sm:max-w-2xl"
             >
-                <div className="flex items-start justify-between border-b border-neutral-200 px-6 py-5">
-                    <div>
-                        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-400">
-                            Confirm
-                        </p>
-                        <h2 className="mt-0.5 text-[18px] font-semibold tracking-tight text-neutral-900">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-3 border-b border-black/5 px-4 py-4 sm:px-6 sm:py-5">
+                    <div className="min-w-0">
+                        <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-indigo-700">
+                            <CheckCircle2 className="h-3 w-3" />
+                            Review & Confirm
+                        </div>
+                        <h2 className="mt-2 text-lg sm:text-xl font-semibold tracking-tight text-zinc-900">
                             Does this look right?
                         </h2>
-                        <p className="mt-1 text-[13px] text-neutral-500">
-                            {totalQuestions} question{totalQuestions === 1 ? "" : "s"} across{" "}
-                            {pages.length} page{pages.length === 1 ? "" : "s"}
-                            {totalDiagrams > 0 ? ` · ${totalDiagrams} diagram${totalDiagrams === 1 ? "" : "s"}` : ""}
-                            . They&rsquo;ll be saved to the question bank and loaded into Create Test.
-                        </p>
+                        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500">
+                            <span>
+                                <span className="font-medium text-zinc-700">{totalQuestions}</span> question{totalQuestions === 1 ? "" : "s"}
+                            </span>
+                            <span className="text-zinc-300">·</span>
+                            <span>
+                                <span className="font-medium text-zinc-700">{pages.length}</span> page{pages.length === 1 ? "" : "s"}
+                            </span>
+                            {totalDiagrams > 0 && (
+                                <>
+                                    <span className="text-zinc-300">·</span>
+                                    <span>
+                                        <span className="font-medium text-zinc-700">{totalDiagrams}</span> diagram{totalDiagrams === 1 ? "" : "s"}
+                                    </span>
+                                </>
+                            )}
+                        </div>
                     </div>
                     <button
                         type="button"
                         onClick={onCancel}
                         disabled={isSaving}
-                        className="rounded-lg p-1 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-900 disabled:opacity-40"
+                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-900 disabled:opacity-40"
                         aria-label="Close"
                     >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M18 6 6 18" />
-                            <path d="m6 6 12 12" />
-                        </svg>
+                        <X className="h-4 w-4" />
                     </button>
                 </div>
 
-                <div className="min-h-0 flex-1 overflow-y-auto bg-neutral-50 px-6 py-5">
+                {/* Body */}
+                <div className="min-h-0 flex-1 overflow-y-auto bg-zinc-50/60 px-4 py-4 sm:px-6 sm:py-5">
                     <div className="space-y-6">
                         {pages.map((p) => (
                             <div key={p.pageNumber}>
                                 {pages.length > 1 && (
-                                    <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-400">
-                                        Page {p.pageNumber}
-                                    </p>
+                                    <div className="mb-2.5 flex items-center gap-2">
+                                        <span className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
+                                            Page {p.pageNumber}
+                                        </span>
+                                        <span className="h-px flex-1 bg-zinc-200" />
+                                        <span className="text-[10px] text-zinc-400">
+                                            {p.questions.length} question{p.questions.length === 1 ? "" : "s"}
+                                        </span>
+                                    </div>
                                 )}
-                                <div className="space-y-3">
+                                <div className="space-y-2.5">
                                     {p.questions.length === 0 ? (
-                                        <p className="rounded-lg border border-dashed border-neutral-200 bg-white px-4 py-6 text-center text-[12px] text-neutral-400">
+                                        <p className="rounded-lg border border-dashed border-zinc-200 bg-white px-4 py-6 text-center text-xs text-zinc-400">
                                             No questions on this page.
                                         </p>
                                     ) : (
@@ -99,16 +117,17 @@ export function PreviewDialog({
                     </div>
                 </div>
 
-                <div className="flex items-center justify-between gap-3 border-t border-neutral-200 bg-white px-6 py-4">
-                    <p className="text-[11px] text-neutral-400">
-                        Once saved, you can edit each question further on the Create Test page.
+                {/* Footer */}
+                <div className="flex flex-col-reverse gap-2 border-t border-black/5 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
+                    <p className="text-[11px] text-zinc-500">
+                        Saved to the question bank. Editable later on Create Test.
                     </p>
                     <div className="flex items-center gap-2">
                         <button
                             type="button"
                             onClick={onCancel}
                             disabled={isSaving}
-                            className="rounded-lg px-4 py-2 text-[13px] font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 disabled:opacity-40"
+                            className="h-9 rounded-lg px-4 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 disabled:opacity-40"
                         >
                             Cancel
                         </button>
@@ -116,15 +135,9 @@ export function PreviewDialog({
                             type="button"
                             onClick={onConfirm}
                             disabled={isSaving || totalQuestions === 0}
-                            className="inline-flex items-center gap-2 rounded-lg bg-neutral-900 px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-neutral-800 disabled:bg-neutral-300"
+                            className="inline-flex h-9 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-medium text-white shadow-xs transition-colors hover:bg-indigo-700 disabled:bg-zinc-300"
                         >
-                            {isSaving && (
-                                <motion.span
-                                    className="inline-block h-3 w-3 rounded-full border-[1.5px] border-white border-b-transparent"
-                                    animate={{ rotate: 360 }}
-                                    transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-                                />
-                            )}
+                            {isSaving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                             {isSaving ? "Saving…" : "Create test"}
                         </button>
                     </div>
@@ -136,17 +149,23 @@ export function PreviewDialog({
 
 function PreviewQuestion({ question, crop }: { question: QuestionDraft; crop?: Crop }) {
     return (
-        <div className="rounded-xl border border-neutral-200 bg-white p-4">
+        <div className="rounded-xl border border-black/5 bg-white p-4 shadow-xs">
             <div className="mb-2 flex items-center gap-2">
-                <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-neutral-400">
+                <span className="inline-flex h-5 items-center rounded-md bg-indigo-50 px-2 font-mono text-[10px] font-semibold text-indigo-700">
                     Q{question.question_number}
                 </span>
+                {crop && (
+                    <span className="inline-flex items-center gap-1 text-[10px] text-zinc-400">
+                        <span className="h-1 w-1 rounded-full bg-zinc-300" />
+                        Diagram attached
+                    </span>
+                )}
             </div>
-            <div className="text-[13px] leading-relaxed text-neutral-900">
+            <div className="text-sm leading-relaxed text-zinc-900">
                 {question.question_text.trim().length > 0 ? (
                     renderMixedLatex(question.question_text)
                 ) : (
-                    <span className="italic text-neutral-400">No question text</span>
+                    <span className="italic text-zinc-400">No question text</span>
                 )}
             </div>
             {question.options.length > 0 && (
@@ -154,20 +173,23 @@ function PreviewQuestion({ question, crop }: { question: QuestionDraft; crop?: C
                     {question.options.map((opt, i) => (
                         <li
                             key={i}
-                            className="text-[13px] leading-relaxed text-neutral-800"
+                            className="flex items-start gap-2 text-sm leading-relaxed text-zinc-700"
                         >
-                            {renderMixedLatex(opt)}
+                            <span className="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded bg-zinc-100 font-mono text-[10px] font-medium text-zinc-500">
+                                {String.fromCharCode(65 + i)}
+                            </span>
+                            <span className="flex-1 min-w-0">{renderMixedLatex(opt)}</span>
                         </li>
                     ))}
                 </ul>
             )}
             {crop && (
-                <div className="mt-3 border-t border-neutral-100 pt-3">
+                <div className="mt-3 border-t border-black/5 pt-3">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                         src={crop.dataUrl}
                         alt={`Q${question.question_number} diagram`}
-                        className="max-h-32 rounded border border-neutral-200 bg-white object-contain"
+                        className="max-h-32 rounded-md border border-black/5 bg-white object-contain"
                     />
                 </div>
             )}

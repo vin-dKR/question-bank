@@ -74,8 +74,8 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
     });
 
     return (
-        <div className="flex h-screen bg-gray-100 tracking-3">
-            <div ref={sidebarRef} className="h-screen bg-white">
+        <div className="flex h-screen bg-zinc-50 tracking-3">
+            <div ref={sidebarRef} className="h-screen bg-white border-r border-black/5">
                 <Sidebar
                     isSidebarOpen={isSidebarOpen}
                     setIsSidebarOpen={setIsSidebarOpen}

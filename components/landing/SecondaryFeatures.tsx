@@ -4,57 +4,54 @@ const SecondaryFeatures = () => {
     const features = [
         {
             icon: Shield,
-            title: "Secure & Reliable",
-            description: "Bank-grade security with 99.9% uptime guarantee"
+            title: "Secure & reliable",
+            description: "Bank-grade security. 99.9% uptime SLA.",
         },
         {
             icon: Zap,
-            title: "Lightning Fast",
-            description: "Produce hundred of questions in seconds"
+            title: "Lightning fast",
+            description: "Hundreds of questions generated in seconds.",
         },
         {
             icon: Users,
             title: "Collaborative",
-            description: "Share question banks with your team"
+            description: "Share question banks with your team in real-time.",
         },
         {
             icon: Globe,
-            title: "Multi-Subjects",
-            description: "Support for Physics, Chemistry, Maths and more subjects"
-        }
+            title: "Multi-subject",
+            description: "Physics, Chemistry, Maths, Biology, and more.",
+        },
     ];
 
     return (
-        <section className="py-20 bg-background relative">
-            <div className="absolute top-0 left-0 w-full h-px bg-border"></div>
-
-            <div className="max-w-[1200px] mx-auto px-8 relative">
-                <div className="absolute -left-8 top-0 w-px h-full bg-border"></div>
-                <div className="absolute -right-8 top-0 w-px h-full bg-border"></div>
-
-                <div className="text-center mb-16">
-                    <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-2 font-inter tracking-2">
-                        Why Choose Eduents?
+        <section className="py-20 md:py-24 bg-zinc-50 border-y border-black/5">
+            <div className="mx-auto max-w-[1000px] px-4 sm:px-6">
+                <div className="mb-12 md:mb-16 max-w-xl">
+                    <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-zinc-900">
+                        Why teachers choose Eduents
                     </h2>
-                    <p style={{ lineHeight: "normal" }} className="text-md md:text-lg text-black/60 tracking-1 leading-relaxed max-w-3xl mx-auto px-8 w-full md:w-100 text-center">
-                        Built specifically for Indian educators with features that matter most
+                    <p className="mt-3 text-base md:text-lg text-zinc-500 leading-relaxed">
+                        Built specifically for Indian educators — with the features that actually matter in the classroom.
                     </p>
                 </div>
 
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
                     {features.map((feature, index) => {
-                        const IconComponent = feature.icon;
+                        const Icon = feature.icon;
                         return (
-                            <div key={index} className="text-center">
-                                <div className="mx-auto w-30 md:w-12 h-30 md:h-12 bg-[#F5F5F5] flex items-center justify-center border border-black/10 rounded-2xl mb-4">
-                                    <IconComponent size={24} className="text-foreground" />
+                            <div key={index} className="flex gap-4 border-t border-black/5 pt-6">
+                                <div className="flex-shrink-0 mt-0.5">
+                                    <Icon className="h-5 w-5 text-indigo-600" strokeWidth={1.75} />
                                 </div>
-                                <h3 className="text-lg font-semibold text-foreground mb-2 font-inter tracking-3">
-                                    {feature.title}
-                                </h3>
-                                <p className="text-sm text-black/50 tracking-3">
-                                    {feature.description}
-                                </p>
+                                <div>
+                                    <h3 className="text-base font-semibold text-zinc-900 tracking-tight">
+                                        {feature.title}
+                                    </h3>
+                                    <p className="mt-1 text-sm text-zinc-500 leading-relaxed">
+                                        {feature.description}
+                                    </p>
+                                </div>
                             </div>
                         );
                     })}
