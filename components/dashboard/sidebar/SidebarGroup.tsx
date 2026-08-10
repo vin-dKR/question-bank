@@ -17,8 +17,14 @@ interface SidebarGroupProps {
 }
 
 export function SidebarGroup({ group, isSidebarOpen, expandedGroups, toggleGroup, pathname }: SidebarGroupProps) {
-    const isExpanded = expandedGroups.has(group.name);
-    const hasActiveChild = group.items.some((item) => pathname === item.href);
+    const isRouteActive = (href: string) => {
+        if (href === "/examination") {
+            return pathname === href;
+        }
+        return pathname === href || pathname.startsWith(`${href}/`);
+    };
+    const hasActiveChild = group.items.some((item) => isRouteActive(item.href));
+    const isExpanded = expandedGroups.has(group.name) || hasActiveChild;
 
     return (
         <div
@@ -59,7 +65,7 @@ export function SidebarGroup({ group, isSidebarOpen, expandedGroups, toggleGroup
                             item={item}
                             isSidebarOpen={isSidebarOpen}
                             isSubItem={true}
-                            isActive={pathname === item.href}
+                            isActive={isRouteActive(item.href)}
                         />
                     ))}
                 </div>

@@ -10,7 +10,7 @@ export default function AuthRedirect({ to = '/dashboard' }: { to?: string }) {
 
     useEffect(() => {
         if (isLoaded && session) {
-            router.push(to);
+            router.replace(to);
         }
     }, [isLoaded, session, router, to]);
 

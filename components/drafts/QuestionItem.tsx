@@ -2,17 +2,6 @@
 
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-
-// Helper function to safely decode image URLs (handles double-encoding)
-const safeDecodeImageUrl = (url: string): string => {
-    if (!url) return url;
-    try {
-        const decoded = decodeURIComponent(url);
-        return decoded !== url ? decoded : url;
-    } catch {
-        return url;
-    }
-};
 import {
     Dialog,
     DialogClose,
@@ -24,6 +13,36 @@ import {
 } from "@/components/ui/dialog";
 import { Trash } from "lucide-react";
 import { renderMixedLatex } from "@/lib/render-tex";
+
+// Safely decode and validate stored image URLs. Older saved questions may have
+// non-URL placeholder values, which would otherwise crash next/image.
+const getSafeImageSrc = (url?: string | null): string | null => {
+    if (!url) return null;
+
+    const trimmed = url.trim();
+    if (!trimmed || trimmed === "null" || trimmed === "undefined") return null;
+
+    let decoded = trimmed;
+    try {
+        decoded = decodeURIComponent(trimmed);
+    } catch {
+        decoded = trimmed;
+    }
+
+    if (decoded.startsWith("/") || decoded.startsWith("data:image/")) {
+        return decoded;
+    }
+
+    if (decoded.startsWith("http://") || decoded.startsWith("https://")) {
+        try {
+            return new URL(decoded).toString();
+        } catch {
+            return null;
+        }
+    }
+
+    return null;
+};
 
 interface Question {
     id: string;
@@ -55,6 +74,8 @@ export function QuestionItem({
     setQuestionToRemove,
     onRemove,
 }: QuestionItemProps) {
+    const questionImageSrc = getSafeImageSrc(question.question_image);
+
     return (
         <li
             className="p-3 bg-slate-50 rounded-md border border-black/5 flex flex-col gap-2"
@@ -110,14 +131,14 @@ export function QuestionItem({
                 {question.subject || "No subject"} • {question.exam_name || "No exam"} • {question.chapter || "No chapter"} •
                 Answer: {question.answer}
             </span>
-            {question.question_image && (
+            {questionImageSrc && (
                 <Image
-                    src={safeDecodeImageUrl(question.question_image)}
+                    src={questionImageSrc}
                     alt="Question"
                     className="mt-2 w-full max-w-[200px] sm:max-w-[300px] h-auto rounded-md"
                     width={300}
                     height={300}
-                    unoptimized={question.question_image.includes('supabase.co')}
+                    unoptimized={questionImageSrc.startsWith("data:image/") || questionImageSrc.includes("supabase.co")}
                 />
             )}
         </li>

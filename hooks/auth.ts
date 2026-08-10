@@ -145,7 +145,7 @@ export const useCustomAuth = (mode: AuthMode) => {
             await authObj.authenticateWithRedirect({
                 strategy,
                 redirectUrl: '/auth/sso-callback',
-                redirectUrlComplete: '/',
+                redirectUrlComplete: '/dashboard',
             });
             // Should redirect away here
             console.log("AuthenticateWithRedirect awaited successfully (but should redirect away)");
@@ -204,8 +204,8 @@ export const useCustomAuth = (mode: AuthMode) => {
                 } else if (result.status === 'complete' && setSignInActive) {
                     console.log("Sign in complete, setting active session...");
                     await setSignInActive({ session: result.createdSessionId });
-                    router.push('/dashboard');
-                    console.log("Redirecting to homepage");
+                    router.replace('/dashboard');
+                    console.log("Redirecting to dashboard");
                     return;
                 }
             } else {
@@ -225,8 +225,8 @@ export const useCustomAuth = (mode: AuthMode) => {
                 } else if (result.status === 'complete' && setSignUpActive) {
                     console.log("Sign up complete, setting active session...");
                     await setSignUpActive({ session: result.createdSessionId });
-                    router.push('/dashboard');
-                    console.log("Redirecting to homepage");
+                    router.replace('/dashboard');
+                    console.log("Redirecting to dashboard");
                     return;
                 }
             }
@@ -281,8 +281,8 @@ export const useCustomAuth = (mode: AuthMode) => {
 
                 if (result.status === 'complete') {
                     await setSignInActive({ session: result.createdSessionId });
-                    router.push('/dashboard');
-                    console.log("Redirecting to homepage after second factor");
+                    router.replace('/dashboard');
+                    console.log("Redirecting to dashboard after second factor");
                     return;
                 }
             } else {
@@ -295,8 +295,8 @@ export const useCustomAuth = (mode: AuthMode) => {
 
                 if (result.status === 'complete') {
                     await setSignUpActive({ session: result.createdSessionId });
-                    router.push('/dashboard');
-                    console.log("Redirecting to homepage after verification");
+                    router.replace('/dashboard');
+                    console.log("Redirecting to dashboard after verification");
                     return;
                 }
             }

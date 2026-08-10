@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuestionForm } from "@/hooks/question/insert";
+import { type QuestionFormData, useQuestionForm } from "@/hooks/question/insert";
 import { useState } from 'react';
 
 const inputClass =
@@ -10,26 +10,35 @@ const textareaClass =
     "w-full px-3 py-2 text-sm rounded-lg border border-black/10 bg-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500";
 const labelClass = "block text-xs font-medium text-zinc-600 mb-1.5";
 
+const toEditableQuestion = (question?: Question): QuestionFormData => ({
+    question_number: question?.question_number ?? '',
+    question_text: question?.question_text ?? '',
+    options: Array.isArray(question?.options) ? question.options.join('\n') : question?.options ?? '',
+    answer: question?.answer ?? '',
+    exam_name: question?.exam_name ?? '',
+    subject: question?.subject ?? '',
+    chapter: question?.chapter ?? '',
+    isOptionImage: question?.isOptionImage ?? false,
+    isQuestionImage: question?.isQuestionImage ?? false,
+    question_image: question?.question_image ?? '',
+});
+
 const QuestionForm = ({ initialData }: { initialData?: Question }) => {
     const { submitQuestion, loading, error, success } = useQuestionForm();
-    const [formData, setFormData] = useState(initialData || {
-        question_number: '',
-        question_text: '',
-        options: '',
-        answer: '',
-        exam_name: '',
-        subject: '',
-        chapter: '',
-        isOptionImage: false,
-        isQuestionImage: false,
-        question_image: ''
-    });
+    const [formData, setFormData] = useState<QuestionFormData>(() => toEditableQuestion(initialData));
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
             [name]: value
+        }));
+    };
+
+    const handleBooleanChange = (name: string, checked: boolean) => {
+        setFormData(prev => ({
+            ...prev,
+            [name]: checked
         }));
     };
 
@@ -153,14 +162,8 @@ const QuestionForm = ({ initialData }: { initialData?: Question }) => {
                         type="checkbox"
                         id="isQuestionImage"
                         name="isQuestionImage"
-                        checked={formData.isQuestionImage}
-                        onChange={(e) => handleChange({
-                            target: {
-                                name: 'isQuestionImage',
-                                value: e.target.checked ? 'true' : 'false'
-                            }
-                            // eslint-disable-next-line
-                        } as any)}
+                        checked={formData.isQuestionImage === true || formData.isQuestionImage === 'true'}
+                        onChange={(e) => handleBooleanChange('isQuestionImage', e.target.checked)}
                         className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-zinc-300 rounded"
                     />
                     <label htmlFor="isQuestionImage" className="text-sm text-zinc-700">

@@ -33,6 +33,7 @@ export default function PDFGenerator({
     const [step, setStep] = useState<'form' | 'preview'>('form');
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState<"question" | "answer" | null>(null);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [formData, setFormData] = useState<TemplateFormData>({
         templateName: '',
         institution: institution || '',
@@ -81,12 +82,6 @@ export default function PDFGenerator({
         });
     }, [institution, institutionAddress, marks, time, exam, subject, logo, standard, session]);
 
-    const handleFormSubmit = useCallback((data: TemplateFormData) => {
-        setFormData(data);
-        setIsGenerating("question");
-        handlePreviewCompiledHTML(data);
-    }, []);
-
     const handlePreviewCompiledHTML = useCallback(async (data: typeof formData) => {
         if (selectedQuestions.length === 0) {
             alert('Please select at least one question');
@@ -95,6 +90,7 @@ export default function PDFGenerator({
         }
 
         try {
+            setError(null);
             await preRenderHtml();
 
             const html = pdfConfigToHTML({
@@ -122,13 +118,22 @@ export default function PDFGenerator({
             const pdfUrl = URL.createObjectURL(pdfBlob);
             setPreviewUrl(pdfUrl);
             setStep('preview');
+            setIsDialogOpen(true);
             setIsGenerating(null);
         } catch (error) {
             console.error('Error generating PDF:', error);
             setError("Error generating PDF: " + (error instanceof Error ? error.message : 'Unknown error'));
+            setStep('preview');
+            setIsDialogOpen(true);
             setIsGenerating(null);
         }
     }, [selectedQuestions, options]);
+
+    const handleFormSubmit = useCallback((data: TemplateFormData) => {
+        setFormData(data);
+        setIsGenerating("question");
+        handlePreviewCompiledHTML(data);
+    }, [handlePreviewCompiledHTML]);
 
     const handlePreviewAnswer = useCallback(async () => {
         if (selectedQuestions.length === 0) {
@@ -138,6 +143,9 @@ export default function PDFGenerator({
 
         try {
             setIsGenerating("answer");
+            setError(null);
+            await preRenderHtml();
+
             const html = pdfConfigToAnswerKeyHTML({
                 institution: formData?.institution || "",
                 selectedQuestions,
@@ -152,6 +160,8 @@ export default function PDFGenerator({
             const blob = await htmlTopdfBlob(html);
             if (!blob.data) {
                 setError("Error generating answer key: " + blob.errorMessage);
+                setStep('preview');
+                setIsDialogOpen(true);
                 setIsGenerating(null);
                 return;
             }
@@ -160,10 +170,13 @@ export default function PDFGenerator({
             const pdfUrl = URL.createObjectURL(pdfBlob);
             setPreviewUrl(pdfUrl);
             setStep('preview');
+            setIsDialogOpen(true);
             setIsGenerating(null);
         } catch (error) {
             console.error('Error generating answer key:', error);
             setError("Error generating answer key: " + (error instanceof Error ? error.message : 'Unknown error'));
+            setStep('preview');
+            setIsDialogOpen(true);
             setIsGenerating(null);
         }
     }, [selectedQuestions, options, formData]);
@@ -217,6 +230,7 @@ export default function PDFGenerator({
         }
         setError(null);
         setStep('form');
+        setIsDialogOpen(false);
         setDialogKey(prev => prev + 1);
     }, [previewUrl]);
 
@@ -266,6 +280,8 @@ export default function PDFGenerator({
 
     return (
         <PDFFormDialog
+            open={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
             selectedQuestions={selectedQuestions}
             formData={formData}
             onFormSubmit={handleFormSubmit}

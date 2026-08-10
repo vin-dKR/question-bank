@@ -6,6 +6,32 @@ import {
     useUpdateQuestionForm,
 } from '@/hooks/queries/mutations';
 
+export type QuestionFormData = {
+    answer: string;
+    chapter?: string | null;
+    exam_name?: string | null;
+    file_name?: string | null;
+    isOptionImage?: boolean | string;
+    isQuestionImage?: boolean | string;
+    option_images?: string[] | string | null;
+    options: string[] | string;
+    question_image?: string | null;
+    question_number: number | string;
+    question_text: string;
+    question_type?: string | null;
+    section_name?: string | null;
+    subject?: string | null;
+    topic?: string | null;
+};
+
+const toBoolean = (value: boolean | string | null | undefined) =>
+    value === true || value === 'true';
+
+const toStringList = (value: string[] | string | null | undefined) => {
+    if (Array.isArray(value)) return value.filter((item) => item.trim());
+    return value?.split('\n').filter((item) => item.trim()) || [];
+};
+
 /**
  * Phase 7: the question-form submit path now routes through TanStack Query
  * `useMutation` hooks so creates/updates invalidate `["questions"]` (and
@@ -22,7 +48,7 @@ export const useQuestionForm = () => {
     const updateMutation = useUpdateQuestionForm();
 
     const submitQuestion = useCallback(
-        async (formData: any, id?: string) => {
+        async (formData: QuestionFormData, id?: string) => {
             setLoading(true);
             setError(null);
             setSuccess(false);
@@ -32,11 +58,11 @@ export const useQuestionForm = () => {
                     question_number: Number(formData.question_number),
                     file_name: formData.file_name || null,
                     question_text: formData.question_text,
-                    isQuestionImage: formData.isQuestionImage === 'true',
+                    isQuestionImage: toBoolean(formData.isQuestionImage),
                     question_image: formData.question_image || null,
-                    isOptionImage: formData.isOptionImage === 'true',
-                    options: formData.options.split('\n').filter((opt: string) => opt.trim()),
-                    option_images: formData.option_images?.split('\n').filter((opt: string) => opt.trim()) || [],
+                    isOptionImage: toBoolean(formData.isOptionImage),
+                    options: toStringList(formData.options),
+                    option_images: toStringList(formData.option_images),
                     section_name: formData.section_name || null,
                     question_type: formData.question_type || null,
                     topic: formData.topic || null,

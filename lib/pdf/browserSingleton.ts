@@ -12,19 +12,52 @@
 import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
 import type { Browser } from "puppeteer-core";
+import { existsSync } from "fs";
 
 let browserPromise: Promise<Browser> | null = null;
 let signalsRegistered = false;
 
+const isLocalChromiumHost = () => process.platform !== "linux";
+
+const getExecutablePath = async () => {
+    const configuredPath =
+        process.env.PUPPETEER_EXECUTABLE_PATH ||
+        process.env.CHROME_EXECUTABLE_PATH;
+
+    if (configuredPath) {
+        return configuredPath;
+    }
+
+    if (isLocalChromiumHost()) {
+        const macChromePath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+        if (process.platform === "darwin" && existsSync(macChromePath)) {
+            return macChromePath;
+        }
+
+        const localPuppeteer = await import("puppeteer");
+        const localExecutablePath = localPuppeteer.default.executablePath();
+        if (existsSync(localExecutablePath)) {
+            return localExecutablePath;
+        }
+
+        throw new Error(
+            "No local Chrome executable found. Install Google Chrome or set PUPPETEER_EXECUTABLE_PATH.",
+        );
+    }
+
+    return chromium.executablePath();
+};
+
 const launchBrowser = async (): Promise<Browser> => {
-    const executablePath = await chromium.executablePath();
+    const executablePath = await getExecutablePath();
     // Options must match the original per-call launch in
     // actions/htmlToPdf/htmlToPdf.ts so PDF output is byte-identical.
     // (@sparticuz/chromium does not expose `headless` / `defaultViewport`
     // on its public surface; original code passed only args + executablePath.)
     const browser = await puppeteer.launch({
-        args: chromium.args,
+        args: isLocalChromiumHost() ? [] : chromium.args,
         executablePath,
+        headless: true,
     });
 
     // If Chromium dies (crash, OOM, manual kill), drop the cached promise so

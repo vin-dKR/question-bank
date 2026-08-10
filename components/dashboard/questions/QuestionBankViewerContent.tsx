@@ -5,7 +5,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/question/EmptyState";
 import QuestionList from "@/components/question/QuestionList";
 import FilterControls from "@/components/question/FilterControls"
-import FoldersControls from "@/components/question/FoldersControls"
 import SelectedQuestionsActions from "@/components/question/SelectedQuestionsActions";
 import { useQuestionBankContext, useQuestionsList } from "@/lib/context/QuestionBankContext";
 
@@ -26,7 +25,6 @@ const QuestionBankViewerContent = () => {
 
                     {/* Main Content */}
                     <main className="col-span-1 lg:col-span-4 xl:col-span-6 space-y-4">
-                        <FoldersControls />
                         <SearchBar />
                         {selectedQuestions.length > 0 && <SelectedQuestionsActions showPrintBtn={true} />}
                         {error && (

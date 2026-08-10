@@ -7,7 +7,6 @@ import {
     DialogHeader,
     DialogTitle,
     DialogFooter,
-    DialogTrigger,
     DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,8 @@ import PDFDetailsForm from '../PDFDetailsForm';
 import PDFPreviewContent from './PDFPreviewContent';
 
 interface PDFFormDialogProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
     selectedQuestions: Question[];
     formData: TemplateFormData;
     onFormSubmit: (data: TemplateFormData) => void;
@@ -38,6 +39,8 @@ interface PDFFormDialogProps {
 }
 
 const PDFFormDialog = memo(({
+    open,
+    onOpenChange,
     selectedQuestions,
     formData,
     onFormSubmit,
@@ -54,31 +57,29 @@ const PDFFormDialog = memo(({
     buttonClasses
 }: PDFFormDialogProps) => {
     return (
-        <Dialog key={dialogKey}>
-            <DialogTrigger asChild>
-                <div className="flex gap-2 justify-end">
-                    <Button
-                        size="sm"
-                        onClick={() => { }}
-                        disabled={disabled.pdf}
-                        className={buttonClasses.pdf}
-                    >
-                        <span className='text-xs sm:text-sm text-nowrap font-bold'>
-                            {isGenerating === "question" ? "Generating..." : "PDF"}
-                        </span>
-                    </Button>
-                    <Button
-                        size="sm"
-                        onClick={onPreviewAnswer}
-                        disabled={disabled.answer}
-                        className={buttonClasses.answer}
-                    >
-                        <span className='text-xs sm:text-sm text-nowrap font-bold'>
-                            {isGenerating === "answer" ? "Generating..." : "Preview Answers"}
-                        </span>
-                    </Button>
-                </div>
-            </DialogTrigger>
+        <Dialog key={dialogKey} open={open} onOpenChange={onOpenChange}>
+            <div className="flex gap-2 justify-end">
+                <Button
+                    size="sm"
+                    onClick={() => onOpenChange(true)}
+                    disabled={disabled.pdf}
+                    className={buttonClasses.pdf}
+                >
+                    <span className='text-xs sm:text-sm text-nowrap font-bold'>
+                        {isGenerating === "question" ? "Generating..." : "PDF"}
+                    </span>
+                </Button>
+                <Button
+                    size="sm"
+                    onClick={onPreviewAnswer}
+                    disabled={disabled.answer}
+                    className={buttonClasses.answer}
+                >
+                    <span className='text-xs sm:text-sm text-nowrap font-bold'>
+                        {isGenerating === "answer" ? "Generating..." : "Preview Answers"}
+                    </span>
+                </Button>
+            </div>
             <DialogContent className="sm:max-w-4xl bg-white max-h-[100vh] !top-[50%] !left-[50%] !transform !-translate-x-1/2 !-translate-y-1/2 border border-black/20 rounded-xl">
                 <DialogHeader>
                     <DialogTitle className="text-center text-2xl tracking-3">

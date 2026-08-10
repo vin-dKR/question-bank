@@ -41,10 +41,48 @@ export type SaveExtractedResult =
     | { success: true; questions: SavedExtractedQuestion[] }
     | { success: false; error: string };
 
+type SaveStats = {
+    baseImageOk: number;
+    baseImageFail: number;
+    diagramOk: number;
+    diagramFail: number;
+};
+
 function parseDataUrl(dataUrl: string): { mime: string; buffer: Buffer } | null {
     const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
     if (!match) return null;
     return { mime: match[1], buffer: Buffer.from(match[2], "base64") };
+}
+
+function cleanErrorMessage(error: unknown): string {
+    const raw = error instanceof Error ? error.message : String(error || "");
+    if (/Inactivity Timeout/i.test(raw) || /Too much time has passed/i.test(raw)) {
+        return "Saving took too long. Please try again with fewer pages, or retry after a moment.";
+    }
+    if (/<html[\s>]/i.test(raw) || /<body[\s>]/i.test(raw)) {
+        return "The save request timed out before the server responded. Please try again.";
+    }
+    return raw || "Failed to save questions.";
+}
+
+async function mapWithConcurrency<T, R>(
+    items: T[],
+    limit: number,
+    mapper: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+    const results: R[] = new Array(items.length);
+    let next = 0;
+
+    const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+        while (next < items.length) {
+            const index = next;
+            next += 1;
+            results[index] = await mapper(items[index], index);
+        }
+    });
+
+    await Promise.all(workers);
+    return results;
 }
 
 async function uploadImage(dataUrl: string, path: string): Promise<string | null> {
@@ -106,17 +144,18 @@ export async function saveExtractedQuestions(
 
     try {
         const batchId = Date.now();
-        const saved: SavedExtractedQuestion[] = [];
-        let diagramOk = 0;
-        let diagramFail = 0;
-        let baseImageOk = 0;
-        let baseImageFail = 0;
+        const stats: SaveStats = {
+            baseImageOk: 0,
+            baseImageFail: 0,
+            diagramOk: 0,
+            diagramFail: 0,
+        };
 
         console.log(
             `[school-test] saving ${totalQuestions} question(s) across ${input.length} page(s)`,
         );
 
-        for (const page of input) {
+        const savedByPage = await mapWithConcurrency(input, 2, async (page) => {
             // Upload the base image once per page; every question on this page
             // reuses the same URL.
             let baseImageUrl: string | null = null;
@@ -124,21 +163,24 @@ export async function saveExtractedQuestions(
                 const baseRand = Math.random().toString(36).slice(2, 8);
                 const basePath = `school-test/${batchId}-p${page.pageNumber}-base-${baseRand}.png`;
                 baseImageUrl = await uploadImage(page.baseImageDataUrl, basePath);
-                if (baseImageUrl) baseImageOk++;
-                else baseImageFail++;
+                if (baseImageUrl) stats.baseImageOk++;
+                else stats.baseImageFail++;
             }
 
-            for (let i = 0; i < page.questions.length; i++) {
-                const q = page.questions[i];
-                let diagramUrl: string | null = null;
+            const diagramUrls = await mapWithConcurrency(page.questions, 4, async (q, i) => {
                 if (q.diagram_data_url) {
                     const rand = Math.random().toString(36).slice(2, 8);
                     const path = `school-test/${batchId}-p${page.pageNumber}-q${q.question_number}-${i}-${rand}.png`;
-                    diagramUrl = await uploadImage(q.diagram_data_url, path);
-                    if (diagramUrl) diagramOk++;
-                    else diagramFail++;
+                    const diagramUrl = await uploadImage(q.diagram_data_url, path);
+                    if (diagramUrl) stats.diagramOk++;
+                    else stats.diagramFail++;
+                    return diagramUrl;
                 }
+                return null;
+            });
 
+            return mapWithConcurrency(page.questions, 6, async (q, i) => {
+                const diagramUrl = diagramUrls[i];
                 const created = await prisma.schoolTestQuestion.create({
                     data: {
                         question_number: q.question_number,
@@ -159,7 +201,7 @@ export async function saveExtractedQuestions(
                     },
                 });
 
-                saved.push({
+                return {
                     id: created.id,
                     question_number: created.question_number,
                     question_text: created.question_text,
@@ -174,21 +216,23 @@ export async function saveExtractedQuestions(
                             : null,
                     source_width: created.sourceWidth ?? null,
                     source_height: created.sourceHeight ?? null,
-                });
-            }
-        }
+                };
+            });
+        });
+
+        const saved = savedByPage.flat();
 
         console.log(
             `[school-test] done — saved ${saved.length} SchoolTestQuestion row(s); ` +
-            `base-image uploads ok=${baseImageOk} fail=${baseImageFail}; ` +
-            `diagram uploads ok=${diagramOk} fail=${diagramFail}`,
+            `base-image uploads ok=${stats.baseImageOk} fail=${stats.baseImageFail}; ` +
+            `diagram uploads ok=${stats.diagramOk} fail=${stats.diagramFail}`,
         );
         return { success: true, questions: saved };
     } catch (e) {
         console.error("[school-test] saveExtractedQuestions failed:", e);
         return {
             success: false,
-            error: (e as Error).message || "Failed to save questions.",
+            error: cleanErrorMessage(e),
         };
     }
 }

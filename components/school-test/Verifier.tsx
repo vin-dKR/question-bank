@@ -209,42 +209,63 @@ export function Verifier({
             )}
 
             <div className="grid grid-cols-1 gap-4 px-3 py-4 sm:gap-5 sm:px-5 sm:py-5 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-6 lg:px-6 lg:py-6">
-                <SourcePane
-                    page={page}
-                    hoverCrop={hoverCrop}
-                    onAdjustCrop={(questionId) =>
-                        setCropTarget({
-                            pageIndex: activeIdx,
-                            questionId,
-                            existing: page.crops[questionId],
-                        })
-                    }
-                />
-                <div className="lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+                <div className="order-2 lg:order-none lg:min-h-0">
+                    <SourcePane
+                        page={page}
+                        hoverCrop={hoverCrop}
+                        onAdjustCrop={(questionId) =>
+                            setCropTarget({
+                                pageIndex: activeIdx,
+                                questionId,
+                                existing: page.crops[questionId],
+                            })
+                        }
+                    />
+                </div>
+                <div className="order-1 lg:order-none lg:min-h-0 lg:overflow-y-auto lg:pr-1">
                     <div className="space-y-3 sm:space-y-4">
-                        <div className="flex items-center justify-between lg:hidden">
-                            <p className="text-xs font-medium text-zinc-500">
-                                <span className="text-zinc-900 font-semibold">{page.questions.length}</span> question{page.questions.length === 1 ? "" : "s"} on this page
-                            </p>
+                        <div className="flex items-center justify-between gap-3">
+                            <div>
+                                <h2 className="text-sm font-semibold tracking-tight text-zinc-900">
+                                    Extracted questions
+                                </h2>
+                                <p className="mt-0.5 text-xs text-zinc-500">
+                                    Page {page.pageNumber} · {page.questions.length} question{page.questions.length === 1 ? "" : "s"}
+                                </p>
+                            </div>
+                            <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-indigo-50 px-2 text-xs font-semibold text-indigo-700">
+                                {page.questions.length}
+                            </span>
                         </div>
-                        {page.questions.map((q) => (
-                            <QuestionCard
-                                key={q.id}
-                                question={q}
-                                crop={page.crops[q.id]}
-                                onChange={(patch) => updateQuestion(activeIdx, q.id, patch)}
-                                onDelete={() => deleteQuestion(activeIdx, q.id)}
-                                onEditCrop={() =>
-                                    setCropTarget({
-                                        pageIndex: activeIdx,
-                                        questionId: q.id,
-                                        existing: page.crops[q.id],
-                                    })
-                                }
-                                onRemoveCrop={() => removeCrop(activeIdx, q.id)}
-                                onHoverCrop={(hover) => setHoverCrop(hover ? q.id : null)}
-                            />
-                        ))}
+                        {page.questions.length > 0 ? (
+                            page.questions.map((q) => (
+                                <QuestionCard
+                                    key={q.id}
+                                    question={q}
+                                    crop={page.crops[q.id]}
+                                    onChange={(patch) => updateQuestion(activeIdx, q.id, patch)}
+                                    onDelete={() => deleteQuestion(activeIdx, q.id)}
+                                    onEditCrop={() =>
+                                        setCropTarget({
+                                            pageIndex: activeIdx,
+                                            questionId: q.id,
+                                            existing: page.crops[q.id],
+                                        })
+                                    }
+                                    onRemoveCrop={() => removeCrop(activeIdx, q.id)}
+                                    onHoverCrop={(hover) => setHoverCrop(hover ? q.id : null)}
+                                />
+                            ))
+                        ) : (
+                            <div className="rounded-xl border border-dashed border-zinc-200 bg-white px-4 py-8 text-center">
+                                <p className="text-sm font-medium text-zinc-900">
+                                    No extracted questions on Page {page.pageNumber}
+                                </p>
+                                <p className="mt-1 text-xs text-zinc-500">
+                                    You can switch pages or add one manually.
+                                </p>
+                            </div>
+                        )}
                         <button
                             type="button"
                             onClick={() => addQuestion(activeIdx)}

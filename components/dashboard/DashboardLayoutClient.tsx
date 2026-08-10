@@ -65,11 +65,18 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
         });
     };
 
+    const isRouteActive = (href: string) => {
+        if (href === "/examination") {
+            return pathname === href;
+        }
+        return pathname === href || pathname.startsWith(`${href}/`);
+    };
+
     const activeItem = sidebarItems.find((item) => {
         if ("href" in item) {
-            return pathname === item.href;
+            return isRouteActive(item.href);
         } else {
-            return item.items.some((subItem) => pathname === subItem.href);
+            return item.items.some((subItem) => isRouteActive(subItem.href));
         }
     });
 

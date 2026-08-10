@@ -51,7 +51,7 @@ export default function Page() {
           <p className="text-sm text-zinc-500">Completing sign in...</p>
         </div>
         <AuthenticateWithRedirectCallback
-          signInForceRedirectUrl="/"
+          signInForceRedirectUrl="/dashboard"
           signUpForceRedirectUrl="/onboarding/user-type"
         />
         <SSOCallbackContent />

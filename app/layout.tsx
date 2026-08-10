@@ -25,7 +25,7 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body className={inter.variable}>
-                <ClerkProvider>
+                <ClerkProvider signInUrl="/auth/signin" signUpUrl="/auth/signup">
                     <QueryProvider>
                         <main className="min-h-screen bg-gray-50">
                             {children}

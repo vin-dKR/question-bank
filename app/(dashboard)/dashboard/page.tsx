@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { QuestionsCountCard } from "@/components/dashboard/QuestionsCountCard";
 import { RecentPapersCard } from "@/components/dashboard/RecentPapersCard";
@@ -22,7 +23,9 @@ export default function Dashboard() {
             <div className="rounded-xl border border-black/5 bg-white p-6 shadow-xs">
                 <h3 className="text-sm font-medium text-zinc-500">Quick Actions</h3>
                 <p className="mt-1 text-sm text-zinc-600">Add a new question or category</p>
-                <Button className="mt-4">Add Question</Button>
+                <Button asChild className="mt-4">
+                    <Link href="/post">Add Question</Link>
+                </Button>
             </div>
             <Suspense fallback={<RecentPapersSkeleton />}>
                 <RecentPapersCard />
