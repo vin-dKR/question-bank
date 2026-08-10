@@ -70,6 +70,9 @@ export const useQuestionForm = () => {
                     subject: formData.subject || null,
                     chapter: formData.chapter || null,
                     answer: formData.answer,
+                    // Manually-created questions are never match-the-column; ingest sets these on publish.
+                    match_columns: null,
+                    match_key: null,
                     flagged: false,
                 };
 

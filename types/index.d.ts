@@ -19,6 +19,18 @@ declare global {
         logo?: File | null;
     }
 
+    /** One labelled entry in a match-the-column column, e.g. { label: 'A', body: 'V = \\(\\sqrt{GM/r}\\)' }. */
+    interface MatchEntry {
+        label: string;
+        body: string;
+    }
+
+    /** One column of a match-the-column question: a heading plus its labelled entries. */
+    interface MatchColumn {
+        title: string;
+        entries: MatchEntry[];
+    }
+
     interface Question {
         id: string;
         question_number: number;
@@ -36,6 +48,11 @@ declare global {
         subject?: string | null;
         chapter?: string | null;
         answer: string;
+        // Structured match-the-column data for MATRIX questions (null/absent otherwise). `match_columns`
+        // is 2+ columns; `match_key` maps each first-column label to the labels it matches. The flat
+        // `answer` mirrors the key as text, so this is purely for the richer table render.
+        match_columns?: MatchColumn[] | null;
+        match_key?: Record<string, string[]> | null;
         folderId?: string | null;
         folder?: FetchDraft | null;
         flagged?: boolean

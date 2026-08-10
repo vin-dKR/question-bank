@@ -97,6 +97,11 @@ model Question {
   chapter         String?
   answer          String?
   flagged         Boolean?
+  // Structured match-the-column data for MATRIX questions (null otherwise). `match_columns` is the
+  // ordered columns (2 or 3), `match_key` maps first-column labels to the labels they match. Written
+  // by the ingest publisher; the flat `answer` still mirrors the key so older readers keep working.
+  match_columns   Json?
+  match_key       Json?
 
   folderRelations FolderQuestion[] @relation("QuestionToFolderQuestion")
   testRelations   TestQuestion[] @relation("QuestionToTestQuestion")

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { renderMixedLatex } from '@/lib/render-tex';
 import { refineTextWithAI } from '@/lib/ai/aiService';
 import { useQuestionBankContext, useQuestionsList } from '@/lib/context/QuestionBankContext';
+import MatchTable from './MatchTable';
 import LoadingState from './question-list/LoadingState';
 import ErrorState from './question-list/ErrorState';
 import EmptyState from './question-list/EmptyState';
@@ -320,7 +321,9 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                         </div>
                     )}
 
-                    {!question.isOptionImage && (
+                    {question.match_columns && question.match_columns.length > 0 ? (
+                        <MatchTable columns={question.match_columns} matchKey={question.match_key} />
+                    ) : !question.isOptionImage ? (
                         <div className="space-y-2 mb-2">
                             <div className="flex items-center gap-2">
                                 <Button
@@ -404,7 +407,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                                 );
                             })}
                         </div>
-                    )}
+                    ) : null}
 
                     {question.answer && (
                         <div className="mt-2 text-xs text-emerald-700 inline-flex items-center gap-1.5 px-2 py-1 bg-emerald-50 border border-emerald-100 rounded-md">
