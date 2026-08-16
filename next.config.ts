@@ -10,6 +10,7 @@ const bundleAnalyzer = withBundleAnalyzer({
 
 const queryEnginePath = path.resolve('generated/prisma/query-engine-rhel-openssl-3.0.x');
 const hasQueryEngine = fs.existsSync(queryEnginePath);
+const prismaTraceIncludes = ['./generated/prisma/**'];
 
 const nextConfig: NextConfig = {
     experimental: {
@@ -24,13 +25,19 @@ const nextConfig: NextConfig = {
     // the serverless bundle and PDF parsing fails in prod with
     // "Cannot find module '/var/task/.../pdf.worker.mjs'".
     outputFileTracingIncludes: {
+        '/*': prismaTraceIncludes,
+        '/api/*': prismaTraceIncludes,
+        '/api/**/*': prismaTraceIncludes,
         '/api/school-test/process': [
+            ...prismaTraceIncludes,
             './node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
         ],
         '/api/omr/tests/[testId]/sheet': [
+            ...prismaTraceIncludes,
             './integrations/omr-cg/**',
         ],
         '/api/omr/tests/[testId]/scan': [
+            ...prismaTraceIncludes,
             './integrations/omr-cg/**',
         ],
     },
