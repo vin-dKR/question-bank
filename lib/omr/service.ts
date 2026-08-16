@@ -371,10 +371,30 @@ function getRemoteOmrBaseUrls(): string[] {
     const configured = process.env.OMR_SERVICE_URL?.trim();
     if (configured) urls.push(normalizeRemoteOmrBaseUrl(configured));
 
+    const productionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+    if (productionUrl) urls.push(normalizeRemoteOmrBaseUrl(`https://${productionUrl.replace(/^https?:\/\//, '')}`));
+
     const vercelUrl = process.env.VERCEL_URL?.trim();
     if (vercelUrl) urls.push(normalizeRemoteOmrBaseUrl(`https://${vercelUrl.replace(/^https?:\/\//, '')}`));
 
     return [...new Set(urls)];
+}
+
+function remoteErrorMessage(error: unknown, fallback: string): string {
+    if (typeof error === 'string') return error;
+    if (typeof error === 'number' || typeof error === 'boolean') return String(error);
+    if (error && typeof error === 'object') {
+        if ('message' in error && typeof error.message === 'string') return error.message;
+        if ('code' in error && typeof error.code === 'string') return error.code;
+
+        try {
+            return JSON.stringify(error);
+        } catch {
+            return fallback;
+        }
+    }
+
+    return fallback;
 }
 
 function describeOmrEndpoint(baseUrl: string, endpoint: string): string {
@@ -426,7 +446,9 @@ async function postRemoteOmr<T>(endpoint: string, payload: unknown): Promise<T> 
             }
 
             if (!response.ok) {
-                const error = typeof data === 'object' && data && 'error' in data ? String(data.error) : response.statusText;
+                const error = typeof data === 'object' && data && 'error' in data
+                    ? remoteErrorMessage(data.error, response.statusText)
+                    : response.statusText;
                 throw new Error(`OMR service failed at ${describeOmrEndpoint(baseUrl, endpoint)}: ${error}`);
             }
 
