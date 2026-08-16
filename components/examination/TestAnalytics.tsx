@@ -176,7 +176,7 @@ export default function TestAnalytics() {
         <div className="max-w-7xl mx-auto space-y-6">
             <div className="flex flex-row items-start sm:items-center justify-between">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                    <Link href="/examination">
+                    <Link href={`/examination/tests/${testIdStr}`}>
                         <Button size="sm" className="bg-black/10 border border-black/15">
                             <ArrowLeft className="w-4 h-4 mr-0 mr-2" />
                             <span className=''>

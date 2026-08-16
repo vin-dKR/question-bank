@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, readdir, readFile, stat, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, rm, stat, unlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
@@ -34,6 +34,21 @@ interface OmrSpec {
     version: number;
     instructions: string[];
     questions: OmrSpecQuestion[];
+}
+
+export interface OmrDraftQuestion {
+    no: number;
+    optionCount: number;
+    questionType?: string | null;
+}
+
+export interface OmrDraftInput {
+    paperId: string;
+    examName: string;
+    subject: string;
+    durationMin: number;
+    maxMarks: number;
+    questions: OmrDraftQuestion[];
 }
 
 interface PythonGenerateSummary {
@@ -208,6 +223,63 @@ function toOmrSpec(test: NonNullable<OmrTest>): OmrSpec {
         subject: test.subject,
         duration_min: test.duration,
         max_marks: test.totalMarks,
+        roll_digits: 6,
+        version: 1,
+        instructions: [
+            'Use blue or black pen. Fill each bubble completely.',
+            'Do not fold, tear, or mark outside the answer bubbles.',
+            'Print this sheet at 100% scale only.',
+        ],
+        questions,
+    };
+}
+
+function toDraftOmrSpec(input: OmrDraftInput): OmrSpec {
+    const examName = input.examName.trim();
+    const subject = input.subject.trim();
+
+    if (!/^[A-Fa-f0-9]{24}$/.test(input.paperId)) throw new Error('The OMR paper ID is invalid');
+    if (!examName) throw new Error('A test title is required for the OMR preview');
+    if (!subject) throw new Error('A subject is required for the OMR preview');
+    if (!Number.isInteger(input.durationMin) || input.durationMin <= 0) {
+        throw new Error('Test duration must be a positive whole number');
+    }
+    if (!Number.isFinite(input.maxMarks) || input.maxMarks <= 0) {
+        throw new Error('Total marks must be greater than zero');
+    }
+    if (input.questions.length === 0) throw new Error('Add at least one question to preview the OMR sheet');
+    if (input.questions.length > 500) throw new Error('OMR preview supports up to 500 questions');
+
+    const seenNumbers = new Set<number>();
+    const questions = input.questions.map((question, index) => {
+        if (!Number.isInteger(question.no) || question.no <= 0) {
+            throw new Error(`Question ${index + 1} has an invalid question number`);
+        }
+        if (seenNumbers.has(question.no)) {
+            throw new Error(`Question number ${question.no} is duplicated`);
+        }
+        seenNumbers.add(question.no);
+
+        const type = normalizeQuestionType(question.questionType ?? null, question.optionCount);
+        if ((type === 'MCQ' || type === 'MSQ') && (question.optionCount < 2 || question.optionCount > OPTION_LABELS.length)) {
+            throw new Error(
+                `Question ${question.no} has ${question.optionCount} options; OMR supports 2-${OPTION_LABELS.length}.`,
+            );
+        }
+
+        return {
+            no: question.no,
+            type,
+            ...((type === 'MCQ' || type === 'MSQ') ? { options: question.optionCount } : {}),
+        } satisfies OmrSpecQuestion;
+    });
+
+    return {
+        paper_id: input.paperId,
+        exam_name: examName,
+        subject,
+        duration_min: input.durationMin,
+        max_marks: input.maxMarks,
         roll_digits: 6,
         version: 1,
         instructions: [
@@ -493,6 +565,44 @@ export async function generateOmrSheet(testId: string): Promise<GenerateOmrSheet
         pdfPath: summary.pdf,
         summary,
     };
+}
+
+/**
+ * Generate the same production OMR PDF used by saved tests, but from an
+ * in-progress Create Test form. Preview artifacts are isolated in a temporary
+ * directory and removed as soon as the PDF has been read.
+ */
+export async function readGeneratedOmrDraftPdf(
+    input: OmrDraftInput,
+): Promise<{ pdf: Buffer; summary: PythonGenerateSummary }> {
+    const { userId } = await auth();
+    if (!userId) throw new Error('Unauthorized');
+
+    const spec = toDraftOmrSpec(input);
+    await mkdir(OMR_WORK_ROOT, { recursive: true });
+    const layoutDir = await mkdtemp(path.join(OMR_WORK_ROOT, 'preview-'));
+
+    try {
+        const specPath = path.join(layoutDir, 'spec.json');
+        await writeFile(specPath, JSON.stringify(spec, null, 2), 'utf8');
+
+        const summary = await runOmrPython<PythonGenerateSummary>([
+            '-m',
+            'omr.generate',
+            '--spec',
+            specPath,
+            '--out',
+            layoutDir,
+        ]);
+
+        if (!summary.ok) {
+            throw new Error(summary.error || 'OMR preview generation failed');
+        }
+
+        return { pdf: await readFile(summary.pdf), summary };
+    } finally {
+        await rm(layoutDir, { recursive: true, force: true }).catch(() => undefined);
+    }
 }
 
 export async function readGeneratedOmrPdf(testId: string): Promise<GenerateOmrSheetResult & { pdf: Buffer }> {

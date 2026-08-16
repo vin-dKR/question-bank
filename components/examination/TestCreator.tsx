@@ -16,7 +16,7 @@ import { useTestCreatorReducer } from '@/hooks/reducer/useTestCreatorReducer';
 import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
 import BulkMarksAssignment from './test-creator/BulkMarksAssignment';
 
-export default function TestCreator() {
+export default function TestCreator({ paperId }: { paperId: string }) {
     const router = useRouter();
     const { state, dispatch } = useTestCreatorReducer();
     const { testData, isSubmitting, hasLoadedQuestions, bulkMarks, bulkNegativeMarks } = state;
@@ -57,6 +57,7 @@ export default function TestCreator() {
                     question_text: q.question_text || '',
                     options: q.options || [],
                     answer: q.answer || '',
+                    question_type: q.question_type || null,
                     question_image: q.question_image || null,
                     marks: 1,
                     question_number: q.question_number || index + 1,
@@ -116,7 +117,8 @@ export default function TestCreator() {
 
         dispatch({ type: 'SET_SUBMITTING', isSubmitting: true });
         try {
-            await createTest({
+            const createdTest = await createTest({
+                omrPaperId: paperId,
                 title: testData.title,
                 description: testData.description,
                 subject: testData.subject,
@@ -130,7 +132,7 @@ export default function TestCreator() {
             });
             toast.success('Test created successfully!');
             sessionStorage.removeItem('selectedQuestionsForTest');
-            router.push('/examination');
+            router.push(createdTest.id ? `/examination/tests/${createdTest.id}` : '/examination');
         } catch (error) {
             console.error('Error creating test:', error);
             toast.error('Failed to create test');
@@ -242,6 +244,7 @@ export default function TestCreator() {
 
                 <div className="lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)]">
                     <RealTimePDFPreview
+                        paperId={paperId}
                         pdfFormData={pdfFormData}
                         selectedQuestions={testData.questions}
                     />

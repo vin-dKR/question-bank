@@ -530,6 +530,7 @@ declare global {
         question_image?: string | null;
         options: string[];
         answer: string;
+        question_type?: string | null;
         marks: number;
         negativeMark?: number;
         // School-test-sourced questions carry their origin + source-page
@@ -543,6 +544,7 @@ declare global {
     }
 
     interface CreateTestData {
+        omrPaperId?: string;
         title: string;
         description: string;
         subject: string;

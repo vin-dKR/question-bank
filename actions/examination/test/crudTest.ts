@@ -19,10 +19,15 @@ export const createTest = async (data: CreateTestData): Promise<Partial<Examinat
             throw new Error('User not found');
         }
 
+        if (data.omrPaperId && !/^[A-Fa-f0-9]{24}$/.test(data.omrPaperId)) {
+            throw new Error('Invalid OMR paper ID');
+        }
+
         // console.log('------------DATA', data);
 
         const test = await prisma.test.create({
             data: {
+                ...(data.omrPaperId ? { id: data.omrPaperId } : {}),
                 title: data.title,
                 description: data.description,
                 subject: data.subject,

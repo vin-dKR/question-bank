@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, BarChart3, Users, Clock, BookOpen, FileDown, ScanLine } from 'lucide-react';
+import { Plus, BarChart3, Users, Clock, BookOpen, FileDown, ScanLine, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useTests } from '@/hooks/queries/useTests';
 
@@ -26,14 +27,15 @@ interface Test {
 }
 
 export default function TestDashboard() {
+    const router = useRouter();
     const [take, setTake] = useState(PAGE_SIZE);
     const { data, isLoading, isError, isFetching } = useTests({ skip: 0, take });
 
     // Surface errors through toast — match the behaviour of the previous
     // effect-based implementation.
-    if (isError) {
-        toast.error('Failed to load tests');
-    }
+    useEffect(() => {
+        if (isError) toast.error('Failed to load tests');
+    }, [isError]);
 
     const tests = (data?.items ?? []) as Test[];
     const total = data?.total ?? 0;
@@ -121,7 +123,21 @@ export default function TestDashboard() {
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {tests.map((test) => (
-                            <Card key={test.id} className="hover:shadow-lg transition-shadow">
+                            <Card
+                                key={test.id}
+                                role="link"
+                                tabIndex={0}
+                                aria-label={`Open ${test.title}`}
+                                onClick={() => router.push(`/examination/tests/${test.id}`)}
+                                onKeyDown={(event) => {
+                                    if (event.target !== event.currentTarget) return;
+                                    if (event.key === 'Enter' || event.key === ' ') {
+                                        event.preventDefault();
+                                        router.push(`/examination/tests/${test.id}`);
+                                    }
+                                }}
+                                className="group cursor-pointer transition-all hover:-translate-y-0.5 hover:border-indigo-100 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                            >
                                 <CardHeader>
                                     <div className="flex items-start justify-between">
                                         <div className="flex-1">
@@ -130,6 +146,7 @@ export default function TestDashboard() {
                                                 {test.subject}
                                             </Badge>
                                         </div>
+                                        <ChevronRight className="h-4 w-4 text-zinc-300 transition-transform group-hover:translate-x-0.5 group-hover:text-indigo-500" />
                                     </div>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
@@ -159,7 +176,7 @@ export default function TestDashboard() {
                                         Created {formatDate(test.createdAt.toISOString())}
                                     </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2" onClick={(event) => event.stopPropagation()}>
                                         <Link href={`/examination/analytics/${test.id}`}>
                                             <Button className="w-full">
                                                 <BarChart3 className="w-4 h-4 mr-2" />

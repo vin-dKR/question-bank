@@ -171,6 +171,7 @@ export default function DraftManager({ previewLimit }: DraftManagerPropsLimit) {
             question_text: q.question_text,
             options: q.options,
             answer: q.answer || "",
+            question_type: q.question_type || null,
             marks: 1,
             questionNumber: index + 1,
         }));
