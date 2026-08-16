@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/omr-*.py": {
+      "maxDuration": 300,
+      "excludeFiles": "{.git/**,.next/**,.venv-omr/**,node_modules/**,generated/**,public/**,docs/**,coverage/**,**/__pycache__/**,**/*.pyc,integrations/omr-cg/omr/vendor/src/tests/**,integrations/omr-cg/omr/vendor/samples/**}"
+    }
+  }
+}

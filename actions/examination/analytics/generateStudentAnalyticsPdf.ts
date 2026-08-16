@@ -1,6 +1,7 @@
 "use server"
 
 import { htmlTopdfBlob } from "@/actions/htmlToPdf/htmlToPdf";
+import { normalizeChoiceKey } from "@/lib/examination/answerKey";
 import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 
@@ -64,8 +65,10 @@ export const generateStudentAnalyticsPdf = async (
         // points at a SchoolTestQuestion. Fall back so analytics still shows
         // the question text/answer for either source.
         const src = q.question ?? q.schoolTestQuestion ?? null;
-        const ans = response.answers?.find((a: ResponseAnswerSelect) => a.questionId === q.questionId);
-        const isCorrect = ans && src && ans.selectedAnswer === src.answer;
+        const ans = response.answers?.find((a: ResponseAnswerSelect) => src && a.questionId === src.id);
+        const selectedKey = normalizeChoiceKey(ans?.selectedAnswer, src?.options ?? []);
+        const correctKey = normalizeChoiceKey(src?.answer, src?.options ?? []);
+        const isCorrect = Boolean(selectedKey && correctKey && selectedKey === correctKey);
         if (isCorrect) {
             correctAnswers += 1;
             calculatedScore += q.marks;

@@ -1,4 +1,4 @@
-import { BarChart, Book, ClipboardList, FolderOpen, GraduationCap, Home, Layers, Settings, TestTube } from "lucide-react";
+import { BarChart, Book, ClipboardList, FolderOpen, GraduationCap, Home, Layers, ScanLine, Settings, TestTube } from "lucide-react";
 
 export const sidebarItems: (SidebarItem | SidebarGroup)[] = [
     { name: "Dashboard", description: "View overview and metrics", href: "/dashboard", icon: <Home className="h-5 w-5" /> },
@@ -14,6 +14,7 @@ export const sidebarItems: (SidebarItem | SidebarGroup)[] = [
         items: [
             { name: "All Tests", description: "View all tests", href: "/examination", icon: <ClipboardList className="h-4 w-4" /> },
             { name: "Create Test", description: "Create new test", href: "/examination/create", icon: <Book className="h-4 w-4" /> },
+            { name: "OMR Checking", description: "Scan OMR sheets", href: "/examination/omr", icon: <ScanLine className="h-4 w-4" /> },
             { name: "Analysis", description: "View test analytics", href: "/examination/analytics", icon: <BarChart className="h-4 w-4" /> },
         ]
     },

@@ -2,6 +2,7 @@
 
 import prisma from '@/lib/prisma';
 import { auth } from '@clerk/nextjs/server';
+import { normalizeChoiceKey } from '@/lib/examination/answerKey';
 
 export interface TestAnalyticsDetailArgs {
     cursor?: string;
@@ -94,6 +95,7 @@ export const getTestAnalyticsDetail = async (
                             select: {
                                 id: true,
                                 answer: true,
+                                options: true,
                                 chapter: true,
                                 topic: true,
                             },
@@ -102,6 +104,7 @@ export const getTestAnalyticsDetail = async (
                             select: {
                                 id: true,
                                 answer: true,
+                                options: true,
                                 chapter: true,
                                 topic: true,
                             },
@@ -120,13 +123,14 @@ export const getTestAnalyticsDetail = async (
         // original analytics code matched on `q.questionId`.
         const questionMap = new Map<
             string,
-            { answer: string | null; chapter: string | null; topic: string | null; marks: number }
+            { answer: string | null; options: string[]; chapter: string | null; topic: string | null; marks: number }
         >();
         for (const tq of test.questions) {
             const src = tq.question ?? tq.schoolTestQuestion;
             if (src) {
                 questionMap.set(src.id, {
                     answer: src.answer ?? null,
+                    options: src.options ?? [],
                     chapter: src.chapter ?? null,
                     topic: src.topic ?? null,
                     marks: tq.marks,
@@ -190,7 +194,9 @@ export const getTestAnalyticsDetail = async (
                 chapterMap[chapter].total += 1;
                 topicMap[topic].total += 1;
 
-                if (src.answer != null && ans.selectedAnswer === src.answer) {
+                const selectedKey = normalizeChoiceKey(ans.selectedAnswer, src.options);
+                const correctKey = normalizeChoiceKey(src.answer, src.options);
+                if (selectedKey && correctKey && selectedKey === correctKey) {
                     correctAnswers += 1;
                     chapterMap[chapter].correct += 1;
                     topicMap[topic].correct += 1;

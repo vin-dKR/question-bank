@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, BarChart3, Users, Clock, BookOpen } from 'lucide-react';
+import { Plus, BarChart3, Users, Clock, BookOpen, FileDown, ScanLine } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { useTests } from '@/hooks/queries/useTests';
@@ -159,13 +159,25 @@ export default function TestDashboard() {
                                         Created {formatDate(test.createdAt.toISOString())}
                                     </div>
 
-                                    <div className="flex gap-2 pt-2">
-                                        <Link href={`/examination/analytics/${test.id}`} className="flex-1">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2">
+                                        <Link href={`/examination/analytics/${test.id}`}>
                                             <Button className="w-full">
                                                 <BarChart3 className="w-4 h-4 mr-2" />
-                                                View Analytics
+                                                Analytics
                                             </Button>
                                         </Link>
+                                        <Link href={`/examination/omr?testId=${test.id}`}>
+                                            <Button variant="outline" className="w-full">
+                                                <ScanLine className="w-4 h-4 mr-2" />
+                                                Scan
+                                            </Button>
+                                        </Link>
+                                        <Button variant="secondary" className="w-full" asChild>
+                                            <a href={`/api/omr/tests/${test.id}/sheet`} download>
+                                                <FileDown className="w-4 h-4 mr-2" />
+                                                Sheet
+                                            </a>
+                                        </Button>
                                     </div>
                                 </CardContent>
                             </Card>

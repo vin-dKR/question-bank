@@ -27,6 +27,12 @@ const nextConfig: NextConfig = {
         '/api/school-test/process': [
             './node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
         ],
+        '/api/omr/tests/[testId]/sheet': [
+            './integrations/omr-cg/**',
+        ],
+        '/api/omr/tests/[testId]/scan': [
+            './integrations/omr-cg/**',
+        ],
     },
     images: {
         remotePatterns: [

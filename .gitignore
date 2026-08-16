@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/.venv-omr
 /.pnp
 .pnp.*
 .yarn/*
@@ -27,6 +28,8 @@
 # production
 /build
 /generated/prisma
+__pycache__/
+*.pyc
 
 # misc
 .DS_Store

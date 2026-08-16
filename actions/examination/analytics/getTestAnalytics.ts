@@ -2,6 +2,7 @@
 
 import prisma from '@/lib/prisma';
 import { auth } from '@clerk/nextjs/server';
+import { normalizeChoiceKey } from '@/lib/examination/answerKey';
 
 /**
  * @deprecated Use `getTestAnalyticsSummary` for overview metrics and
@@ -39,6 +40,7 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
                                 id: true,
                                 question_text: true,
                                 answer: true,
+                                options: true,
                                 topic: true,
                                 chapter: true,
                             },
@@ -48,6 +50,7 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
                                 id: true,
                                 question_text: true,
                                 answer: true,
+                                options: true,
                                 topic: true,
                                 chapter: true,
                             },
@@ -114,10 +117,12 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
             let totalAttempts = 0;
 
             for (const response of responses) {
-                const answer = response.answers?.find((a) => a.questionId === question.questionId);
+                const answer = response.answers?.find((a) => src && a.questionId === src.id);
                 if (answer) {
                     totalAttempts++;
-                    if (src && answer.selectedAnswer === src.answer) {
+                    const selectedKey = normalizeChoiceKey(answer.selectedAnswer, src?.options ?? []);
+                    const correctKey = normalizeChoiceKey(src?.answer, src?.options ?? []);
+                    if (selectedKey && correctKey && selectedKey === correctKey) {
                         correctAnswers++;
                     }
                 }
@@ -144,7 +149,10 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
             const topicMap: Record<string, { total: number; correct: number }> = {};
 
             for (const answer of response.answers || []) {
-                const question = test.questions.find((q) => q.questionId === answer.questionId);
+                const question = test.questions.find((q) => {
+                    const src = q.question ?? q.schoolTestQuestion;
+                    return src?.id === answer.questionId;
+                });
                 if (question) {
                     const src = question.question ?? question.schoolTestQuestion;
                     const chapter = src?.chapter ?? 'Unknown Chapter';
@@ -159,7 +167,9 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
                     }
                     topicMap[topic].total += 1;
 
-                    if (src && answer.selectedAnswer === src.answer) {
+                    const selectedKey = normalizeChoiceKey(answer.selectedAnswer, src?.options ?? []);
+                    const correctKey = normalizeChoiceKey(src?.answer, src?.options ?? []);
+                    if (selectedKey && correctKey && selectedKey === correctKey) {
                         correctAnswers++;
                         calculatedScore += question.marks;
                         chapterMap[chapter].correct += 1;

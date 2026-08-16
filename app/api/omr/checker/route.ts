@@ -1,3 +1,4 @@
+import { normalizeChoiceKey } from "@/lib/examination/answerKey";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
@@ -17,7 +18,8 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
         }
 
-        const { testId, answers, name, rollNumber, className } = body;
+        const { testId, name, rollNumber, className } = body;
+        const answers = body.answers as { questionId: string; selectedAnswer: string }[];
 
         let student = await prisma.student.findFirst({
             where: {
@@ -46,7 +48,8 @@ export async function POST(req: Request) {
             include: {
                 questions: {
                     include: {
-                        question: true
+                        question: true,
+                        schoolTestQuestion: true,
                     }
                 }
             }
@@ -60,31 +63,84 @@ export async function POST(req: Request) {
 
         let score = 0
         const totalMarks = test.totalMarks
+        const answerByQuestionId = new Map(
+            answers.map((answer: { questionId: string; selectedAnswer: string }) => [
+                answer.questionId,
+                answer.selectedAnswer,
+            ]),
+        );
+        const answersToSave: { questionId: string; selectedAnswer: string }[] = [];
 
-        for (const answer of answers) {
-            const question = test.questions.find((q) => q.questionId === answer.questionId);
-            if (question && question.question?.answer === answer.selectedAnswer) {
-                score += question.marks;
+        for (const testQuestion of test.questions) {
+            const source = testQuestion.question ?? testQuestion.schoolTestQuestion;
+            const sourceQuestionId = testQuestion.questionId ?? testQuestion.schoolTestQuestionId;
+
+            if (!source || !sourceQuestionId) {
+                continue;
+            }
+
+            const selectedAnswer = answerByQuestionId.get(sourceQuestionId);
+            if (selectedAnswer == null) {
+                continue;
+            }
+
+            answersToSave.push({
+                questionId: sourceQuestionId,
+                selectedAnswer,
+            });
+
+            const selectedKey = normalizeChoiceKey(selectedAnswer, source.options ?? []);
+            const correctKey = normalizeChoiceKey(source.answer, source.options ?? []);
+            if (selectedKey && correctKey && selectedKey === correctKey) {
+                score += testQuestion.marks;
             }
         }
 
         const percentage = totalMarks > 0 ? (score / totalMarks) * 100 : 0;
 
-        const studentRes = await prisma.studentResponse.create({
-            data: {
-                testId: testId,
-                studentId: studentId,
-                score: score,
-                totalMarks: totalMarks,
-                percentage: percentage,
-                answers: {
-                    create: answers.map((answer: { questionId: string; selectedAnswer: string }) => ({
-                        questionId: answer.questionId,
-                        selectedAnswer: answer.selectedAnswer,
-                    })),
+        const existingResponse = await prisma.studentResponse.findUnique({
+            where: {
+                testId_studentId: {
+                    testId,
+                    studentId,
+                },
+            },
+            select: { id: true },
+        });
+
+        let studentRes;
+
+        if (existingResponse) {
+            await prisma.testAnswer.deleteMany({
+                where: { studentResponseId: existingResponse.id },
+            });
+
+            studentRes = await prisma.studentResponse.update({
+                where: { id: existingResponse.id },
+                data: {
+                    score,
+                    totalMarks,
+                    percentage,
+                    answers: {
+                        create: answersToSave,
+                    },
+                },
+            });
+        } else {
+            studentRes = await prisma.studentResponse.create({
+                data: {
+                    testId,
+                    studentId,
+                    score,
+                    totalMarks,
+                    percentage,
+                    answers: {
+                        create: answersToSave,
+                    },
                 },
             }
-        })
+            );
+        }
 
         const headers = {
             "Access-Control-Allow-Origin": "https://omr-checker.vercel.app", // Or specify your origin: "http://localhost:5173"
