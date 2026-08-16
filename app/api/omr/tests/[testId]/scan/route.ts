@@ -19,19 +19,24 @@ function formNumber(value: FormDataEntryValue | null): number | undefined {
 }
 
 export async function POST(req: Request, context: RouteContext) {
+    let testId = 'unknown';
+    let fileCount = 0;
+    let shouldSave = false;
+
     try {
-        const { testId } = await context.params;
+        ({ testId } = await context.params);
         const form = await req.formData();
         const files = [...form.getAll('files'), ...form.getAll('file'), ...form.getAll('image')].filter(
             (entry): entry is File => entry instanceof File,
         );
+        fileCount = files.length;
 
         if (files.length === 0) {
             return NextResponse.json({ error: 'Upload OMR scan images as form field "files", "file", or "image".' }, { status: 400 });
         }
 
         const includeImages = formBoolean(form.get('includeImages'));
-        const shouldSave = formBoolean(form.get('save'));
+        shouldSave = formBoolean(form.get('save'));
         const scans = await Promise.all(
             files.map(async (file) => ({
                 image: Buffer.from(await file.arrayBuffer()),
@@ -104,6 +109,8 @@ export async function POST(req: Request, context: RouteContext) {
                 : message.includes('manual review') || message.includes('unreadable')
                     ? 422
                     : 500;
+
+        console.error('OMR scan failed', { testId, fileCount, shouldSave, message, error });
 
         return NextResponse.json({ error: message }, { status });
     }

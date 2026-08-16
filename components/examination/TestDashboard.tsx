@@ -5,11 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, BarChart3, Users, Clock, BookOpen, FileDown, ScanLine, ChevronRight } from 'lucide-react';
+import { Plus, BarChart3, Users, Clock, BookOpen, FileDown, ScanLine, ChevronRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useTests } from '@/hooks/queries/useTests';
+import { downloadOmrSheet } from './downloadOmrSheet';
 
 const PAGE_SIZE = 20;
 
@@ -29,6 +30,7 @@ interface Test {
 export default function TestDashboard() {
     const router = useRouter();
     const [take, setTake] = useState(PAGE_SIZE);
+    const [downloadingSheetId, setDownloadingSheetId] = useState<string | null>(null);
     const { data, isLoading, isError, isFetching } = useTests({ skip: 0, take });
 
     // Surface errors through toast — match the behaviour of the previous
@@ -60,6 +62,18 @@ export default function TestDashboard() {
             month: 'short',
             day: 'numeric',
         });
+    };
+
+    const handleDownloadSheet = async (test: Test) => {
+        setDownloadingSheetId(test.id);
+        try {
+            await downloadOmrSheet(test.id, `${test.title.replace(/[^A-Za-z0-9._-]+/g, '_') || 'omr_sheet'}_omr.pdf`);
+            toast.success('OMR sheet downloaded');
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed to download OMR sheet');
+        } finally {
+            setDownloadingSheetId(null);
+        }
     };
 
     if (isLoading) {
@@ -189,11 +203,19 @@ export default function TestDashboard() {
                                                 Scan
                                             </Button>
                                         </Link>
-                                        <Button variant="secondary" className="w-full" asChild>
-                                            <a href={`/api/omr/tests/${test.id}/sheet`} download>
+                                        <Button
+                                            type="button"
+                                            variant="secondary"
+                                            className="w-full"
+                                            disabled={downloadingSheetId === test.id}
+                                            onClick={() => handleDownloadSheet(test)}
+                                        >
+                                            {downloadingSheetId === test.id ? (
+                                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            ) : (
                                                 <FileDown className="w-4 h-4 mr-2" />
-                                                Sheet
-                                            </a>
+                                            )}
+                                            Sheet
                                         </Button>
                                     </div>
                                 </CardContent>

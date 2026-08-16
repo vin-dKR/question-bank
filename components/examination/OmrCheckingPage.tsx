@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTests } from '@/hooks/queries/useTests';
+import { downloadOmrSheet } from './downloadOmrSheet';
 
 interface TestOption {
     id: string;
@@ -138,11 +139,12 @@ export default function OmrCheckingPage({ initialTestId }: OmrCheckingPageProps)
     const [rollNumber, setRollNumber] = useState('');
     const [timeTaken, setTimeTaken] = useState('');
     const [status, setStatus] = useState<OmrStatus>('idle');
+    const [isDownloadingSheet, setIsDownloadingSheet] = useState(false);
     const [result, setResult] = useState<ScanResult | null>(null);
     const queryClient = useQueryClient();
     const { data, isLoading, isError } = useTests({ skip: 0, take: 100 });
 
-    const tests = (data?.items ?? []) as TestOption[];
+    const tests = useMemo(() => (data?.items ?? []) as TestOption[], [data?.items]);
     const selectedTest = useMemo(
         () => tests.find((test) => test.id === selectedTestId) ?? null,
         [selectedTestId, tests],
@@ -237,6 +239,23 @@ export default function OmrCheckingPage({ initialTestId }: OmrCheckingPageProps)
         }
     };
 
+    const handleDownloadSheet = async () => {
+        if (!selectedTestId) return;
+
+        setIsDownloadingSheet(true);
+        try {
+            await downloadOmrSheet(
+                selectedTestId,
+                `${selectedTest?.title.replace(/[^A-Za-z0-9._-]+/g, '_') || 'omr_sheet'}_omr.pdf`,
+            );
+            toast.success('OMR sheet downloaded');
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed to download OMR sheet');
+        } finally {
+            setIsDownloadingSheet(false);
+        }
+    };
+
     const detection = result?.detection;
     const gradingByQuestion = useMemo(
         () => new Map((result?.grading?.answers ?? []).map((answer) => [answer.questionNumber, answer])),
@@ -277,11 +296,18 @@ export default function OmrCheckingPage({ initialTestId }: OmrCheckingPageProps)
                 </div>
                 <div className="flex gap-2">
                     {selectedTestId && (
-                        <Button variant="secondary" asChild>
-                            <a href={`/api/omr/tests/${selectedTestId}/sheet`} download>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            disabled={isDownloadingSheet}
+                            onClick={handleDownloadSheet}
+                        >
+                            {isDownloadingSheet ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
                                 <FileDown className="h-4 w-4 mr-2" />
-                                OMR Sheet
-                            </a>
+                            )}
+                            OMR Sheet
                         </Button>
                     )}
                     {selectedTestId && (

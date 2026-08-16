@@ -9,8 +9,10 @@ interface RouteContext {
 }
 
 export async function GET(_req: Request, context: RouteContext) {
+    let testId = 'unknown';
+
     try {
-        const { testId } = await context.params;
+        ({ testId } = await context.params);
         const { test, spec, summary, pdf } = await readGeneratedOmrPdf(testId);
         const filename = `${test.title.replace(/[^A-Za-z0-9._-]+/g, '_') || 'omr_sheet'}_omr_v${spec.version}.pdf`;
 
@@ -28,6 +30,8 @@ export async function GET(_req: Request, context: RouteContext) {
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to generate OMR sheet';
         const status = message === 'Unauthorized' ? 401 : message === 'Test not found' ? 404 : 500;
+
+        console.error('OMR sheet generation failed', { testId, message, error });
 
         return NextResponse.json({ error: message }, { status });
     }
