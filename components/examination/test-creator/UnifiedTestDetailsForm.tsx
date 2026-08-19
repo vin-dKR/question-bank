@@ -128,7 +128,8 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
 
     const handleSelectTemplate = useCallback((template: Template) => {
         setFormData(template);
-        setIsEditingTemplate(true);
+        setIsEditingTemplate(false);
+        setIsCreatingTemplate(false);
         setShowTemplateModal(false);
         if (onTemplateSelect) {
             onTemplateSelect(template);
