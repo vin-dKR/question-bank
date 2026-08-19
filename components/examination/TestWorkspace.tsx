@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import {
     ArrowLeft,
     BarChart3,
@@ -8,16 +9,19 @@ import {
     Clock3,
     Download,
     FileQuestion,
+    Loader2,
     ScanLine,
     Target,
     Trophy,
     Users,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTestAnalyticsSummary } from '@/hooks/queries/useTestAnalyticsSummary';
+import { downloadOmrSheet } from './downloadOmrSheet';
 
 interface WorkspaceQuestion {
     id: string;
@@ -70,6 +74,19 @@ function StatCard({ icon: Icon, label, value, hint }: {
 
 export default function TestWorkspace({ test }: { test: TestWorkspaceData }) {
     const { data: summary, isLoading: isLoadingSummary } = useTestAnalyticsSummary(test.id);
+    const [isDownloadingSheet, setIsDownloadingSheet] = useState(false);
+
+    const handleDownloadOmrSheet = async () => {
+        setIsDownloadingSheet(true);
+        try {
+            await downloadOmrSheet(test.id, `${test.title.replace(/[^A-Za-z0-9._-]+/g, '_') || 'omr_sheet'}_omr.pdf`);
+            toast.success('OMR sheet downloaded');
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed to download OMR sheet');
+        } finally {
+            setIsDownloadingSheet(false);
+        }
+    };
 
     return (
         <div className="mx-auto w-full max-w-7xl space-y-5 pb-8">
@@ -99,11 +116,13 @@ export default function TestWorkspace({ test }: { test: TestWorkspaceData }) {
                             Scan responses
                         </Link>
                     </Button>
-                    <Button size="sm" asChild>
-                        <a href={`/api/omr/tests/${test.id}/sheet`} download>
+                    <Button size="sm" type="button" disabled={isDownloadingSheet} onClick={handleDownloadOmrSheet}>
+                        {isDownloadingSheet ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
                             <Download className="mr-2 h-4 w-4" />
-                            OMR sheet
-                        </a>
+                        )}
+                        OMR sheet
                     </Button>
                 </div>
             </div>
