@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { Maximize2, ZoomIn, ZoomOut } from "lucide-react";
 import { toast } from "sonner";
 import type { Crop, PageResult, QuestionDraft } from "@/lib/school-test/types";
 import { cn } from "@/lib/utils";
@@ -388,6 +389,16 @@ function PageTabs({
     );
 }
 
+// Zoom multiplies the base "fit" scale. 1 = whole image visible; below fit we
+// clamp to MIN_ZOOM, above to MAX_ZOOM (× the fit scale).
+const MIN_ZOOM = 0.25;
+const MAX_ZOOM = 4;
+const ZOOM_STEP = 1.25;
+
+function clampZoom(z: number) {
+    return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
+}
+
 function SourcePane({
     page,
     hoverCrop,
@@ -399,77 +410,152 @@ function SourcePane({
 }) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
+    // Zoom is a multiplier over the fit scale; 1 = "Fit" (whole page visible).
+    const [zoom, setZoom] = useState(1);
 
     useEffect(() => {
         if (!containerRef.current) return;
         const el = containerRef.current;
-        const ro = new ResizeObserver(() => {
-            setContainerSize({ w: el.clientWidth, h: el.clientHeight });
+        const ro = new ResizeObserver((entries) => {
+            const box = entries[0]?.contentRect;
+            if (box) setContainerSize({ w: box.width, h: box.height });
         });
         ro.observe(el);
         return () => ro.disconnect();
     }, []);
 
+    // New page → reset back to fit so the whole image is visible by default.
+    useEffect(() => {
+        setZoom(1);
+    }, [page.pageNumber]);
+
     const cropEntries = Object.entries(page.crops);
 
-    const scale = useMemo(() => {
+    // Base scale that makes the whole page fit inside the container without
+    // upscaling past its native pixels.
+    const fitScale = useMemo(() => {
         if (containerSize.w === 0 || containerSize.h === 0 || page.sourceWidth === 0) return 1;
-        return Math.min(containerSize.w / page.sourceWidth, containerSize.h / page.sourceHeight);
+        return Math.min(
+            1,
+            containerSize.w / page.sourceWidth,
+            containerSize.h / page.sourceHeight,
+        );
     }, [containerSize, page.sourceWidth, page.sourceHeight]);
 
+    const scale = fitScale * zoom;
     const displayW = page.sourceWidth * scale;
     const displayH = page.sourceHeight * scale;
 
+    // Zoom needed to render the page at 100% of its native pixels.
+    const actualZoom = fitScale > 0 ? clampZoom(1 / fitScale) : 1;
+    const isActual = Math.abs(scale - 1) < 0.01;
+    const isFit = Math.abs(zoom - 1) < 0.01;
+    const percent = Math.round(scale * 100);
+
     return (
-        <div
-            ref={containerRef}
-            className="relative flex max-h-[55vh] items-start justify-center overflow-auto rounded-xl border border-black/5 bg-white p-3 shadow-xs lg:max-h-none lg:min-h-0 lg:overflow-hidden lg:p-4"
-        >
+        <div className="relative flex min-h-0 flex-col rounded-xl border border-black/5 bg-white shadow-xs">
+            <div className="pointer-events-none absolute right-3 top-3 z-10 flex items-center gap-1 rounded-lg border border-black/5 bg-white/90 p-1 shadow-sm backdrop-blur">
+                <button
+                    type="button"
+                    onClick={() => setZoom((z) => clampZoom(z / ZOOM_STEP))}
+                    disabled={zoom <= MIN_ZOOM}
+                    aria-label="Zoom out"
+                    className="pointer-events-auto flex h-7 w-7 items-center justify-center rounded-md text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                    <ZoomOut className="h-4 w-4" />
+                </button>
+                <span className="min-w-[3ch] select-none text-center text-[11px] font-medium tabular-nums text-zinc-500">
+                    {percent}%
+                </span>
+                <button
+                    type="button"
+                    onClick={() => setZoom((z) => clampZoom(z * ZOOM_STEP))}
+                    disabled={zoom >= MAX_ZOOM}
+                    aria-label="Zoom in"
+                    className="pointer-events-auto flex h-7 w-7 items-center justify-center rounded-md text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                    <ZoomIn className="h-4 w-4" />
+                </button>
+                <div className="mx-0.5 h-4 w-px bg-black/10" />
+                <button
+                    type="button"
+                    onClick={() => setZoom(1)}
+                    aria-label="Fit page"
+                    className={cn(
+                        "pointer-events-auto flex h-7 items-center gap-1 rounded-md px-2 text-[11px] font-medium transition-colors",
+                        isFit
+                            ? "bg-indigo-50 text-indigo-700"
+                            : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900",
+                    )}
+                >
+                    <Maximize2 className="h-3.5 w-3.5" />
+                    Fit
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setZoom(actualZoom)}
+                    aria-label="Actual size"
+                    className={cn(
+                        "pointer-events-auto flex h-7 items-center rounded-md px-2 text-[11px] font-medium tabular-nums transition-colors",
+                        isActual
+                            ? "bg-indigo-50 text-indigo-700"
+                            : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900",
+                    )}
+                >
+                    1:1
+                </button>
+            </div>
+
             <div
-                className="relative"
-                style={{ width: displayW || "auto", height: displayH || "auto" }}
+                ref={containerRef}
+                className="relative flex max-h-[70vh] min-h-0 flex-1 overflow-auto p-3 lg:max-h-none lg:p-4"
             >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                    src={page.sourceDataUrl}
-                    alt={`Page ${page.pageNumber}`}
-                    className="block h-full w-full select-none"
-                    draggable={false}
-                />
-                {cropEntries.map(([questionId, crop]) => {
-                    const [x, y, w, h] = crop.bbox;
-                    const left = (x / page.sourceWidth) * 100;
-                    const top = (y / page.sourceHeight) * 100;
-                    const width = (w / page.sourceWidth) * 100;
-                    const height = (h / page.sourceHeight) * 100;
-                    const isHovered = hoverCrop === questionId;
-                    return (
-                        <motion.button
-                            key={questionId}
-                            type="button"
-                            onClick={() => onAdjustCrop(questionId)}
-                            className={cn(
-                                "absolute rounded-[3px] border-2 transition-colors",
-                                isHovered
-                                    ? "border-indigo-600 bg-indigo-500/10"
-                                    : "border-indigo-400/70 hover:border-indigo-600",
-                            )}
-                            style={{
-                                left: `${left}%`,
-                                top: `${top}%`,
-                                width: `${width}%`,
-                                height: `${height}%`,
-                            }}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.25 }}
-                        >
-                            <span className="absolute -top-5 left-0 rounded-md bg-indigo-600 px-1.5 py-[2px] text-[10px] font-semibold text-white shadow-sm">
-                                Q{crop.q_no}
-                            </span>
-                        </motion.button>
-                    );
-                })}
+                <div
+                    className="relative m-auto shrink-0"
+                    style={{ width: displayW || "auto", height: displayH || "auto" }}
+                >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                        src={page.sourceDataUrl}
+                        alt={`Page ${page.pageNumber}`}
+                        className="block h-full w-full select-none"
+                        draggable={false}
+                    />
+                    {cropEntries.map(([questionId, crop]) => {
+                        const [x, y, w, h] = crop.bbox;
+                        const left = (x / page.sourceWidth) * 100;
+                        const top = (y / page.sourceHeight) * 100;
+                        const width = (w / page.sourceWidth) * 100;
+                        const height = (h / page.sourceHeight) * 100;
+                        const isHovered = hoverCrop === questionId;
+                        return (
+                            <motion.button
+                                key={questionId}
+                                type="button"
+                                onClick={() => onAdjustCrop(questionId)}
+                                className={cn(
+                                    "absolute rounded-[3px] border-2 transition-colors",
+                                    isHovered
+                                        ? "border-indigo-600 bg-indigo-500/10"
+                                        : "border-indigo-400/70 hover:border-indigo-600",
+                                )}
+                                style={{
+                                    left: `${left}%`,
+                                    top: `${top}%`,
+                                    width: `${width}%`,
+                                    height: `${height}%`,
+                                }}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.25 }}
+                            >
+                                <span className="absolute -top-5 left-0 rounded-md bg-indigo-600 px-1.5 py-[2px] text-[10px] font-semibold text-white shadow-sm">
+                                    Q{crop.q_no}
+                                </span>
+                            </motion.button>
+                        );
+                    })}
+                </div>
             </div>
         </div>
     );
