@@ -159,11 +159,11 @@ export default function SchoolTestApp() {
                 prev.map((p) =>
                     p.page === page.pageNumber
                         ? {
-                              ...p,
-                              stage: "done",
-                              detections: result.crops.length,
-                              questions: result.questions.length,
-                          }
+                            ...p,
+                            stage: "done",
+                            detections: result.crops.length,
+                            questions: result.questions.length,
+                        }
                         : p,
                 ),
             );
@@ -199,7 +199,7 @@ export default function SchoolTestApp() {
     }, []);
 
     return (
-        <div className="h-full w-full overflow-hidden rounded-xl border border-black/5 bg-white text-zinc-900 shadow-xs">
+        <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-xl border border-black/5 bg-white text-zinc-900 shadow-xs">
             <AnimatePresence mode="wait">
                 {phase === "idle" && (
                     <motion.div
@@ -208,7 +208,7 @@ export default function SchoolTestApp() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -8 }}
                         transition={{ duration: 0.2 }}
-                        className="h-full"
+                        className="flex-1 min-h-0"
                     >
                         <IdleView onFiles={start} />
                     </motion.div>
@@ -220,7 +220,7 @@ export default function SchoolTestApp() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="h-full"
+                        className="flex-1 min-h-0"
                     >
                         <ProcessingPanel fileName={fileName} pages={pageStatuses} onCancel={reset} />
                     </motion.div>
@@ -232,7 +232,7 @@ export default function SchoolTestApp() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="h-full"
+                        className="flex-1 min-h-0"
                     >
                         <Verifier results={results} fileName={fileName} onReset={reset} />
                     </motion.div>
@@ -248,7 +248,7 @@ function IdleView({ onFiles }: { onFiles: (files: File[]) => void }) {
             <div className="w-full max-w-2xl">
                 <div className="mb-8 sm:mb-10 space-y-2.5">
                     <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-indigo-700">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.9 4.5 4.9.4-3.7 3.3 1.1 4.8L12 13.8l-4.2 2.2 1.1-4.8-3.7-3.3 4.9-.4z"/></svg>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.9 4.5 4.9.4-3.7 3.3 1.1 4.8L12 13.8l-4.2 2.2 1.1-4.8-3.7-3.3 4.9-.4z" /></svg>
                         AI-powered
                     </div>
                     <h1 className="text-2xl sm:text-3xl font-semibold leading-tight tracking-tight text-zinc-900">
