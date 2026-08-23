@@ -415,6 +415,9 @@ function PageTabs({
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 4;
 const ZOOM_STEP = 1.25;
+// Breathing room (px) subtracted from the measured viewport when computing the
+// fit scale, so a fitted page doesn't sit flush against the scroll edges.
+const FIT_PADDING = 24;
 
 function clampZoom(z: number) {
     return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
@@ -453,15 +456,23 @@ function SourcePane({
     const cropEntries = Object.entries(page.crops);
 
     // Base scale that makes the whole page fit inside the container without
-    // upscaling past its native pixels.
+    // upscaling past its native pixels. PAD leaves room for the inner padding so
+    // "Fit" doesn't itself trigger the scroll layer's scrollbar.
     const fitScale = useMemo(() => {
-        if (containerSize.w === 0 || containerSize.h === 0 || page.sourceWidth === 0) return 1;
+        const availW = containerSize.w - FIT_PADDING;
+        const availH = containerSize.h - FIT_PADDING;
+        if (availW <= 0 || availH <= 0 || page.sourceWidth === 0) return 1;
         return Math.min(
             1,
-            containerSize.w / page.sourceWidth,
-            containerSize.h / page.sourceHeight,
+            availW / page.sourceWidth,
+            availH / page.sourceHeight,
         );
     }, [containerSize, page.sourceWidth, page.sourceHeight]);
+
+    // Until the container has been measured we don't know the fit scale; render
+    // nothing sized (avoids a full-native-size flash that would balloon the page
+    // height on first paint).
+    const measured = containerSize.w > 0 && containerSize.h > 0;
 
     const scale = fitScale * zoom;
     const displayW = page.sourceWidth * scale;
@@ -527,14 +538,24 @@ function SourcePane({
                 </button>
             </div>
 
+            {/* Measured box: overflow-hidden so its size never changes when the
+                inner scrollbar appears — this is what kills the zoom flicker.
+                Bounded height so a tall page can't balloon the page height. */}
             <div
                 ref={containerRef}
-                className="relative flex max-h-[70vh] min-h-0 flex-1 overflow-auto p-3 lg:max-h-none lg:p-4"
+                className="relative max-h-[70vh] min-h-0 flex-1 overflow-hidden lg:max-h-none"
             >
-                <div
-                    className="relative m-auto shrink-0"
-                    style={{ width: displayW || "auto", height: displayH || "auto" }}
-                >
+                {/* Scroll layer: fills the measured box and owns the scrollbars. */}
+                <div className="absolute inset-0 overflow-auto">
+                    {/* Centers small pages; grows + scrolls for large ones without clipping. */}
+                    <div className="flex min-h-full min-w-full items-center justify-center p-3 lg:p-4">
+                        <div
+                            className="relative shrink-0"
+                            style={{
+                                width: measured ? displayW : "auto",
+                                height: measured ? displayH : "auto",
+                            }}
+                        >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                         src={page.sourceDataUrl}
@@ -576,6 +597,8 @@ function SourcePane({
                             </motion.button>
                         );
                     })}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
