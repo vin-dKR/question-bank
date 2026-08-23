@@ -418,6 +418,10 @@ function PageTabs({
 // so the layout can never feed back into itself.
 const ZOOM_STEP = 1.25;
 const MAX_SCALE = 4;
+// Breathing room (px) subtracted from the measured viewport when computing the
+// fit scale, so a fitted page doesn't sit flush against the scroll edges (and
+// so "Fit" doesn't itself trip the scroll layer's scrollbar).
+const FIT_PADDING = 24;
 
 type ViewMode = "fit" | "width" | "custom";
 
@@ -455,17 +459,27 @@ function SourcePane({
     const cropEntries = Object.entries(page.crops);
 
     // Scale that makes the whole page fit inside the pane (both axes) → no scroll.
+    // FIT_PADDING keeps the fitted page off the scroll edges; capped at 1 so a
+    // small source isn't upscaled past its native pixels.
     const fitScale = useMemo(() => {
-        if (!containerSize.w || !containerSize.h || !page.sourceWidth || !page.sourceHeight) return 1;
-        return Math.min(containerSize.w / page.sourceWidth, containerSize.h / page.sourceHeight);
+        const availW = containerSize.w - FIT_PADDING;
+        const availH = containerSize.h - FIT_PADDING;
+        if (availW <= 0 || availH <= 0 || !page.sourceWidth || !page.sourceHeight) return 1;
+        return Math.min(1, availW / page.sourceWidth, availH / page.sourceHeight);
     }, [containerSize, page.sourceWidth, page.sourceHeight]);
 
     // Scale that makes the page fill the pane width. Depends only on the pane
     // width (always stable), so it never feeds back through the height.
     const widthScale = useMemo(() => {
-        if (!containerSize.w || !page.sourceWidth) return 1;
-        return containerSize.w / page.sourceWidth;
+        const availW = containerSize.w - FIT_PADDING;
+        if (availW <= 0 || !page.sourceWidth) return 1;
+        return availW / page.sourceWidth;
     }, [containerSize.w, page.sourceWidth]);
+
+    // Until the container has been measured we don't know the fit scale; render
+    // nothing sized (avoids a full-native-size flash that would balloon the page
+    // height on first paint).
+    const measured = containerSize.w > 0 && containerSize.h > 0;
 
     // You can never zoom out past "fit" (whole page) or in past MAX_SCALE.
     const minScale = fitScale;
@@ -542,58 +556,68 @@ function SourcePane({
                 </button>
             </div>
 
+            {/* Measured box: overflow-hidden so its size never changes when the
+                inner scrollbar appears — this is what kills the zoom flicker.
+                Bounded height so a tall page can't balloon the page height. */}
             <div
                 ref={containerRef}
-                className="relative h-[70vh] w-full overflow-auto p-3 lg:h-auto lg:min-h-0 lg:flex-1 lg:p-4"
+                className="relative h-[70vh] w-full overflow-hidden lg:h-auto lg:min-h-0 lg:flex-1"
             >
-                {/* min-h/min-w-full keeps the page centred when it's smaller than the
-                    pane, yet lets every edge stay scrollable once it overflows. */}
-                <div className="flex min-h-full min-w-full items-center justify-center">
-                    <div
-                        className="relative shrink-0"
-                        style={{ width: displayW || "auto", height: displayH || "auto" }}
-                    >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                            src={page.sourceDataUrl}
-                            alt={`Page ${page.pageNumber}`}
-                            className="block h-full w-full select-none"
-                            draggable={false}
-                        />
-                        {cropEntries.map(([questionId, crop]) => {
-                            const [x, y, w, h] = crop.bbox;
-                            const left = (x / page.sourceWidth) * 100;
-                            const top = (y / page.sourceHeight) * 100;
-                            const width = (w / page.sourceWidth) * 100;
-                            const height = (h / page.sourceHeight) * 100;
-                            const isHovered = hoverCrop === questionId;
-                            return (
-                                <motion.button
-                                    key={questionId}
-                                    type="button"
-                                    onClick={() => onAdjustCrop(questionId)}
-                                    className={cn(
-                                        "absolute rounded-[3px] border-2 transition-colors",
-                                        isHovered
-                                            ? "border-indigo-600 bg-indigo-500/10"
-                                            : "border-indigo-400/70 hover:border-indigo-600",
-                                    )}
-                                    style={{
-                                        left: `${left}%`,
-                                        top: `${top}%`,
-                                        width: `${width}%`,
-                                        height: `${height}%`,
-                                    }}
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ duration: 0.25 }}
-                                >
-                                    <span className="absolute -top-5 left-0 rounded-md bg-indigo-600 px-1.5 py-[2px] text-[10px] font-semibold text-white shadow-sm">
-                                        Q{crop.q_no}
-                                    </span>
-                                </motion.button>
-                            );
-                        })}
+                {/* Scroll layer: absolutely fills the bounded box and owns the
+                    scrollbars, so content size can never feed back into the
+                    measured container height (this is what kills zoom flicker). */}
+                <div className="absolute inset-0 overflow-auto">
+                    {/* Centers small pages; grows + scrolls for large ones without clipping. */}
+                    <div className="flex min-h-full min-w-full items-center justify-center p-3 lg:p-4">
+                        <div
+                            className="relative shrink-0"
+                            style={{
+                                width: measured ? displayW : "auto",
+                                height: measured ? displayH : "auto",
+                            }}
+                        >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                                src={page.sourceDataUrl}
+                                alt={`Page ${page.pageNumber}`}
+                                className="block h-full w-full select-none"
+                                draggable={false}
+                            />
+                            {cropEntries.map(([questionId, crop]) => {
+                                const [x, y, w, h] = crop.bbox;
+                                const left = (x / page.sourceWidth) * 100;
+                                const top = (y / page.sourceHeight) * 100;
+                                const width = (w / page.sourceWidth) * 100;
+                                const height = (h / page.sourceHeight) * 100;
+                                const isHovered = hoverCrop === questionId;
+                                return (
+                                    <motion.button
+                                        key={questionId}
+                                        type="button"
+                                        onClick={() => onAdjustCrop(questionId)}
+                                        className={cn(
+                                            "absolute rounded-[3px] border-2 transition-colors",
+                                            isHovered
+                                                ? "border-indigo-600 bg-indigo-500/10"
+                                                : "border-indigo-400/70 hover:border-indigo-600",
+                                        )}
+                                        style={{
+                                            left: `${left}%`,
+                                            top: `${top}%`,
+                                            width: `${width}%`,
+                                            height: `${height}%`,
+                                        }}
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ duration: 0.25 }}
+                                    >
+                                        <span className="absolute -top-5 left-0 rounded-md bg-indigo-600 px-1.5 py-[2px] text-[10px] font-semibold text-white shadow-sm">
+                                            Q{crop.q_no}
+                                        </span>
+                                    </motion.button>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
             </div>
