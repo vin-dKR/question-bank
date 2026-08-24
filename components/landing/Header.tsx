@@ -2,12 +2,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
-import { useUser } from "@clerk/nextjs";
+import { useCurrentUser } from "@/hooks/auth/useCurrentUser";
 
 const navItems = ["Home", "Features", "Pricing", "Contact"];
 
 const Header = () => {
-    const { user } = useUser();
+    const { user } = useCurrentUser();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);

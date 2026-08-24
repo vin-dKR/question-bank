@@ -1,6 +1,5 @@
 import prisma from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
-
+import { getAuthContext } from '@/lib/auth/session';
 interface FetchEmailSuccess {
   success: true;
   data: { email: string } | null
@@ -15,14 +14,14 @@ export type FetchEmailResponse = FetchEmailSuccess | FetchEmailError;
 
 export const fetchEmail = async (): Promise<FetchEmailResponse> => {
   try {
-    const { userId } = await auth();
+    const ctx = await getAuthContext();
 
-    if (!userId) {
+    if (!ctx) {
       throw new Error("Unauthorized user");
     }
 
     const email = await prisma.user.findUnique({
-      where: { clerkUserId: userId },
+      where: { id: ctx.userId },
       select: {
         email: true,
       },

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { ClerkProvider } from '@clerk/nextjs';
+import { AuthKitProvider } from '@workos-inc/authkit-nextjs/components';
 import { Inter } from 'next/font/google';
 import { Toaster } from "@/components/ui/sonner";
 import WebVitalsReporter from "@/components/perf/WebVitalsReporter";
@@ -25,7 +25,7 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body className={inter.variable}>
-                <ClerkProvider signInUrl="/auth/signin" signUpUrl="/auth/signup">
+                <AuthKitProvider>
                     <QueryProvider>
                         <main className="min-h-screen bg-gray-50">
                             {children}
@@ -33,7 +33,7 @@ export default function RootLayout({
                         <Toaster closeButton={true} />
                         <WebVitalsReporter />
                     </QueryProvider>
-                </ClerkProvider>
+                </AuthKitProvider>
             </body>
         </html>
     );

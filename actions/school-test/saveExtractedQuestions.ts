@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { getAuthContext } from '@/lib/auth/session';
 import prisma from "@/lib/prisma";
 import { supabaseServer, SUPABASE_IMAGE_BUCKET } from "@/lib/supabase";
 
@@ -125,11 +125,11 @@ function normalizeBbox(
 export async function saveExtractedQuestions(
     input: SaveExtractedPage[],
 ): Promise<SaveExtractedResult> {
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) return { success: false, error: "Not signed in." };
+    const ctx = await getAuthContext();
+    if (!ctx) return { success: false, error: "Not signed in." };
 
     const user = await prisma.user.findUnique({
-        where: { clerkUserId },
+        where: { id: ctx.userId },
         select: { id: true },
     });
     if (!user) return { success: false, error: "User not found." };

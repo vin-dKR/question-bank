@@ -29,6 +29,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getTestRoster, listClassOptions, setTestClass, type TestRoster, type ClassOption } from '@/actions/roster/testRoster';
+import { normalizeRollNumber } from '@/lib/examination/studentRoster';
 import { useTests } from '@/hooks/queries/useTests';
 import { downloadOmrSheet } from './downloadOmrSheet';
 
@@ -141,6 +143,11 @@ export default function OmrCheckingPage({ initialTestId }: OmrCheckingPageProps)
     const [status, setStatus] = useState<OmrStatus>('idle');
     const [isDownloadingSheet, setIsDownloadingSheet] = useState(false);
     const [result, setResult] = useState<ScanResult | null>(null);
+    // Roster-driven entry. Null whenever the selected test has no class linked,
+    // in which case every field below stays manual exactly as before.
+    const [roster, setRoster] = useState<TestRoster | null>(null);
+    const [classOptions, setClassOptions] = useState<ClassOption[]>([]);
+    const [linkingClass, setLinkingClass] = useState(false);
     const queryClient = useQueryClient();
     const { data, isLoading, isError } = useTests({ skip: 0, take: 100 });
 
@@ -161,6 +168,37 @@ export default function OmrCheckingPage({ initialTestId }: OmrCheckingPageProps)
             toast.error('Failed to load tests');
         }
     }, [isError]);
+
+    // Pull the roster for the selected test. A failure here is never fatal —
+    // it just leaves the manual-entry path in place.
+    useEffect(() => {
+        let cancelled = false;
+        if (!selectedTestId) { setRoster(null); return; }
+        getTestRoster(selectedTestId).then((res) => {
+            if (cancelled) return;
+            setRoster(res.success ? res.data : null);
+            if (res.success && res.data.className) setClassName(res.data.className);
+        });
+        return () => { cancelled = true; };
+    }, [selectedTestId]);
+
+    useEffect(() => {
+        listClassOptions().then((res) => { if (res.success) setClassOptions(res.data); });
+    }, []);
+
+    /** The roster entry matching whatever roll number is currently entered. */
+    const rosterMatch = useMemo(() => {
+        if (!roster?.classId || !rollNumber.trim()) return null;
+        const needle = normalizeRollNumber(rollNumber);
+        return roster.students.find((s) => s.rollNumber === needle) ?? null;
+    }, [roster, rollNumber]);
+
+    // Fill the name from the roster once a roll number resolves. Only ever
+    // overwrites a name that came from the roster itself, so a teacher
+    // correcting a misread name by hand does not get it stomped.
+    useEffect(() => {
+        if (rosterMatch) setStudentName(rosterMatch.name);
+    }, [rosterMatch]);
 
     useEffect(() => {
         const detectedRoll = result?.detection.quality.roll_number;
@@ -372,6 +410,59 @@ export default function OmrCheckingPage({ initialTestId }: OmrCheckingPageProps)
                             )}
                         </div>
 
+                        {/* Roster status. Only shown once a class is linked — otherwise
+                            the fields below behave exactly as they always have. */}
+                        {roster && (
+                            roster.classId ? (
+                                <div className="rounded-lg border border-emerald-100 bg-emerald-50/60 px-3 py-2">
+                                    <p className="text-xs font-medium text-emerald-900">
+                                        {roster.classLabel} · {roster.students.length} student
+                                        {roster.students.length === 1 ? '' : 's'}
+                                        {roster.academicYearName ? ` · ${roster.academicYearName}` : ''}
+                                    </p>
+                                    <p className="mt-0.5 text-[11px] text-emerald-700">
+                                        Enter or scan a roll number and the name fills itself.
+                                    </p>
+                                </div>
+                            ) : classOptions.length > 0 ? (
+                                <div className="rounded-lg border border-black/5 bg-zinc-50 px-3 py-2.5">
+                                    <p className="text-xs font-medium text-zinc-700">
+                                        Link this test to a class
+                                    </p>
+                                    <p className="mt-0.5 mb-2 text-[11px] text-zinc-500">
+                                        Then roll numbers resolve to students and you stop typing names per sheet.
+                                    </p>
+                                    <select
+                                        className="w-full rounded-md border border-black/10 bg-white px-2 py-1.5 text-xs"
+                                        disabled={linkingClass}
+                                        defaultValue=""
+                                        onChange={async (event) => {
+                                            const classId = event.target.value;
+                                            if (!classId) return;
+                                            setLinkingClass(true);
+                                            const res = await setTestClass(selectedTestId, classId);
+                                            setLinkingClass(false);
+                                            if (res.success) {
+                                                const next = await getTestRoster(selectedTestId);
+                                                if (next.success) {
+                                                    setRoster(next.data);
+                                                    if (next.data.className) setClassName(next.data.className);
+                                                }
+                                                toast.success('Class linked');
+                                            } else {
+                                                toast.error("Couldn't link the class", { description: res.error });
+                                            }
+                                        }}
+                                    >
+                                        <option value="">Choose a class…</option>
+                                        {classOptions.map((c) => (
+                                            <option key={c.id} value={c.id}>{c.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            ) : null
+                        )}
+
                         <div className="grid grid-cols-1 gap-3">
                             <div className="space-y-2">
                                 <Label htmlFor="student-name">Student name</Label>
@@ -381,6 +472,18 @@ export default function OmrCheckingPage({ initialTestId }: OmrCheckingPageProps)
                                     onChange={(event) => setStudentName(event.target.value)}
                                     placeholder="Student name"
                                 />
+                                {roster?.classId && rollNumber.trim() && (
+                                    rosterMatch ? (
+                                        <p className="text-[11px] text-emerald-700">
+                                            Roll {rollNumber.trim()} → {rosterMatch.name}
+                                        </p>
+                                    ) : (
+                                        <p className="text-[11px] text-amber-700">
+                                            Roll {rollNumber.trim()} isn&apos;t in {roster.classLabel}. Check the
+                                            number, or type the name to add them.
+                                        </p>
+                                    )
+                                )}
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-2">
@@ -390,6 +493,8 @@ export default function OmrCheckingPage({ initialTestId }: OmrCheckingPageProps)
                                         value={className}
                                         onChange={(event) => setClassName(event.target.value)}
                                         placeholder="Class"
+                                        readOnly={Boolean(roster?.classId)}
+                                        className={roster?.classId ? 'bg-zinc-50 text-zinc-500' : undefined}
                                     />
                                 </div>
                                 <div className="space-y-2">

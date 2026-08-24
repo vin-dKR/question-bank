@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma";
+import { AuthError, requireUser } from "@/lib/auth/guard";
 
 // Define proper types for Prisma where clauses
 type QuestionWhereClause = Prisma.QuestionWhereInput;
@@ -351,11 +352,19 @@ export async function getFilterOptions(
     }
 }
 
-export async function selectFlagged(id: string, userRole: UserRole) {
+/**
+ * Flagging is deliberately NOT gated by question ownership: since orgs can no
+ * longer edit shared questions (doc §13), flagging is their only way to report
+ * a bad one. Any signed-in user may flag.
+ *
+ * @param _userRole IGNORED. Kept so existing callers keep compiling. The role
+ *   now comes from the server session — a role passed in from the browser is
+ *   just a value the caller chose, and server actions are public endpoints.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function selectFlagged(id: string, _userRole?: UserRole) {
     try {
-        if (userRole !== "coaching") {
-            return { success: false, data: null, error: "Only coaching can flag questions" };
-        }
+        await requireUser();
 
         const question = await prisma.question.update({
             where: { id },
@@ -367,16 +376,20 @@ export async function selectFlagged(id: string, userRole: UserRole) {
         });
         return { success: true, data: question };
     } catch (error) {
+        if (error instanceof AuthError) {
+            return { success: false, data: null, error: error.message };
+        }
         console.error("Error setting question flag:", error);
         return { success: false, data: null, error: "Failed to set question flag" };
     }
 }
 
-export async function toggleFlag(id: string, userRole: UserRole) {
+/** @param _userRole IGNORED — see selectFlagged above. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function toggleFlag(id: string, _userRole?: UserRole) {
     try {
-        if (userRole !== "coaching") {
-            return { success: false, data: null, error: "Only coaching can toggle question flags" };
-        }
+        await requireUser();
+
         const question = await prisma.question.findUnique({
             where: { id },
             select: { flagged: true },
@@ -398,6 +411,9 @@ export async function toggleFlag(id: string, userRole: UserRole) {
         });
         return { success: true, data: updatedQuestion };
     } catch (error) {
+        if (error instanceof AuthError) {
+            return { success: false, data: null, error: error.message };
+        }
         console.error("Error toggling question flag:", error);
         return { success: false, data: null, error: "Failed to toggle question flag" };
     }

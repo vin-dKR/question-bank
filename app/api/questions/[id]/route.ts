@@ -1,6 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { handleCorsResponse, handleOptionsRequest } from "@/lib/cors";
+import {
+    AuthError,
+    assertCanMutateQuestion,
+    requireApiActor,
+} from "@/lib/auth/guard";
+
+/**
+ * SECURITY NOTE: before this change, PUT and DELETE here had no authentication
+ * of any kind — any caller who knew a question id could rewrite or delete it,
+ * cross-origin. See docs/WORKOS_MIGRATION_APPROACH.md §14.
+ *
+ * Callers must now present EITHER a signed-in session OR
+ * `Authorization: Bearer $QUESTION_API_KEY`. The satellite tools
+ * (question-editor, multi-crop, omr-checker) should use the bearer path —
+ * cross-site cookies are fragile and get more so with AuthKit (doc §8).
+ */
+
+function authFailure(request: NextRequest, error: AuthError) {
+    return handleCorsResponse(
+        request,
+        NextResponse.json({ success: false, error: error.message }, { status: error.status })
+    );
+}
 
 export async function OPTIONS(request: NextRequest) {
     return handleOptionsRequest(request);
@@ -12,6 +35,9 @@ export async function PUT(
 ) {
     try {
         const { id } = await params;
+
+        const actor = await requireApiActor(request);
+
         const body = await request.json();
 
         const {
@@ -47,6 +73,13 @@ export async function PUT(
             return handleCorsResponse(request, response);
         }
 
+        // A service-key caller is trusted (it is one of our own tools); a user
+        // caller must own the question. Note this runs AFTER the 404 check so
+        // the two cases stay distinguishable for our own tooling.
+        if (actor.kind === "user") {
+            await assertCanMutateQuestion(id, actor.user);
+        }
+
         // Update the question
         const updatedQuestion = await prisma.question.update({
             where: { id },
@@ -74,6 +107,8 @@ export async function PUT(
 
         return handleCorsResponse(request, response);
     } catch (error) {
+        if (error instanceof AuthError) return authFailure(request, error);
+
         console.error('Error updating question:', error);
         const response = NextResponse.json(
             { success: false, error: 'Failed to update question' },
@@ -91,12 +126,19 @@ export async function DELETE(
     try {
         const { id } = await params;
 
-        // Find and delete the question
-        const question = await prisma.question.delete({
-            where: { id }
+        const actor = await requireApiActor(request);
+
+        // Check existence and ownership BEFORE deleting. The previous version
+        // deleted first and then tested the result for null, which meant the
+        // 404 branch was unreachable (prisma.delete throws on a missing row)
+        // and an unauthorized delete had already happened by the time anything
+        // was checked.
+        const existingQuestion = await prisma.question.findUnique({
+            where: { id },
+            select: { id: true },
         });
 
-        if (!question) {
+        if (!existingQuestion) {
             const response = NextResponse.json(
                 { success: false, error: 'Question not found' },
                 { status: 404 }
@@ -105,6 +147,14 @@ export async function DELETE(
             return handleCorsResponse(request, response);
         }
 
+        if (actor.kind === "user") {
+            await assertCanMutateQuestion(id, actor.user);
+        }
+
+        await prisma.question.delete({
+            where: { id }
+        });
+
         const response = NextResponse.json({
             success: true,
             message: 'Question deleted successfully'
@@ -112,6 +162,8 @@ export async function DELETE(
 
         return handleCorsResponse(request, response);
     } catch (error) {
+        if (error instanceof AuthError) return authFailure(request, error);
+
         console.error('Error deleting question:', error);
         const response = NextResponse.json(
             { success: false, error: 'Failed to delete question' },
@@ -120,4 +172,4 @@ export async function DELETE(
 
         return handleCorsResponse(request, response);
     }
-} 
+}

@@ -1,17 +1,16 @@
 'use server';
 
 import prisma from '@/lib/prisma';
-import { auth } from '@clerk/nextjs/server';
-
+import { getAuthContext } from '@/lib/auth/session';
 export const createTest = async (data: CreateTestData): Promise<Partial<ExaminationTest>> => {
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        if (!ctx) {
             throw new Error('Unauthorized');
         }
 
         const user = await prisma.user.findUnique({
-            where: { clerkUserId },
+            where: { id: ctx.userId },
             select: { id: true },
         });
 
@@ -154,13 +153,13 @@ export const getTests = async (
     const { skip = 0, take = 20 } = args;
 
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        if (!ctx) {
             throw new Error('Unauthorized');
         }
 
         const user = await prisma.user.findUnique({
-            where: { clerkUserId },
+            where: { id: ctx.userId },
             select: { id: true },
         });
 
@@ -236,13 +235,13 @@ export const getTests = async (
 
 export const getTestById = async (testId: string): Promise<Partial<ExaminationTest> | null> => {
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        if (!ctx) {
             throw new Error('Unauthorized');
         }
 
         const user = await prisma.user.findUnique({
-            where: { clerkUserId },
+            where: { id: ctx.userId },
             select: { id: true },
         });
 
@@ -311,13 +310,13 @@ export const getTestById = async (testId: string): Promise<Partial<ExaminationTe
 
 export const deleteTest = async (testId: string): Promise<void> => {
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        if (!ctx) {
             throw new Error('Unauthorized');
         }
 
         const user = await prisma.user.findUnique({
-            where: { clerkUserId },
+            where: { id: ctx.userId },
             select: { id: true },
         });
 

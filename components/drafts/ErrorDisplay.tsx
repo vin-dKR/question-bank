@@ -27,7 +27,7 @@ export function ErrorDisplay({ error, onRetry, onBrowseFolders }: ErrorDisplayPr
                         <div className="mt-2 text-xs text-red-600">
                             {error.includes("permission") && <p>• You may need to be invited to this folder by the owner</p>}
                             {error.includes("not found") && <p>• The folder may have been deleted or the link is incorrect</p>}
-                            {error.includes("Invalid") && <p>• The collaboration link appears to be malformed</p>}
+                            {error.includes("Invalid") && <p>• The folder link appears to be malformed</p>}
                         </div>
                     </div>
                     <div className="mt-4 flex flex-wrap gap-2">

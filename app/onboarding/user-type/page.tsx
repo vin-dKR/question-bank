@@ -22,7 +22,7 @@ export default function UserTypePage() {
 
 
     // Optimized navigation with prefetching and immediate navigation
-    const onContinueClick = useCallback((role: "student" | "teacher" | "coaching", href: string) => {
+    const onContinueClick = useCallback((role: "teacher" | "coaching", href: string) => {
         setLoadingRole(role);
 
         setRole(role);

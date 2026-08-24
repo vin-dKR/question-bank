@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { useUser } from "@clerk/nextjs";
+import { useCurrentUser } from "@/hooks/auth/useCurrentUser";
 import { Check } from "lucide-react";
 import Link from "next/link";
 
 const Pricing = () => {
-    const { user } = useUser();
+    const { user } = useCurrentUser();
 
     const plans = [
         {

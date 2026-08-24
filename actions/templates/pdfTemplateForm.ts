@@ -1,6 +1,20 @@
 "use server"
 import prisma from "@/lib/prisma"
-import { auth } from "@clerk/nextjs/server"
+import { getAuthContext } from "@/lib/auth/session"
+
+/**
+ * NOTE ON `TemplateForm.userId`.
+ *
+ * The schema declares this as a relation to `User.id`, but every one of the 38
+ * pre-existing rows stores a CLERK id (`user_31Ay…`) instead, because this file
+ * used to write `auth().userId` straight into it. The relation has therefore
+ * never resolved — `include: { user: … }` returns nothing for any of them.
+ *
+ * It now writes the local `User.id`, which is what the column always claimed to
+ * hold. `scripts/workos/backfill-orgs.ts` remaps the legacy rows by looking
+ * their Clerk id up against `User.clerkUserId`. Until that backfill runs, old
+ * templates are invisible to their owners — run it as part of the cutover.
+ */
 
 export const createTemplate = async (formData: Template): Promise<{
     data: Template | null
@@ -8,7 +22,8 @@ export const createTemplate = async (formData: Template): Promise<{
 }> => {
     console.log('this is formData from actions template pdfTemp', formData);
 
-    const { userId } = await auth()
+    const ctx = await getAuthContext()
+    const userId = ctx?.userId
     console.log('Auth result - userId:', userId);
 
     if (!userId) {
@@ -60,7 +75,8 @@ export const getUserTemplates = async (): Promise<{
     data: Template[] | null
     error: string | null
 }> => {
-    const { userId } = await auth()
+    const ctx = await getAuthContext()
+    const userId = ctx?.userId
 
     if (!userId) {
         return {
@@ -111,7 +127,8 @@ export const deleteTemplate = async (templateId: string): Promise<{
     success: boolean
     error: string | null
 }> => {
-    const { userId } = await auth()
+    const ctx = await getAuthContext()
+    const userId = ctx?.userId
 
     if (!userId) {
         return {
@@ -157,7 +174,8 @@ export const updateTemplate = async (
     data?: Template
     error?: string
 }> => {
-    const { userId } = await auth()
+    const ctx = await getAuthContext()
+    const userId = ctx?.userId
 
     if (!userId) {
         return { success: false, error: "Unauthorized" }

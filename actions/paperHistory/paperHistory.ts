@@ -1,8 +1,7 @@
 'use server';
 
 import prisma from '@/lib/prisma';
-import { auth } from '@clerk/nextjs/server';
-
+import { getAuthContext } from '@/lib/auth/session';
 export const savePaperHistory = async (data: PaperHistoryData): Promise<{ success: boolean; id?: string; error?: string }> => {
     if (!data.isContinue) {
         return {
@@ -12,13 +11,13 @@ export const savePaperHistory = async (data: PaperHistoryData): Promise<{ succes
     }
 
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        if (!ctx) {
             throw new Error('Unauthorized');
         }
 
         const user = await prisma.user.findUnique({
-            where: { clerkUserId },
+            where: { id: ctx.userId },
             select: { id: true },
         });
 
@@ -60,13 +59,13 @@ export const savePaperHistory = async (data: PaperHistoryData): Promise<{ succes
 
 export const getPaperHistories = async (limit: number = 10): Promise<PaperHistoryWithQuestions[]> => {
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        if (!ctx) {
             throw new Error('Unauthorized');
         }
 
         const user = await prisma.user.findUnique({
-            where: { clerkUserId },
+            where: { id: ctx.userId },
             select: { id: true },
         });
 
@@ -108,13 +107,13 @@ export const getPaperHistories = async (limit: number = 10): Promise<PaperHistor
 
 export const getPaperHistoryById = async (id: string): Promise<PaperHistoryWithQuestions | null> => {
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        if (!ctx) {
             throw new Error('Unauthorized');
         }
 
         const user = await prisma.user.findUnique({
-            where: { clerkUserId },
+            where: { id: ctx.userId },
             select: { id: true },
         });
 
@@ -157,13 +156,13 @@ export const getPaperHistoryById = async (id: string): Promise<PaperHistoryWithQ
 
 export const deletePaperHistory = async (id: string): Promise<{ success: boolean; error?: string }> => {
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        if (!ctx) {
             throw new Error('Unauthorized');
         }
 
         const user = await prisma.user.findUnique({
-            where: { clerkUserId },
+            where: { id: ctx.userId },
             select: { id: true },
         });
 

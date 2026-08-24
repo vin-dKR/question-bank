@@ -1,5 +1,4 @@
 export { }
-import WebSocket from 'ws';
 
 declare global {
     interface Window {
@@ -97,8 +96,6 @@ declare global {
         // eslint-disable-next-line
         questions: any[];
         userRole: 'owner' | 'editor' | 'viewer';
-        isCollaborated: boolean;
-        collaboratorCount: number;
     }
 
     interface PDFGeneratorProps {
@@ -406,36 +403,6 @@ declare global {
         success: boolean;
         refined_text?: string;
         error?: string;
-    }
-
-    // collaboration ----------------------------------------------------------
-    interface CollaborationUser {
-        userId: string;
-        userName: string;
-        isOnline: boolean;
-    }
-
-    interface CollaborationMessageData {
-        action: "joined" | "left" | "room_state" | "reorder";
-        users?: CollaborationUser[];
-        questionCount?: number;
-    }
-
-    interface CollaborationMessage {
-        type: 'join' | 'leave' | 'update' | 'presence' | 'cursor';
-        folderId: string;
-        userId: string;
-        userName: string;
-        data?: CollaborationMessageData
-    }
-
-    interface CollaborationContextType {
-        connectedUsers: CollaborationUser[];
-        isConnected: boolean;
-        sendMessage: (message: CollaborationMessage) => void;
-        joinFolder: (folderId: string) => void;
-        leaveFolder: () => void;
-        currentFolderId: string | null;
     }
 
     interface ConnectedUser {
