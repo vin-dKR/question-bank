@@ -39,12 +39,11 @@ export const createFolder = async (name: string, questions: { id: string }[]): P
         const ctx = await getAuthContext();
         if (!ctx) throw new Error("Unauthorized");
 
-        const user = await prisma.user.findUnique({
-            where: { id: ctx.userId },
-            select: { id: true },
-        });
-
-        if (!user) throw new Error("User not found in database");
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
 
         if (!name.trim()) throw new Error("Folder name cannot be empty");
 
@@ -175,15 +174,11 @@ export const deleteFolder = async (id: string): Promise<void> => {
             throw new Error("Unauthorized");
         }
 
-        const user = await prisma.user.findUnique({
-            where: { id: ctx.userId },
-            select: { id: true },
-        });
-
-        if (!user) {
-            throw new Error("User not found in database");
-        }
-
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
         const folder = await prisma.folder.findFirst({
             where: { id, userId: user.id },
         });
@@ -218,15 +213,11 @@ export const renameFolder = async (id: string, name: string): Promise<Folder> =>
             throw new Error("Unauthorized");
         }
 
-        const user = await prisma.user.findUnique({
-            where: { id: ctx.userId },
-            select: { id: true },
-        });
-
-        if (!user) {
-            throw new Error("User not found in database");
-        }
-
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
         const folder = await prisma.folder.findFirst({
             where: { id, userId: user.id },
         });
@@ -268,15 +259,11 @@ export const updateFolderQuestions = async (
             throw new Error("Unauthorized");
         }
 
-        const user = await prisma.user.findUnique({
-            where: { id: ctx.userId },
-            select: { id: true },
-        });
-
-        if (!user) {
-            throw new Error("User not found in database");
-        }
-
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
         const folder = await prisma.folder.findFirst({
             where: { id: folderId, userId: user.id },
         });

@@ -9,15 +9,11 @@ export const createTest = async (data: CreateTestData): Promise<Partial<Examinat
             throw new Error('Unauthorized');
         }
 
-        const user = await prisma.user.findUnique({
-            where: { id: ctx.userId },
-            select: { id: true },
-        });
-
-        if (!user) {
-            throw new Error('User not found');
-        }
-
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
         if (data.omrPaperId && !/^[A-Fa-f0-9]{24}$/.test(data.omrPaperId)) {
             throw new Error('Invalid OMR paper ID');
         }
@@ -158,15 +154,11 @@ export const getTests = async (
             throw new Error('Unauthorized');
         }
 
-        const user = await prisma.user.findUnique({
-            where: { id: ctx.userId },
-            select: { id: true },
-        });
-
-        if (!user) {
-            throw new Error('User not found');
-        }
-
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
         const where = { createdBy: user.id } as const;
 
         const [tests, total] = await Promise.all([
@@ -240,15 +232,11 @@ export const getTestById = async (testId: string): Promise<Partial<ExaminationTe
             throw new Error('Unauthorized');
         }
 
-        const user = await prisma.user.findUnique({
-            where: { id: ctx.userId },
-            select: { id: true },
-        });
-
-        if (!user) {
-            throw new Error('User not found');
-        }
-
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
         const test = await prisma.test.findFirst({
             where: {
                 id: testId,
@@ -315,15 +303,11 @@ export const deleteTest = async (testId: string): Promise<void> => {
             throw new Error('Unauthorized');
         }
 
-        const user = await prisma.user.findUnique({
-            where: { id: ctx.userId },
-            select: { id: true },
-        });
-
-        if (!user) {
-            throw new Error('User not found');
-        }
-
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
         await prisma.test.deleteMany({
             where: {
                 id: testId,

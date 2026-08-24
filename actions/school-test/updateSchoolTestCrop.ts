@@ -38,11 +38,11 @@ export async function updateSchoolTestCrop(
     const ctx = await getAuthContext();
     if (!ctx) return { success: false, error: "Not signed in." };
 
-    const user = await prisma.user.findUnique({
-        where: { id: ctx.userId },
-        select: { id: true },
-    });
-    if (!user) return { success: false, error: "User not found." };
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
 
     const existing = await prisma.schoolTestQuestion.findUnique({
         where: { id: input.schoolTestQuestionId },

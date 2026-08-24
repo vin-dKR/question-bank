@@ -298,15 +298,11 @@ async function getOwnedTestForOmr(testId: string) {
         throw new Error('Unauthorized');
     }
 
-    const user = await prisma.user.findUnique({
-        where: { id: ctx.userId },
-        select: { id: true },
-    });
-
-    if (!user) {
-        throw new Error('User not found');
-    }
-
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
     return prisma.test.findFirst({
         where: { id: testId, createdBy: user.id },
         include: {

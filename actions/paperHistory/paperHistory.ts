@@ -16,15 +16,11 @@ export const savePaperHistory = async (data: PaperHistoryData): Promise<{ succes
             throw new Error('Unauthorized');
         }
 
-        const user = await prisma.user.findUnique({
-            where: { id: ctx.userId },
-            select: { id: true },
-        });
-
-        if (!user) {
-            throw new Error('User not found');
-        }
-
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
         const paperHistory = await prisma.paperHistory.create({
             data: {
                 userId: user.id,
@@ -64,15 +60,11 @@ export const getPaperHistories = async (limit: number = 10): Promise<PaperHistor
             throw new Error('Unauthorized');
         }
 
-        const user = await prisma.user.findUnique({
-            where: { id: ctx.userId },
-            select: { id: true },
-        });
-
-        if (!user) {
-            throw new Error('User not found');
-        }
-
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
         const paperHistories = await prisma.paperHistory.findMany({
             where: { userId: user.id },
             include: {
@@ -112,15 +104,11 @@ export const getPaperHistoryById = async (id: string): Promise<PaperHistoryWithQ
             throw new Error('Unauthorized');
         }
 
-        const user = await prisma.user.findUnique({
-            where: { id: ctx.userId },
-            select: { id: true },
-        });
-
-        if (!user) {
-            throw new Error('User not found');
-        }
-
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
         const paperHistory = await prisma.paperHistory.findFirst({
             where: {
                 id,
@@ -161,15 +149,11 @@ export const deletePaperHistory = async (id: string): Promise<{ success: boolean
             throw new Error('Unauthorized');
         }
 
-        const user = await prisma.user.findUnique({
-            where: { id: ctx.userId },
-            select: { id: true },
-        });
-
-        if (!user) {
-            throw new Error('User not found');
-        }
-
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
         await prisma.paperHistory.deleteMany({
             where: {
                 id,
