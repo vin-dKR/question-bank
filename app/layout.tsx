@@ -4,6 +4,7 @@ import { AuthKitProvider } from '@workos-inc/authkit-nextjs/components';
 import { Inter } from 'next/font/google';
 import { Toaster } from "@/components/ui/sonner";
 import WebVitalsReporter from "@/components/perf/WebVitalsReporter";
+import StaleServiceWorkerCleanup from "@/components/StaleServiceWorkerCleanup";
 import { QueryProvider } from "@/provider/QueryProvider";
 
 const inter = Inter({
@@ -32,6 +33,7 @@ export default function RootLayout({
                         </main>
                         <Toaster closeButton={true} />
                         <WebVitalsReporter />
+                        <StaleServiceWorkerCleanup />
                     </QueryProvider>
                 </AuthKitProvider>
             </body>

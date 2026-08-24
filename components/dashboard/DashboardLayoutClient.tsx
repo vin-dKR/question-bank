@@ -49,7 +49,9 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
     }, [isMobile, isSidebarOpen]);
 
     const handleLogout = async () => {
-        await signOut({ returnTo: "/auth/signup" });
+        // Absolute URL — see the note in components/Signout.tsx. A relative
+        // path makes WorkOS fall back to the app homepage URL and fail logout.
+        await signOut({ returnTo: `${window.location.origin}/auth/signup` });
     };
 
     const toggleGroup = (groupName: string) => {
