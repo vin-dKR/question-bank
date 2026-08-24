@@ -14,6 +14,7 @@ import { PRESETS, getTheme } from "@/lib/slides/presets";
 import { templateToSlides, hasLatex, resolveImage } from "@/lib/slides/generate";
 import { slidesToPptxBuffer } from "@/lib/slides/pptx";
 import { createLatexRasterizer } from "@/lib/slides/latexRaster";
+import { closeBrowser } from "@/lib/pdf/browserSingleton";
 
 const [target, presetArg = "practice", themeArg = "midnight"] = process.argv.slice(2);
 
@@ -104,10 +105,17 @@ async function main() {
     console.log(`\nwrote ${out}  —  ${slides.length} slides, ${(buf.length / 1024).toFixed(1)} KB`);
 }
 
+// The browser singleton deliberately outlives a single PDF/deck render, so a CLI
+// run has to close it explicitly or the process hangs after writing the file.
+async function shutdown() {
+    await closeBrowser();
+    await prisma.$disconnect();
+}
+
 main()
-    .then(() => prisma.$disconnect())
+    .then(shutdown)
     .catch(async (e) => {
         console.error(e);
-        await prisma.$disconnect();
+        await shutdown();
         process.exit(1);
     });

@@ -121,45 +121,67 @@ export async function createLatexRasterizer(): Promise<LatexRasterizer> {
     const browser = await getBrowser();
     const page = await browser.newPage();
 
-    const rasterize: RasterizeLatex = async ({ text, widthPx, heightPx, color, fontSizePx }) => {
-        const html = `<!doctype html><html><head><meta charset="utf-8"><style>
+    // The stylesheet carries ~300KB of inlined fonts. Loading it once per deck
+    // rather than once per equation is the whole point of holding a page open:
+    // a 25-question set went from dozens of full navigations to one.
+    await page.setContent(
+        `<!doctype html><html><head><meta charset="utf-8"><style>
             ${katexCss()}
             html,body{margin:0;padding:0;background:transparent}
             #box{
-                width:${widthPx}px;height:${heightPx}px;
-                display:flex;flex-direction:column;justify-content:flex-start;
-                color:${color};
-                font-family:${JSON.stringify(FONTS[0])},system-ui,sans-serif;
-                font-size:${fontSizePx}px;
+                display:flex;flex-direction:column;
+                overflow:hidden;box-sizing:border-box;
                 line-height:1.4;
-                overflow:hidden;
-                box-sizing:border-box;
             }
             #box .katex{font-size:1em}
-        </style></head><body><div id="box"><div id="inner">${toHtml(text)}</div></div></body></html>`;
+        </style></head><body><div id="box"><div id="inner"></div></div></body></html>`,
+        { waitUntil: "load" }
+    );
+
+    // Identical text in the same box renders identically — options repeat across
+    // the question and answer slides of a group, so this is a real saving.
+    const cache = new Map<string, string>();
+
+    const rasterize: RasterizeLatex = async ({ text, widthPx, heightPx, color, fontSizePx }) => {
+        const key = `${widthPx}x${heightPx}|${fontSizePx}|${color}|${text}`;
+        const hit = cache.get(key);
+        if (hit !== undefined) return hit;
 
         await page.setViewport({
             width: Math.ceil(widthPx),
             height: Math.ceil(heightPx),
             deviceScaleFactor: SCALE,
         });
-        await page.setContent(html, { waitUntil: "load" });
 
-        // Auto-shrink to fit, mirroring the shrinkText behaviour applied to plain
-        // text boxes — otherwise a long derivation is simply cropped.
+        // Restyle and refill the existing box instead of reloading the document.
+        // The shrink pass runs here too, so it costs one round trip rather than two.
         await page.evaluate(
-            (minShrink: number, base: number) => {
-                const box = document.getElementById("box");
-                const inner = document.getElementById("inner");
-                if (!box || !inner) return;
+            (html: string, w: number, h: number, colour: string, base: number, font: string, minShrink: number) => {
+                const box = document.getElementById("box")!;
+                const inner = document.getElementById("inner")!;
+                box.style.width = `${w}px`;
+                box.style.height = `${h}px`;
+                box.style.color = colour;
+                box.style.fontFamily = `${font},system-ui,sans-serif`;
+                box.style.fontSize = `${base}px`;
+                box.style.justifyContent = "flex-start";
+                inner.innerHTML = html;
+
+                // Auto-shrink to fit, mirroring the shrinkText behaviour applied to
+                // plain text boxes — otherwise a long derivation is simply cropped.
                 let size = base;
                 while (inner.scrollHeight > box.clientHeight && size > base * minShrink) {
                     size -= Math.max(1, base * 0.04);
                     box.style.fontSize = `${size}px`;
                 }
             },
-            MIN_SHRINK,
-            fontSizePx
+            toHtml(text),
+            widthPx,
+            heightPx,
+            color,
+            fontSizePx,
+            FONTS[0],
+            MIN_SHRINK
         );
 
         const el = await page.$("#box");
@@ -171,13 +193,16 @@ export async function createLatexRasterizer(): Promise<LatexRasterizer> {
             encoding: "base64",
         });
 
-        return `data:image/png;base64,${shot as unknown as string}`;
+        const data = `data:image/png;base64,${shot as unknown as string}`;
+        cache.set(key, data);
+        return data;
     };
 
     return {
         rasterize,
         // Close the page only. The browser is a shared singleton — see browserSingleton.
         close: async () => {
+            cache.clear();
             try {
                 await page.close();
             } catch {
