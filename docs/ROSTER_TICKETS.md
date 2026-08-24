@@ -171,7 +171,27 @@ placing them by hand once real school orgs exist.
 ---
 
 ### T-04 — Stand up the production WorkOS environment
-`S` · **Depends on:** nothing · **NOW BLOCKING T-01 AND T-02 PART B**
+`S` · **DONE — 24 Aug 2026**
+
+> Production environment live and serving eduents.com. Redirect URIs, App
+> homepage URL, Sign-out URIs and Initiate login URI set; Google, Email+Password,
+> Magic Auth and SSO enabled; webhook `we_01M0SBSVVMTPAJBMB670R4EFYX` created;
+> all env vars on Vercel. Verified in production logs: 120 authenticated
+> `/dashboard` renders, 147 `/classes`, 222 `/examination/omr`, **zero errors**.
+>
+> **Three bugs surfaced only in production and are fixed:**
+> 1. A redundant `prisma.user.findUnique` left by the Clerk codemod threw
+>    "User not found" on every authenticated page. 19 removed across 10 files.
+> 2. `signOut()` passed a RELATIVE `returnTo`; WorkOS's logout endpoint needs an
+>    absolute URL and fell back to the (unset) app homepage URL.
+> 3. A service worker from a previous build (`media-cache-sw.js`, referenced
+>    nowhere in this codebase) served the OLD Clerk sign-in page from cache to
+>    returning visitors — a login form posting to endpoints that no longer
+>    exist. `StaleServiceWorkerCleanup` now unregisters it on load.
+>
+> Also removed 14 dead env vars from Vercel (all Clerk, Turnstile, NextAuth and
+> the collaboration WebSocket). **Revoke the Clerk secret key in the Clerk
+> dashboard** — deleting it from Vercel does not invalidate it.
 
 **Why now.** Everything so far is configured against `sk_test_`. The webhook I created (`we_01M0PKTW1S5RZRTV6X2GV57R32`) points at `https://eduents.com` **from the test environment** — that mismatch will not work in production.
 
@@ -235,7 +255,19 @@ collaboration feature was removed.)
 ---
 
 ### T-06 — Move the satellite apps onto `QUESTION_API_KEY`
-`M` · **Depends on:** T-04
+`M` · **Depends on:** T-04 (done) · **NOW A LIVE REGRESSION**
+
+> **URGENT as of the 24 Aug cutover.** The satellites authenticated by riding the
+> Clerk session cookie. Clerk is gone, so they have no session. Verified against
+> production:
+>
+> ```
+> GET  /api/questions/get-all   200   reads still work (endpoint is public)
+> PUT  /api/questions/{id}      401   writes now REJECTED
+> QUESTION_API_KEY in Vercel:   NOT SET — the bearer path is inert
+> ```
+>
+> So editing or deleting a question from `question-editor` is broken right now.
 
 **Why now.** `question-editor`, `multi-crop` and `omr-checker` call this app cross-origin **with cookies** (`Access-Control-Allow-Credentials: true`). AuthKit uses a sealed session cookie; cross-site cookie delivery needs `SameSite=None; Secure` and browsers keep tightening it. This will break on its own schedule. `requireApiActor()` already accepts a bearer token — the server side is done, the satellites just haven't adopted it.
 
@@ -257,7 +289,25 @@ collaboration feature was removed.)
 ---
 
 ### T-07 — Decide and enforce access to `GET /api/questions`
-`S` · **Depends on:** T-06
+`S` · **Depends on:** T-06 · **DEFERRED by decision, 24 Aug 2026**
+
+> Measured against production on 24 Aug, so the scale of the decision is on
+> record:
+>
+> ```
+> GET /api/questions?limit=5000  ->  5000 questions, unauthenticated,
+>                                    pagination {total: 5445, pages: 2}
+>                                    fields include `answer` (the key)
+> ```
+>
+> Two requests take the entire bank with answers. `limit` is caller-controlled
+> with no cap — the default of 10 is a suggestion, not a limit.
+>
+> Correction to the original ticket: `/api/questions/get-all` caps at 20 and is
+> NOT the exposure. `?limit=` is.
+>
+> Separately from the commercial question, **an uncapped `limit` is a
+> availability risk** — it lets any caller pull 5,000 rows per request.
 
 **Why now.** It is unauthenticated and serves the entire 5,445-question bank to any caller. That's the product's main commercial asset, currently scrapeable. This is a business decision, not a bug — but it's an unmade one.
 

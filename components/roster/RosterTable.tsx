@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Plus, X, Pencil, Check } from "lucide-react";
 import { addStudentToClass, updateEnrollment, removeFromClass } from "@/actions/roster/enrollment";
 import type { ClassDetail, RosterEntry } from "@/actions/roster/types";
+import { RosterImport } from "./RosterImport";
 
 export function RosterTable({ detail }: { detail: ClassDetail }) {
     const router = useRouter();
@@ -167,6 +168,8 @@ export function RosterTable({ detail }: { detail: ClassDetail }) {
                     </div>
                 )}
             </div>
+
+            <RosterImport classId={detail.id} />
 
             <form onSubmit={onAdd} className="rounded-xl border border-black/5 bg-white p-5">
                 <p className="mb-3 text-xs font-medium uppercase tracking-wide text-zinc-500">Add a student</p>

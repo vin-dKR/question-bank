@@ -43,3 +43,32 @@ export type YearSummary = {
 export type RosterResult<T> =
     | { success: true; data: T }
     | { success: false; error: string };
+
+// ---- CSV roster import ----------------------------------------------------
+
+export type ImportRow = {
+    name?: string;
+    rollNumber?: string;
+    admissionNumber?: string | null;
+};
+
+export type ImportPreview = {
+    classLabel: string;
+    rows: {
+        index: number;
+        name: string;
+        rollNumber: string;
+        admissionNumber: string | null;
+        /** create = new to this class · update = already enrolled · skip = unusable */
+        status: "create" | "update" | "skip";
+        note: string;
+    }[];
+    counts: { create: number; update: number; skip: number };
+};
+
+export type ImportResult = {
+    created: number;
+    updated: number;
+    skipped: number;
+    failures: { row: number; name: string; reason: string }[];
+};
