@@ -12,14 +12,14 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Search, Bell, LogOut, Settings, User as UserIcon, ChevronRight } from "lucide-react";
-import type { UserResource } from "@clerk/types";
+import type { CurrentUser } from "@/hooks/auth/useCurrentUser";
 import { HamburgerMenu } from "@/components/dashboard/sidebar/HamburgerMenu";
 import { Dispatch, SetStateAction } from "react";
 import { CommandPalette } from "@/components/dashboard/CommandPalette";
 
 interface HeaderProps {
     activeItem: SidebarItem | SidebarGroup | undefined;
-    user: UserResource | null | undefined;
+    user: CurrentUser | null | undefined;
     handleLogout: () => void;
     isSidebarOpen: boolean;
     setIsSidebarOpen: Dispatch<SetStateAction<boolean>>;
@@ -71,13 +71,13 @@ export function Header({
             : activeItem.description
         : undefined;
 
-    const displayName = user?.fullName || user?.username || "User";
-    const displayEmail = user?.primaryEmailAddress?.emailAddress;
+    const displayName = user?.fullName || "User";
+    const displayEmail = user?.email;
     const initials =
         displayName
             .split(" ")
             .slice(0, 2)
-            .map((s) => s[0]?.toUpperCase())
+            .map((part: string) => part[0]?.toUpperCase())
             .join("") || "U";
 
     return (

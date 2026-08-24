@@ -10,6 +10,7 @@ import {
     OnboardingLayout,
 } from "@/components/onboarding/FormComponents";
 import { useOnboardingForm } from "@/hooks/onboarding/useOnboardingForm";
+import { usePrefillFromSession } from "@/hooks/onboarding/usePrefillFromSession";
 import { subjects, experienceOptions, studentCountOptions } from "@/constant/on-boarding/teacher"
 
 export default function TeacherSetupPage() {
@@ -22,6 +23,10 @@ export default function TeacherSetupPage() {
             router.push("/onboarding/user-type");
         }
     }, [onboarding, router]);
+
+    // Name and email come from the session — don't make them retype what they
+    // just signed in with.
+    usePrefillFromSession({ nameField: "name", emailField: "email" });
 
     const teacherData = (onboarding?.data as TeacherOnboardingData) || {
         name: "",

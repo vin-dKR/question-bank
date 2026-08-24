@@ -1,20 +1,32 @@
 "use server"
 
 import prisma from "@/lib/prisma"
-import { auth } from '@clerk/nextjs/server'
+import { getAuthContext } from '@/lib/auth/session';
 import { Folder, Question } from "@/generated/prisma"
-import { checkFolderAccess, CollaborationResponse } from "@/actions/collaboration/folder"
-import { CollaborationError, CollaborationErrorType, createCollaborationError, logCollaborationError } from '@/types/collaboration-errors'
+import { checkFolderAccess } from "@/actions/drafts/folderAccess"
 
 interface FolderWithRelations extends Folder {
     questionRelations: { question: Question }[];
 }
 
-export interface FolderWithCollaboration extends FolderWithRelations {
-    userRole: 'owner' | 'editor' | 'viewer';
-    isCollaborated: boolean;
-    collaboratorCount: number;
+/**
+ * A folder plus the caller's relationship to it.
+ *
+ * `userRole` is always 'owner' now: folders are single-owner since the
+ * collaboration feature was removed. It is kept because the UI branches on it
+ * to decide what is editable, and because org-level sharing (which will
+ * reintroduce a role) is on the roadmap.
+ */
+export interface FolderWithMeta extends FolderWithRelations {
+    userRole: 'owner';
     createdAt: Date;
+}
+
+/** Result shape for folder reads that can fail on permissions. */
+export interface FolderResult {
+    success: boolean;
+    data?: FolderWithMeta;
+    error?: string;
 }
 
 export const createFolder = async (name: string, questions: { id: string }[]): Promise<FolderWithRelations> => {
@@ -24,11 +36,11 @@ export const createFolder = async (name: string, questions: { id: string }[]): P
             throw new Error("prisma.folderQuestion is undefined");
         }
 
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) throw new Error("Unauthorized");
+        const ctx = await getAuthContext();
+        if (!ctx) throw new Error("Unauthorized");
 
         const user = await prisma.user.findUnique({
-            where: { clerkUserId },
+            where: { id: ctx.userId },
             select: { id: true },
         });
 
@@ -90,240 +102,81 @@ export const createFolder = async (name: string, questions: { id: string }[]): P
 
 
 
-export const getFolders = async (): Promise<FolderWithCollaboration[] | null> => {
+export const getFolders = async (): Promise<FolderWithMeta[] | null> => {
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        if (!ctx) {
             throw new Error("Unauthorized");
         }
 
-        const user = await prisma.user.findUnique({
-            where: { clerkUserId },
-            select: { id: true },
+        // Folders are single-owner. This used to run a second query for folders
+        // shared with you and merge the two lists; that went away with the
+        // collaboration feature.
+        const folders = await prisma.folder.findMany({
+            where: { userId: ctx.userId },
+            include: {
+                questionRelations: {
+                    include: { question: true },
+                    orderBy: { position: 'asc' },
+                },
+            },
+            orderBy: { createdAt: "desc" },
         });
 
-        if (!user) {
-            throw new Error("User not found in database");
-        }
-
-        // Query both owned folders and collaborated folders in parallel
-        const [ownedFolders, collaboratedFolders] = await Promise.all([
-            // Owned folders
-            prisma.folder.findMany({
-                where: { userId: user.id },
-                include: {
-                    questionRelations: {
-                        include: { question: true },
-                        orderBy: { position: 'asc' },
-                    },
-                    collaborators: true, // Include collaborators to get count
-                },
-                orderBy: { createdAt: "desc" },
-            }),
-            // Collaborated folders
-            prisma.folder.findMany({
-                where: {
-                    collaborators: {
-                        some: { userId: user.id }
-                    }
-                },
-                include: {
-                    questionRelations: {
-                        include: { question: true },
-                        orderBy: { position: 'asc' },
-                    },
-                    collaborators: {
-                        where: { userId: user.id }
-                    },
-                    _count: {
-                        select: { collaborators: true }
-                    }
-                },
-                orderBy: { createdAt: "desc" },
-            })
-        ]);
-
-        // Transform owned folders to include collaboration metadata
-        const transformedOwnedFolders: FolderWithCollaboration[] = ownedFolders.map(folder => ({
-            ...folder,
-            userRole: 'owner' as const,
-            isCollaborated: false,
-            collaboratorCount: folder.collaborators.length,
-        }));
-
-        // Transform collaborated folders to include collaboration metadata
-        const transformedCollaboratedFolders: FolderWithCollaboration[] = collaboratedFolders.map(folder => {
-            const userCollaboration = folder.collaborators[0]; // We filtered for current user
-            return {
-                ...folder,
-                userRole: (userCollaboration?.role as 'editor' | 'viewer') || 'viewer',
-                isCollaborated: true,
-                collaboratorCount: folder._count?.collaborators || 0,
-            };
-        });
-
-        // Combine and sort all folders by creation date (most recent first)
-        const allFolders = [...transformedOwnedFolders, ...transformedCollaboratedFolders];
-        allFolders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-        return allFolders;
+        return folders.map((folder) => ({ ...folder, userRole: 'owner' as const }));
     } catch (error) {
-        // console.error("Error fetching folders:", error);
         throw error instanceof Error ? error : new Error("Failed to fetch folders");
     }
 };
 
 // Get a specific folder by ID with permission checking
-export const getFolderById = async (folderId: string): Promise<CollaborationResponse> => {
+export const getFolderById = async (folderId: string): Promise<FolderResult> => {
     try {
-        // Validate folder ID format
         if (!folderId || typeof folderId !== 'string' || folderId.trim() === '') {
-            const error = createCollaborationError(
-                CollaborationErrorType.INVALID_FOLDER_ID,
-                undefined,
-                undefined,
-                folderId
-            );
-            logCollaborationError(error, { function: 'getFolderById' });
-            return { 
-                success: false, 
-                error: 'Invalid folder ID provided',
-                collaborationError: error
-            };
+            return { success: false, error: 'Invalid folder ID provided' };
         }
 
-        // Check access permissions first using existing checkFolderAccess function
-        const accessCheck = await checkFolderAccess(folderId, 'viewer');
+        const accessCheck = await checkFolderAccess(folderId);
         if (!accessCheck.success) {
-            // The checkFolderAccess function already creates and logs collaboration errors
-            return accessCheck;
+            return { success: false, error: accessCheck.error };
         }
 
-        // Get the current user to determine their role and collaboration status
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
-            const error = createCollaborationError(
-                CollaborationErrorType.AUTHENTICATION_REQUIRED,
-                undefined,
-                undefined,
-                folderId
-            );
-            logCollaborationError(error, { function: 'getFolderById' });
-            return { 
-                success: false, 
-                error: 'Unauthorized',
-                collaborationError: error
-            };
+        const ctx = await getAuthContext();
+        if (!ctx) {
+            return { success: false, error: 'Unauthorized' };
         }
 
-        const user = await prisma.user.findUnique({
-            where: { clerkUserId },
-            select: { id: true },
-        });
-
-        if (!user) {
-            const error = createCollaborationError(
-                CollaborationErrorType.AUTHENTICATION_REQUIRED,
-                'User account not found in database',
-                undefined,
-                folderId,
-                clerkUserId
-            );
-            logCollaborationError(error, { function: 'getFolderById' });
-            return { 
-                success: false, 
-                error: 'User not found in database',
-                collaborationError: error
-            };
-        }
-
-        // Fetch folder with questions and collaboration data
         const folder = await prisma.folder.findUnique({
             where: { id: folderId },
             include: {
                 questionRelations: {
                     include: { question: true },
-                    orderBy: { position: 'asc' }, // Order by position if available
+                    orderBy: { position: 'asc' },
                 },
-                collaborators: true, // Include all collaborators for count
             },
         });
 
         if (!folder) {
-            const error = createCollaborationError(
-                CollaborationErrorType.FOLDER_NOT_FOUND,
-                undefined,
-                undefined,
-                folderId,
-                user.id
-            );
-            logCollaborationError(error, { function: 'getFolderById' });
-            return { 
-                success: false, 
-                error: 'Folder not found',
-                collaborationError: error
-            };
+            return { success: false, error: 'Folder not found' };
         }
 
-        // Determine user's role and collaboration status
-        const isOwner = folder.userId === user.id;
-        let userRole: 'owner' | 'editor' | 'viewer' = 'viewer';
-        let isCollaborated = false;
-
-        if (isOwner) {
-            userRole = 'owner';
-            isCollaborated = false;
-        } else {
-            // Find user's collaboration record
-            const userCollaboration = folder.collaborators.find(collab => collab.userId === user.id);
-            if (userCollaboration) {
-                userRole = userCollaboration.role as 'editor' | 'viewer';
-                isCollaborated = true;
-            }
-        }
-
-        // Transform folder to include collaboration metadata
-        const folderWithCollaboration: FolderWithCollaboration = {
-            ...folder,
-            userRole,
-            isCollaborated,
-            collaboratorCount: folder.collaborators.length,
-        };
-
-        return { 
-            success: true, 
-            data: folderWithCollaboration 
-        };
+        return { success: true, data: { ...folder, userRole: 'owner' as const } };
     } catch (error) {
-        const collaborationError = createCollaborationError(
-            CollaborationErrorType.UNKNOWN_ERROR,
-            'Failed to fetch folder. Please try again later.',
-            error instanceof Error ? error.message : 'Unknown error occurred',
-            folderId
-        );
-        logCollaborationError(collaborationError, { 
-            function: 'getFolderById',
-            originalError: error instanceof Error ? error.message : String(error)
-        });
         console.error('Error fetching folder by ID:', error);
-        return { 
-            success: false, 
-            error: 'Failed to fetch folder. Please try again later.',
-            collaborationError: collaborationError
-        };
+        return { success: false, error: 'Failed to fetch folder. Please try again later.' };
     }
 };
 
 // Delete a folder and its relations
 export const deleteFolder = async (id: string): Promise<void> => {
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        if (!ctx) {
             throw new Error("Unauthorized");
         }
 
         const user = await prisma.user.findUnique({
-            where: { clerkUserId },
+            where: { id: ctx.userId },
             select: { id: true },
         });
 
@@ -360,13 +213,13 @@ export const deleteFolder = async (id: string): Promise<void> => {
 // Rename a folder
 export const renameFolder = async (id: string, name: string): Promise<Folder> => {
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        if (!ctx) {
             throw new Error("Unauthorized");
         }
 
         const user = await prisma.user.findUnique({
-            where: { clerkUserId },
+            where: { id: ctx.userId },
             select: { id: true },
         });
 
@@ -410,13 +263,13 @@ export const updateFolderQuestions = async (
     questionIds: string[]
 ): Promise<FolderWithRelations | null> => {
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        if (!ctx) {
             throw new Error("Unauthorized");
         }
 
         const user = await prisma.user.findUnique({
-            where: { clerkUserId },
+            where: { id: ctx.userId },
             select: { id: true },
         });
 

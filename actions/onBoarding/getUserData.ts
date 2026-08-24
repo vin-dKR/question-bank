@@ -1,18 +1,18 @@
 'use server'
 
 import prisma from '@/lib/prisma'
-import { auth } from '@clerk/nextjs/server'
+import { getAuthContext } from '@/lib/auth/session'
 
 export async function getUserData() {
-    const { userId: clerkUserId } = await auth();
+    const ctx = await getAuthContext();
 
-    if (!clerkUserId) {
+    if (!ctx) {
         throw new Error("Unauthorized");
     }
 
     try {
         const user = await prisma.user.findUnique({
-            where: { clerkUserId },
+            where: { id: ctx.userId },
             include: {
                 teacherData: true,
                 studentData: true,

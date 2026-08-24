@@ -1,7 +1,7 @@
 'use server';
 
 import prisma from '@/lib/prisma';
-import { auth } from '@clerk/nextjs/server';
+import { getAuthContext } from '@/lib/auth/session';
 import { normalizeChoiceKey } from '@/lib/examination/answerKey';
 
 export interface TestAnalyticsDetailArgs {
@@ -66,13 +66,13 @@ export const getTestAnalyticsDetail = async (
     const { cursor, take = DEFAULT_TAKE } = args;
 
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        if (!ctx) {
             throw new Error('Unauthorized');
         }
 
         const user = await prisma.user.findUnique({
-            where: { clerkUserId },
+            where: { id: ctx.userId },
             select: { id: true },
         });
 

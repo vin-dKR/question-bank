@@ -1,4 +1,4 @@
-import { Shield, Zap, Users, Globe } from "lucide-react";
+import { Shield, Zap, Globe } from "lucide-react";
 
 const SecondaryFeatures = () => {
     const features = [
@@ -11,11 +11,6 @@ const SecondaryFeatures = () => {
             icon: Zap,
             title: "Lightning fast",
             description: "Hundreds of questions generated in seconds.",
-        },
-        {
-            icon: Users,
-            title: "Collaborative",
-            description: "Share question banks with your team in real-time.",
         },
         {
             icon: Globe,

@@ -4,7 +4,8 @@ import { mkdir, mkdtemp, readdir, readFile, rm, stat, unlink, writeFile } from '
 import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
-import { auth } from '@clerk/nextjs/server';
+import { getAuthContext, requireAuth } from '@/lib/auth/session';
+import { resolveOrCreateStudent } from '@/lib/examination/studentRoster';
 import { normalizeChoiceKey } from '@/lib/examination/answerKey';
 import prisma from '@/lib/prisma';
 
@@ -292,13 +293,13 @@ function toDraftOmrSpec(input: OmrDraftInput): OmrSpec {
 }
 
 async function getOwnedTestForOmr(testId: string) {
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) {
+    const ctx = await getAuthContext();
+    if (!ctx) {
         throw new Error('Unauthorized');
     }
 
     const user = await prisma.user.findUnique({
-        where: { clerkUserId },
+        where: { id: ctx.userId },
         select: { id: true },
     });
 
@@ -624,8 +625,8 @@ export async function generateOmrSheet(testId: string): Promise<GenerateOmrSheet
 export async function readGeneratedOmrDraftPdf(
     input: OmrDraftInput,
 ): Promise<{ pdf: Buffer; summary: PythonGenerateSummary }> {
-    const { userId } = await auth();
-    if (!userId) throw new Error('Unauthorized');
+    const ctx = await getAuthContext();
+    if (!ctx) throw new Error('Unauthorized');
 
     const spec = toDraftOmrSpec(input);
     await mkdir(OMR_WORK_ROOT, { recursive: true });
@@ -812,6 +813,10 @@ export async function saveDetectedOmrResponse(
     detection: OmrDetectionResult,
     studentInput: SaveDetectedResponseArgs,
 ) {
+    // The roster row must be scoped to the caller's organization, or roll "12"
+    // in class "10A" is the same student at every school on the platform.
+    const ctx = await requireAuth();
+
     if (!detection.ok) {
         throw new Error('Cannot save an unreadable OMR sheet');
     }
@@ -831,23 +836,19 @@ export async function saveDetectedOmrResponse(
         selectedAnswer: answer.selectedAnswer,
     }));
 
-    let student = await prisma.student.findFirst({
-        where: {
-            name: studentInput.name,
-            rollNumber,
-            className: studentInput.className,
-        },
+    // Identity is (org, class, roll) — NOT the name. Matching on the name forked
+    // a new roster row every time OCR or the teacher spelled it differently.
+    // See lib/examination/studentRoster.ts.
+    const student = await resolveOrCreateStudent({
+        organizationId: ctx.organizationId,
+        name: studentInput.name,
+        className: studentInput.className,
+        rollNumber,
+        // When the test is linked to a class, identity resolves through that
+        // class's Enrollment rather than the denormalised className string —
+        // which is what survives a student being promoted.
+        classId: test.classId,
     });
-
-    if (!student) {
-        student = await prisma.student.create({
-            data: {
-                name: studentInput.name,
-                rollNumber,
-                className: studentInput.className,
-            },
-        });
-    }
 
     const existing = await prisma.studentResponse.findUnique({
         where: {

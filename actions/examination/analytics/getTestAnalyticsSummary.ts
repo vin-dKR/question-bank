@@ -1,8 +1,7 @@
 'use server';
 
 import prisma from '@/lib/prisma';
-import { auth } from '@clerk/nextjs/server';
-
+import { getAuthContext } from '@/lib/auth/session';
 export interface TopStudentEntry {
     studentId: string;
     studentName: string;
@@ -43,13 +42,13 @@ export const getTestAnalyticsSummary = async (
     testId: string,
 ): Promise<TestAnalyticsSummary> => {
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        if (!ctx) {
             throw new Error('Unauthorized');
         }
 
         const user = await prisma.user.findUnique({
-            where: { clerkUserId },
+            where: { id: ctx.userId },
             select: { id: true },
         });
 

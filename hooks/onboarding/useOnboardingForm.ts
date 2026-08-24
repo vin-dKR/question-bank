@@ -2,7 +2,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { completeOnboarding } from "@/actions/onBoarding/completeOnboarding";
 import { useRouter } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
 
 export function useOnboardingForm<T extends OnboardingData>(
     role: UserRole,
@@ -12,7 +11,6 @@ export function useOnboardingForm<T extends OnboardingData>(
 ) {
     const [loading, setLoading] = useState<boolean>(false);
     const router = useRouter();
-    const { user } = useUser();
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -35,7 +33,9 @@ export function useOnboardingForm<T extends OnboardingData>(
                 toast.success("Success", { 
                     description: `${role.charAt(0).toUpperCase() + role.slice(1)} profile submitted successfully!` 
                 });
-                await user?.reload();
+                // No session reload needed: onboarding state is `User.role` in
+                // the database now, not a claim baked into the session token
+                // (doc §6), so the next request already sees it.
                 router.push("/dashboard");
             } else if (res?.error) {
                 toast.error("Onboarding Error", { description: res.error });

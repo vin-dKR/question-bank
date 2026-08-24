@@ -1,6 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { handleCorsResponse, handleOptionsRequest } from "@/lib/cors";
+import { AuthError, requireApiActor } from "@/lib/auth/guard";
+
+/**
+ * SECURITY NOTE: POST below had no authentication — any caller could insert
+ * rows into the shared question bank. See docs/WORKOS_MIGRATION_APPROACH.md §14.
+ *
+ * GET is still unauthenticated. That is a deliberate, separate decision: it
+ * serves the whole question bank to any caller, which is worth revisiting since
+ * the bank is the product's main asset.
+ */
+
+function authFailure(request: NextRequest, error: AuthError) {
+    return handleCorsResponse(
+        request,
+        NextResponse.json({ success: false, error: error.message }, { status: error.status })
+    );
+}
 
 export async function OPTIONS(request: NextRequest) {
     return handleOptionsRequest(request);
@@ -85,6 +102,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
+        await requireApiActor(request);
+
         const body = await request.json();
 
         // Check if we're receiving an array of questions
@@ -212,6 +231,8 @@ export async function POST(request: NextRequest) {
             return handleCorsResponse(request, response);
         }
     } catch (error) {
+        if (error instanceof AuthError) return authFailure(request, error);
+
         console.error('Error creating question:', error);
         const response = NextResponse.json(
             { success: false, error: 'Failed to create question' },

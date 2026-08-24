@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getAuthContext } from '@/lib/auth/session';
 import { processPage } from "@/lib/school-test/pipeline";
 
 export const runtime = "nodejs";
@@ -25,8 +25,8 @@ function decodeDataUrl(dataUrl: string): Buffer | null {
 }
 
 export async function POST(req: NextRequest) {
-    const { userId } = await auth();
-    if (!userId) return new Response("Unauthorized", { status: 401 });
+    const ctx = await getAuthContext();
+    if (!ctx) return new Response("Unauthorized", { status: 401 });
 
     const contentLength = Number(req.headers.get("content-length") ?? 0);
     if (contentLength > MAX_BODY) {

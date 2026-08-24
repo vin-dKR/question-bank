@@ -3,19 +3,18 @@
 import { htmlTopdfBlob } from "@/actions/htmlToPdf/htmlToPdf";
 import { normalizeChoiceKey } from "@/lib/examination/answerKey";
 import prisma from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
-
+import { getAuthContext } from '@/lib/auth/session';
 export const generateStudentAnalyticsPdf = async (
     testId: string,
     studentId: string
 ): Promise<{ data: Uint8Array; filename: string }> => {
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) {
+    const ctx = await getAuthContext();
+    if (!ctx) {
         throw new Error('Unauthorized');
     }
 
     const user = await prisma.user.findUnique({
-        where: { clerkUserId },
+        where: { id: ctx.userId },
         select: { id: true },
     });
 

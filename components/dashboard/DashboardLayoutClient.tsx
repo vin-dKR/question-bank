@@ -3,15 +3,14 @@
 import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { useMediaQuery } from "react-responsive";
-import { useAuth, useUser } from "@clerk/nextjs";
+import { useCurrentUser } from "@/hooks/auth/useCurrentUser";
 import { sidebarItems } from "@/constant/sidebar/sidebar";
 import { Sidebar } from "@/components/dashboard/sidebar/Sidebar";
 import { Header } from "@/components/dashboard/content/Header";
 
 export function DashboardLayoutClient({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-    const { user } = useUser();
-    const { signOut } = useAuth();
+    const { user, signOut } = useCurrentUser();
     const isMobile = useMediaQuery({ maxWidth: 768 });
     const sidebarRef = useRef<HTMLDivElement>(null);
 
@@ -50,7 +49,7 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
     }, [isMobile, isSidebarOpen]);
 
     const handleLogout = async () => {
-        await signOut({ redirectUrl: "/auth/signup" });
+        await signOut({ returnTo: "/auth/signup" });
     };
 
     const toggleGroup = (groupName: string) => {

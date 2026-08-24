@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { useUser } from "@clerk/nextjs";
+import { useCurrentUser } from "@/hooks/auth/useCurrentUser";
 import { ArrowRight, Users, Clock, Star } from "lucide-react";
 import Link from "next/link";
 
 const CallToAction = () => {
-    const { user } = useUser();
+    const { user } = useCurrentUser();
 
     return (
         <section className="relative overflow-hidden py-20 md:py-28 bg-zinc-50 border-t border-black/5">

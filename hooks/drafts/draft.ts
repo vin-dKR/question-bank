@@ -1,17 +1,14 @@
 "use client";
 
-import { createFolder, deleteFolder, getFolders, getFolderById, renameFolder, updateFolderQuestions, FolderWithCollaboration } from "@/actions/drafts/draft";
+import { createFolder, deleteFolder, getFolders, getFolderById, renameFolder, updateFolderQuestions, type FolderWithMeta } from "@/actions/drafts/draft";
 import { useCallback, useEffect, useState } from "react";
 import { Question } from "@/generated/prisma";
-import { CollaborationError, CollaborationErrorType, createCollaborationError, logCollaborationError } from '@/types/collaboration-errors';
 
 interface FetchDraft {
     id: string;
     name: string;
     questions: Question[];
-    userRole: 'owner' | 'editor' | 'viewer';
-    isCollaborated: boolean;
-    collaboratorCount: number;
+    userRole: 'owner';
 }
 
 interface Folder {
@@ -22,22 +19,11 @@ interface Folder {
     }>;
 }
 
-const mapFolderToDraft = (folder: Folder): FetchDraft => ({
+const mapFolderToDraft = (folder: Folder | FolderWithMeta): FetchDraft => ({
     id: folder.id,
     name: folder.name,
     questions: folder.questionRelations.map((relation) => relation.question),
-    userRole: 'owner', // Default for legacy folders
-    isCollaborated: false,
-    collaboratorCount: 0,
-});
-
-const mapCollaborationFolderToDraft = (folder: FolderWithCollaboration): FetchDraft => ({
-    id: folder.id,
-    name: folder.name,
-    questions: folder.questionRelations.map((relation) => relation.question),
-    userRole: folder.userRole,
-    isCollaborated: folder.isCollaborated,
-    collaboratorCount: folder.collaboratorCount,
+    userRole: 'owner',
 });
 
 export const useFolders = () => {
@@ -53,40 +39,16 @@ export const useFolders = () => {
 
             const folders = await getFolders();
             if (folders) {
-                setDrafts(folders.map(mapCollaborationFolderToDraft));
-                // Clear collaboration unavailable state on successful fetch
+                setDrafts(folders.map(mapFolderToDraft));
             } else {
                 setDrafts([]);
             }
             return folders;
         } catch (e) {
-            const errorMessage = e instanceof Error ? e.message : "Failed to fetch folders";
-
-            // Check if this might be a collaboration service issue
-            if (errorMessage.toLowerCase().includes('collaboration') ||
-                errorMessage.toLowerCase().includes('timeout') ||
-                errorMessage.toLowerCase().includes('network')) {
-
-                const collaborationError = createCollaborationError(
-                    CollaborationErrorType.COLLABORATION_UNAVAILABLE,
-                    'Collaboration features are temporarily unavailable. You can still access your own folders.',
-                    errorMessage
-                );
-
-                logCollaborationError(collaborationError, {
-                    function: 'getAllFolders',
-                    originalError: errorMessage
-                });
-
-
-                // Try to fall back to a basic folder fetch (owned folders only)
-                // This would require a separate API endpoint for owned folders only
-                // For now, we'll just show the error
-            } else {
-                // Regular error handling
-                setErr(errorMessage);
-            }
-
+            // Previously this swallowed anything mentioning collaboration/timeout/
+            // network without calling setErr, so those failures rendered as an
+            // empty folder list with no message. All errors surface now.
+            setErr(e instanceof Error ? e.message : "Failed to fetch folders");
             return null;
         } finally {
             setLoading(false);
@@ -142,7 +104,6 @@ export const useFolders = () => {
             setDrafts((prev) =>
                 prev.map((draft) => {
                     if (draft.id === id) {
-                        // Preserve collaboration metadata when renaming
                         return {
                             ...draft,
                             name: updatedFolder.name,
@@ -174,7 +135,6 @@ export const useFolders = () => {
                 setDrafts((prev) =>
                     prev.map((draft) => {
                         if (draft.id === folderId) {
-                            // Preserve collaboration metadata when updating questions
                             return {
                                 ...draft,
                                 questions: updatedFolder.questionRelations.map((relation) => relation.question),
@@ -215,7 +175,6 @@ export const useFolders = () => {
                 setDrafts((prev) =>
                     prev.map((draft) => {
                         if (draft.id === folderId) {
-                            // Preserve collaboration metadata when removing questions
                             return {
                                 ...draft,
                                 questions: updatedFolder.questionRelations.map((relation) => relation.question),
@@ -237,7 +196,7 @@ export const useFolders = () => {
         }
     };
 
-    // Get folder by ID for direct access (e.g., via collaboration links)
+    // Get folder by ID for direct access (e.g. opening a folder link)
     const getFolderByIdMethod = async (folderId: string) => {
         try {
             setLoading(true);
@@ -245,28 +204,12 @@ export const useFolders = () => {
 
             const response = await getFolderById(folderId);
 
-            if (!response.success) {
-                // Handle collaboration-specific errors
-                if (response.collaborationError) {
-
-                    // Check if collaboration features are unavailable
-                    if (response.collaborationError.type === CollaborationErrorType.COLLABORATION_UNAVAILABLE) {
-                        // Try to fall back to owned folders only
-                        try {
-                            await getAllFolders();
-                        } catch (fallbackError) {
-                            console.warn('Fallback to owned folders also failed:', fallbackError);
-                        }
-                    }
-                } else {
-                    // Legacy error handling
-                    setErr(response.error || "Failed to fetch folder");
-                }
+            if (!response.success || !response.data) {
+                setErr(response.error || "Failed to fetch folder");
                 return null;
             }
 
-            const folder = response.data as FolderWithCollaboration;
-            const mappedFolder = mapCollaborationFolderToDraft(folder);
+            const mappedFolder = mapFolderToDraft(response.data);
 
             // Update the drafts list to include this folder if it's not already there
             setDrafts((prev) => {
@@ -282,22 +225,9 @@ export const useFolders = () => {
                 }
             });
 
-            // Clear any previous collaboration unavailable state
             return mappedFolder;
         } catch (e) {
-            // Create a collaboration error for unexpected errors
-            const collaborationError = createCollaborationError(
-                CollaborationErrorType.UNKNOWN_ERROR,
-                e instanceof Error ? e.message : "Failed to fetch folder",
-                undefined,
-                folderId
-            );
-
-            logCollaborationError(collaborationError, {
-                function: 'getFolderByIdMethod',
-                originalError: e instanceof Error ? e.message : String(e)
-            });
-
+            console.error('Error fetching folder by id:', e);
             setErr(e instanceof Error ? e.message : "Failed to fetch folder");
             return null;
         } finally {

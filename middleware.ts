@@ -1,5 +1,33 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { authkit, handleAuthkitProxy } from '@workos-inc/authkit-nextjs'
 import { NextRequest, NextResponse } from 'next/server'
+
+/**
+ * One pass, two concerns:
+ *
+ *   1. CORS for /api/* (the allowlist below is duplicated in netlify.toml for
+ *      /api/omr/* and /api/questions — update BOTH).
+ *   2. "signed in or not" for everything else.
+ *
+ * TWO THINGS HERE ARE EASY TO GET WRONG, AND BOTH FAIL ONLY AT RUNTIME:
+ *
+ * (a) `authkit()` must run for API routes too. `withAuth()` THROWS if the
+ *     `x-workos-middleware` request header is missing — it does not fall back to
+ *     reading the session cookie. So short-circuiting /api/* straight to a CORS
+ *     response breaks every route that calls getAuthContext(): the questions
+ *     API, school-test, OMR. Only the OPTIONS preflight can skip it.
+ *
+ * (b) The headers `authkit()` returns must be merged with `handleAuthkitProxy`,
+ *     not passed to `NextResponse.next({ headers })`. Some of them
+ *     (`x-workos-session`, `x-workos-middleware`, `x-url`, …) are REQUEST
+ *     headers meant only for downstream server components. Setting them as
+ *     response headers leaks the sealed session to the browser and starves
+ *     `withAuth()` of what it needs.
+ *
+ * The onboarding gate that used to live here is gone (doc §6) — it read
+ * `sessionClaims.metadata.onboardingComplete`, a Clerk publicMetadata field
+ * AuthKit has no equivalent for. It is now a DB check in
+ * app/(dashboard)/layout.tsx. Middleware does the one thing it is good at.
+ */
 
 const allowedOrigins = [
     'http://localhost:3000',
@@ -10,71 +38,62 @@ const allowedOrigins = [
     'https://omr-checker.vercel.app'
 ]
 
-const isOnboardingRoute = (req: NextRequest) => req.nextUrl.pathname.startsWith('/onboarding');
-const isPublicRoute = createRouteMatcher(['/auth/signin', '/auth/signup', '/auth/sso-callback', "/", "/api"])
+/** Reachable without a session. */
+const PUBLIC_PATHS = [
+    '/',
+    '/auth/signin',
+    '/auth/signup',
+    '/auth/callback',
+    '/auth/forgot-pass',
+]
 
-export default clerkMiddleware(async (auth, req: NextRequest) => {
-    // console.log("c-midddleare", req.url)
-    // Handle CORS for API routes
-    if (req.nextUrl.pathname.startsWith('/api/')) {
-        return handleCors(req)
-    }
+function isPublicPath(pathname: string): boolean {
+    return PUBLIC_PATHS.includes(pathname)
+}
 
-    const { userId, sessionClaims, redirectToSignIn } = await auth()
+const CORS_METHODS = 'GET, POST, PUT, DELETE, OPTIONS'
+const CORS_HEADERS =
+    'Content-Type, Authorization, X-Requested-With, Cache-Control, Accept, Accept-Language, Content-Language, Range, Expires'
 
-    // For users visiting /onboarding, don't try to redirect
-    if (userId && isOnboardingRoute(req)) {
-        return NextResponse.next()
-    }
-
-    // If the user isn't signed in and the route is private, redirect to sign-in
-    if (!userId && !isPublicRoute(req)) return redirectToSignIn({ returnBackUrl: req.url })
-
-    // Catch users who do not have `onboardingComplete: true` in their publicMetadata
-    // Redirect them to the /onboarding route to complete onboarding
-    if (userId && !sessionClaims?.metadata?.onboardingComplete) {
-        console.log("the sessionClaims is not true")
-        const onboardingUrl = new URL('/onboarding/user-type', req.url)
-        return NextResponse.redirect(onboardingUrl)
-    }
-
-    // If the user is logged in and the route is protected, let them view.
-    if (userId && !isPublicRoute(req)) return NextResponse.next()
-})
-
-
-function handleCors(request: NextRequest) {
+function applyCors(request: NextRequest, response: NextResponse): NextResponse {
     const origin = request.headers.get('origin')
-    const isAllowedOrigin = origin && allowedOrigins.includes(origin)
+    if (origin && allowedOrigins.includes(origin)) {
+        response.headers.set('Access-Control-Allow-Origin', origin)
+    }
+    response.headers.set('Access-Control-Allow-Methods', CORS_METHODS)
+    response.headers.set('Access-Control-Allow-Headers', CORS_HEADERS)
+    response.headers.set('Access-Control-Allow-Credentials', 'true')
+    return response
+}
 
-    // Handle preflight requests (OPTIONS)
-    if (request.method === 'OPTIONS') {
-        const response = new NextResponse(null, { status: 200 })
+export default async function middleware(request: NextRequest) {
+    const { pathname } = request.nextUrl
+    const isApi = pathname.startsWith('/api/')
 
-        if (isAllowedOrigin) {
-            response.headers.set('Access-Control-Allow-Origin', origin)
-        }
-
-        response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-        response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Cache-Control, Accept, Accept-Language, Content-Language, Range, Expires')
-        response.headers.set('Access-Control-Allow-Credentials', 'true')
-        response.headers.set('Access-Control-Max-Age', '86400') // Cache preflight for 24 hours
-
+    // Preflight carries no credentials and needs no session work.
+    if (isApi && request.method === 'OPTIONS') {
+        const response = applyCors(request, new NextResponse(null, { status: 200 }))
+        response.headers.set('Access-Control-Max-Age', '86400')
         return response
     }
 
-    // For other requests, let them proceed and add CORS headers in the response
-    const response = NextResponse.next()
+    const { session, headers, authorizationUrl } = await authkit(request)
 
-    if (isAllowedOrigin) {
-        response.headers.set('Access-Control-Allow-Origin', origin)
+    if (isApi) {
+        // API routes authorize themselves (lib/auth/guard.ts) and must answer
+        // with a JSON 401 rather than an HTML redirect — the satellite tools
+        // can't parse a redirect. They still need AuthKit's request headers.
+        return applyCors(request, handleAuthkitProxy(request, headers))
     }
 
-    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Cache-Control, Accept, Accept-Language, Content-Language, Range, Expires')
-    response.headers.set('Access-Control-Allow-Credentials', 'true')
+    if (!session.user && !isPublicPath(pathname) && authorizationUrl) {
+        // Straight to the hosted AuthKit page. The PKCE cookie authkit() just
+        // minted is in `headers`, so this needs no extra hop through
+        // /auth/signin (that route still exists for direct links).
+        return handleAuthkitProxy(request, headers, { redirect: authorizationUrl })
+    }
 
-    return response
+    return handleAuthkitProxy(request, headers)
 }
 
 export const config = {

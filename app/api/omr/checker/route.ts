@@ -1,10 +1,25 @@
 import { normalizeChoiceKey } from "@/lib/examination/answerKey";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { AuthError } from "@/lib/auth/session";
+import { requireApiActor } from "@/lib/auth/guard";
+import { resolveOrCreateStudent } from "@/lib/examination/studentRoster";
 
-export async function POST(req: Request) {
+/**
+ * SECURITY: this route had NO authentication of any kind. It took a testId from
+ * the request body and wrote StudentResponse + TestAnswer rows for it, and it
+ * is CORS-enabled for the omr-checker satellite — so anyone who could guess or
+ * observe a testId could inject or overwrite any student's marks. Same class of
+ * hole as the question routes in docs/WORKOS_MIGRATION_APPROACH.md §14.
+ *
+ * It now requires either a signed-in session or the QUESTION_API_KEY bearer
+ * token, and it verifies the test belongs to the caller's organization before
+ * writing anything.
+ */
+
+export async function POST(request: Request) {
     try {
-        const body = await req.json()
+        const body = await request.json()
 
         if (
             !body ||
@@ -21,25 +36,7 @@ export async function POST(req: Request) {
         const { testId, name, rollNumber, className } = body;
         const answers = body.answers as { questionId: string; selectedAnswer: string }[];
 
-        let student = await prisma.student.findFirst({
-            where: {
-                name,
-                rollNumber,
-                className
-            }
-        })
-
-        if (!student) {
-            student = await prisma.student.create({
-                data: {
-                    name,
-                    rollNumber,
-                    className
-                }
-            })
-        }
-
-        const studentId = student.id
+        const actor = await requireApiActor(request);
 
         const test = await prisma.test.findUnique({
             where: {
@@ -58,6 +55,34 @@ export async function POST(req: Request) {
         if (!test) {
             return NextResponse.json({ error: 'Test not found' }, { status: 404 });
         }
+
+        // Look the test up FIRST, then check ownership, then write. A service
+        // token (the OMR satellite) is trusted for any test; a user may only
+        // post marks against a test their own organization owns.
+        const organizationId =
+            actor.kind === "user" ? actor.user.organizationId : test.organizationId;
+
+        if (actor.kind === "user" && test.organizationId !== actor.user.organizationId) {
+            return NextResponse.json(
+                { error: "That test belongs to another organization." },
+                { status: 403 }
+            );
+        }
+
+        // Identity is (org, class, roll), never the name — see
+        // lib/examination/studentRoster.ts for why matching on name duplicated
+        // a child's roster row on every differently-spelled scan.
+        const student = await resolveOrCreateStudent({
+            organizationId,
+            name,
+            className,
+            rollNumber,
+            // See lib/examination/studentRoster.ts — resolves via Enrollment
+            // when the test has a class, falls back to the string match when not.
+            classId: test.classId,
+        });
+
+        const studentId = student.id
 
         //Calculation Data
 
@@ -154,9 +179,14 @@ export async function POST(req: Request) {
         }, { headers });
 
     } catch (error) {
+        // An auth failure must answer 401/403, not 500 — the satellite tools
+        // branch on the status to decide whether to re-authenticate or retry.
+        if (error instanceof AuthError) {
+            return NextResponse.json({ error: error.message }, { status: error.status });
+        }
         console.error('Error saving verified answers:', error);
         return NextResponse.json(
-            { error: 'Failed to save verified answers', details: error },
+            { error: 'Failed to save verified answers' },
             { status: 500 }
         );
     }
