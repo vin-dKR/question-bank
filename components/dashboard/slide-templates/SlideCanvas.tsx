@@ -125,6 +125,12 @@ interface Props {
     onChange: (elements: SlideElement[]) => void;
     /** Optional fixed width in CSS px. Omit to fill the parent. */
     width?: number;
+    /**
+     * Size from the parent's height instead of its width, deriving width from the
+     * aspect ratio. Use inside a height-constrained flex row so the slide fits
+     * without scrolling; width-driven sizing overflows vertically there.
+     */
+    fitHeight?: boolean;
     readOnly?: boolean;
 }
 
@@ -134,6 +140,7 @@ export default function SlideCanvas({
     onSelect,
     onChange,
     width,
+    fitHeight,
     readOnly,
 }: Props) {
     const ref = useRef<HTMLDivElement>(null);
@@ -320,7 +327,11 @@ export default function SlideCanvas({
             onPointerDown={() => !readOnly && onSelect(null)}
             className="relative overflow-hidden rounded-lg shadow-sm select-none max-w-full"
             style={{
-                width: width ? `${width}px` : "100%",
+                // Height-driven when asked, so the slide fits a constrained row;
+                // otherwise it fills the available width.
+                ...(fitHeight
+                    ? { height: "100%", width: "auto", maxHeight: "100%" }
+                    : { width: width ? `${width}px` : "100%" }),
                 aspectRatio: `${CANVAS_W} / ${CANVAS_H}`,
                 containerType: "inline-size",
                 background: slide.bg,

@@ -176,11 +176,16 @@ export default function SlideDeckDialog({ selectedQuestions, deckName, disabled 
             </DialogTrigger>
 
             <DialogContent
-                className={`${
-                    step === "preview" ? "sm:max-w-4xl" : "sm:max-w-2xl"
-                } w-[calc(100vw-2rem)] max-h-[85vh] overflow-y-auto overflow-x-hidden`}
+                className={`w-[calc(100vw-2rem)] overflow-x-hidden ${
+                    step === "preview"
+                        ? // Fixed height + flex column: the slide flexes to whatever
+                          // is left, so the whole step fits without scrolling.
+                          // Tighter padding/gap than the base grid, to buy the slide room.
+                          "sm:max-w-5xl h-[92vh] flex flex-col overflow-hidden gap-3 p-4"
+                        : "sm:max-w-2xl max-h-[85vh] overflow-y-auto"
+                }`}
             >
-                <DialogHeader>
+                <DialogHeader className="shrink-0">
                     <DialogTitle>{step === "preview" ? "Preview" : "Make slides"}</DialogTitle>
                     <DialogDescription>
                         {step === "preview"
@@ -320,20 +325,24 @@ export default function SlideDeckDialog({ selectedQuestions, deckName, disabled 
 
                 {/* Preview */}
                 {step === "preview" && (
-                    <div className="space-y-3">
-                        <div className="rounded-lg bg-zinc-100 p-3 w-full min-w-0">
+                    <div className="flex-1 min-h-0 flex flex-col gap-2">
+                        {/* min-h-0 lets this shrink below its content, which is what
+                            allows the canvas to be bounded by the row instead of
+                            pushing the dialog taller. */}
+                        <div className="flex-1 min-h-0 rounded-lg bg-zinc-100 p-2 flex items-center justify-center">
                             {previewSlides[slideIndex] && (
                                 <SlideCanvas
                                     slide={previewSlides[slideIndex]}
                                     selectedId={null}
                                     onSelect={() => {}}
                                     onChange={() => {}}
+                                    fitHeight
                                     readOnly
                                 />
                             )}
                         </div>
 
-                        <div className="flex items-center justify-center gap-3">
+                        <div className="shrink-0 flex items-center justify-center gap-3">
                             <Button
                                 size="icon"
                                 variant="outline"
@@ -359,7 +368,7 @@ export default function SlideDeckDialog({ selectedQuestions, deckName, disabled 
 
                         {/* Thumbnail strip — jump straight to any slide. Capped, because
                             a 200-question deck would otherwise mount hundreds of canvases. */}
-                        <div className="flex gap-2 overflow-x-auto pb-2">
+                        <div className="shrink-0 flex gap-2 overflow-x-auto pb-1">
                             {previewSlides.slice(0, THUMB_LIMIT).map((s, i) => (
                                 <button
                                     key={s.id}
@@ -389,7 +398,7 @@ export default function SlideDeckDialog({ selectedQuestions, deckName, disabled 
                     </div>
                 )}
 
-                <DialogFooter className="flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <DialogFooter className="shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <span className="text-xs text-zinc-500">
                         {count} question{count === 1 ? "" : "s"} → <strong>{slides} slides</strong>
                     </span>
