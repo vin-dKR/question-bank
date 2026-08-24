@@ -144,9 +144,13 @@ function stampSlide(
     opts: Required<GenerateOptions>
 ): Slide {
     return {
+        // Spread first so slide-level presentation (bgImage, and anything added
+        // later) carries through; only the fields below are recomputed. Listing
+        // fields explicitly silently dropped the background.
+        ...slide,
         // Unique per stamped copy so ids stay unique across the whole deck.
         id: `${slide.id}-${position}`,
-        bg: slide.bg,
+        repeat: undefined,
         elements: slide.elements
             .map((el) => stampElement(el, q, position, opts))
             .filter((el): el is SlideElement => el !== null)
@@ -157,8 +161,9 @@ function stampSlide(
 /** Strip bindings from a slide that is emitted once (covers, end-cards). */
 function staticSlide(slide: Slide): Slide {
     return {
-        id: slide.id,
-        bg: slide.bg,
+        // Spread first, for the same reason as stampSlide.
+        ...slide,
+        repeat: undefined,
         elements: slide.elements.map((el) => {
             const next = { ...el };
             delete next.bind;

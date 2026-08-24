@@ -132,6 +132,13 @@ export type SlideElement =
 export interface Slide {
     id: string;
     bg: string;
+    /**
+     * Full-bleed background image, painted under every element. This is how a
+     * coaching centre's own branded design is applied — either an uploaded image
+     * or one lifted out of an uploaded .pptx. `bg` still shows through wherever
+     * the image is absent or transparent.
+     */
+    bgImage?: string;
     /** Stamp this slide once per question. At least one slide must set it. */
     repeat?: boolean;
     /** Paint order — later elements sit on top. */

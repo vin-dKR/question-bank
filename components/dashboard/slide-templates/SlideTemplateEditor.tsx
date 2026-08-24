@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import SlideCanvas from "./SlideCanvas";
 import ElementInspector from "./ElementInspector";
+import BackgroundPicker from "./BackgroundPicker";
 import { THEMES, getTheme } from "@/lib/slides/presets";
 import {
     PALETTE,
@@ -311,7 +312,15 @@ export default function SlideTemplateEditor({ initial, onClose, onSaved }: Props
 
                 {/* Palette + inspector */}
                 <div className="space-y-4 order-3">
-                    <div className="space-y-2">
+                    <BackgroundPicker
+                        value={slide?.bgImage}
+                        onChange={(url) => patchSlide(activeIndex, { bgImage: url })}
+                        onApplyAll={(url) =>
+                            setSlides((prev) => prev.map((s) => ({ ...s, bgImage: url })))
+                        }
+                    />
+
+                    <div className="space-y-2 border-t border-zinc-200 pt-4">
                         <Label className="text-xs text-zinc-500">Add a box</Label>
                         <div className="grid grid-cols-2 gap-1.5">
                             {PALETTE.filter((b) => b.group === "content").map((b) => (

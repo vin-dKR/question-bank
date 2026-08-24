@@ -338,6 +338,20 @@ export default function SlideCanvas({
                 cursor: drag ? "grabbing" : "default",
             }}
         >
+            {/* Painted under everything, and never interactive — the background is
+                template artwork, not an element the user can select or move. */}
+            {slide.bgImage && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                    src={slide.bgImage}
+                    alt=""
+                    aria-hidden
+                    className="absolute inset-0 w-full h-full pointer-events-none select-none"
+                    style={{ objectFit: "cover" }}
+                    draggable={false}
+                />
+            )}
+
             {slide.elements.map((el) => {
                 const isSelected = el.id === selectedId;
                 return (

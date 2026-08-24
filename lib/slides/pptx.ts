@@ -222,6 +222,25 @@ async function buildDeck(slides: Slide[], opts: PptxOptions): Promise<PptxGenJS>
         const slide = pptx.addSlide();
         slide.background = { color: hex(s.bg, "FFFFFF") };
 
+        // Template artwork, painted first so every element sits on top of it.
+        // pptxgenjs supports `background: { data }`, but going through addImage
+        // reuses the fetch-and-cache path that remote URLs need anyway.
+        if (s.bgImage) {
+            const data = s.bgImage.startsWith("data:")
+                ? s.bgImage
+                : await fetchAsDataUrl(s.bgImage);
+            if (data) {
+                slide.addImage({
+                    data,
+                    x: 0,
+                    y: 0,
+                    w: CANVAS_W / PX_PER_IN,
+                    h: CANVAS_H / PX_PER_IN,
+                    sizing: { type: "cover", w: CANVAS_W / PX_PER_IN, h: CANVAS_H / PX_PER_IN },
+                });
+            }
+        }
+
         // Array order is paint order, and pptxgenjs stacks in insertion order too.
         for (const el of s.elements) {
             switch (el.type) {
