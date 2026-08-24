@@ -51,6 +51,7 @@ model Organization {
   students      Student[]
   paperHistories PaperHistory[]
   templateForms TemplateForm[]
+  slideTemplates SlideTemplate[]
   questions     Question[]
   schoolTestQuestions SchoolTestQuestion[]
   academicYears AcademicYear[]
@@ -120,6 +121,7 @@ model User {
   coachingData      CoachingData?
   studentData       StudentData?
   templateForms     TemplateForm[]
+  slideTemplates    SlideTemplate[]
   paperHistories    PaperHistory[]
   tests             Test[] @relation("TestCreator")
   // Tombstone. A user deleted in WorkOS keeps their row so that questions,
@@ -307,6 +309,31 @@ model FolderQuestion {
 }
 
 
+
+// A slide-deck layout built in the PPT template maker. `slides` holds the deck as
+// JSON in the shape of types/slides.ts — boxes with x/y/w/h and a `bind` naming the
+// question field each one shows. Slides flagged `repeat` are stamped once per
+// selected question at generation time.
+//
+// Scoped like TemplateForm (doc §13): `organizationId` is the authorization key,
+// `userId` records who authored it. Nullable org so an admin-authored template can
+// exist outside any tenant, matching the Question convention.
+model SlideTemplate {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  organizationId String?       @db.ObjectId
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  userId         String        @db.ObjectId
+  user           User          @relation(fields: [userId], references: [id])
+  name           String
+  themeId        String        @default("midnight")
+  slides         Json
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([organizationId])
+  @@index([name])
+}
 
 model TemplateForm {
     id                  String    @id   @default(auto())    @map("_id")    @db.ObjectId

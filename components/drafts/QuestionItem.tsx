@@ -13,35 +13,18 @@ import {
 } from "@/components/ui/dialog";
 import { Trash } from "lucide-react";
 import { renderMixedLatex } from "@/lib/render-tex";
+import { resolveQuestionImage } from "@/lib/images";
 
-// Safely decode and validate stored image URLs. Older saved questions may have
-// non-URL placeholder values, which would otherwise crash next/image.
+// Safely resolve stored image references. Older saved questions may hold literal
+// "null"/"undefined" placeholders, which would otherwise crash next/image; bare
+// object names are resolved against the Supabase bucket by resolveQuestionImage.
 const getSafeImageSrc = (url?: string | null): string | null => {
     if (!url) return null;
 
     const trimmed = url.trim();
     if (!trimmed || trimmed === "null" || trimmed === "undefined") return null;
 
-    let decoded = trimmed;
-    try {
-        decoded = decodeURIComponent(trimmed);
-    } catch {
-        decoded = trimmed;
-    }
-
-    if (decoded.startsWith("/") || decoded.startsWith("data:image/")) {
-        return decoded;
-    }
-
-    if (decoded.startsWith("http://") || decoded.startsWith("https://")) {
-        try {
-            return new URL(decoded).toString();
-        } catch {
-            return null;
-        }
-    }
-
-    return null;
+    return resolveQuestionImage(trimmed);
 };
 
 interface Question {

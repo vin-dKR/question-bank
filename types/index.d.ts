@@ -495,6 +495,8 @@ declare global {
         question_text: string;
         question_number: number;
         question_image?: string | null;
+        isOptionImage?: boolean;
+        option_images?: string[] | null;
         options: string[];
         answer: string;
         question_type?: string | null;

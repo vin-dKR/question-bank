@@ -8,16 +8,7 @@ import { TestCreatorAction } from '@/hooks/reducer/useTestCreatorReducer';
 import Image from 'next/image';
 import { CropEditor } from '@/components/school-test/CropEditor';
 import { updateSchoolTestCrop } from '@/actions/school-test/updateSchoolTestCrop';
-
-const safeDecodeImageUrl = (url: string): string => {
-    if (!url) return url;
-    try {
-        const decoded = decodeURIComponent(url);
-        return decoded !== url ? decoded : url;
-    } catch {
-        return url;
-    }
-};
+import { resolveQuestionImage } from '@/lib/images';
 
 interface QuestionCardProps {
     question: QuestionForCreateTestData;
@@ -126,15 +117,15 @@ export default function QuestionCard({ question, index, dispatch }: QuestionCard
                     <div className="rounded-lg bg-zinc-50/70 border border-black/5 p-3 text-sm text-zinc-900 leading-relaxed overflow-x-auto">
                         {renderMixedLatex(question.question_text)}
                     </div>
-                    {question.question_image && (
+                    {resolveQuestionImage(question.question_image) && (
                         <div className="mt-3 flex flex-col items-start gap-2">
                             <Image
-                                src={safeDecodeImageUrl(question.question_image)}
+                                src={resolveQuestionImage(question.question_image)!}
                                 alt="Question image"
                                 width={200}
                                 height={200}
                                 className="max-w-full h-auto rounded-md border border-black/5"
-                                unoptimized={question.question_image.includes('supabase.co')}
+                                unoptimized
                             />
                             {canEditCrop && (
                                 <Button

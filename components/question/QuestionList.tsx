@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { renderMixedLatex } from '@/lib/render-tex';
 import { refineTextWithAI } from '@/lib/ai/aiService';
 import { useQuestionBankContext, useQuestionsList } from '@/lib/context/QuestionBankContext';
+import { resolveQuestionImage } from '@/lib/images';
 import LoadingState from './question-list/LoadingState';
 import ErrorState from './question-list/ErrorState';
 import EmptyState from './question-list/EmptyState';
@@ -21,20 +22,6 @@ interface QuestionProps {
     toggleQuestionFlag: (id: string) => void;
     userRole?: 'coaching' | 'teacher' | 'student';
 }
-
-// Helper function to safely decode image URLs (handles double-encoding)
-const safeDecodeImageUrl = (url: string): string => {
-    if (!url) return url;
-    try {
-        // Try decoding - if already decoded or invalid, it will throw
-        const decoded = decodeURIComponent(url);
-        // Check if decoding actually changed something (was encoded)
-        return decoded !== url ? decoded : url;
-    } catch {
-        // If decoding fails, return original URL
-        return url;
-    }
-};
 
 const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, toggleQuestionFlag }: QuestionProps) => {
     const { updateQuestion } = useQuestionBankContext();
@@ -282,37 +269,37 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                         <h3 className="text-sm md:text-base font-medium mb-2 text-zinc-900 leading-relaxed">
                             {questionText}
                         </h3>
-                        {question.question_image?.startsWith('https') && (
+                        {resolveQuestionImage(question.question_image) && (
                             <div>
                                 <Image
-                                    src={safeDecodeImageUrl(question.question_image)}
+                                    src={resolveQuestionImage(question.question_image)!}
                                     width={300}
                                     height={300}
                                     alt="question"
-                                    unoptimized={question.question_image.includes('supabase.co')}
+                                    unoptimized
                                 />
                             </div>
                         )}
                     </div>
 
-                    {question.option_images && question.option_images[0]?.startsWith('https') && (
+                    {question.option_images && resolveQuestionImage(question.option_images[0]) && (
                         <div className="grid grid-cols-2 gap-4 mb-4">
                             {question.option_images.map((imageUrl, index) => {
                                 const optionLetter = String.fromCharCode(65 + index);
-                                // Decode URL to fix double-encoding issues (e.g., %2520 -> %20)
-                                const decodedUrl = safeDecodeImageUrl(imageUrl);
+                                const src = resolveQuestionImage(imageUrl);
+                                if (!src) return null;
                                 return (
                                     <div key={index} className="relative flex justify-center items-center">
                                         <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 z-10 bg-slate-800/40 text-white px-2 py-1 rounded-md text-[9px] font-medium">
                                             {optionLetter}
                                         </div>
                                         <Image
-                                            src={decodedUrl}
+                                            src={src}
                                             alt={`Option ${optionLetter}`}
                                             width={100}
                                             height={100}
                                             className="object-contain rounded-md"
-                                            unoptimized={decodedUrl.includes('supabase.co')}
+                                            unoptimized
                                         />
                                     </div>
                                 );
