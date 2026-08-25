@@ -204,8 +204,10 @@ export async function getCurrentUser(): Promise<AuthContext | null> {
 }
 
 export class AuthError extends Error {
-    readonly status: 401 | 403;
-    constructor(message: string, status: 401 | 403) {
+    /** HTTP status the route should answer with. 401/403 for auth, 429 for the
+     *  RateLimitError subclass in lib/ratelimit.ts. */
+    readonly status: number;
+    constructor(message: string, status: number) {
         super(message);
         this.name = "AuthError";
         this.status = status;

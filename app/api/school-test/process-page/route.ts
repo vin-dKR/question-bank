@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAuthContext } from '@/lib/auth/session';
 import { processPage } from "@/lib/school-test/pipeline";
+import { enforceRateLimit, RateLimitError } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,6 +28,20 @@ function decodeDataUrl(dataUrl: string): Buffer | null {
 export async function POST(req: NextRequest) {
     const ctx = await getAuthContext();
     if (!ctx) return new Response("Unauthorized", { status: 401 });
+
+    // Each call hits a paid vision model (OpenAI/Gemini). Cap per user so a
+    // logged-in account can't run up the bill / abuse the extractor.
+    try {
+        await enforceRateLimit("vision", `user:${ctx.userId}`);
+    } catch (error) {
+        if (error instanceof RateLimitError) {
+            return new Response("Too many requests. Please slow down.", {
+                status: 429,
+                headers: { "Retry-After": String(error.retryAfterSeconds) },
+            });
+        }
+        throw error;
+    }
 
     const contentLength = Number(req.headers.get("content-length") ?? 0);
     if (contentLength > MAX_BODY) {

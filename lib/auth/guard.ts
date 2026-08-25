@@ -69,28 +69,71 @@ export async function assertCanMutateQuestion(
     }
 }
 
+type ServiceKey = { label: string; secret: string };
+
+/**
+ * The set of accepted service keys. Two sources, in priority order:
+ *
+ *   SERVICE_API_KEYS  — JSON map of label -> secret, e.g.
+ *       {"omr-checker":"…","question-editor":"…"}
+ *     Named keys are the recommended model (docs/API_SECURITY.md, Layer 5):
+ *     each tool gets its OWN key, so one can be ROTATED or REVOKED without
+ *     touching the others, and the matched label lets audit logs / rate limits
+ *     ATTRIBUTE traffic to a specific tool.
+ *
+ *   QUESTION_API_KEY  — the legacy single shared key. Kept working so nothing
+ *     breaks mid-migration; retire it once every satellite carries a named key.
+ *
+ * The durable end-state (per-key scopes, expiry, DB-backed revocation) is the
+ * `ApiKey` model documented in the security doc; this env-map is the interim.
+ */
+function serviceKeys(): ServiceKey[] {
+    const keys: ServiceKey[] = [];
+
+    const raw = process.env.SERVICE_API_KEYS;
+    if (raw) {
+        try {
+            const map = JSON.parse(raw) as Record<string, unknown>;
+            for (const [label, secret] of Object.entries(map)) {
+                if (typeof secret === "string" && secret) keys.push({ label, secret });
+            }
+        } catch {
+            console.error("[auth] SERVICE_API_KEYS is not valid JSON — ignoring it.");
+        }
+    }
+
+    if (process.env.QUESTION_API_KEY) {
+        keys.push({ label: "legacy", secret: process.env.QUESTION_API_KEY });
+    }
+
+    return keys;
+}
+
 /**
  * API-route variant. Accepts EITHER a signed-in session OR a bearer token
- * matching QUESTION_API_KEY.
+ * matching one of the configured service keys (see serviceKeys()).
  *
  * The bearer path exists for the satellite tools (question-editor, multi-crop,
- * omr-checker) which call this route cross-origin. They previously relied on an
- * ambient session cookie, which is fragile cross-site and more so under
- * AuthKit's sealed cookie — see doc §8. Setting QUESTION_API_KEY in both apps
- * is the migration path.
+ * omr-checker) which call cross-origin. They previously relied on an ambient
+ * session cookie, which is fragile cross-site and more so under AuthKit's sealed
+ * cookie — a per-tool key is the durable answer.
+ *
+ * The returned `keyLabel` on the service branch is what audit logging and rate
+ * limiting use to tell one tool from another.
  */
 export async function requireApiActor(
     request: Request
-): Promise<{ kind: "user"; user: AuthedUser } | { kind: "service" }> {
-    const apiKey = process.env.QUESTION_API_KEY;
+): Promise<{ kind: "user"; user: AuthedUser } | { kind: "service"; keyLabel: string }> {
     const header = request.headers.get("authorization");
 
-    if (apiKey && header?.startsWith("Bearer ")) {
+    if (header?.startsWith("Bearer ")) {
         const presented = header.slice("Bearer ".length).trim();
-        // Length check first so the comparison below can't be used as an
-        // oracle for the key length.
-        if (presented.length === apiKey.length && timingSafeEqual(presented, apiKey)) {
-            return { kind: "service" };
+        for (const key of serviceKeys()) {
+            // Length check first so the compare can't be used as an oracle for
+            // any key's length.
+            if (presented.length === key.secret.length && timingSafeEqual(presented, key.secret)) {
+                return { kind: "service", keyLabel: key.label };
+            }
         }
         throw new AuthError("Invalid API key.", 401);
     }
