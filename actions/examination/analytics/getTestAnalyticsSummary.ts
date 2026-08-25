@@ -61,8 +61,13 @@ export const getTestAnalyticsSummary = async (
                 title: true,
                 subject: true,
                 totalMarks: true,
-                _count: { select: { responses: true } },
+                _count: { select: { responses: { where: { status: "graded" } } } },
+                    // Absent students carry a StudentResponse so the roster can
+                    // show they were accounted for, but they have no score.
+                    // Including them would drag every average down — see the
+                    // note on StudentResponse.status.
                 responses: {
+                    where: { status: "graded" },
                     orderBy: { score: 'desc' },
                     take: TOP_N,
                     select: {
@@ -107,7 +112,7 @@ export const getTestAnalyticsSummary = async (
         // Separate aggregation for averages / min — this keeps the primary
         // query bounded regardless of response volume.
         const agg = await prisma.studentResponse.aggregate({
-            where: { testId },
+            where: { testId, status: "graded" },
             _avg: { score: true, percentage: true },
             _max: { score: true },
             _min: { score: true },

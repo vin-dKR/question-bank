@@ -53,7 +53,12 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
                         },
                     },
                 },
+                    // Absent students carry a StudentResponse so the roster can
+                    // show they were accounted for, but they have no score.
+                    // Including them would drag every average down — see the
+                    // note on StudentResponse.status.
                 responses: {
+                    where: { status: "graded" },
                     include: {
                         student: true,
                         answers: {

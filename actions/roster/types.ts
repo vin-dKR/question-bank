@@ -72,3 +72,23 @@ export type ImportResult = {
     skipped: number;
     failures: { row: number; name: string; reason: string }[];
 };
+
+// ---- Scan progress / attendance -------------------------------------------
+
+export type ScanProgress = {
+    testId: string;
+    testTitle: string;
+    /** Null when the test isn't linked to a class — no roster, no denominator. */
+    classLabel: string | null;
+    expected: number | null;
+    scanned: number;
+    absent: number;
+    pending: number | null;
+    students: {
+        studentId: string;
+        name: string;
+        rollNumber: string;
+        state: "scanned" | "absent" | "pending";
+        percentage: number | null;
+    }[];
+};

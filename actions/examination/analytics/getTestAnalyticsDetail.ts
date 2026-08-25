@@ -138,7 +138,9 @@ export const getTestAnalyticsDetail = async (
 
         // Request one extra row to determine whether there is a next page.
         const responses = await prisma.studentResponse.findMany({
-            where: { testId },
+            // Absent students hold a StudentResponse so the roster knows they
+            // were accounted for, but they have no result to rank or average.
+            where: { testId, status: "graded" },
             orderBy: [{ score: 'desc' }, { id: 'asc' }],
             take: take + 1,
             ...(cursor

@@ -33,7 +33,11 @@ export const generateStudentAnalyticsPdf = async (
                 },
             },
             responses: {
-                where: { studentId },
+                // An absent student holds a StudentResponse so the roster knows
+                // they were accounted for, but it carries no marks. Generating a
+                // report from it would produce a document stating they scored
+                // 0% — which is not what "absent" means.
+                where: { studentId, status: "graded" },
                 include: {
                     student: true,
                     answers: { select: { questionId: true, selectedAnswer: true } },
@@ -49,7 +53,9 @@ export const generateStudentAnalyticsPdf = async (
     const response = test.responses[0];
     // console.log('TEWST response -----------------', test.questions);
     if (!response) {
-        throw new Error('Student response not found');
+        throw new Error(
+            "No marked sheet for this student — they were absent, or their sheet hasn't been scanned yet."
+        );
     }
 
     let correctAnswers = 0;

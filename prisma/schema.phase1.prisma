@@ -576,6 +576,16 @@ model Student {
 
 model StudentResponse {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  /// graded = a sheet was scanned and marked · absent = the student did not sit
+  /// the test.
+  ///
+  /// ABSENT IS NOT ZERO. An absent student has no score, and averaging a zero in
+  /// misrepresents both them and the class — a class of 40 where 8 were absent
+  /// would show an average roughly 20% lower than the paper actually produced.
+  /// So every aggregate filters to status = "graded"; absent rows exist only to
+  /// record that the student was accounted for, which is what makes
+  /// "28 of 42 scanned" trustworthy.
+  status       String   @default("graded")
   testId       String   @db.ObjectId
   test         Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
   studentId    String   @db.ObjectId
@@ -591,6 +601,7 @@ model StudentResponse {
 
   @@unique([testId, studentId])
   @@index([testId])
+  @@index([status])
   @@index([studentId])
   @@index([score])
   @@index([percentage])

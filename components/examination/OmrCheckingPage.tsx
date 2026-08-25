@@ -31,6 +31,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { getTestRoster, listClassOptions, setTestClass, type TestRoster, type ClassOption } from '@/actions/roster/testRoster';
 import { normalizeRollNumber } from '@/lib/examination/studentRoster';
+import { ScanProgressPanel } from '@/components/examination/ScanProgressPanel';
 import { useTests } from '@/hooks/queries/useTests';
 import { downloadOmrSheet } from './downloadOmrSheet';
 
@@ -148,6 +149,9 @@ export default function OmrCheckingPage({ initialTestId }: OmrCheckingPageProps)
     const [roster, setRoster] = useState<TestRoster | null>(null);
     const [classOptions, setClassOptions] = useState<ClassOption[]>([]);
     const [linkingClass, setLinkingClass] = useState(false);
+    // Bumped after every successful save so the roster panel re-reads and the
+    // scanned/pending counts stay truthful as the teacher works through a pile.
+    const [progressKey, setProgressKey] = useState(0);
     const queryClient = useQueryClient();
     const { data, isLoading, isError } = useTests({ skip: 0, take: 100 });
 
@@ -265,6 +269,7 @@ export default function OmrCheckingPage({ initialTestId }: OmrCheckingPageProps)
             if (save) {
                 setStatus('saved');
                 toast.success('OMR response saved');
+                setProgressKey((k) => k + 1);
                 queryClient.invalidateQueries({ queryKey: ['tests'] });
                 queryClient.invalidateQueries({ queryKey: ['testAnalytics', selectedTestId] });
             } else {
@@ -461,6 +466,17 @@ export default function OmrCheckingPage({ initialTestId }: OmrCheckingPageProps)
                                     </select>
                                 </div>
                             ) : null
+                        )}
+
+                        {roster?.classId && (
+                            <ScanProgressPanel
+                                testId={selectedTestId}
+                                refreshKey={progressKey}
+                                onPickRoll={(roll) => {
+                                    setRollNumber(roll);
+                                    setStudentName('');
+                                }}
+                            />
                         )}
 
                         <div className="grid grid-cols-1 gap-3">
