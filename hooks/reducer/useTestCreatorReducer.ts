@@ -15,7 +15,9 @@ export type TestCreatorAction =
     | {
         type: 'SET_TEST_FIELD' | 'UPDATE_TEST_DATA';
         field: keyof Omit<CreateTestData, 'questions'>;
-        value: string | number;
+        // null is permitted so `classId` can be cleared — "not tied to a class"
+        // is a real choice, not an absent value.
+        value: string | number | null;
     }
     | {
         type: 'UPDATE_QUESTION';
@@ -50,7 +52,8 @@ const initialState: TestCreatorState = {
         institution: '',
         institutionAddress: '',
         standard: '',
-        session: ''
+        session: '',
+        classId: null
     },
     bulkMarks: 1,
     bulkNegativeMarks: 0,

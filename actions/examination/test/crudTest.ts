@@ -26,6 +26,10 @@ export const createTest = async (data: CreateTestData): Promise<Partial<Examinat
                 title: data.title,
                 description: data.description,
                 subject: data.subject,
+                // Nullable and always will be: tests created before classes
+                // existed have none, and a teacher may legitimately set a paper
+                // without tying it to a roster.
+                classId: data.classId ?? null,
                 duration: typeof data.duration === 'string' ? parseInt(data.duration) : data.duration,
                 totalMarks: data.totalMarks,
                 createdBy: user.id,

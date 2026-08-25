@@ -512,6 +512,15 @@ declare global {
 
     interface CreateTestData {
         omrPaperId?: string;
+        /**
+         * The class sitting this test, chosen at creation.
+         *
+         * Distinct from `standard` below, which is free text printed in the PDF
+         * header. This is the roster relation: it is what lets OMR scanning
+         * resolve a detected roll number to a real student instead of asking
+         * the teacher to retype a name for every sheet.
+         */
+        classId?: string | null;
         title: string;
         description: string;
         subject: string;

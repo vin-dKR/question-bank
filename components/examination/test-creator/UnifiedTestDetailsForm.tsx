@@ -2,6 +2,7 @@
 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ClassPicker } from './ClassPicker';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect, useCallback } from 'react';
 import { CirclePlus, Trash2, AlertTriangle } from 'lucide-react';
@@ -304,6 +305,19 @@ export default function UnifiedTestDetailsForm({ testData, dispatch, onTemplateS
                                 onChange={handleInputChange}
                                 placeholder="Enter institution address"
                                
+                            />
+                        </div>
+                        <div>
+                            <ClassPicker
+                                value={testData.classId}
+                                onChange={(classId) =>
+                                    dispatch({ type: 'UPDATE_TEST_DATA', field: 'classId', value: classId })
+                                }
+                                onClassLabel={(label) =>
+                                    // Mirror into the printed header so the paper and
+                                    // the roster always name the same class.
+                                    dispatch({ type: 'UPDATE_TEST_DATA', field: 'standard', value: label })
+                                }
                             />
                         </div>
                         <div>

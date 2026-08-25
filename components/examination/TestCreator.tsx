@@ -119,6 +119,7 @@ export default function TestCreator({ paperId }: { paperId: string }) {
         try {
             const createdTest = await createTest({
                 omrPaperId: paperId,
+                classId: testData.classId ?? null,
                 title: testData.title,
                 description: testData.description,
                 subject: testData.subject,
