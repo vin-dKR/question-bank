@@ -43,7 +43,10 @@ export const getTestAnalyticsSummary = async (
 ): Promise<TestAnalyticsSummary> => {
     try {
         const ctx = await getAuthContext();
-        if (!ctx) {
+        // Access to a test is decided by ORGANISATION, not authorship. A caller
+        // with no organisation must match nothing at all — without this guard
+        // `where: { organizationId: null }` would match org-less rows instead.
+        if (!ctx?.organizationId) {
             throw new Error('Unauthorized');
         }
 
@@ -55,7 +58,7 @@ export const getTestAnalyticsSummary = async (
         // Ownership check + overview fields + top-N responses in a single
         // round-trip. Prisma compiles this to one Mongo pipeline.
         const test = await prisma.test.findFirst({
-            where: { id: testId, createdBy: user.id },
+            where: { id: testId, organizationId: ctx.organizationId },
             select: {
                 id: true,
                 title: true,

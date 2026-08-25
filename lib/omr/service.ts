@@ -294,17 +294,13 @@ function toDraftOmrSpec(input: OmrDraftInput): OmrSpec {
 
 async function getOwnedTestForOmr(testId: string) {
     const ctx = await getAuthContext();
-    if (!ctx) {
+    // Access is decided by ORGANISATION, not authorship — see crudTest.ts.
+    if (!ctx?.organizationId) {
         throw new Error('Unauthorized');
     }
 
-        // getAuthContext() has already resolved — and if necessary created —
-        // this user, so ctx.userId is authoritative. Re-querying it was a
-        // leftover from the Clerk migration, where this lookup translated a
-        // Clerk id into a local one. That translation no longer exists.
-        const user = { id: ctx.userId };
     return prisma.test.findFirst({
-        where: { id: testId, createdBy: user.id },
+        where: { id: testId, organizationId: ctx.organizationId },
         include: {
             questions: {
                 orderBy: { questionNumber: 'asc' },

@@ -13,7 +13,10 @@ import { normalizeChoiceKey } from '@/lib/examination/answerKey';
 export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> => {
     try {
         const ctx = await getAuthContext();
-        if (!ctx) {
+        // Access to a test is decided by ORGANISATION, not authorship. A caller
+        // with no organisation must match nothing at all — without this guard
+        // `where: { organizationId: null }` would match org-less rows instead.
+        if (!ctx?.organizationId) {
             throw new Error('Unauthorized');
         }
 
@@ -25,7 +28,7 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
         const test = await prisma.test.findFirst({
             where: {
                 id: testId,
-                createdBy: user.id,
+                organizationId: ctx.organizationId,
             },
             include: {
                 questions: {

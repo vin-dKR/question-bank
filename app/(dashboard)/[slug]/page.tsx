@@ -3,6 +3,7 @@ import PaperHistory from "@/components/dashboard/history/PaperHistoryPage";
 import QuesitonsPage from "@/components/dashboard/questions/QuestionsPage";
 import QuestionTemplate from "@/components/dashboard/templates/QuestionTemplatePage";
 import ExaminationPage from "../examination/page";
+import { notFound } from "next/navigation";
 
 export default async function SlugPage({
     params,
@@ -24,7 +25,10 @@ export default async function SlugPage({
         case "examination":
             return <ExaminationPage />;
         default:
-            return <QuesitonsPage />;
+            // Previously fell through to the questions page, so a typo like
+            // /quesitons rendered a working screen instead of an error — which
+            // hides broken links from us and confuses the person who typed it.
+            return notFound();
     }
 }
 

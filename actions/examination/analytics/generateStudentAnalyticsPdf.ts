@@ -9,7 +9,8 @@ export const generateStudentAnalyticsPdf = async (
     studentId: string
 ): Promise<{ data: Uint8Array; filename: string }> => {
     const ctx = await getAuthContext();
-    if (!ctx) {
+    // Access is decided by ORGANISATION, not authorship — see crudTest.ts.
+    if (!ctx?.organizationId) {
         throw new Error('Unauthorized');
     }
 
@@ -19,7 +20,7 @@ export const generateStudentAnalyticsPdf = async (
         // Clerk id into a local one. That translation no longer exists.
         const user = { id: ctx.userId };
     const test = (await prisma.test.findFirst({
-        where: { id: testId, createdBy: user.id },
+        where: { id: testId, organizationId: ctx.organizationId },
         include: {
             questions: {
                 orderBy: { questionNumber: 'asc' },

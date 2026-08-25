@@ -5,7 +5,10 @@ import { getAuthContext } from '@/lib/auth/session';
 export const createTest = async (data: CreateTestData): Promise<Partial<ExaminationTest>> => {
     try {
         const ctx = await getAuthContext();
-        if (!ctx) {
+        // Access to a test is decided by ORGANISATION, not authorship. A caller
+        // with no organisation must match nothing at all — without this guard
+        // `where: { organizationId: null }` would match org-less rows instead.
+        if (!ctx?.organizationId) {
             throw new Error('Unauthorized');
         }
 
@@ -32,6 +35,10 @@ export const createTest = async (data: CreateTestData): Promise<Partial<Examinat
                 classId: data.classId ?? null,
                 duration: typeof data.duration === 'string' ? parseInt(data.duration) : data.duration,
                 totalMarks: data.totalMarks,
+                // The AUTHORIZATION key. Without it a new test is invisible to
+                // the org-scoped reads below — including to its own author.
+                organizationId: ctx.organizationId,
+                // Authorship, not access. Kept so "who wrote this" survives.
                 createdBy: user.id,
                 questions: {
                     // School-test questions live in a separate collection; route
@@ -154,7 +161,10 @@ export const getTests = async (
 
     try {
         const ctx = await getAuthContext();
-        if (!ctx) {
+        // Access to a test is decided by ORGANISATION, not authorship. A caller
+        // with no organisation must match nothing at all — without this guard
+        // `where: { organizationId: null }` would match org-less rows instead.
+        if (!ctx?.organizationId) {
             throw new Error('Unauthorized');
         }
 
@@ -163,7 +173,7 @@ export const getTests = async (
         // leftover from the Clerk migration, where this lookup translated a
         // Clerk id into a local one. That translation no longer exists.
         const user = { id: ctx.userId };
-        const where = { createdBy: user.id } as const;
+        const where = { organizationId: ctx.organizationId } as const;
 
         const [tests, total] = await Promise.all([
             prisma.test.findMany({
@@ -232,7 +242,10 @@ export const getTests = async (
 export const getTestById = async (testId: string): Promise<Partial<ExaminationTest> | null> => {
     try {
         const ctx = await getAuthContext();
-        if (!ctx) {
+        // Access to a test is decided by ORGANISATION, not authorship. A caller
+        // with no organisation must match nothing at all — without this guard
+        // `where: { organizationId: null }` would match org-less rows instead.
+        if (!ctx?.organizationId) {
             throw new Error('Unauthorized');
         }
 
@@ -244,7 +257,7 @@ export const getTestById = async (testId: string): Promise<Partial<ExaminationTe
         const test = await prisma.test.findFirst({
             where: {
                 id: testId,
-                createdBy: user.id,
+                organizationId: ctx.organizationId,
             },
             include: {
                 questions: {
@@ -303,7 +316,10 @@ export const getTestById = async (testId: string): Promise<Partial<ExaminationTe
 export const deleteTest = async (testId: string): Promise<void> => {
     try {
         const ctx = await getAuthContext();
-        if (!ctx) {
+        // Access to a test is decided by ORGANISATION, not authorship. A caller
+        // with no organisation must match nothing at all — without this guard
+        // `where: { organizationId: null }` would match org-less rows instead.
+        if (!ctx?.organizationId) {
             throw new Error('Unauthorized');
         }
 
@@ -315,7 +331,7 @@ export const deleteTest = async (testId: string): Promise<void> => {
         await prisma.test.deleteMany({
             where: {
                 id: testId,
-                createdBy: user.id,
+                organizationId: ctx.organizationId,
             },
         });
     } catch (error) {

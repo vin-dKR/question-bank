@@ -67,7 +67,10 @@ export const getTestAnalyticsDetail = async (
 
     try {
         const ctx = await getAuthContext();
-        if (!ctx) {
+        // Access to a test is decided by ORGANISATION, not authorship. A caller
+        // with no organisation must match nothing at all — without this guard
+        // `where: { organizationId: null }` would match org-less rows instead.
+        if (!ctx?.organizationId) {
             throw new Error('Unauthorized');
         }
 
@@ -79,7 +82,7 @@ export const getTestAnalyticsDetail = async (
         // Load the test with its question source map in one round-trip. This
         // doubles as an ownership check.
         const test = await prisma.test.findFirst({
-            where: { id: testId, createdBy: user.id },
+            where: { id: testId, organizationId: ctx.organizationId },
             select: {
                 id: true,
                 totalMarks: true,
