@@ -419,24 +419,46 @@ function SourcePane({
     onAdjustCrop: (questionId: string) => void;
 }) {
     const containerRef = useRef<HTMLDivElement>(null);
-    const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
+    const [containerWidth, setContainerWidth] = useState(0);
+    const [viewportHeight, setViewportHeight] = useState(0);
 
+    // Width only. The container's height comes from its content on some
+    // breakpoints, so reading it back to size that same content is circular; the
+    // width comes from the grid column and is independent of what we draw.
     useEffect(() => {
-        if (!containerRef.current) return;
         const el = containerRef.current;
-        const ro = new ResizeObserver(() => {
-            setContainerSize({ w: el.clientWidth, h: el.clientHeight });
-        });
+        if (!el) return;
+        const ro = new ResizeObserver(() => setContainerWidth(el.clientWidth));
         ro.observe(el);
+        setContainerWidth(el.clientWidth);
         return () => ro.disconnect();
+    }, []);
+
+    // The height budget comes from the viewport, which nothing here can change —
+    // so there is no loop to fall into.
+    useEffect(() => {
+        const read = () => setViewportHeight(window.innerHeight);
+        read();
+        window.addEventListener("resize", read);
+        return () => window.removeEventListener("resize", read);
     }, []);
 
     const cropEntries = Object.entries(page.crops);
 
     const scale = useMemo(() => {
-        if (containerSize.w === 0 || containerSize.h === 0 || page.sourceWidth === 0) return 1;
-        return Math.min(containerSize.w / page.sourceWidth, containerSize.h / page.sourceHeight);
-    }, [containerSize, page.sourceWidth, page.sourceHeight]);
+        // 0, not 1. The previous fallback was 1 — natural size — so until the
+        // observer fired the page rendered at full camera resolution inside a
+        // container that clips, and a 1200x1600 photo showed only its top-left
+        // corner. 0 defers to the aspect-ratio box below, which already fits.
+        if (!containerWidth || !page.sourceWidth || !page.sourceHeight) return 0;
+        const heightBudget = (viewportHeight || 800) * 0.62;
+        // Fit inside both, and never enlarge past the source's own resolution.
+        return Math.min(
+            containerWidth / page.sourceWidth,
+            heightBudget / page.sourceHeight,
+            1,
+        );
+    }, [containerWidth, viewportHeight, page.sourceWidth, page.sourceHeight]);
 
     const displayW = page.sourceWidth * scale;
     const displayH = page.sourceHeight * scale;
@@ -444,11 +466,17 @@ function SourcePane({
     return (
         <div
             ref={containerRef}
-            className="relative flex max-h-[55vh] items-start justify-center overflow-auto rounded-xl border border-black/5 bg-white p-3 shadow-xs lg:max-h-none lg:min-h-0 lg:overflow-hidden lg:p-4"
+            className="relative flex items-start justify-center overflow-hidden rounded-xl border border-black/5 bg-white p-3 shadow-xs lg:p-4"
         >
             <div
                 className="relative"
-                style={{ width: displayW || "auto", height: displayH || "auto" }}
+                style={{
+                    // Hold the page's ratio before the measurement lands, so the
+                    // pane does not jump from full-bleed to fitted on first paint.
+                    width: displayW || "100%",
+                    height: displayH || undefined,
+                    aspectRatio: displayH ? undefined : `${page.sourceWidth} / ${page.sourceHeight}`,
+                }}
             >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
