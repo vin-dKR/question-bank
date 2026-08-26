@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { Maximize2, Minimize2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Crop, PageResult, QuestionDraft } from "@/lib/school-test/types";
 import { cn } from "@/lib/utils";
@@ -36,6 +37,12 @@ export function Verifier({
     const [activeIdx, setActiveIdx] = useState(0);
     const [hoverCrop, setHoverCrop] = useState<string | null>(null);
     const [cropTarget, setCropTarget] = useState<CropTarget | null>(null);
+    /**
+     * Off by default: the page is drawn large enough to read, and the pane
+     * scrolls. Fitting the whole page in makes the text too small to check
+     * against the extracted questions, which is what this screen is for.
+     */
+    const [fitPage, setFitPage] = useState(false);
     const [previewOpen, setPreviewOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -195,6 +202,8 @@ export function Verifier({
                 fileName={fileName}
                 pages={pages.length}
                 totalQuestions={totalQuestions}
+                fitPage={fitPage}
+                onToggleFit={() => setFitPage((v) => !v)}
                 onReset={onReset}
                 onPreview={() => setPreviewOpen(true)}
             />
@@ -213,6 +222,7 @@ export function Verifier({
                     <SourcePane
                         page={page}
                         hoverCrop={hoverCrop}
+                        fitPage={fitPage}
                         onAdjustCrop={(questionId) =>
                             setCropTarget({
                                 pageIndex: activeIdx,
@@ -331,12 +341,16 @@ function TopBar({
     fileName,
     pages,
     totalQuestions,
+    fitPage,
+    onToggleFit,
     onReset,
     onPreview,
 }: {
     fileName: string | null;
     pages: number;
     totalQuestions: number;
+    fitPage: boolean;
+    onToggleFit: () => void;
     onReset: () => void;
     onPreview: () => void;
 }) {
@@ -354,6 +368,23 @@ function TopBar({
                 </p>
             </div>
             <div className="flex items-center gap-2">
+                <button
+                    type="button"
+                    onClick={onToggleFit}
+                    title={
+                        fitPage
+                            ? "Show the page large enough to read"
+                            : "Shrink the page until all of it is visible"
+                    }
+                    className="flex h-9 items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 text-[12px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-900"
+                >
+                    {fitPage ? (
+                        <Maximize2 className="h-3.5 w-3.5" />
+                    ) : (
+                        <Minimize2 className="h-3.5 w-3.5" />
+                    )}
+                    {fitPage ? "Actual size" : "Fit to screen"}
+                </button>
                 <button
                     type="button"
                     onClick={onReset}
@@ -412,10 +443,13 @@ function PageTabs({
 function SourcePane({
     page,
     hoverCrop,
+    fitPage,
     onAdjustCrop,
 }: {
     page: EditablePage;
     hoverCrop: string | null;
+    /** Shrink the page until all of it is visible, instead of scrolling. */
+    fitPage: boolean;
     onAdjustCrop: (questionId: string) => void;
 }) {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -451,14 +485,16 @@ function SourcePane({
         // container that clips, and a 1200x1600 photo showed only its top-left
         // corner. 0 defers to the aspect-ratio box below, which already fits.
         if (!containerWidth || !page.sourceWidth || !page.sourceHeight) return 0;
+
+        // Fill the column, never enlarging past the source's own resolution.
+        // The pane scrolls, so a tall page stays readable.
+        const byWidth = Math.min(containerWidth / page.sourceWidth, 1);
+        if (!fitPage) return byWidth;
+
+        // Fitting: also bound by the viewport, which nothing here can change.
         const heightBudget = (viewportHeight || 800) * 0.62;
-        // Fit inside both, and never enlarge past the source's own resolution.
-        return Math.min(
-            containerWidth / page.sourceWidth,
-            heightBudget / page.sourceHeight,
-            1,
-        );
-    }, [containerWidth, viewportHeight, page.sourceWidth, page.sourceHeight]);
+        return Math.min(byWidth, heightBudget / page.sourceHeight);
+    }, [containerWidth, viewportHeight, fitPage, page.sourceWidth, page.sourceHeight]);
 
     const displayW = page.sourceWidth * scale;
     const displayH = page.sourceHeight * scale;
@@ -466,7 +502,12 @@ function SourcePane({
     return (
         <div
             ref={containerRef}
-            className="relative flex items-start justify-center overflow-hidden rounded-xl border border-black/5 bg-white p-3 shadow-xs lg:p-4"
+            className={cn(
+                "relative flex items-start justify-center rounded-xl border border-black/5 bg-white p-3 shadow-xs lg:p-4",
+                // Scrolling only matters when the page is drawn larger than the
+                // pane; fitted, there is nothing to scroll to.
+                fitPage ? "overflow-hidden" : "max-h-[72vh] overflow-auto",
+            )}
         >
             <div
                 className="relative"
