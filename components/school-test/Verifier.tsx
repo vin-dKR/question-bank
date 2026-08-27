@@ -8,8 +8,10 @@ import { toast } from "sonner";
 import type { Crop, PageResult, QuestionDraft } from "@/lib/school-test/types";
 import { cn } from "@/lib/utils";
 import { saveExtractedQuestions } from "@/actions/school-test/saveExtractedQuestions";
+import { cleanCropRegion } from "@/actions/school-test/cleanCropRegion";
 import { QuestionCard } from "./QuestionCard";
 import { CropEditor } from "./CropEditor";
+import { TouchUpEditor } from "./TouchUpEditor";
 import { PreviewDialog } from "./PreviewDialog";
 
 type EditablePage = {
@@ -37,6 +39,22 @@ export function Verifier({
     const [activeIdx, setActiveIdx] = useState(0);
     const [hoverCrop, setHoverCrop] = useState<string | null>(null);
     const [cropTarget, setCropTarget] = useState<CropTarget | null>(null);
+    /** Question id currently being whitened, so only its button shows progress. */
+    const [cleaningId, setCleaningId] = useState<string | null>(null);
+    /** Open touch-up session. */
+    const [touchUp, setTouchUp] = useState<{
+        pageIndex: number;
+        questionId: string;
+        cleaned: string;
+        original: string;
+    } | null>(null);
+    /**
+     * What the brush restores from, keyed by question: the crop levelled and
+     * sharpened but with separation skipped, so a restored patch shows the text
+     * on white paper. Restoring from the raw crop instead paints the original
+     * paper cast back in as a coloured smear.
+     */
+    const [restoreSource, setRestoreSource] = useState<Record<string, string>>({});
     /**
      * Off by default: the page is drawn large enough to read, and the pane
      * scrolls. Fitting the whole page in makes the text too small to check
@@ -124,6 +142,52 @@ export function Verifier({
             setCropTarget(null);
         },
         [updatePage],
+    );
+
+    /**
+     * Whiten the paper behind one diagram. The page is sent rather than the crop
+     * so the estimator has real paper to measure — see cleanCropRegion.
+     */
+    const cleanCrop = useCallback(
+        async (i: number, questionId: string) => {
+            setCleaningId(questionId);
+            const toastId = toast.loading("Whitening the paper…");
+            try {
+                const page = pages[i];
+                const crop = page?.crops?.[questionId];
+                if (!page?.sourceDataUrl || !crop?.bbox) {
+                    toast.error("The source page is not available for this crop.", { id: toastId });
+                    return;
+                }
+
+                const res = await cleanCropRegion({
+                    pageDataUrl: page.sourceDataUrl,
+                    bbox: crop.bbox,
+                });
+                if (!res.success) {
+                    toast.error(res.error, { id: toastId });
+                    return;
+                }
+
+                // Only the picture changes; the bbox is untouched, so the overlay
+                // on the page preview stays exactly where it was.
+                updatePage(i, (p) => ({
+                    ...p,
+                    crops: {
+                        ...p.crops,
+                        [questionId]: { ...p.crops[questionId], dataUrl: res.dataUrl },
+                    },
+                }));
+
+                setRestoreSource((prev) => ({ ...prev, [questionId]: res.restoreDataUrl }));
+                toast.success("Background cleaned.", { id: toastId });
+            } catch (e) {
+                toast.error((e as Error).message || "Could not clean the diagram.", { id: toastId });
+            } finally {
+                setCleaningId(null);
+            }
+        },
+        [pages, updatePage],
     );
 
     const confirmCreateTest = useCallback(async () => {
@@ -263,6 +327,25 @@ export function Verifier({
                                         })
                                     }
                                     onRemoveCrop={() => removeCrop(activeIdx, q.id)}
+                                    onCleanCrop={
+                                        page.sourceDataUrl
+                                            ? () => cleanCrop(activeIdx, q.id)
+                                            : undefined
+                                    }
+                                    onTouchUp={() => {
+                                        const c = page.crops[q.id];
+                                        if (!c) return;
+                                        setTouchUp({
+                                            pageIndex: activeIdx,
+                                            questionId: q.id,
+                                            cleaned: c.dataUrl,
+                                            // Falls back to the current image when the
+                                            // crop was never cleaned; Restore then just
+                                            // undoes brushwork.
+                                            original: restoreSource[q.id] ?? c.dataUrl,
+                                        });
+                                    }}
+                                    isCleaning={cleaningId === q.id}
                                     onHoverCrop={(hover) => setHoverCrop(hover ? q.id : null)}
                                 />
                             ))
@@ -300,6 +383,27 @@ export function Verifier({
                     onSave={(bbox, dataUrl) =>
                         saveCrop(cropTarget.pageIndex, cropTarget.questionId, bbox, dataUrl)
                     }
+                />
+            )}
+
+            {touchUp && (
+                <TouchUpEditor
+                    cleanedDataUrl={touchUp.cleaned}
+                    originalDataUrl={touchUp.original}
+                    onCancel={() => setTouchUp(null)}
+                    onSave={(dataUrl) => {
+                        updatePage(touchUp.pageIndex, (p) => ({
+                            ...p,
+                            crops: {
+                                ...p.crops,
+                                [touchUp.questionId]: {
+                                    ...p.crops[touchUp.questionId],
+                                    dataUrl,
+                                },
+                            },
+                        }));
+                        setTouchUp(null);
+                    }}
                 />
             )}
 
