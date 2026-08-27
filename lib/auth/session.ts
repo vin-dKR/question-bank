@@ -3,6 +3,7 @@ import { cache } from "react";
 import { withAuth } from "@workos-inc/authkit-nextjs";
 import prisma from "@/lib/prisma";
 import { ensurePersonalOrg } from "./provisionOrg";
+import { readLastOrg } from "./activeOrg";
 
 /**
  * The single server-side entry point for "who is asking, and on behalf of which
@@ -19,6 +20,19 @@ import { ensurePersonalOrg } from "./provisionOrg";
  *      webhook fired and `completeOnboarding` threw "User not found".
  */
 
+/** One organization the caller belongs to, as the UI needs it. */
+export type OrgMembership = {
+    /** Local `Organization.id`. */
+    organizationId: string;
+    workosOrgId: string;
+    name: string;
+    /** 'personal' | 'school' | 'coaching'. */
+    type: string;
+    /** Role in THIS org. The same person can be admin here and member there. */
+    role: string;
+    isActive: boolean;
+};
+
 export type AuthContext = {
     /** Local `User.id` (Mongo ObjectId). This is what resource rows reference. */
     userId: string;
@@ -33,6 +47,15 @@ export type AuthContext = {
     organizationId: string | null;
     /** WorkOS organization id (`org_…`). */
     workosOrgId: string | null;
+    /**
+     * Every organization this person belongs to, oldest first. One indexed query
+     * that the header and the org switcher both need, so it rides along rather
+     * than being fetched again per component.
+     *
+     * `workosOrgId` is in here: do NOT hand this array to a client component
+     * wholesale. Map it to what the UI needs first.
+     */
+    memberships: OrgMembership[];
     permissions: string[];
     /** Set when a WorkOS admin is impersonating this user — block writes. */
     impersonatorEmail: string | null;
@@ -56,6 +79,15 @@ function adminEmails(): string[] {
         .split(",")
         .map((e) => e.trim().toLowerCase())
         .filter(Boolean);
+}
+
+/**
+ * Label for a personal org created moments ago by `ensurePersonalOrg`, whose row
+ * we deliberately don't re-read. Mirrors `personalOrgName` in provisionOrg.ts.
+ */
+function personalWorkspaceLabel(name: string | null, email: string): string {
+    const base = name?.trim() || email.split("@")[0];
+    return `${base}'s workspace`;
 }
 
 /** Best-effort display name from whatever WorkOS gives us. */
@@ -134,29 +166,91 @@ async function loadAuthContext(): Promise<AuthContext | null> {
         });
     }
 
-    // Resolve the active organization. Prefer what the session says, because
-    // that is what the access token's permissions were minted against. Fall
-    // back to the user's own membership, then to creating one.
-    let org: { id: string; workosOrgId: string } | null = null;
-    let membershipRole: string | null = null;
+    // Every organization this person belongs to, in one indexed query. It is
+    // also the ONLY source the resolution below selects from — which is what
+    // makes the remembered-org cookie safe: it can pick between these, and can
+    // never introduce one that isn't here.
+    const rows = await prisma.membership.findMany({
+        where: { userId: user.id, status: "active" },
+        orderBy: { createdAt: "asc" },
+        select: {
+            role: true,
+            organization: {
+                select: { id: true, workosOrgId: true, name: true, type: true },
+            },
+        },
+    });
 
-    if (sessionOrgId) {
-        org = await prisma.organization.findUnique({
-            where: { workosOrgId: sessionOrgId },
-            select: { id: true, workosOrgId: true },
-        });
+    const memberships: OrgMembership[] = rows
+        .filter((m) => m.organization)
+        .map((m) => ({
+            organizationId: m.organization.id,
+            workosOrgId: m.organization.workosOrgId,
+            name: m.organization.name,
+            type: m.organization.type,
+            role: m.role,
+            isActive: false,
+        }));
+
+    /**
+     * Resolve the active organization, in order of how much the choice was
+     * actually the user's:
+     *
+     *   1. the session's org — the access token's permissions were minted
+     *      against it, so disagreeing with it would mean authorizing against one
+     *      org with another's permissions
+     *   2. the remembered org from the cookie, VALIDATED against the list above.
+     *      A cookie naming an org they've been removed from falls through
+     *      silently rather than 403ing every page
+     *   3. their only org, when there is exactly one — the common case
+     *   4. the most recently joined REAL institution. Someone invited to a
+     *      centre expects to land in the centre, not in the personal workspace
+     *      they happened to create first
+     *   5. the personal workspace
+     *
+     * Step 4 is the fix for the silent pin. The previous code stopped at
+     * `findFirst({ orderBy: { createdAt: 'asc' } })` — the OLDEST membership —
+     * so an existing user who accepted an invitation landed back in their own
+     * workspace on every subsequent sign-in, and no mechanism existed to ever
+     * produce a different answer.
+     */
+    const lastOrgId = await readLastOrg();
+
+    const pick = (): OrgMembership | null => {
+        if (sessionOrgId) {
+            const fromSession = memberships.find((m) => m.workosOrgId === sessionOrgId);
+            if (fromSession) return fromSession;
+        }
+        if (lastOrgId) {
+            const remembered = memberships.find((m) => m.workosOrgId === lastOrgId);
+            if (remembered) return remembered;
+        }
+        if (memberships.length === 1) return memberships[0];
+
+        const realOrgs = memberships.filter((m) => m.type !== "personal");
+        if (realOrgs.length > 0) return realOrgs[realOrgs.length - 1];
+
+        return memberships[0] ?? null;
+    };
+
+    const active = pick();
+
+    let org: { id: string; workosOrgId: string } | null = active
+        ? { id: active.organizationId, workosOrgId: active.workosOrgId }
+        : null;
+    let membershipRole: string | null = active?.role ?? null;
+
+    if (active) {
+        active.isActive = true;
     }
 
-    if (!org) {
-        const membership = await prisma.membership.findFirst({
-            where: { userId: user.id, status: "active" },
-            orderBy: { createdAt: "asc" },
-            select: { role: true, organization: { select: { id: true, workosOrgId: true } } },
-        });
-        if (membership) {
-            org = membership.organization;
-            membershipRole = membership.role;
-        }
+    // The session named an org we have no local row for — a WorkOS org created
+    // outside the app, or one whose webhook hasn't landed. Fall back to the
+    // local answer rather than authorizing against nothing.
+    if (sessionOrgId && org && org.workosOrgId !== sessionOrgId) {
+        console.warn(
+            `[session] session org ${sessionOrgId} is not among this user's memberships; using ${org.workosOrgId}`
+        );
     }
 
     if (!org) {
@@ -168,6 +262,16 @@ async function loadAuthContext(): Promise<AuthContext | null> {
             name,
         });
         membershipRole = "admin";
+        if (org) {
+            memberships.push({
+                organizationId: org.id,
+                workosOrgId: org.workosOrgId,
+                name: personalWorkspaceLabel(user.name ?? name, email),
+                type: "personal",
+                role: "admin",
+                isActive: true,
+            });
+        }
     }
 
     return {
@@ -175,10 +279,18 @@ async function loadAuthContext(): Promise<AuthContext | null> {
         workosUserId: wosUser.id,
         email,
         name: user.name ?? name,
-        role: role ?? membershipRole ?? "member",
+        // The membership role wins over the session's when we resolved to an org
+        // the session didn't name — the session's `role` was minted against a
+        // DIFFERENT org, and carrying it across would grant this org's pages the
+        // other org's role. Falls back to the session role otherwise.
+        role:
+            active && sessionOrgId !== active.workosOrgId
+                ? active.role
+                : role ?? membershipRole ?? "member",
         isAdmin: user.role === "admin" || adminEmails().includes(email),
         organizationId: org?.id ?? null,
         workosOrgId: org?.workosOrgId ?? null,
+        memberships,
         permissions: permissions ?? [],
         impersonatorEmail: impersonator?.email ?? null,
         onboardingComplete: Boolean(user.role && user.role.trim() !== ""),

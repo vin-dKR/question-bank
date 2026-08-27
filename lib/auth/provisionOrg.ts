@@ -24,6 +24,27 @@ function personalOrgExternalId(localUserId: string): string {
 }
 
 /**
+ * External id for an ADDITIONAL organization someone creates by hand.
+ *
+ * It must not be `personalOrgExternalId` — that key is already taken by their
+ * personal workspace, and `createOrGetWorkosOrg` treats a conflict as "adopt the
+ * existing one". Reusing it would silently hand back the personal workspace
+ * instead of creating anything, and the caller would then rename and re-type it
+ * into the new institution.
+ *
+ * Keying on the name as well as the user keeps a double-clicked form idempotent
+ * without making two genuinely different institutions collide.
+ */
+function namedOrgExternalId(localUserId: string, name: string): string {
+    const slug = name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 40);
+    return `org-${localUserId}-${slug || "unnamed"}`;
+}
+
+/**
  * A readable org name for someone who never told us their institution.
  * "Suraj Kumar" -> "Suraj Kumar's workspace"; falls back to the email local part.
  */
@@ -85,6 +106,67 @@ async function createWorkosMembership(
         });
         return { id: m.id, role: m.role?.slug ?? "member" };
     }
+}
+
+/**
+ * The organization this user JOINED rather than created — i.e. arrived in via an
+ * invitation. Null if they have none.
+ *
+ * This is the check that keeps onboarding from minting a second, junk org for an
+ * invitee. `ensurePersonalOrg` never runs for them (getAuthContext only calls it
+ * when the user has NO membership at all, and the invitation already gave them
+ * one), so they own no personal org — and a bare `findFirst({ ownerUserId })`
+ * therefore finds nothing and concludes "needs an org", which is exactly wrong.
+ *
+ * The ownership test is done in JS, deliberately. `ownerUserId` is absent on
+ * real school/coaching orgs, and on MongoDB a Prisma filter of `{ not: userId }`
+ * against an ABSENT field is precisely the null-is-not-missing trap that made
+ * the phase-2 backfill silently match nothing (doc §11a). A user has a handful
+ * of memberships; filter them in memory and the trap can't fire.
+ */
+export type JoinedOrg = {
+    id: string;
+    workosOrgId: string;
+    name: string;
+    type: string;
+    /** The invitee's role in that org, mirrored from WorkOS. */
+    role: string;
+    /** When the membership was created — i.e. when they accepted. */
+    joinedAt: Date;
+};
+
+export async function findJoinedOrg(userId: string): Promise<JoinedOrg | null> {
+    const memberships = await prisma.membership.findMany({
+        where: { userId, status: "active" },
+        orderBy: { createdAt: "asc" },
+        select: {
+            role: true,
+            createdAt: true,
+            organization: {
+                select: {
+                    id: true,
+                    workosOrgId: true,
+                    name: true,
+                    type: true,
+                    ownerUserId: true,
+                },
+            },
+        },
+    });
+
+    const joined = memberships.find(
+        (m) => m.organization && m.organization.ownerUserId !== userId
+    );
+
+    if (!joined?.organization) return null;
+    return {
+        id: joined.organization.id,
+        workosOrgId: joined.organization.workosOrgId,
+        name: joined.organization.name,
+        type: joined.organization.type,
+        role: joined.role,
+        joinedAt: joined.createdAt,
+    };
 }
 
 /**
@@ -188,6 +270,17 @@ export async function provisionOrganizationForOnboarding(params: {
     orgName: string | null;
     /** 'coaching' for a centre/institute, 'personal' for a solo teacher. */
     type: "personal" | "school" | "coaching";
+    /**
+     * Create a NEW organization even if the caller already has one.
+     *
+     * Off by default because the onboarding path depends on the opposite: it
+     * reuses the personal org created at first sign-in, renames it, and keeps
+     * `Organization.id` stable so nothing already stamped has to be re-pointed.
+     * Set this only from "create another institution", where adopting the
+     * caller's existing org would convert their personal workspace into the new
+     * institution rather than creating one.
+     */
+    forceNew?: boolean;
     profile?: {
         contactPerson?: string | null;
         contactEmail?: string | null;
@@ -198,10 +291,27 @@ export async function provisionOrganizationForOnboarding(params: {
 }): Promise<ProvisionedOrg | null> {
     const name = params.orgName?.trim() || personalOrgName(params.userName, params.email);
 
-    const existing = await prisma.organization.findFirst({
-        where: { ownerUserId: params.userId },
-        select: { id: true, workosOrgId: true },
-    });
+    const existing = params.forceNew
+        ? null
+        : await prisma.organization.findFirst({
+              where: { ownerUserId: params.userId },
+              select: { id: true, workosOrgId: true },
+          });
+
+    // An INVITEE reaches onboarding already belonging to somebody else's
+    // institution. Before this guard, the `findFirst` above returned nothing (an
+    // invitee owns no personal org), so this function fell through to "create" —
+    // handing every invited teacher a spurious second organization, naming it
+    // after whatever they typed in the school field, and making them its admin.
+    //
+    // Their institution already exists and is not theirs to rename or re-type.
+    // Adopt it and return.
+    if (!existing && !params.forceNew) {
+        const joined = await findJoinedOrg(params.userId);
+        if (joined) {
+            return { id: joined.id, workosOrgId: joined.workosOrgId };
+        }
+    }
 
     if (existing) {
         try {
@@ -237,9 +347,15 @@ export async function provisionOrganizationForOnboarding(params: {
         return existing;
     }
 
-    // No personal org yet (WorkOS was down at first sign-in, say). Create now.
+    // No personal org yet (WorkOS was down at first sign-in, say), or an
+    // explicitly new institution. Create now.
     try {
-        const wosOrg = await createOrGetWorkosOrg(name, personalOrgExternalId(params.userId));
+        const wosOrg = await createOrGetWorkosOrg(
+            name,
+            params.forceNew
+                ? namedOrgExternalId(params.userId, name)
+                : personalOrgExternalId(params.userId)
+        );
 
         const org = await prisma.organization.upsert({
             where: { workosOrgId: wosOrg.id },
@@ -248,7 +364,13 @@ export async function provisionOrganizationForOnboarding(params: {
                 workosOrgId: wosOrg.id,
                 name,
                 type: params.type,
-                ownerUserId: params.userId,
+                // `ownerUserId` means "this is that user's implicit PERSONAL
+                // workspace" — it is what `findJoinedOrg` and the leave guard
+                // read to tell a workspace from an institution. A real
+                // institution someone created must not claim it, or they'd be
+                // blocked from ever leaving it and invitees would be treated as
+                // its owner.
+                ownerUserId: params.forceNew ? null : params.userId,
                 contactPerson: params.profile?.contactPerson ?? null,
                 contactEmail: params.profile?.contactEmail ?? params.email,
                 phone: params.profile?.phone ?? null,

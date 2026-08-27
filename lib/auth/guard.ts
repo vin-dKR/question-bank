@@ -143,6 +143,61 @@ export async function requireApiActor(
     return { kind: "user", user };
 }
 
+/**
+ * The organization a request acts on behalf of.
+ *
+ * For a signed-in user this is simply their active org. For the SERVICE key it
+ * is a genuine problem: `requireApiActor` returns `{ kind: "service" }` with no
+ * organization at all, and a create path that stamps nothing writes a question
+ * with NO organizationId — which means the global shared bank. A satellite tool
+ * uploading one school's private paper would have published it to every
+ * customer, silently, and the row would also have been absent-not-null and so
+ * invisible to the shared-bank filter (doc §11a).
+ *
+ * So the service caller must NAME its organization. `x-organization-id` accepts
+ * either the local `Organization.id` or the WorkOS `org_…` id, whichever the
+ * calling tool has to hand. `QUESTION_API_ORG_ID` is the fallback for a
+ * single-tenant deployment of a satellite that has no per-request org.
+ *
+ * `allowGlobal` exists for READS: an unscoped service read of the shared bank is
+ * fine (it's shared), whereas an unscoped service WRITE is the leak above.
+ */
+export async function resolveApiActorOrg(
+    actor: { kind: "user"; user: AuthedUser } | { kind: "service" },
+    request: Request,
+    opts: { allowGlobal?: boolean } = {}
+): Promise<string | null> {
+    if (actor.kind === "user") return actor.user.organizationId;
+
+    const named =
+        request.headers.get("x-organization-id")?.trim() ||
+        process.env.QUESTION_API_ORG_ID?.trim() ||
+        "";
+
+    if (!named) {
+        if (opts.allowGlobal) return null;
+        throw new AuthError(
+            "This request must name an organization. Send x-organization-id, or set QUESTION_API_ORG_ID.",
+            403
+        );
+    }
+
+    // Accept either id form, and PROVE it exists — an unknown value must fail
+    // loudly rather than fall through to null, which would mean "global bank".
+    const org = named.startsWith("org_")
+        ? await prisma.organization.findUnique({
+              where: { workosOrgId: named },
+              select: { id: true },
+          })
+        : await prisma.organization.findUnique({
+              where: { id: named },
+              select: { id: true },
+          });
+
+    if (!org) throw new AuthError("Unknown organization.", 403);
+    return org.id;
+}
+
 /** Constant-time string compare, so a wrong key leaks no timing information. */
 function timingSafeEqual(a: string, b: string): boolean {
     if (a.length !== b.length) return false;

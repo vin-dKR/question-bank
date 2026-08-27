@@ -2,6 +2,7 @@
 
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { getTestAnalyticsDetail } from '@/actions/examination/analytics/getTestAnalyticsDetail';
+import { useOrgKey } from "@/provider/ActiveOrgProvider";
 
 export interface UseTestAnalyticsDetailArgs {
     take?: number;
@@ -18,8 +19,10 @@ export const useTestAnalyticsDetail = (
     testId: string | undefined,
     { take = 25 }: UseTestAnalyticsDetailArgs = {},
 ) => {
+    const orgKey = useOrgKey();
     return useInfiniteQuery({
-        queryKey: ['testAnalytics', testId, 'detail', { take }],
+        // Org segment LAST so prefix-based invalidation keeps matching.
+        queryKey: ['testAnalytics', testId, 'detail', { take }, orgKey],
         queryFn: ({ pageParam }) => {
             if (!testId) {
                 throw new Error('testId is required');

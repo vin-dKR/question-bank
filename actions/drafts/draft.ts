@@ -2,6 +2,31 @@
 
 import prisma from "@/lib/prisma"
 import { getAuthContext } from '@/lib/auth/session';
+import { questionTenancyFilter } from "@/lib/auth/questionScope";
+
+/**
+ * Drafts (folders) are ORG-SCOPED **and** AUTHOR-PRIVATE.
+ *
+ * Both halves matter and they do different jobs:
+ *
+ *   organizationId — the authorization boundary (doc §1). Without it, a teacher
+ *     who belongs to two institutions sees the drafts they built at one while
+ *     working in the other.
+ *   userId — a visibility rule INSIDE that boundary. A half-built paper is not
+ *     the same artefact as a finished one; colleagues share the question bank,
+ *     the papers and the templates, but not each other's work in progress.
+ *
+ * So this is deliberately NOT the same shape as `paperHistory` or
+ * `templateForm`, which are org-wide. If drafts ever become shareable, the
+ * change is to relax the `userId` half here — the org half stays either way.
+ *
+ * A caller with no organisation must match NOTHING: an `undefined` in a Prisma
+ * `where` is DROPPED rather than treated as null, so the condition would vanish
+ * and the query would return every folder in the collection.
+ */
+function draftScope(ctx: { userId: string; organizationId: string }) {
+    return { organizationId: ctx.organizationId, userId: ctx.userId };
+}
 import { Folder, Question } from "@/generated/prisma"
 import { checkFolderAccess } from "@/actions/drafts/folderAccess"
 
@@ -37,7 +62,10 @@ export const createFolder = async (name: string, questions: { id: string }[]): P
         }
 
         const ctx = await getAuthContext();
-        if (!ctx) throw new Error("Unauthorized");
+        // Needs an ORGANISATION, not just a user: an undefined organizationId in
+        // a Prisma `where` is dropped, which would widen the query to every
+        // folder in the collection rather than narrowing it to none.
+        if (!ctx?.organizationId) throw new Error("Unauthorized");
 
         // getAuthContext() has already resolved — and if necessary created —
         // this user, so ctx.userId is authoritative. Re-querying it was a
@@ -49,8 +77,17 @@ export const createFolder = async (name: string, questions: { id: string }[]): P
 
         // Verify question IDs exist
         if (questions.length > 0) {
+            // Tenancy-scoped on purpose: this is the check that decides which
+            // ids may go into a folder. Unscoped, a caller could put another
+            // org's private question into their own folder by id and read it
+            // through the folder from then on.
             const existingQuestions = await prisma.question.findMany({
-                where: { id: { in: questions.map((q) => q.id) } },
+                where: {
+                    AND: [
+                        questionTenancyFilter(ctx.organizationId),
+                        { id: { in: questions.map((q) => q.id) } },
+                    ],
+                },
                 select: { id: true },
             });
             if (existingQuestions.length !== questions.length) {
@@ -62,6 +99,11 @@ export const createFolder = async (name: string, questions: { id: string }[]): P
         const folder = await prisma.folder.create({
             data: {
                 name: name.trim(),
+                // The AUTHORIZATION key. Without it the folder is invisible to
+                // the scoped reads below — including to the person who made it.
+                organization: {
+                    connect: { id: ctx.organizationId },
+                },
                 user: {
                     connect: { id: user.id },
                 },
@@ -104,7 +146,7 @@ export const createFolder = async (name: string, questions: { id: string }[]): P
 export const getFolders = async (): Promise<FolderWithMeta[] | null> => {
     try {
         const ctx = await getAuthContext();
-        if (!ctx) {
+        if (!ctx?.organizationId) {
             throw new Error("Unauthorized");
         }
 
@@ -112,7 +154,7 @@ export const getFolders = async (): Promise<FolderWithMeta[] | null> => {
         // shared with you and merge the two lists; that went away with the
         // collaboration feature.
         const folders = await prisma.folder.findMany({
-            where: { userId: ctx.userId },
+            where: draftScope({ userId: ctx.userId, organizationId: ctx.organizationId }),
             include: {
                 questionRelations: {
                     include: { question: true },
@@ -145,6 +187,9 @@ export const getFolderById = async (folderId: string): Promise<FolderResult> => 
             return { success: false, error: 'Unauthorized' };
         }
 
+        // Unscoped by design: `checkFolderAccess` above already proved org and
+        // authorship. Re-filtering here would be duplicated logic that could
+        // drift from the gate.
         const folder = await prisma.folder.findUnique({
             where: { id: folderId },
             include: {
@@ -170,7 +215,7 @@ export const getFolderById = async (folderId: string): Promise<FolderResult> => 
 export const deleteFolder = async (id: string): Promise<void> => {
     try {
         const ctx = await getAuthContext();
-        if (!ctx) {
+        if (!ctx?.organizationId) {
             throw new Error("Unauthorized");
         }
 
@@ -180,7 +225,7 @@ export const deleteFolder = async (id: string): Promise<void> => {
         // Clerk id into a local one. That translation no longer exists.
         const user = { id: ctx.userId };
         const folder = await prisma.folder.findFirst({
-            where: { id, userId: user.id },
+            where: { id, ...draftScope({ userId: user.id, organizationId: ctx.organizationId }) },
         });
 
         if (!folder) {
@@ -209,7 +254,7 @@ export const deleteFolder = async (id: string): Promise<void> => {
 export const renameFolder = async (id: string, name: string): Promise<Folder> => {
     try {
         const ctx = await getAuthContext();
-        if (!ctx) {
+        if (!ctx?.organizationId) {
             throw new Error("Unauthorized");
         }
 
@@ -219,7 +264,7 @@ export const renameFolder = async (id: string, name: string): Promise<Folder> =>
         // Clerk id into a local one. That translation no longer exists.
         const user = { id: ctx.userId };
         const folder = await prisma.folder.findFirst({
-            where: { id, userId: user.id },
+            where: { id, ...draftScope({ userId: user.id, organizationId: ctx.organizationId }) },
         });
 
         if (!folder) {
@@ -255,7 +300,7 @@ export const updateFolderQuestions = async (
 ): Promise<FolderWithRelations | null> => {
     try {
         const ctx = await getAuthContext();
-        if (!ctx) {
+        if (!ctx?.organizationId) {
             throw new Error("Unauthorized");
         }
 
@@ -265,16 +310,25 @@ export const updateFolderQuestions = async (
         // Clerk id into a local one. That translation no longer exists.
         const user = { id: ctx.userId };
         const folder = await prisma.folder.findFirst({
-            where: { id: folderId, userId: user.id },
+            where: {
+                id: folderId,
+                ...draftScope({ userId: user.id, organizationId: ctx.organizationId }),
+            },
         });
 
         if (!folder) {
             throw new Error("Folder not found or unauthorized");
         }
 
-        // Verify all question IDs exist
+        // Verify all question IDs exist AND are visible to this org — see the
+        // note in createFolder above.
         const questions = await prisma.question.findMany({
-            where: { id: { in: questionIds } },
+            where: {
+                AND: [
+                    questionTenancyFilter(ctx.organizationId),
+                    { id: { in: questionIds } },
+                ],
+            },
             select: { id: true },
         });
 
