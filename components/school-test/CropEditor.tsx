@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, RotateCcw } from "lucide-react";
+import { Loader2, Maximize2, Minimize2, RotateCcw } from "lucide-react";
 import type { Crop } from "@/lib/school-test/types";
 import { cn } from "@/lib/utils";
 
@@ -78,6 +78,14 @@ export function CropEditor({
 
     const [imgLoaded, setImgLoaded] = useState(false);
     const [displaySize, setDisplaySize] = useState({ w: 0, h: 0 });
+    /**
+     * Off by default: the page renders wide enough to read, and the pane scrolls.
+     * That is what you want when placing a crop precisely. On, it shrinks the
+     * page until the whole thing is visible, for finding the right question.
+     */
+    const [fitToScreen, setFitToScreen] = useState(false);
+    const canvasAreaRef = useRef<HTMLDivElement>(null);
+    const [canvasArea, setCanvasArea] = useState({ w: 0, h: 0 });
     const [rect, setRect] = useState<Rect | null>(() => {
         if (!existing) return null;
         const [x, y, w, h] = existing.bbox;
@@ -124,6 +132,32 @@ export function CropEditor({
             window.removeEventListener("resize", measure);
         };
     }, [imgLoaded]);
+
+    // Size of the scrolling pane, which "fit to screen" measures against. Its
+    // height is set by the dialog, not by the image, so reading it is safe.
+    useEffect(() => {
+        const el = canvasAreaRef.current;
+        if (!el) return;
+        const measure = () => setCanvasArea({ w: el.clientWidth, h: el.clientHeight });
+        measure();
+        const ro = new ResizeObserver(measure);
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, []);
+
+    /**
+     * Width the page is drawn at. Normally as wide as the pane allows, capped at
+     * 960 so a big scan does not become unreadably huge; when fitting, narrow
+     * enough that the full height lands inside the pane.
+     */
+    const stageWidth = useMemo(() => {
+        const natural = Math.min(960, canvasArea.w || 960);
+        if (!fitToScreen) return natural;
+        if (!page.sourceWidth || !page.sourceHeight || !canvasArea.h) return natural;
+        // p-4 on the pane, so take the padding off before fitting.
+        const budget = canvasArea.h - 32;
+        return Math.max(160, Math.min(natural, budget * (page.sourceWidth / page.sourceHeight)));
+    }, [fitToScreen, canvasArea, page.sourceWidth, page.sourceHeight]);
 
     // --- Coord helper -------------------------------------------------------
     const clientToSource = useCallback(
@@ -365,6 +399,23 @@ export function CropEditor({
                     <div className="flex items-center gap-2">
                         <button
                             type="button"
+                            onClick={() => setFitToScreen((v) => !v)}
+                            title={
+                                fitToScreen
+                                    ? "Show the page large enough to read"
+                                    : "Shrink the page until all of it is visible"
+                            }
+                            className="flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-2.5 py-1.5 text-[12px] font-medium text-neutral-600 hover:border-neutral-300 hover:text-neutral-900"
+                        >
+                            {fitToScreen ? (
+                                <Maximize2 className="h-3.5 w-3.5" />
+                            ) : (
+                                <Minimize2 className="h-3.5 w-3.5" />
+                            )}
+                            {fitToScreen ? "Actual size" : "Fit to screen"}
+                        </button>
+                        <button
+                            type="button"
                             onClick={() => setRect(null)}
                             disabled={!rect}
                             className="flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-2.5 py-1.5 text-[12px] font-medium text-neutral-600 hover:border-neutral-300 hover:text-neutral-900 disabled:cursor-not-allowed disabled:opacity-50"
@@ -387,11 +438,14 @@ export function CropEditor({
                 </div>
 
                 {/* Canvas area */}
-                <div className="relative min-h-0 flex-1 overflow-auto bg-neutral-100 p-4">
+                <div
+                    ref={canvasAreaRef}
+                    className="relative min-h-0 flex-1 overflow-auto bg-neutral-100 p-4"
+                >
                     <div
                         ref={viewportRef}
                         className="relative mx-auto w-full max-w-full select-none touch-none"
-                        style={{ maxWidth: 960 }}
+                        style={{ maxWidth: stageWidth }}
                         onPointerDown={onViewportPointerDown}
                         onPointerMove={onViewportPointerMove}
                         onPointerUp={onViewportPointerUp}
