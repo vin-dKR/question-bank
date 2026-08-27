@@ -13,7 +13,15 @@ const execFileAsync = promisify(execFile);
 
 const OMR_ROOT = path.join(process.cwd(), 'integrations', 'omr-cg');
 const OMR_WORK_ROOT = path.join(os.tmpdir(), 'question-bank-omr');
-const LOCAL_OMR_PYTHON = path.join(process.cwd(), '.venv-omr', 'bin', 'python');
+// A virtualenv lays itself out differently per platform: bin/python on POSIX,
+// Scripts/python.exe on Windows. Checking only the POSIX path meant the local
+// venv was never found on Windows, so it fell through to bare `python3` — which
+// there resolves to the Microsoft Store stub and fails with "Python was not
+// found" even when Python is installed.
+const LOCAL_OMR_PYTHON =
+    process.platform === 'win32'
+        ? path.join(process.cwd(), '.venv-omr', 'Scripts', 'python.exe')
+        : path.join(process.cwd(), '.venv-omr', 'bin', 'python');
 const OPTION_LABELS = 'ABCDEFGH';
 const OMR_SERVICE_TOKEN_HEADER = 'x-omr-service-token';
 
@@ -553,7 +561,13 @@ async function runOmrPython<T>(args: string[], timeout = 60_000): Promise<T> {
         return runRemoteOmrPython<T>(args);
     }
 
-    const pythonBin = process.env.OMR_PYTHON_BIN || (existsSync(LOCAL_OMR_PYTHON) ? LOCAL_OMR_PYTHON : 'python3');
+    // Last-resort interpreter name. On Windows `python3` is normally the Microsoft
+    // Store alias — a stub that exists on PATH and errors when run — so `python`
+    // is the one that reaches a real install.
+    const fallbackPython = process.platform === 'win32' ? 'python' : 'python3';
+    const pythonBin =
+        process.env.OMR_PYTHON_BIN ||
+        (existsSync(LOCAL_OMR_PYTHON) ? LOCAL_OMR_PYTHON : fallbackPython);
 
     try {
         const { stdout } = await execFileAsync(pythonBin, args, {
