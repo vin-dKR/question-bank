@@ -1,18 +1,16 @@
-[[headers]]
-  for = "/api/omr/*"  # Apply to all /api/omr/* endpoints, including /api/omr/fetchTestbyId
-  [headers.values]
-    Access-Control-Allow-Origin = "https://omr-checker.vercel.app"
-    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization"
-    Access-Control-Allow-Credentials = "true"
-    Access-Control-Max-Age = "86400"
-
-[[headers]]
-  for = "/api/questions"  # Keep existing rule for /api/questions
-  [headers.values]
-    Access-Control-Allow-Origin = "https://question-editor.vercel.app,https://omr-checker.vercel.app,https://multi-crop.vercel.app,http://localhost:3000,http://localhost:3001,http://localhost:5173"
-    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization"
-    Access-Control-Allow-Credentials = "true"
-    Access-Control-Max-Age = "86400"
-
+# CORS is owned at RUNTIME by lib/cors.ts + middleware.ts (the single source of
+# truth) — see docs/API_SECURITY.md §Layer 6. The previous static rules here
+# were removed because:
+#
+#   1. `Access-Control-Allow-Origin` was set to a COMMA-JOINED list of origins,
+#      which is invalid per the CORS spec — a browser accepts exactly one origin
+#      (or `*`, which is disallowed with credentials). So the rule granted no one
+#      credentialed access; the effective grant already came from the runtime
+#      layer's per-request origin reflection.
+#   2. They set `Access-Control-Allow-Credentials: true`, which we no longer use
+#      (the satellite tools authenticate with a Bearer token, not cookies).
+#   3. Three separate copies of the origin allowlist (here, middleware.ts,
+#      lib/cors.ts) had already drifted out of sync.
+#
+# Keeping CORS in one runtime place stops the drift and lets the allowlist gate
+# localhost by environment. Do not re-add static CORS headers here.
