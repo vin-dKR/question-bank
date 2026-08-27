@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { getAuthContext } from "@/lib/auth/session";
+import { questionTenancyFilter } from "@/lib/auth/questionScope";
 
 /**
  * Folder authorization and question ordering.
@@ -44,12 +45,21 @@ export async function checkFolderAccess(
         }
 
         const ctx = await getAuthContext();
-        if (!ctx) {
+        if (!ctx?.organizationId) {
             return { success: false, error: 'Unauthorized' };
         }
 
+        // Org AND author: drafts are author-private inside the organisation
+        // (see the note on `draftScope` in draft.ts). The org half is the
+        // authorization boundary; the userId half is the visibility rule within
+        // it. Both are required here because this is the gate every folder
+        // mutation goes through.
         const folder = await prisma.folder.findFirst({
-            where: { id: folderId, userId: ctx.userId },
+            where: {
+                id: folderId,
+                organizationId: ctx.organizationId,
+                userId: ctx.userId,
+            },
             select: { id: true },
         });
 
@@ -59,6 +69,10 @@ export async function checkFolderAccess(
 
         // Distinguish "doesn't exist" from "not yours" for a useful message, but
         // never leak the existence of another org's folder beyond that.
+        // Existence check only — deliberately NOT scoped, because its whole
+        // purpose is to tell "no such folder" from "not yours". It selects `id`
+        // and nothing else, so it distinguishes the two without revealing
+        // anything about a folder in another org.
         const exists = await prisma.folder.findUnique({
             where: { id: folderId },
             select: { id: true },
@@ -95,8 +109,15 @@ export async function updateFolderQuestionsWithOrder(
             return accessCheck;
         }
 
+        // Same tenancy check as createFolder: the ids come from the browser,
+        // and this is what decides which of them may enter a folder.
         const questions = await prisma.question.findMany({
-            where: { id: { in: questionIds } },
+            where: {
+                AND: [
+                    questionTenancyFilter(ctx.organizationId),
+                    { id: { in: questionIds } },
+                ],
+            },
             select: { id: true },
         });
 

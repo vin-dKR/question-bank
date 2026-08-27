@@ -24,9 +24,12 @@ export const createTemplate = async (formData: Template): Promise<{
 
     const ctx = await getAuthContext()
     const userId = ctx?.userId
+    // ACCESS key. `userId` below is authorship only (doc §1).
+    const organizationId = ctx?.organizationId
+    const organizationName = ctx?.memberships.find((m) => m.isActive)?.name ?? null
     console.log('Auth result - userId:', userId);
 
-    if (!userId) {
+    if (!userId || !organizationId) {
         console.error('No userId found in auth');
         return { data: null, error: "Unauthorized" };
     }
@@ -41,9 +44,16 @@ export const createTemplate = async (formData: Template): Promise<{
     try {
         const newTemplate = await prisma.templateForm.create({
             data: {
+                // Authorship. Access is decided by organizationId.
                 userId,
+                organizationId,
                 templateName: formData.templateName.trim(),
-                institution: formData.institution || '',
+                // Falls back to the ACTIVE organisation's name rather than an
+                // empty string. The institution used to be typed independently
+                // into four places that never agreed (doc §4, and T-20); the org
+                // is the single source of truth for it now, and a teacher at two
+                // institutions gets the right header without thinking about it.
+                institution: formData.institution || organizationName || '',
                 institutionAddress: formData.institutionAddress || '',
                 marks: formData.marks || '',
                 time: formData.time || '',
@@ -77,8 +87,10 @@ export const getUserTemplates = async (): Promise<{
 }> => {
     const ctx = await getAuthContext()
     const userId = ctx?.userId
+    // ACCESS key. `userId` below is authorship only (doc §1).
+    const organizationId = ctx?.organizationId
 
-    if (!userId) {
+    if (!userId || !organizationId) {
         return {
             data: null,
             error: "Unauthorized"
@@ -88,7 +100,7 @@ export const getUserTemplates = async (): Promise<{
     try {
         // Optimized query with minimal logging and efficient field selection
         const templates = await prisma.templateForm.findMany({
-            where: { userId },
+            where: { organizationId },
             select: {
                 id: true,
                 templateName: true,
@@ -129,8 +141,10 @@ export const deleteTemplate = async (templateId: string): Promise<{
 }> => {
     const ctx = await getAuthContext()
     const userId = ctx?.userId
+    // ACCESS key. `userId` below is authorship only (doc §1).
+    const organizationId = ctx?.organizationId
 
-    if (!userId) {
+    if (!userId || !organizationId) {
         return {
             success: false,
             error: "Unauthorized"
@@ -142,7 +156,7 @@ export const deleteTemplate = async (templateId: string): Promise<{
         const deletedTemplate = await prisma.templateForm.deleteMany({
             where: {
                 id: templateId,
-                userId
+                organizationId
             }
         })
 
@@ -176,15 +190,17 @@ export const updateTemplate = async (
 }> => {
     const ctx = await getAuthContext()
     const userId = ctx?.userId
+    // ACCESS key. `userId` below is authorship only (doc §1).
+    const organizationId = ctx?.organizationId
 
-    if (!userId) {
+    if (!userId || !organizationId) {
         return { success: false, error: "Unauthorized" }
     }
 
     try {
         // Ensure the template belongs to the user
         const existing = await prisma.templateForm.findFirst({
-            where: { id: templateId, userId },
+            where: { id: templateId, organizationId },
         })
 
         if (!existing) {

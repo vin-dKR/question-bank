@@ -2,6 +2,7 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { getQuestions, searchQuestions } from "@/actions/question/questionBank";
+import { useOrgKey } from "@/provider/ActiveOrgProvider";
 
 /**
  * Arguments for `useQuestions`.
@@ -47,11 +48,19 @@ export function useQuestions({
     searchQuery,
     pageSize = 20,
 }: UseQuestionsArgs) {
+    const orgKey = useOrgKey();
     const trimmedQuery = (searchQuery ?? "").trim();
     const isSearching = trimmedQuery.length >= 2;
     const teacherSubject = isTeacher ? subject : undefined;
 
     return useInfiniteQuery<QuestionsPage>({
+        // The org segment sits LAST, not first, and that placement is load
+        // bearing. TanStack matches invalidation keys by PREFIX, and the
+        // mutations in hooks/queries/mutations/* invalidate with
+        // `{ queryKey: ["questions"] }`. Putting the org id in front would make
+        // that prefix stop matching and every optimistic update would silently
+        // stop refetching — a bug with no error and no visible symptom until
+        // stale data is on screen.
         queryKey: [
             "questions",
             {
@@ -73,6 +82,7 @@ export function useQuestions({
                 searchQuery: isSearching ? trimmedQuery : null,
                 pageSize,
             },
+            orgKey,
         ],
         queryFn: async ({ pageParam }): Promise<QuestionsPage> => {
             if (isSearching) {

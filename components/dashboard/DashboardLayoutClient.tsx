@@ -7,8 +7,16 @@ import { useCurrentUser } from "@/hooks/auth/useCurrentUser";
 import { sidebarItems } from "@/constant/sidebar/sidebar";
 import { Sidebar } from "@/components/dashboard/sidebar/Sidebar";
 import { Header } from "@/components/dashboard/content/Header";
+import type { SwitcherOrg } from "@/components/organization/OrgSwitcher";
 
-export function DashboardLayoutClient({ children }: { children: React.ReactNode }) {
+export function DashboardLayoutClient({
+    children,
+    orgs = [],
+}: {
+    children: React.ReactNode;
+    /** Resolved server-side in the layout — see AuthContext.memberships. */
+    orgs?: SwitcherOrg[];
+}) {
     const pathname = usePathname();
     const { user, signOut } = useCurrentUser();
     const isMobile = useMediaQuery({ maxWidth: 768 });
@@ -94,7 +102,7 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
                 />
             </div>
             <div className="flex-1 flex flex-col overflow-hidden">
-                <Header activeItem={activeItem} user={user} handleLogout={handleLogout} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} isMobile={isMobile} />
+                <Header activeItem={activeItem} user={user} orgs={orgs} handleLogout={handleLogout} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} isMobile={isMobile} />
                 {children}
             </div>
         </div>

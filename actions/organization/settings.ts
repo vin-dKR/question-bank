@@ -6,7 +6,10 @@ import prisma from "@/lib/prisma";
 import { AuthError, requireOrgContext } from "@/lib/auth/session";
 import {
     ASSIGNABLE_ROLES,
+    INVITATION_EXPIRY_DAYS,
+    INVITATION_HISTORY_DAYS,
     type AssignableRole,
+    type InvitationState,
     type OrgInvitation,
     type OrgSettings,
 } from "./types";
@@ -33,6 +36,73 @@ function fail(error: unknown, fallback: string) {
     console.error(fallback, error);
     const message = error instanceof Error ? error.message : fallback;
     return { success: false as const, error: message };
+}
+
+/**
+ * Shapes one WorkOS invitation for the UI.
+ *
+ * `acceptUrl` is only carried for PENDING invitations. It is a bearer
+ * credential — whoever holds it joins the org as the invited address — so an
+ * accepted or revoked invite must not keep handing it out.
+ */
+function toOrgInvitation(i: {
+    id: string;
+    email: string;
+    state: string;
+    roleSlug?: string | null;
+    createdAt: string;
+    expiresAt: string;
+    acceptedAt?: string | null;
+    acceptInvitationUrl?: string | null;
+}): OrgInvitation {
+    const state = i.state as InvitationState;
+    return {
+        id: i.id,
+        email: i.email,
+        state,
+        role: i.roleSlug ?? null,
+        createdAt: i.createdAt,
+        expiresAt: i.expiresAt,
+        acceptedAt: i.acceptedAt ?? null,
+        acceptUrl: state === "pending" ? i.acceptInvitationUrl ?? null : null,
+    };
+}
+
+/**
+ * Pending first, then most recent. Terminal invitations older than
+ * INVITATION_HISTORY_DAYS drop off — they have answered the only question they
+ * were kept around for.
+ */
+function presentableInvitations(all: OrgInvitation[]): OrgInvitation[] {
+    const cutoff = Date.now() - INVITATION_HISTORY_DAYS * 24 * 60 * 60 * 1000;
+
+    return all
+        .filter((i) => {
+            if (i.state === "pending") return true;
+            const at = Date.parse(i.acceptedAt ?? i.createdAt);
+            return Number.isNaN(at) ? false : at >= cutoff;
+        })
+        .sort((a, b) => {
+            if (a.state === "pending" && b.state !== "pending") return -1;
+            if (b.state === "pending" && a.state !== "pending") return 1;
+            return Date.parse(b.createdAt) - Date.parse(a.createdAt);
+        });
+}
+
+/**
+ * Loads an invitation and proves it belongs to the caller's org.
+ *
+ * The id arrives from the browser. Without this, an admin of any org could
+ * resend or revoke any other org's invitation — and resending is the more
+ * dangerous of the two, because it re-delivers a live accept link.
+ */
+async function requireOwnInvitation(invitationId: string, workosOrgId: string) {
+    const workos = getWorkOS();
+    const invitation = await workos.userManagement.getInvitation(invitationId);
+    if (!invitation || invitation.organizationId !== workosOrgId) {
+        throw new AuthError("That invitation isn't yours to manage.", 403);
+    }
+    return invitation;
 }
 
 /** Everything the settings page needs, in one round trip. */
@@ -67,22 +137,28 @@ export async function getOrganizationSettings(): Promise<
 
         if (!org) throw new AuthError("Organization not found.", 403);
 
-        // Pending invitations live only in WorkOS — we deliberately don't mirror
-        // them, so there is nothing to keep in sync and no stale row to leak an
-        // address after it's revoked.
+        // Invitations live only in WorkOS — we deliberately don't mirror them, so
+        // there is nothing to keep in sync and no stale row to leak an address
+        // after it's revoked.
+        //
+        // Terminal states are NOT filtered out. They used to be, and it meant an
+        // accepted invite, an expired one and one that was never sent all looked
+        // identical from the settings page: a row that quietly vanished.
         let invitations: OrgInvitation[] = [];
         try {
             const list = await getWorkOS().userManagement.listInvitations({
                 organizationId: org.workosOrgId,
+                // WorkOS list endpoints default to a page of TEN. That was
+                // already quietly dropping pending invites for a busy org; now
+                // that terminal states count against the same page, a handful of
+                // old accepted invitations could push every pending one off it —
+                // and a pending invite that isn't listed can't be resent.
+                // 100 is the maximum WorkOS allows, and `desc` puts the newest
+                // first so the cut, if it ever comes, falls on the oldest.
+                limit: 100,
+                order: "desc",
             });
-            invitations = list.data
-                .filter((i) => i.state === "pending")
-                .map((i) => ({
-                    id: i.id,
-                    email: i.email,
-                    state: i.state,
-                    expiresAt: i.expiresAt,
-                }));
+            invitations = presentableInvitations(list.data.map(toOrgInvitation));
         } catch (err) {
             // A WorkOS blip shouldn't blank the whole settings page.
             console.error("[org settings] could not list invitations", err);
@@ -191,11 +267,33 @@ export async function inviteMember(email: string, role: AssignableRole = "member
             return { success: false as const, error: "That person is already a member." };
         }
 
-        await getWorkOS().userManagement.sendInvitation({
+        const workos = getWorkOS();
+
+        // Checking memberships alone was not enough: an address with an invite
+        // already in flight isn't a member yet, so a second "Invite" quietly
+        // minted a SECOND invitation and sent a second email with a second live
+        // link. Surface it instead, with a code the UI turns into "Resend".
+        const existing = await workos.userManagement.listInvitations({
+            organizationId: org.workosOrgId,
+            email: normalized,
+        });
+        const pending = existing.data.find((i) => i.state === "pending");
+        if (pending) {
+            return {
+                success: false as const,
+                error: `${normalized} already has an invitation pending.`,
+                code: "already_invited" as const,
+                invitationId: pending.id,
+            };
+        }
+
+        await workos.userManagement.sendInvitation({
             email: normalized,
             organizationId: org.workosOrgId,
             inviterUserId: ctx.workosUserId,
             roleSlug: role,
+            // WorkOS defaults to 7 days. See INVITATION_EXPIRY_DAYS.
+            expiresInDays: INVITATION_EXPIRY_DAYS,
         });
 
         revalidatePath("/settings");
@@ -212,28 +310,64 @@ export async function revokeInvitation(invitationId: string) {
             throw new AuthError("Only an admin can revoke invitations.", 403);
         }
 
-        // Confirm the invitation belongs to THIS org before touching it —
-        // the id comes from the browser, and without this check any admin of
-        // any org could revoke any other org's invitation.
         const org = await prisma.organization.findUnique({
             where: { id: ctx.organizationId },
             select: { workosOrgId: true },
         });
         if (!org) throw new AuthError("Organization not found.", 403);
 
-        const workos = getWorkOS();
-        const list = await workos.userManagement.listInvitations({
-            organizationId: org.workosOrgId,
-        });
-        if (!list.data.some((i) => i.id === invitationId)) {
-            throw new AuthError("That invitation isn't yours to revoke.", 403);
-        }
+        await requireOwnInvitation(invitationId, org.workosOrgId);
 
-        await workos.userManagement.revokeInvitation(invitationId);
+        await getWorkOS().userManagement.revokeInvitation(invitationId);
         revalidatePath("/settings");
         return { success: true as const };
     } catch (error) {
         return fail(error, "Failed to revoke the invitation");
+    }
+}
+
+/**
+ * Sends the invitation email again, same invitation and same link.
+ *
+ * This is a first-class WorkOS operation, NOT revoke-then-invite. That matters:
+ * revoking kills the link the invitee may already have open in another tab, and
+ * re-inviting resets the clock and the role. Resend touches neither.
+ *
+ * The realistic trigger is a spam filter, so this is the button an admin reaches
+ * for most often after the first invite fails to land.
+ */
+export async function resendInvitation(invitationId: string) {
+    try {
+        const ctx = await requireOrgContext();
+        if (!(ctx.role === "admin" || ctx.isAdmin)) {
+            throw new AuthError("Only an admin can resend invitations.", 403);
+        }
+
+        const org = await prisma.organization.findUnique({
+            where: { id: ctx.organizationId },
+            select: { workosOrgId: true },
+        });
+        if (!org) throw new AuthError("Organization not found.", 403);
+
+        // Ownership check first: resending re-delivers a live accept link, so
+        // this is the more dangerous of the two id-from-the-browser paths.
+        const invitation = await requireOwnInvitation(invitationId, org.workosOrgId);
+
+        if (invitation.state !== "pending") {
+            return {
+                success: false as const,
+                error:
+                    invitation.state === "accepted"
+                        ? "They've already accepted — no need to resend."
+                        : "That invitation is no longer active. Send a new one instead.",
+            };
+        }
+
+        await getWorkOS().userManagement.resendInvitation(invitationId);
+        revalidatePath("/settings");
+        return { success: true as const, email: invitation.email };
+    } catch (error) {
+        return fail(error, "Failed to resend the invitation");
     }
 }
 

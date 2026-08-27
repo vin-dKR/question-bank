@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getWorkOS } from '@workos-inc/authkit-nextjs'
+import { revalidatePath } from 'next/cache'
 import prisma from '@/lib/prisma'
 
 /**
@@ -32,6 +33,10 @@ type HandledEvent =
     | 'organization_membership.created'
     | 'organization_membership.updated'
     | 'organization_membership.deleted'
+    | 'invitation.created'
+    | 'invitation.accepted'
+    | 'invitation.revoked'
+    | 'invitation.resent'
 
 export async function POST(req: NextRequest) {
     const secret = process.env.WORKOS_WEBHOOK_SECRET
@@ -201,6 +206,31 @@ async function handle(type: HandledEvent, data: Record<string, unknown>) {
         case 'organization_membership.deleted': {
             const workosMembershipId = data.id as string
             await prisma.membership.deleteMany({ where: { workosMembershipId } })
+            return
+        }
+
+        case 'invitation.created':
+        case 'invitation.accepted':
+        case 'invitation.revoked':
+        case 'invitation.resent': {
+            // Invitations are NOT mirrored locally — the settings page reads
+            // them live from WorkOS so a revoked invite leaves no stale row
+            // holding an email address. There is therefore nothing to write
+            // here; the only thing that goes stale is Next's cached render of
+            // /settings, where an admin is watching for exactly this change.
+            //
+            // Without it, an invitation that has been accepted keeps showing as
+            // Pending until someone happens to hard-refresh — which is the same
+            // "did it work?" ambiguity the state chips exist to remove.
+            //
+            // The membership itself arrives separately as
+            // organization_membership.created, handled above.
+            //
+            // There is deliberately no 'invitation.expired' case: WorkOS emits
+            // no such event, because expiry is the passage of time rather than
+            // something that happens. Reading invitations live means an expired
+            // one simply reports `state: "expired"` on the next load.
+            revalidatePath('/settings')
             return
         }
 
