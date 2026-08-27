@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { handleCorsResponse, handleOptionsRequest } from "@/lib/cors";
-import { AuthError, requireApiActor } from "@/lib/auth/guard";
+import { AuthError, requireApiActor, resolveApiActorOrg } from "@/lib/auth/guard";
 import { clientIp, enforceRateLimit, RateLimitError } from "@/lib/ratelimit";
 import { audit } from "@/lib/audit";
 
@@ -157,7 +157,35 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
-        await requireApiActor(request);
+        const actor = await requireApiActor(request);
+
+        /**
+         * Which tier this upload lands in. Stamped from the SERVER, never from
+         * the body — otherwise any caller could post into another tenant's org,
+         * or into the shared bank.
+         *
+         *   admin user -> null, the global shared bank (doc §13)
+         *   other user -> their own org
+         *   service    -> the org it named; `allowGlobal` is deliberately NOT
+         *                 set, so a satellite that names none is refused rather
+         *                 than silently publishing a school's paper to everyone
+         *
+         * THIS IS NOT THEORETICAL. The read side was hardened on 25 Aug and
+         * this write path was left stamping nothing — so on 26 Aug a single
+         * extractor upload put 122 questions into the database with the field
+         * ABSENT. Absent is worse than wrong: Prisma's `{ organizationId: null }`
+         * matches only rows where the field EXISTS and is null (doc §11a), so
+         * those rows belonged to the shared bank and yet no query could see
+         * them. They were invisible to every customer including their author,
+         * with no error anywhere. Found by scripts/workos/verify-org-scoping.ts
+         * and normalised by hand.
+         *
+         * Passing `null` explicitly therefore matters as much as passing an org.
+         */
+        const organizationId =
+            actor.kind === "user" && actor.user.isAdmin
+                ? null
+                : await resolveApiActorOrg(actor, request);
 
         const body = await request.json();
 
@@ -210,7 +238,8 @@ export async function POST(request: NextRequest) {
                             subject,
                             chapter,
                             answer,
-                            flagged: false
+                            flagged: false,
+                            organizationId
                         }
                     });
 
@@ -277,7 +306,8 @@ export async function POST(request: NextRequest) {
                     subject,
                     chapter,
                     answer,
-                    flagged: false
+                    flagged: false,
+                    organizationId
                 }
             });
 

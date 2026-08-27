@@ -147,12 +147,13 @@ export async function requireApiActor(
  * The organization a request acts on behalf of.
  *
  * For a signed-in user this is simply their active org. For the SERVICE key it
- * is a genuine problem: `requireApiActor` returns `{ kind: "service" }` with no
- * organization at all, and a create path that stamps nothing writes a question
- * with NO organizationId — which means the global shared bank. A satellite tool
- * uploading one school's private paper would have published it to every
- * customer, silently, and the row would also have been absent-not-null and so
- * invisible to the shared-bank filter (doc §11a).
+ * is a genuine problem: `requireApiActor` identifies WHICH TOOL is calling
+ * (`keyLabel`) but not which organization it is acting for, and a create path
+ * that stamps nothing writes a question with NO organizationId at all. That is
+ * not "the shared bank" — an ABSENT field does not match
+ * `{ organizationId: null }` on MongoDB (doc §11a), so the row is invisible to
+ * every query in the product, including its author's. 122 questions landed in
+ * exactly that state on 26 Aug.
  *
  * So the service caller must NAME its organization. `x-organization-id` accepts
  * either the local `Organization.id` or the WorkOS `org_…` id, whichever the
@@ -163,7 +164,10 @@ export async function requireApiActor(
  * fine (it's shared), whereas an unscoped service WRITE is the leak above.
  */
 export async function resolveApiActorOrg(
-    actor: { kind: "user"; user: AuthedUser } | { kind: "service" },
+    // Derived from `requireApiActor` rather than restated, so adding a field to
+    // the actor (as the multi-key work added `keyLabel`) can't leave this
+    // signature quietly describing a shape that no longer exists.
+    actor: Awaited<ReturnType<typeof requireApiActor>>,
     request: Request,
     opts: { allowGlobal?: boolean } = {}
 ): Promise<string | null> {
