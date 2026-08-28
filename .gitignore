@@ -57,3 +57,4 @@ prisma/schema.prisma.bak
 # Rollback snapshots written before a bulk database edit. They hold real
 # question content and belong on disk, not in the repository.
 *-backup-*.json
+.integrity-baseline.json

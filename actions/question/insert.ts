@@ -7,6 +7,7 @@ import {
     assertCanMutateQuestion,
     requireUser,
 } from '@/lib/auth/guard';
+import { audit } from '@/lib/audit';
 
 /**
  * SECURITY NOTE: every export in this file is a Next.js server action, which
@@ -73,14 +74,56 @@ export async function updateQuestion(id: string, questionData: Partial<Question>
     }
 }
 
+/**
+ * Deletes a question — and RECORDS that it did.
+ *
+ * This is the only path in the codebase that hard-deletes a Question. It ran
+ * silently until 28 Aug, which is why the loss of 122 rows on 26 Aug could not
+ * be attributed to anything: the oplog showed no delete, and the application
+ * had no record either, so there was nothing to distinguish "the app did it"
+ * from "the infrastructure did it". Now there is.
+ *
+ * The row is snapshotted into the audit line before it goes, so a delete is
+ * recoverable from logs even after the oplog window closes.
+ */
 export async function deleteQuestion(id: string) {
     try {
         const user = await requireUser();
         await assertCanMutateQuestion(id, user);
 
+        // Read BEFORE deleting: afterwards there is nothing left to describe,
+        // and an audit line saying only "an id was deleted" is close to useless.
+        const doomed = await prisma.question.findUnique({
+            where: { id },
+            select: {
+                id: true,
+                question_text: true,
+                file_name: true,
+                subject: true,
+                organizationId: true,
+            },
+        });
+
         await prisma.question.delete({
             where: { id }
         });
+
+        audit({
+            event: "question.delete",
+            actorType: "user",
+            actorId: user.userId,
+            organizationId: doomed?.organizationId ?? null,
+            count: 1,
+            meta: {
+                questionId: id,
+                file_name: doomed?.file_name ?? null,
+                subject: doomed?.subject ?? null,
+                // Enough to identify what was lost without dumping the bank
+                // into the log stream.
+                excerpt: doomed?.question_text?.slice(0, 120) ?? null,
+            },
+        });
+
         return { success: true as const };
     } catch (error) {
         return toErrorResponse(error, 'Failed to delete question');
