@@ -204,7 +204,7 @@ const Hero = () => {
                             <aside className="hidden sm:flex w-14 md:w-52 flex-col border-r border-black/5 bg-white">
                                 <div className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2.5 border-b border-black/5">
                                     <video
-                                        src="/output.mp4"
+                                        src="/output.webm"
                                         autoPlay
                                         loop
                                         muted

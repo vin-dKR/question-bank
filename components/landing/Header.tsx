@@ -18,7 +18,7 @@ const Header = () => {
                 <div className="flex w-full items-center justify-between h-14 md:h-16">
                     <div className="flex items-center">
                         <video
-                            src="/output.mp4"
+                            src="/output.webm"
                             autoPlay
                             loop
                             muted
