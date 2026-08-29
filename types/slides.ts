@@ -47,21 +47,89 @@ export interface Bind {
     when: BindWhen;
 }
 
-/** Font stack by index — kept as indices so templates stay JSON-portable. */
+/**
+ * Font stack by index — kept as indices so templates stay JSON-portable.
+ *
+ * IMPORTANT: only ever APPEND to this list. Saved templates store the numeric
+ * index, so reordering would silently restyle every existing deck. The first five
+ * are the original set; the rest are system/office fonts that both render in the
+ * browser and exist in PowerPoint, so they round-trip cleanly to .pptx.
+ */
 export const FONTS = [
     "Inter",
     "Space Grotesk",
     "Playfair Display",
     "Georgia",
     "JetBrains Mono",
+    "Arial",
+    "Calibri",
+    "Times New Roman",
+    "Verdana",
+    "Trebuchet MS",
+    "Tahoma",
+    "Courier New",
+    "Comic Sans MS",
+    "Garamond",
+    "Segoe UI",
 ] as const;
 
-export type FontIndex = 0 | 1 | 2 | 3 | 4;
+/** An index into FONTS. Kept wide (number) so the list can grow without a retype. */
+export type FontIndex = number;
 /** 500 is included because medium reads better than regular for question bodies. */
 export type FontWeight = 300 | 400 | 500 | 600 | 700 | 800;
 export type Align = "left" | "center" | "right";
 export type VAlign = "top" | "center" | "bottom";
 export type Fit = "cover" | "contain";
+
+/**
+ * Drop shadow, modelled on PowerPoint's own shadow so it maps 1:1 onto pptxgenjs
+ * `ShadowProps`. `offset`/`blur` are px (converted to points on export), `angle` is
+ * degrees (0 = right, 90 = down), `opacity` is 0..1.
+ */
+export interface Shadow {
+    color: string;
+    blur: number;
+    offset: number;
+    angle: number;
+    opacity: number;
+}
+
+/** A two-stop linear gradient. `angle` is degrees, 0 = left→right. */
+export interface Gradient {
+    angle: number;
+    from: string;
+    to: string;
+}
+
+/**
+ * Vector shapes beyond the primitive rect/ellipse/line. Every name here is a valid
+ * pptxgenjs `ShapeType`, so export is a direct lookup; the editor draws each one as
+ * an SVG (see lib/slides/shapes.ts).
+ */
+export const SHAPE_KINDS = [
+    "triangle",
+    "rtTriangle",
+    "diamond",
+    "parallelogram",
+    "trapezoid",
+    "pentagon",
+    "hexagon",
+    "octagon",
+    "star4",
+    "star5",
+    "star6",
+    "rightArrow",
+    "leftArrow",
+    "upArrow",
+    "downArrow",
+    "chevron",
+    "homePlate",
+    "plus",
+    "heart",
+    "cloud",
+] as const;
+
+export type ShapeKind = (typeof SHAPE_KINDS)[number];
 
 interface ElementBase {
     id: string;
@@ -70,6 +138,10 @@ interface ElementBase {
     w: number;
     h: number;
     opacity: number;
+    /** Clockwise rotation in degrees. Purely visual; stored geometry is unrotated. */
+    rotation?: number;
+    /** Drop shadow, if any. */
+    shadow?: Shadow;
     /**
      * Page furniture — frames, rules, accent bars, footers. Repeats untouched and
      * is never filled with data. Mutually exclusive with `bind`; see assertValid().
@@ -85,6 +157,12 @@ export interface TextElement extends ElementBase {
     font: FontIndex;
     weight: FontWeight;
     italic: boolean;
+    /** Underline the whole box. */
+    underline?: boolean;
+    /** Strike through the whole box. */
+    strike?: boolean;
+    /** Highlight colour behind the text, or "" / undefined for none. */
+    highlight?: string;
     color: string;
     align: Align;
     valign: VAlign;
@@ -120,6 +198,24 @@ export interface ImageElement extends ElementBase {
     src: string;
     fit: Fit;
     radius: number;
+    /** Optional border. */
+    stroke?: string;
+    strokeWidth?: number;
+    flipH?: boolean;
+    flipV?: boolean;
+}
+
+/**
+ * A vector shape from the extended library (triangle, star, arrow, …). rect and
+ * ellipse stay as their own types for backward compatibility; everything else is a
+ * ShapeElement keyed by `shape`.
+ */
+export interface ShapeElement extends ElementBase {
+    type: "shape";
+    shape: ShapeKind;
+    fill: string;
+    stroke: string;
+    strokeWidth: number;
 }
 
 export type SlideElement =
@@ -127,11 +223,18 @@ export type SlideElement =
     | RectElement
     | EllipseElement
     | LineElement
-    | ImageElement;
+    | ImageElement
+    | ShapeElement;
 
 export interface Slide {
     id: string;
     bg: string;
+    /**
+     * A gradient background. When set, the editor paints it as a live CSS gradient
+     * and the export path uses `bgImage` (a rasterised copy of this gradient) so the
+     * .pptx matches. Kept alongside `bgImage` purely so the gradient stays editable.
+     */
+    bgGradient?: Gradient;
     /**
      * Full-bleed background image, painted under every element. This is how a
      * coaching centre's own branded design is applied — either an uploaded image

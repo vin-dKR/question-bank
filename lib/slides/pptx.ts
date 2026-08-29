@@ -11,7 +11,7 @@
  * than failing the export.
  */
 import PptxGenJS from "pptxgenjs";
-import type { ImageElement, LineElement, Slide, TextElement } from "@/types/slides";
+import type { ImageElement, LineElement, Shadow, Slide, TextElement } from "@/types/slides";
 import { CANVAS_H, CANVAS_W, FONTS, PX_PER_IN } from "@/types/slides";
 import { hasLatex } from "./generate";
 
@@ -54,6 +54,26 @@ function shapeLine(stroke: string, strokeWidth: number, opacity: number) {
     return strokeWidth > 0 && !isTransparent(stroke)
         ? { line: { color: hex(stroke), width: pt(strokeWidth), transparency: alpha(opacity) } }
         : {};
+}
+
+/** Our Shadow → pptxgenjs ShadowProps (points; angle 0-359). */
+function shadowOpt(sh?: Shadow) {
+    if (!sh) return {};
+    return {
+        shadow: {
+            type: "outer" as const,
+            color: hex(sh.color, "000000"),
+            opacity: Math.max(0, Math.min(1, sh.opacity)),
+            blur: pt(sh.blur),
+            offset: pt(sh.offset),
+            angle: ((Math.round(sh.angle) % 360) + 360) % 360,
+        },
+    };
+}
+
+/** Rotation, only when non-zero, so unrotated elements stay clean. */
+function rotateOpt(rotation?: number) {
+    return rotation ? { rotate: Math.round(rotation) } : {};
 }
 
 export interface RasterizeLatex {
@@ -131,11 +151,16 @@ async function addText(
         color: hex(el.color, "FFFFFF"),
         bold: el.weight >= 600,
         italic: el.italic,
+        underline: el.underline ? { style: "sng", color: hex(el.color, "FFFFFF") } : undefined,
+        strike: el.strike ? "sngStrike" : undefined,
+        highlight: el.highlight ? hex(el.highlight) : undefined,
         align: el.align,
         valign: VALIGN[el.valign] ?? "top",
         charSpacing: pt(el.tracking),
         lineSpacingMultiple: el.lineHeight,
         transparency: alpha(el.opacity),
+        ...rotateOpt(el.rotation),
+        ...shadowOpt(el.shadow),
         // Long questions in a fixed box shrink rather than overflow.
         shrinkText: true,
         wrap: true,
@@ -172,7 +197,7 @@ async function fetchAsDataUrl(url: string): Promise<string | null> {
     return result;
 }
 
-async function addImage(slide: PptxGenJS.Slide, el: ImageElement): Promise<void> {
+async function addImage(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: ImageElement): Promise<void> {
     if (!el.src) return;
 
     // A missing diagram should cost one image, not the whole deck.
@@ -187,7 +212,28 @@ async function addImage(slide: PptxGenJS.Slide, el: ImageElement): Promise<void>
         h: inch(el.h),
         sizing: { type: el.fit, w: inch(el.w), h: inch(el.h) },
         transparency: alpha(el.opacity),
+        flipH: el.flipH,
+        flipV: el.flipV,
+        // pptx image rounding is all-or-nothing (a circle), so only round when the
+        // radius is large enough to read as intentional.
+        rounding: !!el.radius && el.radius >= Math.min(el.w, el.h) / 2,
+        ...rotateOpt(el.rotation),
+        ...shadowOpt(el.shadow),
     });
+
+    // pptx images have no border property, so a border is drawn as an outlined
+    // frame over the picture at the same box.
+    if (el.strokeWidth && el.stroke && !isTransparent(el.stroke)) {
+        slide.addShape(pptx.ShapeType.rect, {
+            x: inch(el.x),
+            y: inch(el.y),
+            w: inch(el.w),
+            h: inch(el.h),
+            fill: { type: "none" },
+            line: { color: hex(el.stroke), width: pt(el.strokeWidth) },
+            ...rotateOpt(el.rotation),
+        });
+    }
 }
 
 function addLine(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: LineElement): void {
@@ -201,6 +247,7 @@ function addLine(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: LineElement): void
             width: pt(el.strokeWidth),
             transparency: alpha(el.opacity),
         },
+        ...rotateOpt(el.rotation),
     });
 }
 
@@ -248,7 +295,7 @@ async function buildDeck(slides: Slide[], opts: PptxOptions): Promise<PptxGenJS>
                     await addText(slide, el, opts);
                     break;
                 case "image":
-                    await addImage(slide, el);
+                    await addImage(pptx, slide, el);
                     break;
                 case "line":
                     addLine(pptx, slide, el);
@@ -263,6 +310,8 @@ async function buildDeck(slides: Slide[], opts: PptxOptions): Promise<PptxGenJS>
                         ...shapeLine(el.stroke, el.strokeWidth, el.opacity),
                         // pptx expresses corner radius as a fraction of the short side.
                         rectRadius: el.radius > 0 ? Math.min(0.5, el.radius / Math.min(el.w, el.h)) : 0,
+                        ...rotateOpt(el.rotation),
+                        ...shadowOpt(el.shadow),
                     });
                     break;
                 case "ellipse":
@@ -273,6 +322,20 @@ async function buildDeck(slides: Slide[], opts: PptxOptions): Promise<PptxGenJS>
                         h: inch(el.h),
                         ...shapeFill(el.fill, el.opacity),
                         ...shapeLine(el.stroke, el.strokeWidth, el.opacity),
+                        ...rotateOpt(el.rotation),
+                        ...shadowOpt(el.shadow),
+                    });
+                    break;
+                case "shape":
+                    slide.addShape(pptx.ShapeType[el.shape], {
+                        x: inch(el.x),
+                        y: inch(el.y),
+                        w: inch(el.w),
+                        h: inch(el.h),
+                        ...shapeFill(el.fill, el.opacity),
+                        ...shapeLine(el.stroke, el.strokeWidth, el.opacity),
+                        ...rotateOpt(el.rotation),
+                        ...shadowOpt(el.shadow),
                     });
                     break;
             }

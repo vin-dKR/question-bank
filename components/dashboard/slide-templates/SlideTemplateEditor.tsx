@@ -17,18 +17,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import SlideCanvas from "./SlideCanvas";
 import ElementInspector from "./ElementInspector";
-import BackgroundPicker from "./BackgroundPicker";
+import FormatBar from "./FormatBar";
+import InsertPanel from "./InsertPanel";
+import DesignPanel from "./DesignPanel";
 import { THEMES, getTheme } from "@/lib/slides/presets";
 import {
     PALETTE,
     duplicateElement,
+    makeImageBox,
+    makeShape,
+    makeTextBox,
     newSlide,
     recolourForTheme,
 } from "@/lib/slides/editorFactory";
 import { saveSlideTemplate, type StoredSlideTemplate } from "@/actions/slides/slideTemplates";
-import { validateTemplate, type Slide, type SlideElement, type SlideTemplate } from "@/types/slides";
+import {
+    validateTemplate,
+    type ShapeKind,
+    type Slide,
+    type SlideElement,
+    type SlideTemplate,
+} from "@/types/slides";
 
 interface Props {
     initial?: StoredSlideTemplate;
@@ -45,6 +57,8 @@ export default function SlideTemplateEditor({ initial, onClose, onSaved }: Props
     const [activeIndex, setActiveIndex] = useState(0);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
+    /** Right-hand panel: Insert boxes, Design the background, or Format the selection. */
+    const [panelTab, setPanelTab] = useState<"insert" | "design" | "format">("insert");
 
     const theme = useMemo(() => getTheme(themeId), [themeId]);
     const slide: Slide | undefined = slides[activeIndex];
@@ -56,12 +70,27 @@ export default function SlideTemplateEditor({ initial, onClose, onSaved }: Props
 
     const setElements = (elements: SlideElement[]) => patchSlide(activeIndex, { elements });
 
-    const addBlock = (blockKey: string) => {
-        const block = PALETTE.find((b) => b.key === blockKey);
-        if (!block || !slide) return;
-        const el = block.make(theme);
+    const addElement = (el: SlideElement) => {
+        if (!slide) return;
         setElements([...slide.elements, el]);
         setSelectedId(el.id);
+        setPanelTab("format");
+    };
+
+    const addBlock = (blockKey: string) => {
+        const block = PALETTE.find((b) => b.key === blockKey);
+        if (!block) return;
+        addElement(block.make(theme));
+    };
+
+    const addShape = (kind: ShapeKind) => addElement(makeShape(kind, theme));
+    const addText = () => addElement(makeTextBox(theme));
+    const addImage = () => addElement(makeImageBox());
+
+    // Selecting a box jumps to its Format controls; deselecting frees the panel.
+    const selectElement = (id: string | null) => {
+        setSelectedId(id);
+        if (id) setPanelTab("format");
     };
 
     const patchElement = (patch: Partial<SlideElement>) => {
@@ -185,29 +214,9 @@ export default function SlideTemplateEditor({ initial, onClose, onSaved }: Props
                     />
                 </div>
 
-                <div className="flex items-center gap-3">
-                    <div className="flex gap-1">
-                        {THEMES.map((t) => (
-                            <button
-                                key={t.id}
-                                onClick={() => changeTheme(t.id)}
-                                title={t.name}
-                                className={`size-7 rounded-md border-2 cursor-pointer ${
-                                    t.id === themeId ? "border-indigo-500" : "border-transparent"
-                                }`}
-                                style={{ background: t.bg }}
-                            >
-                                <span
-                                    className="block size-2 rounded-full mx-auto"
-                                    style={{ background: t.accent }}
-                                />
-                            </button>
-                        ))}
-                    </div>
-                    <Button size="sm" onClick={onSave} disabled={saving}>
-                        {saving ? "Saving…" : "Save template"}
-                    </Button>
-                </div>
+                <Button size="sm" onClick={onSave} disabled={saving}>
+                    {saving ? "Saving…" : "Save template"}
+                </Button>
             </div>
 
             {problems.length > 0 && (
@@ -281,12 +290,26 @@ export default function SlideTemplateEditor({ initial, onClose, onSaved }: Props
 
                 {/* Canvas */}
                 <div className="space-y-3 order-1 lg:order-2 min-w-0">
+                    {/* Contextual format bar — PowerPoint's mini-toolbar. */}
+                    <div className="min-h-[3rem]">
+                        {selected && (
+                            <FormatBar
+                                element={selected}
+                                onChange={patchElement}
+                                onDuplicate={copyElement}
+                                onDelete={removeElement}
+                                onBringForward={() => reorder(1)}
+                                onSendBackward={() => reorder(-1)}
+                            />
+                        )}
+                    </div>
+
                     <div className="w-full min-w-0">
                         {slide && (
                             <SlideCanvas
                                 slide={slide}
                                 selectedId={selectedId}
-                                onSelect={setSelectedId}
+                                onSelect={selectElement}
                                 onChange={setElements}
                             />
                         )}
@@ -310,54 +333,50 @@ export default function SlideTemplateEditor({ initial, onClose, onSaved }: Props
                     )}
                 </div>
 
-                {/* Palette + inspector */}
-                <div className="space-y-4 order-3">
-                    <BackgroundPicker
-                        value={slide?.bgImage}
-                        onChange={(url) => patchSlide(activeIndex, { bgImage: url })}
-                        onApplyAll={(url) =>
-                            setSlides((prev) => prev.map((s) => ({ ...s, bgImage: url })))
-                        }
-                    />
+                {/* Insert / Design / Format panel */}
+                <div className="order-3">
+                    <Tabs value={panelTab} onValueChange={(v) => setPanelTab(v as typeof panelTab)}>
+                        <TabsList className="grid w-full grid-cols-3">
+                            <TabsTrigger value="insert">Insert</TabsTrigger>
+                            <TabsTrigger value="design">Design</TabsTrigger>
+                            <TabsTrigger value="format">Format</TabsTrigger>
+                        </TabsList>
 
-                    <div className="space-y-2 border-t border-zinc-200 pt-4">
-                        <Label className="text-xs text-zinc-500">Add a box</Label>
-                        <div className="grid grid-cols-2 gap-1.5">
-                            {PALETTE.filter((b) => b.group === "content").map((b) => (
-                                <button
-                                    key={b.key}
-                                    onClick={() => addBlock(b.key)}
-                                    title={b.hint}
-                                    className="text-[11px] rounded-md border border-zinc-200 px-2 py-1.5 hover:border-indigo-400 hover:bg-indigo-50 cursor-pointer text-left"
-                                >
-                                    {b.label}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="grid grid-cols-2 gap-1.5 pt-1">
-                            {PALETTE.filter((b) => b.group === "static").map((b) => (
-                                <button
-                                    key={b.key}
-                                    onClick={() => addBlock(b.key)}
-                                    title={b.hint}
-                                    className="text-[11px] rounded-md border border-dashed border-zinc-300 px-2 py-1.5 hover:border-indigo-400 cursor-pointer text-left text-zinc-600"
-                                >
-                                    {b.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                        <TabsContent value="insert" className="pt-3">
+                            <InsertPanel
+                                onAddText={addText}
+                                onAddImage={addImage}
+                                onAddShape={addShape}
+                                onAddBlock={addBlock}
+                            />
+                        </TabsContent>
 
-                    <div className="border-t border-zinc-200 pt-4">
-                        <ElementInspector
-                            element={selected}
-                            onChange={patchElement}
-                            onDelete={removeElement}
-                            onDuplicate={copyElement}
-                            onBringForward={() => reorder(1)}
-                            onSendBackward={() => reorder(-1)}
-                        />
-                    </div>
+                        <TabsContent value="design" className="pt-3">
+                            {slide && (
+                                <DesignPanel
+                                    slide={slide}
+                                    onPatch={(patch) => patchSlide(activeIndex, patch)}
+                                    onApplyAll={(patch) =>
+                                        setSlides((prev) => prev.map((s) => ({ ...s, ...patch })))
+                                    }
+                                    themes={THEMES}
+                                    themeId={themeId}
+                                    onChangeTheme={changeTheme}
+                                />
+                            )}
+                        </TabsContent>
+
+                        <TabsContent value="format" className="pt-3">
+                            <ElementInspector
+                                element={selected}
+                                onChange={patchElement}
+                                onDelete={removeElement}
+                                onDuplicate={copyElement}
+                                onBringForward={() => reorder(1)}
+                                onSendBackward={() => reorder(-1)}
+                            />
+                        </TabsContent>
+                    </Tabs>
                 </div>
             </div>
         </div>
