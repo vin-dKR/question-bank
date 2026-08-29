@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Maximize2, Minimize2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Crop, PageResult, QuestionDraft } from "@/lib/school-test/types";
 import { cn } from "@/lib/utils";
@@ -56,12 +55,6 @@ export function Verifier({
      * paper cast back in as a coloured smear.
      */
     const [restoreSource, setRestoreSource] = useState<Record<string, string>>({});
-    /**
-     * Off by default: the page is drawn large enough to read, and the pane
-     * scrolls. Fitting the whole page in makes the text too small to check
-     * against the extracted questions, which is what this screen is for.
-     */
-    const [fitPage, setFitPage] = useState(false);
     const [previewOpen, setPreviewOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -269,8 +262,6 @@ export function Verifier({
                 fileName={fileName}
                 pages={pages.length}
                 totalQuestions={totalQuestions}
-                fitPage={fitPage}
-                onToggleFit={() => setFitPage((v) => !v)}
                 onReset={onReset}
                 onPreview={() => setPreviewOpen(true)}
             />
@@ -284,12 +275,11 @@ export function Verifier({
                 />
             )}
 
-            <div className="grid grid-cols-1 gap-4 px-3 py-4 sm:gap-5 sm:px-5 sm:py-5 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-6 lg:px-6 lg:py-6">
+            <div className="grid grid-cols-1 gap-4 px-3 py-4 sm:gap-5 sm:px-5 sm:py-5 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:grid-rows-[minmax(0,1fr)] lg:gap-6 lg:px-6 lg:py-6">
                 <div className="order-2 lg:order-none lg:min-h-0">
                     <SourcePane
                         page={page}
                         hoverCrop={hoverCrop}
-                        fitPage={fitPage}
                         onAdjustCrop={(questionId) =>
                             setCropTarget({
                                 pageIndex: activeIdx,
@@ -374,10 +364,6 @@ export function Verifier({
                 </div>
             </div>
 
-            <div className="border-t border-black/5 bg-white px-4 py-3 text-[11px] text-zinc-400 sm:px-6">
-                Questions are saved to the question bank when you press Preview Test &rarr; Create test.
-            </div>
-
             {cropTarget && (
                 <CropEditor
                     page={pages[cropTarget.pageIndex]}
@@ -448,54 +434,33 @@ function TopBar({
     fileName,
     pages,
     totalQuestions,
-    fitPage,
-    onToggleFit,
     onReset,
     onPreview,
 }: {
     fileName: string | null;
     pages: number;
     totalQuestions: number;
-    fitPage: boolean;
-    onToggleFit: () => void;
     onReset: () => void;
     onPreview: () => void;
 }) {
     return (
-        <div className="flex items-start justify-between gap-3 border-b border-black/5 bg-white px-4 py-3 sm:items-center sm:px-6 sm:py-4">
-            <div className="min-w-0">
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-indigo-700">
+        <div className="flex items-center justify-between gap-3 border-b border-black/5 bg-white px-4 py-2.5 sm:px-6">
+            <div className="flex min-w-0 items-center gap-2.5">
+                <span className="hidden shrink-0 items-center rounded-md bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-indigo-700 sm:inline-flex">
                     Review
-                </div>
-                <h1 className="mt-1 truncate text-base font-semibold tracking-tight text-zinc-900 sm:text-lg">
+                </span>
+                <h1 className="truncate text-sm font-semibold tracking-tight text-zinc-900" title={fileName ?? "Untitled"}>
                     {fileName ?? "Untitled"}
                 </h1>
-                <p className="mt-0.5 text-[11px] text-zinc-500">
-                    <span className="font-medium text-zinc-700">{pages}</span> {pages === 1 ? "page" : "pages"} · <span className="font-medium text-zinc-700">{totalQuestions}</span> questions
-                </p>
+                <span className="hidden shrink-0 whitespace-nowrap text-[11px] text-zinc-400 sm:inline">
+                    {pages} {pages === 1 ? "page" : "pages"} · {totalQuestions} questions
+                </span>
             </div>
-            <div className="flex items-center gap-2">
-                <button
-                    type="button"
-                    onClick={onToggleFit}
-                    title={
-                        fitPage
-                            ? "Show the page large enough to read"
-                            : "Shrink the page until all of it is visible"
-                    }
-                    className="flex h-9 items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 text-[12px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-900"
-                >
-                    {fitPage ? (
-                        <Maximize2 className="h-3.5 w-3.5" />
-                    ) : (
-                        <Minimize2 className="h-3.5 w-3.5" />
-                    )}
-                    {fitPage ? "Actual size" : "Fit to screen"}
-                </button>
+            <div className="flex shrink-0 items-center gap-2">
                 <button
                     type="button"
                     onClick={onReset}
-                    className="h-9 rounded-lg px-3 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
+                    className="h-8 rounded-lg px-2.5 text-[13px] font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
                 >
                     Start over
                 </button>
@@ -503,7 +468,7 @@ function TopBar({
                     type="button"
                     onClick={onPreview}
                     disabled={totalQuestions === 0}
-                    className="h-9 rounded-lg bg-indigo-600 px-4 text-sm font-medium text-white shadow-xs transition-colors hover:bg-indigo-700 disabled:bg-zinc-200 disabled:text-zinc-400"
+                    className="h-8 rounded-lg bg-indigo-600 px-3.5 text-[13px] font-medium text-white shadow-xs transition-colors hover:bg-indigo-700 disabled:bg-zinc-200 disabled:text-zinc-400"
                 >
                     Preview Test
                 </button>
@@ -547,27 +512,36 @@ function PageTabs({
     );
 }
 
+type FitMode = "fit-width" | "fit-page";
+
+const ZOOM_MIN = 0.25;
+const ZOOM_MAX = 6;
+const ZOOM_STEP = 1.25;
+
 function SourcePane({
     page,
     hoverCrop,
-    fitPage,
     onAdjustCrop,
 }: {
     page: EditablePage;
     hoverCrop: string | null;
-    /** Shrink the page until all of it is visible, instead of scrolling. */
-    fitPage: boolean;
     onAdjustCrop: (questionId: string) => void;
 }) {
-    const containerRef = useRef<HTMLDivElement>(null);
+    const scrollRef = useRef<HTMLDivElement>(null);
     const [containerWidth, setContainerWidth] = useState(0);
     const [viewportHeight, setViewportHeight] = useState(0);
+    // "fit-width" fills the column and scrolls tall pages — the default, since
+    // the whole point of this screen is reading the page against the extracted
+    // questions. "fit-page" shrinks the page until it all shows at once.
+    const [mode, setMode] = useState<FitMode>("fit-width");
+    // User zoom multiplier on top of the active fit. 1 = pure fit.
+    const [zoomFactor, setZoomFactor] = useState(1);
 
     // Width only. The container's height comes from its content on some
     // breakpoints, so reading it back to size that same content is circular; the
     // width comes from the grid column and is independent of what we draw.
     useEffect(() => {
-        const el = containerRef.current;
+        const el = scrollRef.current;
         if (!el) return;
         const ro = new ResizeObserver(() => setContainerWidth(el.clientWidth));
         ro.observe(el);
@@ -584,9 +558,17 @@ function SourcePane({
         return () => window.removeEventListener("resize", read);
     }, []);
 
+    // A new page starts fresh: default fit, no zoom, scrolled to the top.
+    useEffect(() => {
+        setMode("fit-width");
+        setZoomFactor(1);
+        scrollRef.current?.scrollTo(0, 0);
+    }, [page.pageNumber, page.sourceDataUrl]);
+
     const cropEntries = Object.entries(page.crops);
 
-    const scale = useMemo(() => {
+    // Base scale for the active fit mode, before the user's zoom multiplier.
+    const baseScale = useMemo(() => {
         // 0, not 1. The previous fallback was 1 — natural size — so until the
         // observer fired the page rendered at full camera resolution inside a
         // container that clips, and a 1200x1600 photo showed only its top-left
@@ -594,80 +576,161 @@ function SourcePane({
         if (!containerWidth || !page.sourceWidth || !page.sourceHeight) return 0;
 
         // Fill the column, never enlarging past the source's own resolution.
-        // The pane scrolls, so a tall page stays readable.
         const byWidth = Math.min(containerWidth / page.sourceWidth, 1);
-        if (!fitPage) return byWidth;
+        if (mode === "fit-width") return byWidth;
 
         // Fitting: also bound by the viewport, which nothing here can change.
         const heightBudget = (viewportHeight || 800) * 0.62;
         return Math.min(byWidth, heightBudget / page.sourceHeight);
-    }, [containerWidth, viewportHeight, fitPage, page.sourceWidth, page.sourceHeight]);
+    }, [containerWidth, viewportHeight, mode, page.sourceWidth, page.sourceHeight]);
 
+    const scale = baseScale * zoomFactor;
     const displayW = page.sourceWidth * scale;
     const displayH = page.sourceHeight * scale;
 
+    const selectMode = useCallback((m: FitMode) => {
+        setMode(m);
+        setZoomFactor(1);
+    }, []);
+
+    const zoomBy = useCallback((mult: number) => {
+        setZoomFactor((z) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z * mult)));
+    }, []);
+
     return (
-        <div
-            ref={containerRef}
-            className={cn(
-                "relative flex items-start justify-center rounded-xl border border-black/5 bg-white p-3 shadow-xs lg:p-4",
-                // Scrolling only matters when the page is drawn larger than the
-                // pane; fitted, there is nothing to scroll to.
-                fitPage ? "overflow-hidden" : "max-h-[72vh] overflow-auto",
-            )}
-        >
+        <div className="relative flex h-full min-h-0 flex-col gap-2 rounded-xl border border-black/5 bg-white p-2 shadow-xs sm:p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 px-0.5">
+                <div className="inline-flex rounded-lg bg-zinc-100 p-0.5">
+                    <ModeButton active={mode === "fit-width"} onClick={() => selectMode("fit-width")}>
+                        Fit width
+                    </ModeButton>
+                    <ModeButton active={mode === "fit-page"} onClick={() => selectMode("fit-page")}>
+                        Fit page
+                    </ModeButton>
+                </div>
+                <div className="inline-flex items-center gap-1">
+                    <ZoomButton onClick={() => zoomBy(1 / ZOOM_STEP)} disabled={!scale || scale <= ZOOM_MIN} label="Zoom out">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 12h14" /></svg>
+                    </ZoomButton>
+                    <button
+                        type="button"
+                        onClick={() => setZoomFactor(1)}
+                        className="min-w-[3.25rem] rounded-md px-1.5 py-1 text-center text-xs font-medium tabular-nums text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
+                        title="Reset zoom"
+                    >
+                        {scale ? `${Math.round(scale * 100)}%` : "—"}
+                    </button>
+                    <ZoomButton onClick={() => zoomBy(ZOOM_STEP)} disabled={!scale || scale >= ZOOM_MAX} label="Zoom in">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+                    </ZoomButton>
+                </div>
+            </div>
+
             <div
-                className="relative"
-                style={{
-                    // Hold the page's ratio before the measurement lands, so the
-                    // pane does not jump from full-bleed to fitted on first paint.
-                    width: displayW || "100%",
-                    height: displayH || undefined,
-                    aspectRatio: displayH ? undefined : `${page.sourceWidth} / ${page.sourceHeight}`,
-                }}
+                ref={scrollRef}
+                className="relative max-h-[72vh] min-h-0 overflow-auto rounded-lg bg-zinc-50 lg:max-h-none lg:flex-1"
             >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                    src={page.sourceDataUrl}
-                    alt={`Page ${page.pageNumber}`}
-                    className="block h-full w-full select-none"
-                    draggable={false}
-                />
-                {cropEntries.map(([questionId, crop]) => {
-                    const [x, y, w, h] = crop.bbox;
-                    const left = (x / page.sourceWidth) * 100;
-                    const top = (y / page.sourceHeight) * 100;
-                    const width = (w / page.sourceWidth) * 100;
-                    const height = (h / page.sourceHeight) * 100;
-                    const isHovered = hoverCrop === questionId;
-                    return (
-                        <motion.button
-                            key={questionId}
-                            type="button"
-                            onClick={() => onAdjustCrop(questionId)}
-                            className={cn(
-                                "absolute rounded-[3px] border-2 transition-colors",
-                                isHovered
-                                    ? "border-indigo-600 bg-indigo-500/10"
-                                    : "border-indigo-400/70 hover:border-indigo-600",
-                            )}
-                            style={{
-                                left: `${left}%`,
-                                top: `${top}%`,
-                                width: `${width}%`,
-                                height: `${height}%`,
-                            }}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.25 }}
-                        >
-                            <span className="absolute -top-5 left-0 rounded-md bg-indigo-600 px-1.5 py-[2px] text-[10px] font-semibold text-white shadow-sm">
-                                Q{crop.q_no}
-                            </span>
-                        </motion.button>
-                    );
-                })}
+                <div
+                    className="relative mx-auto"
+                    style={{
+                        // Hold the page's ratio before the measurement lands, so the
+                        // pane does not jump from full-bleed to fitted on first paint.
+                        width: displayW || "100%",
+                        height: displayH || undefined,
+                        aspectRatio: displayH ? undefined : `${page.sourceWidth} / ${page.sourceHeight}`,
+                    }}
+                >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                        src={page.sourceDataUrl}
+                        alt={`Page ${page.pageNumber}`}
+                        className="block h-full w-full select-none"
+                        draggable={false}
+                    />
+                    {cropEntries.map(([questionId, crop]) => {
+                        const [x, y, w, h] = crop.bbox;
+                        const left = (x / page.sourceWidth) * 100;
+                        const top = (y / page.sourceHeight) * 100;
+                        const width = (w / page.sourceWidth) * 100;
+                        const height = (h / page.sourceHeight) * 100;
+                        const isHovered = hoverCrop === questionId;
+                        return (
+                            <motion.button
+                                key={questionId}
+                                type="button"
+                                onClick={() => onAdjustCrop(questionId)}
+                                className={cn(
+                                    "absolute rounded-[3px] border-2 transition-colors",
+                                    isHovered
+                                        ? "border-indigo-600 bg-indigo-500/10"
+                                        : "border-indigo-400/70 hover:border-indigo-600",
+                                )}
+                                style={{
+                                    left: `${left}%`,
+                                    top: `${top}%`,
+                                    width: `${width}%`,
+                                    height: `${height}%`,
+                                }}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.25 }}
+                            >
+                                <span className="absolute -top-5 left-0 rounded-md bg-indigo-600 px-1.5 py-[2px] text-[10px] font-semibold text-white shadow-sm">
+                                    Q{crop.q_no}
+                                </span>
+                            </motion.button>
+                        );
+                    })}
+                </div>
             </div>
         </div>
+    );
+}
+
+function ModeButton({
+    active,
+    onClick,
+    children,
+}: {
+    active: boolean;
+    onClick: () => void;
+    children: ReactNode;
+}) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className={cn(
+                "rounded-[7px] px-2.5 py-1 text-xs font-medium transition-colors",
+                active ? "bg-white text-zinc-900 shadow-xs" : "text-zinc-500 hover:text-zinc-900",
+            )}
+        >
+            {children}
+        </button>
+    );
+}
+
+function ZoomButton({
+    onClick,
+    disabled,
+    label,
+    children,
+}: {
+    onClick: () => void;
+    disabled?: boolean;
+    label: string;
+    children: ReactNode;
+}) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            disabled={disabled}
+            aria-label={label}
+            title={label}
+            className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 disabled:pointer-events-none disabled:opacity-40"
+        >
+            {children}
+        </button>
     );
 }
