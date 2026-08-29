@@ -12,6 +12,8 @@ import type {
     ImageElement,
     LineElement,
     RectElement,
+    ShapeElement,
+    ShapeKind,
     Slide,
     SlideElement,
     TextElement,
@@ -251,6 +253,46 @@ export const PALETTE: PaletteBlock[] = [
     },
 ];
 
+/** A blank, unbound text box for the Insert menu. */
+export function makeTextBox(theme: Theme): TextElement {
+    return text(newId("text"), centred(520, 120), {
+        color: theme.ink,
+        fontSize: 28,
+        weight: 500,
+        text: "Text",
+        template: true,
+    });
+}
+
+/** A blank image placeholder the user fills from their own device. */
+export function makeImageBox(): ImageElement {
+    return {
+        id: newId("image"),
+        type: "image",
+        ...centred(420, 300),
+        opacity: 1,
+        template: true,
+        src: "",
+        fit: "contain",
+        radius: 4,
+    };
+}
+
+/** A shape from the extended library, filled with the theme accent. */
+export function makeShape(kind: ShapeKind, theme: Theme): ShapeElement {
+    return {
+        id: newId("shape"),
+        type: "shape",
+        shape: kind,
+        ...centred(300, 220),
+        opacity: 1,
+        template: true,
+        fill: theme.accent,
+        stroke: "",
+        strokeWidth: 0,
+    };
+}
+
 /** A slide with just the accent bar, as a starting point. */
 export function newSlide(theme: Theme, repeat = true): Slide {
     const bar: RectElement = {
@@ -298,7 +340,7 @@ export function recolourForTheme(slides: Slide[], from: Theme, to: Theme): Slide
         elements: s.elements.map((el) => {
             const next = { ...el } as SlideElement;
             if (next.type === "text") next.color = swap(next.color);
-            if (next.type === "rect" || next.type === "ellipse") {
+            if (next.type === "rect" || next.type === "ellipse" || next.type === "shape") {
                 next.fill = swap(next.fill);
                 next.stroke = swap(next.stroke);
             }

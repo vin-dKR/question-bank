@@ -19,10 +19,13 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { renderMixedLatex } from "@/lib/render-tex";
 import { hasLatex } from "@/lib/slides/generate";
+import { SHAPE_GEOMETRY, gradientCss } from "@/lib/slides/shapes";
 import {
     CANVAS_H,
     CANVAS_W,
     FONTS,
+    type Shadow,
+    type ShapeElement,
     type Slide,
     type SlideElement,
     type TextElement,
@@ -55,6 +58,53 @@ const pctX = (v: number) => `${(v / CANVAS_W) * 100}%`;
 const pctY = (v: number) => `${(v / CANVAS_H) * 100}%`;
 /** Slide px as container-query width units, so type scales with the canvas. */
 const cqw = (v: number) => `${(v / CANVAS_W) * 100}cqw`;
+
+/** #rrggbb + 0..1 alpha → an rgba() string, for shadows and highlights. */
+function rgba(hex: string, alpha: number): string {
+    const c = (hex || "#000000").replace("#", "");
+    const full = c.length === 3 ? c.split("").map((x) => x + x).join("") : c;
+    const n = parseInt(full || "000000", 16);
+    return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}
+
+/** A drop shadow expressed as a CSS filter, sized in canvas-relative units. */
+function shadowFilter(sh?: Shadow): string | undefined {
+    if (!sh) return undefined;
+    const rad = (sh.angle * Math.PI) / 180;
+    const dx = sh.offset * Math.cos(rad);
+    const dy = sh.offset * Math.sin(rad);
+    return `drop-shadow(${cqw(dx)} ${cqw(dy)} ${cqw(sh.blur)} ${rgba(sh.color, sh.opacity)})`;
+}
+
+/** An extended-library shape, drawn as an SVG stretched to the element box. */
+function ShapeSvg({ el }: { el: ShapeElement }) {
+    const geo = SHAPE_GEOMETRY[el.shape];
+    const fill = !el.fill || el.fill === "transparent" ? "none" : el.fill;
+    const hasStroke = el.strokeWidth > 0 && el.stroke && el.stroke !== "transparent";
+    // The 100-unit box is stretched to el.w × el.h, so stroke width is normalised by
+    // the average scale to stay close to the intended slide-pixel thickness.
+    const sw = hasStroke ? (el.strokeWidth * 200) / (el.w + el.h) : 0;
+    const common = {
+        fill,
+        stroke: hasStroke ? el.stroke : "none",
+        strokeWidth: sw,
+        strokeLinejoin: "round" as const,
+    };
+    return (
+        <svg
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            className="w-full h-full pointer-events-none overflow-visible"
+            style={{ opacity: el.opacity }}
+        >
+            {geo.kind === "polygon" ? (
+                <polygon points={geo.points} {...common} />
+            ) : (
+                <path d={geo.d} {...common} />
+            )}
+        </svg>
+    );
+}
 
 type DragMode = {
     kind: "move" | "resize";
@@ -214,6 +264,10 @@ export default function SlideCanvas({
                         fontFamily: FONTS[el.font],
                         fontWeight: el.weight,
                         fontStyle: el.italic ? "italic" : "normal",
+                        textDecoration:
+                            [el.underline && "underline", el.strike && "line-through"]
+                                .filter(Boolean)
+                                .join(" ") || "none",
                         textAlign: el.align,
                         lineHeight: el.lineHeight,
                         letterSpacing: cqw(el.tracking),
@@ -231,6 +285,18 @@ export default function SlideCanvas({
                 >
                     {isReserved ? (
                         <span className="opacity-40 italic">(left blank)</span>
+                    ) : el.highlight ? (
+                        <span
+                            style={{
+                                background: el.highlight,
+                                // Clone the background across wrapped lines, as PPT does.
+                                boxDecorationBreak: "clone",
+                                WebkitBoxDecorationBreak: "clone",
+                                padding: "0 0.08em",
+                            }}
+                        >
+                            {hasLatex(label) ? renderMixedLatex(label) : label}
+                        </span>
                     ) : hasLatex(label) ? (
                         // Mirrors the exporter, which rasterises LaTeX with the same
                         // KaTeX build — so the preview matches the .pptx.
@@ -256,6 +322,14 @@ export default function SlideCanvas({
                             objectFit: el.fit === "cover" ? "cover" : "contain",
                             borderRadius: cqw(el.radius),
                             opacity: el.opacity,
+                            border:
+                                el.strokeWidth && el.stroke
+                                    ? `${cqw(el.strokeWidth)} solid ${el.stroke}`
+                                    : undefined,
+                            transform:
+                                [el.flipH && "scaleX(-1)", el.flipV && "scaleY(-1)"]
+                                    .filter(Boolean)
+                                    .join(" ") || undefined,
                         }}
                     />
                 );
@@ -308,6 +382,10 @@ export default function SlideCanvas({
             );
         }
 
+        if (el.type === "shape") {
+            return <ShapeSvg el={el} />;
+        }
+
         // line
         return (
             <div
@@ -334,13 +412,16 @@ export default function SlideCanvas({
                     : { width: width ? `${width}px` : "100%" }),
                 aspectRatio: `${CANVAS_W} / ${CANVAS_H}`,
                 containerType: "inline-size",
-                background: slide.bg,
+                // A gradient is painted live as CSS; the export uses the rasterised
+                // copy stored in bgImage so the .pptx matches.
+                background: slide.bgGradient ? gradientCss(slide.bgGradient) : slide.bg,
                 cursor: drag ? "grabbing" : "default",
             }}
         >
             {/* Painted under everything, and never interactive — the background is
-                template artwork, not an element the user can select or move. */}
-            {slide.bgImage && (
+                template artwork, not an element the user can select or move. A live
+                gradient is drawn by the container style above instead of an <img>. */}
+            {slide.bgImage && !slide.bgGradient && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                     src={slide.bgImage}
@@ -364,6 +445,8 @@ export default function SlideCanvas({
                             top: pctY(el.y),
                             width: pctX(el.w),
                             height: pctY(el.h),
+                            transform: el.rotation ? `rotate(${el.rotation}deg)` : undefined,
+                            filter: shadowFilter(el.shadow),
                             cursor: readOnly ? "default" : "move",
                             outline: isSelected
                                 ? "2px solid #6366f1"
