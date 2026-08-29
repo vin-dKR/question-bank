@@ -7,6 +7,10 @@ import { useUserSubject } from '@/hooks/auth/useUserSubject';
 import { usePersistentSelection } from '@/hooks/question/usePersistentSelection';
 import { useQuestionActions } from '@/hooks/question/useQuestionActions';
 import { useQuestions } from '@/hooks/queries/useQuestions';
+import { useQuestionCount } from '@/hooks/queries/useQuestionCount';
+
+/** A keyword only searches once it's meaningful — matches the search action's 2-char floor. */
+const MIN_SEARCH_LENGTH = 2;
 
 /**
  * QuestionBankContext — UI state only (Phase 6).
@@ -154,5 +158,24 @@ export const useQuestionsList = () => {
         // `initialFetchDone` parity for components that guard EmptyState on it.
         initialFetchDone: !query.isPending,
         query,
+    };
+};
+
+/**
+ * The org-scoped total of the published bank matching the active filters, for
+ * the "Showing X of N published questions" header. Disabled while a keyword
+ * search is active — the search path (`searchQuestions`) matches on text that
+ * `getQuestionCount` does not, so during search the list itself is the count.
+ */
+export const useQuestionsCount = () => {
+    const { filters, searchQuery } = useQuestionBankContext();
+    const isSearching = searchQuery.trim().length >= MIN_SEARCH_LENGTH;
+
+    const query = useQuestionCount({ filters, enabled: !isSearching });
+
+    return {
+        total: query.data ?? 0,
+        loading: query.isPending && !isSearching,
+        isSearching,
     };
 };

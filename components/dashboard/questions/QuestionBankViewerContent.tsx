@@ -6,11 +6,19 @@ import EmptyState from "@/components/question/EmptyState";
 import QuestionList from "@/components/question/QuestionList";
 import FilterControls from "@/components/question/FilterControls"
 import SelectedQuestionsActions from "@/components/question/SelectedQuestionsActions";
-import { useQuestionBankContext, useQuestionsList } from "@/lib/context/QuestionBankContext";
+import { useQuestionBankContext, useQuestionsCount, useQuestionsList } from "@/lib/context/QuestionBankContext";
 
 const QuestionBankViewerContent = () => {
     const { selectedQuestions } = useQuestionBankContext();
     const { questions, loading, error, initialFetchDone } = useQuestionsList();
+    const { total, isSearching } = useQuestionsCount();
+
+    // "Showing X of N published questions" while browsing; during a keyword
+    // search the list is the whole result set, so show its size instead.
+    const shown = questions.length;
+    const countLabel = isSearching
+        ? `${shown} result${shown === 1 ? "" : "s"}`
+        : `Showing ${shown} of ${total.toLocaleString()} published question${total === 1 ? "" : "s"}`;
 
     return (
         <div className="relative">
@@ -26,6 +34,9 @@ const QuestionBankViewerContent = () => {
                     {/* Main Content */}
                     <main className="col-span-1 lg:col-span-4 xl:col-span-6 space-y-4">
                         <SearchBar />
+                        {!loading && !error && (isSearching || total > 0) && (
+                            <p className="m-0 text-xs text-zinc-500">{countLabel}</p>
+                        )}
                         {selectedQuestions.length > 0 && <SelectedQuestionsActions showPrintBtn={true} />}
                         {error && (
                             <div className="flex items-start gap-3 p-4 rounded-xl border border-rose-100 bg-rose-50/50 text-sm text-rose-700">
