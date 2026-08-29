@@ -6,9 +6,9 @@
  * each metric to one of two sinks depending on `NODE_ENV`:
  *
  *  - dev: `console.log` so engineers see numbers in their browser devtools.
- *  - prod: a stub `navigator.sendBeacon(...)` placeholder that POSTs to
- *    `/api/perf/web-vitals`. That route does NOT exist yet — Phase 0 only
- *    wires the client side. See the `// TODO` below.
+ *  - prod: `navigator.sendBeacon(...)` to the endpoint named by
+ *    `NEXT_PUBLIC_WEB_VITALS_ENDPOINT`. UNSET BY DEFAULT, and nothing is sent
+ *    while it is unset. See the note on the constant below.
  *
  * Wired from `components/perf/WebVitalsReporter.tsx`, mounted once in
  * `app/layout.tsx`. Never import this file directly from a server component.
@@ -16,13 +16,20 @@
 
 import type { Metric } from 'web-vitals';
 
-// TODO(perf-phase-0): create `app/api/perf/web-vitals/route.ts` that ingests
-// these payloads (validate, attach userId/route, persist to a perf store /
-// forward to an analytics provider). Until then `sendBeacon` will simply
-// POST into the void and silently fail — that is intentional for the
-// baseline phase; we do not want to block shipping the reporter on having
-// the backend ready.
-const VITALS_ENDPOINT = '/api/perf/web-vitals';
+/**
+ * Where to send metrics. Empty means DON'T.
+ *
+ * This used to be a hardcoded `/api/perf/web-vitals`, on the reasoning that
+ * beaconing into the void was harmless until the route existed. It was not
+ * harmless: `sendBeacon` fires on every metric, so real users' consoles filled
+ * with `404 (Not Found)` on every page load, and someone reported it as a bug.
+ * A silent failure in one layer is noise in another.
+ *
+ * TODO(perf-phase-0): build the ingest route, then set this env var to switch
+ * reporting on. It is a public unauthenticated POST by nature, so it needs a
+ * payload cap and rate limiting before it goes live — see docs/API_SECURITY.md.
+ */
+const VITALS_ENDPOINT = process.env.NEXT_PUBLIC_WEB_VITALS_ENDPOINT?.trim() ?? '';
 
 type ReportableMetric = Pick<
     Metric,
@@ -51,6 +58,10 @@ function reportMetric(metric: Metric): void {
         );
         return;
     }
+
+    // No sink configured: drop it. Sending to a route that does not exist buys
+    // nothing and costs every user a console error per metric, five per load.
+    if (!VITALS_ENDPOINT) return;
 
     if (typeof navigator === 'undefined' || typeof navigator.sendBeacon !== 'function') {
         return;

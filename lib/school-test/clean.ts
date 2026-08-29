@@ -117,7 +117,18 @@ async function cleanRemote(png: Buffer, opts: Required<CleanOptions>): Promise<C
 
             const body = (await res.json()) as CleanResponse;
             if (!res.ok || !body.ok || !body.image_b64) {
-                lastError = body.error ?? `bg-clean returned ${res.status}`;
+                // `error` is TYPED as a string but arrives from another service,
+                // so it is only a string by agreement. FastAPI validation errors
+                // come back as `detail: [...]`, and a proxy or platform error
+                // page can put anything here. An object reaching
+                // `new Error(...)` below stringifies to the literal text
+                // "[object Object]", which is exactly what a user saw in a toast
+                // after clicking "Clean background" — a message that says
+                // nothing at all about what went wrong.
+                lastError =
+                    typeof body?.error === "string" && body.error.trim()
+                        ? body.error
+                        : `bg-clean at ${base} returned ${res.status}`;
                 continue;
             }
             return {
@@ -127,10 +138,16 @@ async function cleanRemote(png: Buffer, opts: Required<CleanOptions>): Promise<C
                     : undefined,
             };
         } catch (err) {
-            lastError = err instanceof Error ? err.message : String(err);
+            // Covers the case the service isn't there at all: Netlify does not
+            // execute `api/*.py`, so the fetch lands on an HTML page and
+            // `res.json()` throws a parse error rather than returning anything
+            // shaped like CleanResponse.
+            lastError = `bg-clean at ${base}: ${err instanceof Error ? err.message : String(err)}`;
         }
     }
 
+    // `lastError` is a string on every path above, so this can never produce
+    // an Error whose message is "[object Object]".
     throw new Error(lastError);
 }
 

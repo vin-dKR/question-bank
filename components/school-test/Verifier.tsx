@@ -9,6 +9,7 @@ import type { Crop, PageResult, QuestionDraft } from "@/lib/school-test/types";
 import { cn } from "@/lib/utils";
 import { saveExtractedQuestions } from "@/actions/school-test/saveExtractedQuestions";
 import { cleanCropRegion } from "@/actions/school-test/cleanCropRegion";
+import { errorText } from "@/lib/errorText";
 import { QuestionCard } from "./QuestionCard";
 import { CropEditor } from "./CropEditor";
 import { TouchUpEditor } from "./TouchUpEditor";
@@ -165,7 +166,9 @@ export function Verifier({
                     bbox: crop.bbox,
                 });
                 if (!res.success) {
-                    toast.error(res.error, { id: toastId });
+                    toast.error(errorText(res.error, "Could not clean the diagram."), {
+                        id: toastId,
+                    });
                     return;
                 }
 
@@ -182,7 +185,7 @@ export function Verifier({
                 setRestoreSource((prev) => ({ ...prev, [questionId]: res.restoreDataUrl }));
                 toast.success("Background cleaned.", { id: toastId });
             } catch (e) {
-                toast.error((e as Error).message || "Could not clean the diagram.", { id: toastId });
+                toast.error(errorText(e, "Could not clean the diagram."), { id: toastId });
             } finally {
                 setCleaningId(null);
             }
@@ -218,7 +221,7 @@ export function Verifier({
 
             const result = await saveExtractedQuestions(payload);
             if (!result.success) {
-                toast.error(result.error);
+                toast.error(errorText(result.error, "Could not save the questions."));
                 setIsSaving(false);
                 return;
             }
