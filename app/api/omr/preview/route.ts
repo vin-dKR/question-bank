@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { readGeneratedOmrDraftPdf, type OmrDraftInput } from '@/lib/omr/service';
+import { readGeneratedOmrDraftHtml, type OmrDraftInput } from '@/lib/omr/service';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -33,14 +33,14 @@ function parseDraftInput(value: unknown): OmrDraftInput {
 export async function POST(request: Request) {
     try {
         const input = parseDraftInput(await request.json());
-        const { pdf, summary } = await readGeneratedOmrDraftPdf(input);
+        const { html, summary } = await readGeneratedOmrDraftHtml(input);
 
-        return new NextResponse(new Uint8Array(pdf), {
+        return new NextResponse(html, {
             status: 200,
             headers: {
-                'Content-Type': 'application/pdf',
-                'Content-Disposition': 'inline; filename="omr-preview.pdf"',
+                'Content-Type': 'text/html; charset=utf-8',
                 'Cache-Control': 'no-store',
+                'Content-Security-Policy': "default-src 'none'; img-src data:; style-src 'unsafe-inline'; font-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'",
                 'X-OMR-Page-Count': String(summary.page_count),
             },
         });

@@ -27,7 +27,7 @@ async function responseErrorMessage(response: Response): Promise<string> {
     return text.trim().slice(0, 240) || fallback;
 }
 
-export async function downloadOmrSheet(testId: string, fallbackName = 'omr-sheet.pdf') {
+export async function fetchOmrSheet(testId: string, fallbackName = 'omr-sheet.pdf') {
     const response = await fetch(`/api/omr/tests/${testId}/sheet`, {
         cache: 'no-store',
     });
@@ -36,13 +36,20 @@ export async function downloadOmrSheet(testId: string, fallbackName = 'omr-sheet
         throw new Error(await responseErrorMessage(response));
     }
 
-    const blob = await response.blob();
+    return {
+        blob: await response.blob(),
+        filename: filenameFromDisposition(response.headers.get('content-disposition'), fallbackName),
+    };
+}
+
+export async function downloadOmrSheet(testId: string, fallbackName = 'omr-sheet.pdf') {
+    const { blob, filename } = await fetchOmrSheet(testId, fallbackName);
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = filenameFromDisposition(response.headers.get('content-disposition'), fallbackName);
+    anchor.download = filename;
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
-    URL.revokeObjectURL(url);
+    window.setTimeout(() => URL.revokeObjectURL(url), 1_200);
 }

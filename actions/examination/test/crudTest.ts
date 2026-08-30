@@ -21,88 +21,113 @@ export const createTest = async (data: CreateTestData): Promise<Partial<Examinat
             throw new Error('Invalid OMR paper ID');
         }
 
-        // console.log('------------DATA', data);
-
-        const test = await prisma.test.create({
-            data: {
-                ...(data.omrPaperId ? { id: data.omrPaperId } : {}),
-                title: data.title,
-                description: data.description,
-                subject: data.subject,
-                // Nullable and always will be: tests created before classes
-                // existed have none, and a teacher may legitimately set a paper
-                // without tying it to a roster.
-                classId: data.classId ?? null,
-                duration: typeof data.duration === 'string' ? parseInt(data.duration) : data.duration,
-                totalMarks: data.totalMarks,
-                // The AUTHORIZATION key. Without it a new test is invisible to
-                // the org-scoped reads below — including to its own author.
-                organizationId: ctx.organizationId,
-                // Authorship, not access. Kept so "who wrote this" survives.
-                createdBy: user.id,
-                questions: {
-                    // School-test questions live in a separate collection; route
-                    // the `connect` to the right relation based on the source
-                    // flag that travelled with the question through sessionStorage.
-                    create: data.questions.map(q =>
-                        q.source === 'school-test'
-                            ? {
-                                schoolTestQuestion: { connect: { id: q.id } },
-                                marks: q.marks,
-                                questionNumber: q.question_number,
-                            }
-                            : {
-                                question: { connect: { id: q.id } },
-                                marks: q.marks,
-                                questionNumber: q.question_number,
-                            },
-                    ),
-                },
-            },
-            include: {
-                questions: {
-                    orderBy: { questionNumber: 'asc' },
-                    include: {
-                        question: {
-                            select: {
-                                id: true,
-                                question_text: true,
-                                options: true,
-                                answer: true,
-                                topic: true,
-                                question_type: true,
-                                section_name: true,
-                                exam_name: true,
-                                subject: true,
-                                chapter: true,
-                            },
+        const include = {
+            questions: {
+                orderBy: { questionNumber: 'asc' as const },
+                include: {
+                    question: {
+                        select: {
+                            id: true,
+                            question_text: true,
+                            options: true,
+                            answer: true,
+                            topic: true,
+                            question_type: true,
+                            section_name: true,
+                            exam_name: true,
+                            subject: true,
+                            chapter: true,
                         },
-                        schoolTestQuestion: {
-                            select: {
-                                id: true,
-                                question_text: true,
-                                options: true,
-                                answer: true,
-                                topic: true,
-                                question_type: true,
-                                section_name: true,
-                                exam_name: true,
-                                subject: true,
-                                chapter: true,
-                                question_image: true,
-                                baseImage: true,
-                                cropBbox: true,
-                                sourceWidth: true,
-                                sourceHeight: true,
-                            },
+                    },
+                    schoolTestQuestion: {
+                        select: {
+                            id: true,
+                            question_text: true,
+                            options: true,
+                            answer: true,
+                            topic: true,
+                            question_type: true,
+                            section_name: true,
+                            exam_name: true,
+                            subject: true,
+                            chapter: true,
+                            question_image: true,
+                            baseImage: true,
+                            cropBbox: true,
+                            sourceWidth: true,
+                            sourceHeight: true,
                         },
                     },
                 },
-                _count: {
-                    select: { responses: true },
-                },
             },
-        });
+            _count: {
+                select: { responses: true },
+            },
+        } as const;
+
+        // The create page supplies one stable Mongo ObjectId for the whole
+        // create-and-download workflow. If the response is lost after MongoDB
+        // commits, retrying the same action returns that test instead of creating
+        // a second row. The organisation check prevents an id from becoming a
+        // cross-tenant lookup key.
+        const existingTest = data.omrPaperId
+            ? await prisma.test.findUnique({ where: { id: data.omrPaperId }, include })
+            : null;
+        if (existingTest && existingTest.organizationId !== ctx.organizationId) {
+            throw new Error('OMR paper ID is already in use');
+        }
+
+        const createData = {
+            ...(data.omrPaperId ? { id: data.omrPaperId } : {}),
+            title: data.title,
+            description: data.description,
+            subject: data.subject,
+            // Nullable and always will be: tests created before classes
+            // existed have none, and a teacher may legitimately set a paper
+            // without tying it to a roster.
+            classId: data.classId ?? null,
+            duration: typeof data.duration === 'string' ? parseInt(data.duration) : data.duration,
+            totalMarks: data.totalMarks,
+            // The AUTHORIZATION key. Without it a new test is invisible to
+            // the org-scoped reads below — including to its own author.
+            organizationId: ctx.organizationId,
+            // Authorship, not access. Kept so "who wrote this" survives.
+            createdBy: user.id,
+            questions: {
+                // School-test questions live in a separate collection; route
+                // the `connect` to the right relation based on the source
+                // flag that travelled with the question through sessionStorage.
+                create: data.questions.map(q =>
+                    q.source === 'school-test'
+                        ? {
+                            schoolTestQuestion: { connect: { id: q.id } },
+                            marks: q.marks,
+                            questionNumber: q.question_number,
+                        }
+                        : {
+                            question: { connect: { id: q.id } },
+                            marks: q.marks,
+                            questionNumber: q.question_number,
+                        },
+                ),
+            },
+        };
+
+        let test = existingTest;
+        if (!test) {
+            try {
+                test = await prisma.test.create({ data: createData, include });
+            } catch (createError) {
+                // Cover concurrent/replayed requests that both observed no row.
+                const replayedTest = data.omrPaperId
+                    ? await prisma.test.findUnique({ where: { id: data.omrPaperId }, include })
+                    : null;
+                if (!replayedTest || replayedTest.organizationId !== ctx.organizationId) {
+                    throw createError;
+                }
+                test = replayedTest;
+            }
+        }
 
         return {
             ...test,

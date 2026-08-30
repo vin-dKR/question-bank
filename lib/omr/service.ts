@@ -70,10 +70,22 @@ interface PythonGenerateSummary {
     paper_id: string;
     version: number;
     pdf: string;
+    html?: string;
     page_count: number;
     question_count: number;
     fib_count: number;
     artifacts: string[];
+    error?: string;
+}
+
+interface PythonHtmlSummary {
+    ok: boolean;
+    paper_id: string;
+    version: number;
+    html: string;
+    page_count: number;
+    question_count: number;
+    fib_count: number;
     error?: string;
 }
 
@@ -85,6 +97,13 @@ interface RemoteFile {
 interface RemoteGenerateResponse {
     ok: boolean;
     summary?: PythonGenerateSummary;
+    files?: RemoteFile[];
+    error?: string;
+}
+
+interface RemoteHtmlResponse {
+    ok: boolean;
+    summary?: PythonHtmlSummary;
     files?: RemoteFile[];
     error?: string;
 }
@@ -442,7 +461,9 @@ async function collectFiles(rootDir: string): Promise<RemoteFile[]> {
                 continue;
             }
 
-            if (!entry.isFile() || entry.name.endsWith('.pdf')) continue;
+            // The HTML is a preview/print artifact, not a detector input. Do not
+            // base64 it back to the remote detector with every scanned page.
+            if (!entry.isFile() || entry.name.endsWith('.pdf') || entry.name.endsWith('.html')) continue;
 
             files.push({
                 path: path.relative(rootDir, fullPath),
@@ -500,6 +521,26 @@ async function runRemoteOmrPython<T>(service: RemoteOmrService, args: string[]):
             ...result.summary,
             pdf: pdfFile ? path.join(outDir, assertSafeRemotePath(pdfFile.path)) : result.summary.pdf,
             artifacts,
+        } as T;
+    }
+
+    if (moduleName === 'omr.render_html') {
+        const specPath = argValue(args, '--spec');
+        const outDir = argValue(args, '--out');
+        const spec = JSON.parse(await readFile(specPath, 'utf8')) as OmrSpec;
+        const result = await postRemoteOmr<RemoteHtmlResponse>('/api/omr-html', { spec });
+
+        if (!result.ok || !result.summary || !result.files) {
+            throw new Error(result.error || 'OMR remote HTML generation failed');
+        }
+
+        await writeRemoteFiles(outDir, result.files);
+        const htmlFile = result.files.find((file) => file.path.toLowerCase().endsWith('.html'));
+        if (!htmlFile) throw new Error('OMR service did not return the HTML preview');
+
+        return {
+            ...result.summary,
+            html: path.join(outDir, assertSafeRemotePath(htmlFile.path)),
         } as T;
     }
 
@@ -593,27 +634,28 @@ export async function generateOmrSheet(testId: string): Promise<GenerateOmrSheet
 }
 
 /**
- * Generate the same production OMR PDF used by saved tests, but from an
- * in-progress Create Test form. Preview artifacts are isolated in a temporary
- * directory and removed as soon as the PDF has been read.
+ * Render the in-progress OMR sheet directly as HTML. This path deliberately
+ * invokes the HTML-only Python entry point, so the preview never waits for the
+ * ReportLab PDF or detection artifacts. Both renderers still consume the same
+ * validated Layout and geometry module.
  */
-export async function readGeneratedOmrDraftPdf(
+export async function readGeneratedOmrDraftHtml(
     input: OmrDraftInput,
-): Promise<{ pdf: Buffer; summary: PythonGenerateSummary }> {
+): Promise<{ html: string; summary: PythonHtmlSummary }> {
     const ctx = await getAuthContext();
     if (!ctx) throw new Error('Unauthorized');
 
     const spec = toDraftOmrSpec(input);
     await mkdir(OMR_WORK_ROOT, { recursive: true });
-    const layoutDir = await mkdtemp(path.join(OMR_WORK_ROOT, 'preview-'));
+    const layoutDir = await mkdtemp(path.join(OMR_WORK_ROOT, 'preview-html-'));
 
     try {
         const specPath = path.join(layoutDir, 'spec.json');
         await writeFile(specPath, JSON.stringify(spec, null, 2), 'utf8');
 
-        const summary = await runOmrPython<PythonGenerateSummary>([
+        const summary = await runOmrPython<PythonHtmlSummary>([
             '-m',
-            'omr.generate',
+            'omr.render_html',
             '--spec',
             specPath,
             '--out',
@@ -621,10 +663,10 @@ export async function readGeneratedOmrDraftPdf(
         ]);
 
         if (!summary.ok) {
-            throw new Error(summary.error || 'OMR preview generation failed');
+            throw new Error(summary.error || 'OMR HTML preview generation failed');
         }
 
-        return { pdf: await readFile(summary.pdf), summary };
+        return { html: await readFile(summary.html, 'utf8'), summary };
     } finally {
         await rm(layoutDir, { recursive: true, force: true }).catch(() => undefined);
     }

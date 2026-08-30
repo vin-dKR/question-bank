@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Save, FolderOpen, Plus, CheckCircle2, Loader2 } from 'lucide-react';
+import { Download, FolderOpen, Plus, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import QuestionCard from './test-creator/QuestionCard';
 import UnifiedTestDetailsForm from './test-creator/UnifiedTestDetailsForm';
 import EmptyQuestionsCard from './test-creator/EmptyQuestionsCard';
@@ -15,6 +15,72 @@ import { usePDFGeneratorContext } from '@/lib/context/PDFGeneratorContext';
 import { useTestCreatorReducer } from '@/hooks/reducer/useTestCreatorReducer';
 import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
 import BulkMarksAssignment from './test-creator/BulkMarksAssignment';
+import { preRenderHtml } from '@/lib/preRenderHtml';
+import { htmlTopdfBlob } from '@/actions/htmlToPdf/htmlToPdf';
+import { pdfConfigToAnswerKeyHTML, pdfConfigToHTML } from '@/lib/questionToHtmlUtils';
+import { fetchOmrSheet } from './downloadOmrSheet';
+import {
+    closeDownloadSlots,
+    deliverReservedDownload,
+    reserveDownloadSlots,
+    type ReservedDownloadSlot,
+    type TestPdfKind,
+} from './test-creator/downloadSlots';
+
+const PDF_KINDS: TestPdfKind[] = ['questions', 'answers', 'omr'];
+const PDF_LABELS: Record<TestPdfKind, string> = {
+    questions: 'Questions',
+    answers: 'Answer Key',
+    omr: 'OMR Sheet',
+};
+const PDF_OPTIONS = {
+    includeAnswers: false,
+    includeMetadata: true,
+    pageSize: 'a4' as const,
+    orientation: 'portrait' as const,
+    fontSize: 12,
+    lineHeight: 1.4,
+    margin: 20,
+    pdfOptions: {
+        pageSize: 'a4' as const,
+        orientation: 'portrait' as const,
+        margin: 20,
+        scale: 0.8,
+        quality: 0.8,
+    },
+};
+
+type PdfProgress = Record<TestPdfKind, 'pending' | 'running' | 'downloaded' | 'failed'>;
+
+interface WorkflowSnapshot {
+    testData: CreateTestData;
+    pdfFormData: TemplateFormData;
+}
+
+const INITIAL_PDF_PROGRESS: PdfProgress = {
+    questions: 'pending',
+    answers: 'pending',
+    omr: 'pending',
+};
+
+function safeFilenamePart(value: string | undefined) {
+    return (value || 'test').replace(/[^A-Za-z0-9._-]+/g, '_');
+}
+
+function cloneSnapshot(testData: CreateTestData, pdfFormData: TemplateFormData): WorkflowSnapshot {
+    return {
+        testData: {
+            ...testData,
+            questions: testData.questions.map((question) => ({
+                ...question,
+                options: [...question.options],
+                option_images: question.option_images ? [...question.option_images] : question.option_images,
+                crop_bbox: question.crop_bbox ? [...question.crop_bbox] as [number, number, number, number] : question.crop_bbox,
+            })),
+        },
+        pdfFormData: { ...pdfFormData },
+    };
+}
 
 export default function TestCreator({ paperId }: { paperId: string }) {
     const router = useRouter();
@@ -23,6 +89,11 @@ export default function TestCreator({ paperId }: { paperId: string }) {
     const { institution } = usePDFGeneratorContext();
     const { selectedQuestions } = useQuestionBankContext();
     const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+    const [pdfProgress, setPdfProgress] = useState<PdfProgress>(INITIAL_PDF_PROGRESS);
+    const [workflowStep, setWorkflowStep] = useState<string | null>(null);
+    const [workflowError, setWorkflowError] = useState<string | null>(null);
+    const [createdTestId, setCreatedTestId] = useState<string | null>(null);
+    const workflowSnapshotRef = useRef<WorkflowSnapshot | null>(null);
     const [pdfFormData, setPdfFormData] = useState<TemplateFormData>({
         templateName: '',
         institution: institution || '',
@@ -35,6 +106,17 @@ export default function TestCreator({ paperId }: { paperId: string }) {
         standard: '',
         session: '',
     });
+
+    useEffect(() => {
+        // Keep the idempotency key across a full-page retry without leaking it
+        // into a future create flow: reload retains the query string, while a
+        // fresh navigation to /examination/create receives a new server ID.
+        const url = new URL(window.location.href);
+        if (url.searchParams.get('paperId') !== paperId) {
+            url.searchParams.set('paperId', paperId);
+            window.history.replaceState(window.history.state, '', url);
+        }
+    }, [paperId]);
 
     useEffect(() => {
         const storedQuestions = sessionStorage.getItem('selectedQuestionsForTest');
@@ -86,58 +168,158 @@ export default function TestCreator({ paperId }: { paperId: string }) {
         }));
     }, [testData.totalMarks, testData.duration, testData.title, testData.subject, testData.institution, testData.institutionAddress, testData.standard, testData.session]);
 
-    const handleSubmit = async () => {
-        if (!testData.title.trim()) {
+    const validateTest = (data: CreateTestData) => {
+        if (!data.title.trim()) {
             toast.error('Please enter a test title');
-            return;
+            return false;
         }
-        if (!testData.subject.trim()) {
+        if (!data.subject.trim()) {
             toast.error('Please select a subject');
-            return;
+            return false;
         }
-        if (testData.questions.length === 0) {
+        if (data.questions.length === 0) {
             toast.error('Please add at least one question');
-            return;
+            return false;
         }
-        for (let i = 0; i < testData.questions.length; i++) {
-            const q = testData.questions[i];
+        for (let i = 0; i < data.questions.length; i++) {
+            const q = data.questions[i];
             if (!q.question_text.trim()) {
                 toast.error(`Question ${i + 1}: Please enter question text`);
-                return;
+                return false;
             }
             if (q.options.some((opt) => !opt.trim())) {
                 toast.error(`Question ${i + 1}: Please fill all options`);
-                return;
+                return false;
             }
             if (!q.answer) {
                 toast.error(`Question ${i + 1}: Please select correct answer`);
-                return;
+                return false;
             }
         }
+        return true;
+    };
+
+    const renderPaperPdf = async (kind: 'questions' | 'answers', snapshot: WorkflowSnapshot) => {
+        await preRenderHtml();
+        const form = snapshot.pdfFormData;
+        const config = {
+            institution: form.institution || '',
+            institutionAddress: form.institutionAddress,
+            selectedQuestions: snapshot.testData.questions,
+            options: PDF_OPTIONS,
+            marks: form.marks,
+            time: form.time,
+            exam: form.exam,
+            subject: form.subject,
+            logo: form.logo || '',
+            standard: form.standard,
+            session: form.session,
+        };
+        const html = kind === 'questions'
+            ? pdfConfigToHTML(config)
+            : pdfConfigToAnswerKeyHTML(config);
+        const result = await htmlTopdfBlob(html);
+        if (!result.data) {
+            throw new Error(result.errorMessage || `Failed to generate ${PDF_LABELS[kind]}`);
+        }
+        return new Blob([result.data], { type: 'application/pdf' });
+    };
+
+    const handleSubmit = async () => {
+        const snapshot = workflowSnapshotRef.current ?? cloneSnapshot(testData, pdfFormData);
+        if (!workflowSnapshotRef.current && !validateTest(snapshot.testData)) return;
+
+        const remaining = PDF_KINDS.filter((kind) => pdfProgress[kind] !== 'downloaded');
+        let slots: ReservedDownloadSlot[] = [];
+
+        // This must remain before the first await: popup permission and browser
+        // user activation do not survive the save/PDF server round-trips.
+        try {
+            slots = reserveDownloadSlots(remaining);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Allow pop-ups for this site, then try again.';
+            setWorkflowError(message);
+            toast.error(message);
+            return;
+        }
+
+        workflowSnapshotRef.current = snapshot;
+        setWorkflowError(null);
 
         dispatch({ type: 'SET_SUBMITTING', isSubmitting: true });
+        let currentKind: TestPdfKind | null = null;
+        let savedTestId = createdTestId;
+        const completed = new Set(PDF_KINDS.filter((kind) => pdfProgress[kind] === 'downloaded'));
+
         try {
+            setWorkflowStep(savedTestId ? 'Confirming saved test…' : 'Saving test…');
             const createdTest = await createTest({
                 omrPaperId: paperId,
-                classId: testData.classId ?? null,
-                title: testData.title,
-                description: testData.description,
-                subject: testData.subject,
-                duration: typeof testData.duration === 'string' ? parseInt(testData.duration) || 60 : testData.duration,
-                totalMarks: testData.questions.reduce((total, q) => total + q.marks, 0),
-                questions: testData.questions.map((q) => ({
+                classId: snapshot.testData.classId ?? null,
+                title: snapshot.testData.title,
+                description: snapshot.testData.description,
+                subject: snapshot.testData.subject,
+                duration: typeof snapshot.testData.duration === 'string'
+                    ? parseInt(snapshot.testData.duration) || 60
+                    : snapshot.testData.duration,
+                totalMarks: snapshot.testData.questions.reduce((total, q) => total + q.marks, 0),
+                questions: snapshot.testData.questions.map((q) => ({
                     ...q,
                     negativeMark: 0,
                     question_number: q.question_number
                 })),
             });
-            toast.success('Test created successfully!');
+            if (!createdTest.id) throw new Error('The test was saved but no test ID was returned');
+            savedTestId = createdTest.id;
+            setCreatedTestId(createdTest.id);
+
+            for (const kind of remaining) {
+                currentKind = kind;
+                setPdfProgress((progress) => ({ ...progress, [kind]: 'running' }));
+                setWorkflowStep(`Generating ${PDF_LABELS[kind]}…`);
+                const slot = slots.find((candidate) => candidate.kind === kind);
+                if (!slot) throw new Error(`No download window is available for ${PDF_LABELS[kind]}`);
+
+                const safeName = safeFilenamePart(snapshot.pdfFormData.exam || snapshot.testData.title);
+                let blob: Blob;
+                let filename: string;
+                if (kind === 'questions') {
+                    blob = await renderPaperPdf('questions', snapshot);
+                    filename = `${safeName}_questions.pdf`;
+                } else if (kind === 'answers') {
+                    blob = await renderPaperPdf('answers', snapshot);
+                    filename = `${safeName}_answers.pdf`;
+                } else {
+                    const omr = await fetchOmrSheet(createdTest.id, `${safeName}_omr_sheet.pdf`);
+                    blob = omr.blob;
+                    filename = omr.filename;
+                }
+
+                setWorkflowStep(`Downloading ${PDF_LABELS[kind]}…`);
+                await deliverReservedDownload(slot, blob, filename);
+                completed.add(kind);
+                setPdfProgress((progress) => ({ ...progress, [kind]: 'downloaded' }));
+            }
+
+            setWorkflowStep('Downloads started');
+            toast.success('Test created and all three PDF downloads started.');
             sessionStorage.removeItem('selectedQuestionsForTest');
             router.push(createdTest.id ? `/examination/tests/${createdTest.id}` : '/examination');
         } catch (error) {
-            console.error('Error creating test:', error);
-            toast.error('Failed to create test');
+            console.error('Create test and download workflow failed:', error);
+            if (currentKind) {
+                setPdfProgress((progress) => ({ ...progress, [currentKind!]: 'failed' }));
+            }
+            const detail = error instanceof Error ? error.message : 'Unknown error';
+            const downloaded = PDF_KINDS.filter((kind) => completed.has(kind)).map((kind) => PDF_LABELS[kind]);
+            const message = savedTestId
+                ? `Test saved. ${downloaded.length > 0 ? `${downloaded.join(', ')} download${downloaded.length === 1 ? '' : 's'} started. ` : ''}${currentKind ? `${PDF_LABELS[currentKind]} failed: ` : ''}${detail} Retry to download only the remaining files.`
+                : `The test was not created and no PDFs were downloaded: ${detail}`;
+            setWorkflowStep(null);
+            setWorkflowError(message);
+            toast.error(message);
         } finally {
+            closeDownloadSlots(slots.filter((slot) => !completed.has(slot.kind)));
             dispatch({ type: 'SET_SUBMITTING', isSubmitting: false });
         }
     };
@@ -172,12 +354,23 @@ export default function TestCreator({ paperId }: { paperId: string }) {
                         {isSubmitting ? (
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         ) : (
-                            <Save className="w-4 h-4 mr-2" />
+                            <Download className="w-4 h-4 mr-2" />
                         )}
-                        {isSubmitting ? 'Creating…' : 'Create Test'}
+                        {isSubmitting
+                            ? workflowStep || 'Working…'
+                            : createdTestId || Object.values(pdfProgress).some((status) => status === 'downloaded')
+                                ? 'Retry Remaining Downloads'
+                                : 'Create Test & Download'}
                     </Button>
                 </div>
             </div>
+
+            {workflowError && (
+                <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-amber-900">
+                    <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                    <p className="text-xs leading-5">{workflowError}</p>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-6">
                 <div className="space-y-5">

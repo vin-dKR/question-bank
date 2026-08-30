@@ -1,14 +1,11 @@
 'use client';
 
-import { FileText, Download, AlertCircle, Loader2, FileQuestion, FileCheck2, ScanLine } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { FileText, AlertCircle, Loader2, FileQuestion, FileCheck2, ScanLine } from 'lucide-react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
 import PDFBlobViewer from './PDFBlobViewer';
 
-import { preRenderHtml } from '@/lib/preRenderHtml';
-import { htmlTopdfBlob } from '@/actions/htmlToPdf/htmlToPdf';
 import { pdfConfigToHTML, pdfConfigToAnswerKeyHTML } from '@/lib/questionToHtmlUtils';
 
 interface RealTimePDFPreviewProps {
@@ -23,13 +20,10 @@ export default function RealTimePDFPreview({ paperId, pdfFormData, selectedQuest
     const [activeTab, setActiveTab] = useState<Tab>('questions');
     const [questionHtml, setQuestionHtml] = useState<string | null>(null);
     const [answerHtml, setAnswerHtml] = useState<string | null>(null);
-    const [isGeneratingPdf, setIsGeneratingPdf] = useState<Tab | null>(null);
     const [isGeneratingOmr, setIsGeneratingOmr] = useState(false);
-    const [omrPdfUrl, setOmrPdfUrl] = useState<string | null>(null);
-    const [omrPdfBlob, setOmrPdfBlob] = useState<Blob | null>(null);
+    const [omrHtml, setOmrHtml] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const generationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const omrPdfUrlRef = useRef<string | null>(null);
 
     const pdfOptions = useMemo(
         () => ({
@@ -128,10 +122,7 @@ export default function RealTimePDFPreview({ paperId, pdfFormData, selectedQuest
 
         const hasOmrContent = selectedQuestions.length > 0 && Boolean(pdfFormData.exam) && Boolean(pdfFormData.subject);
         if (!hasOmrContent) {
-            setOmrPdfBlob(null);
-            if (omrPdfUrlRef.current) URL.revokeObjectURL(omrPdfUrlRef.current);
-            omrPdfUrlRef.current = null;
-            setOmrPdfUrl(null);
+            setOmrHtml(null);
             return;
         }
 
@@ -171,12 +162,7 @@ export default function RealTimePDFPreview({ paperId, pdfFormData, selectedQuest
                     throw new Error(payload?.error || 'Could not generate the OMR preview');
                 }
 
-                const blob = await response.blob();
-                const url = URL.createObjectURL(blob);
-                if (omrPdfUrlRef.current) URL.revokeObjectURL(omrPdfUrlRef.current);
-                omrPdfUrlRef.current = url;
-                setOmrPdfBlob(blob);
-                setOmrPdfUrl(url);
+                setOmrHtml(await response.text());
             } catch (previewError) {
                 if (previewError instanceof DOMException && previewError.name === 'AbortError') return;
                 setError(previewError instanceof Error ? previewError.message : 'Could not generate the OMR preview');
@@ -191,131 +177,13 @@ export default function RealTimePDFPreview({ paperId, pdfFormData, selectedQuest
         };
     }, [activeTab, paperId, pdfFormData.exam, pdfFormData.subject, pdfFormData.time, selectedQuestions]);
 
-    useEffect(() => () => {
-        if (omrPdfUrlRef.current) URL.revokeObjectURL(omrPdfUrlRef.current);
-    }, []);
-
-    const generateQuestionPDF = useCallback(async () => {
-        if (selectedQuestions.length === 0) {
-            setError('No questions available for download');
-            return;
-        }
-
-        try {
-            setIsGeneratingPdf('questions');
-            setError(null);
-
-            await preRenderHtml();
-
-            const html = pdfConfigToHTML({
-                institution: pdfFormData.institution || '',
-                institutionAddress: pdfFormData.institutionAddress,
-                selectedQuestions: selectedQuestions,
-                options: pdfOptions,
-                marks: pdfFormData.marks,
-                time: pdfFormData.time,
-                exam: pdfFormData.exam,
-                subject: pdfFormData.subject,
-                logo: pdfFormData.logo || '',
-                standard: pdfFormData.standard,
-                session: pdfFormData.session,
-            });
-
-            const blob = await htmlTopdfBlob(html);
-            if (blob.data) {
-                const pdfBlob = new Blob([blob.data], { type: 'application/pdf' });
-                const pdfUrl = URL.createObjectURL(pdfBlob);
-                const link = document.createElement('a');
-                link.href = pdfUrl;
-                link.download = `${pdfFormData.exam}_questions.pdf`;
-                link.click();
-                URL.revokeObjectURL(pdfUrl);
-            } else {
-                setError('Failed to generate question PDF: ' + blob.errorMessage);
-            }
-        } catch (error) {
-            console.error('Error generating question PDF:', error);
-            setError('Error generating question PDF: ' + (error instanceof Error ? error.message : 'Unknown error'));
-        } finally {
-            setIsGeneratingPdf(null);
-        }
-    }, [selectedQuestions, pdfFormData, pdfOptions]);
-
-    const generateAnswerPDF = useCallback(async () => {
-        if (selectedQuestions.length === 0) {
-            setError('No questions available for download');
-            return;
-        }
-
-        try {
-            setIsGeneratingPdf('answers');
-            setError(null);
-
-            await preRenderHtml();
-
-            const html = pdfConfigToAnswerKeyHTML({
-                institution: pdfFormData.institution || '',
-                institutionAddress: pdfFormData.institutionAddress,
-                selectedQuestions: selectedQuestions,
-                options: pdfOptions,
-                marks: pdfFormData.marks,
-                time: pdfFormData.time,
-                exam: pdfFormData.exam,
-                subject: pdfFormData.subject,
-                standard: pdfFormData.standard,
-                session: pdfFormData.session,
-                logo: pdfFormData.logo || '',
-            });
-
-            const blob = await htmlTopdfBlob(html);
-            if (blob.data) {
-                const pdfBlob = new Blob([blob.data], { type: 'application/pdf' });
-                const pdfUrl = URL.createObjectURL(pdfBlob);
-                const link = document.createElement('a');
-                link.href = pdfUrl;
-                link.download = `${pdfFormData.exam}_answers.pdf`;
-                link.click();
-                URL.revokeObjectURL(pdfUrl);
-            } else {
-                setError('Failed to generate answer PDF: ' + blob.errorMessage);
-            }
-        } catch (error) {
-            console.error('Error generating answer PDF:', error);
-            setError('Error generating answer PDF: ' + (error instanceof Error ? error.message : 'Unknown error'));
-        } finally {
-            setIsGeneratingPdf(null);
-        }
-    }, [selectedQuestions, pdfFormData, pdfOptions]);
-
-    const downloadOmrPDF = useCallback(() => {
-        if (!omrPdfBlob || !omrPdfUrl) {
-            setError('The OMR sheet is still being prepared');
-            return;
-        }
-
-        const safeName = (pdfFormData.exam || 'test').replace(/[^A-Za-z0-9._-]+/g, '_');
-        const link = document.createElement('a');
-        link.href = omrPdfUrl;
-        link.download = `${safeName}_omr_sheet.pdf`;
-        link.click();
-    }, [omrPdfBlob, omrPdfUrl, pdfFormData.exam]);
-
-    const isGenerating = activeTab === 'omr' ? isGeneratingOmr : isGeneratingPdf === activeTab;
     const currentHtml = activeTab === 'questions' ? questionHtml : answerHtml;
-    const currentDownload = activeTab === 'questions'
-        ? generateQuestionPDF
-        : activeTab === 'answers'
-            ? generateAnswerPDF
-            : downloadOmrPDF;
     const hasContent = selectedQuestions.length > 0 && Boolean(pdfFormData.exam) && Boolean(pdfFormData.subject);
-    const downloadDisabled = isGenerating
-        || selectedQuestions.length === 0
-        || (activeTab === 'omr' && !omrPdfBlob);
 
     return (
         <div className="flex h-full flex-col overflow-hidden rounded-xl border border-black/5 bg-white shadow-xs">
             {/* Header */}
-            <div className="flex items-center justify-between gap-3 border-b border-black/5 px-4 py-3">
+            <div className="flex items-center gap-3 border-b border-black/5 px-4 py-3">
                 <div className="flex items-center gap-2 min-w-0">
                     <div className="flex h-7 w-7 items-center justify-center rounded-md bg-indigo-50 text-indigo-600">
                         <FileText className="h-3.5 w-3.5" />
@@ -329,24 +197,6 @@ export default function RealTimePDFPreview({ paperId, pdfFormData, selectedQuest
                         </p>
                     </div>
                 </div>
-                <Button
-                    onClick={currentDownload}
-                    disabled={downloadDisabled}
-                    size="sm"
-                    className="flex-shrink-0"
-                >
-                    {isGenerating ? (
-                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                    ) : (
-                        <Download className="w-3.5 h-3.5 mr-1.5" />
-                    )}
-                    <span className="hidden sm:inline">
-                        {isGenerating ? 'Generating…' : 'Download'}
-                    </span>
-                    <span className="sm:hidden">
-                        {isGenerating ? '…' : 'PDF'}
-                    </span>
-                </Button>
             </div>
 
             {/* Segmented tabs */}
@@ -423,10 +273,11 @@ export default function RealTimePDFPreview({ paperId, pdfFormData, selectedQuest
                     </div>
                 ) : activeTab === 'omr' ? (
                     <div className="relative h-full min-h-[500px] overflow-hidden rounded-lg border border-zinc-200 bg-white">
-                        {omrPdfUrl ? (
+                        {omrHtml ? (
                             <iframe
                                 title="OMR sheet preview"
-                                src={omrPdfUrl}
+                                srcDoc={omrHtml}
+                                sandbox=""
                                 className="h-full min-h-[500px] w-full border-0"
                             />
                         ) : error && !isGeneratingOmr ? (
@@ -442,10 +293,10 @@ export default function RealTimePDFPreview({ paperId, pdfFormData, selectedQuest
                         ) : (
                             <div className="flex h-full min-h-[500px] flex-col items-center justify-center gap-3 text-zinc-500">
                                 <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
-                                <p className="text-xs font-medium">Building your OMR sheet…</p>
+                                <p className="text-xs font-medium">Preparing live HTML preview…</p>
                             </div>
                         )}
-                        {isGeneratingOmr && omrPdfUrl && (
+                        {isGeneratingOmr && omrHtml && (
                             <div className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-black/5 bg-white/95 px-2.5 py-1 text-[11px] font-medium text-zinc-600 shadow-sm backdrop-blur">
                                 <Loader2 className="h-3 w-3 animate-spin text-indigo-600" />
                                 Updating

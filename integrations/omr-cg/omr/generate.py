@@ -18,6 +18,7 @@ from pathlib import Path
 
 from . import spec as spec_mod
 from .layout import LayoutError, plan
+from .render_html import write as render_html
 from .render_pdf import render
 from .template_emitter import write_all
 
@@ -31,6 +32,7 @@ def generate(exam_spec: spec_mod.ExamSpec, out_dir: str | Path) -> dict:
 
     pdf_name = f"{exam_spec.paper_id}_v{exam_spec.version}.pdf"
     pdf_path = render(layout, out_dir / pdf_name)
+    html_path = render_html(layout, out_dir / f"{exam_spec.paper_id}_v{exam_spec.version}.html")
     written = write_all(layout, out_dir, pdf_name)
 
     return {
@@ -38,10 +40,11 @@ def generate(exam_spec: spec_mod.ExamSpec, out_dir: str | Path) -> dict:
         "paper_id": exam_spec.paper_id,
         "version": exam_spec.version,
         "pdf": str(pdf_path),
+        "html": str(html_path),
         "page_count": layout.page_count,
         "question_count": len(exam_spec.questions),
         "fib_count": len(exam_spec.fib_questions),
-        "artifacts": [str(p) for p in written],
+        "artifacts": [str(html_path), *[str(p) for p in written]],
     }
 
 
