@@ -1,7 +1,16 @@
+import { PageContainer } from "./PageContainer";
+
 interface MainContentProps {
     children: React.ReactNode;
 }
 
 export function MainContent({ children }: MainContentProps) {
-    return <main className="relative flex min-h-0 flex-1 flex-col overflow-y-auto p-2 sm:p-4 md:p-6 lg:p-8">{children}</main>;
+    return (
+        <main
+            id="main-content"
+            className="shell-gutters relative min-h-0 flex-1 overflow-y-auto overscroll-y-contain py-4 sm:py-5 lg:py-6"
+        >
+            <PageContainer>{children}</PageContainer>
+        </main>
+    );
 }

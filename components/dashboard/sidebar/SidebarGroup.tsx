@@ -14,9 +14,10 @@ interface SidebarGroupProps {
     expandedGroups: Set<string>;
     toggleGroup: (groupName: string) => void;
     pathname: string;
+    onNavigate?: () => void;
 }
 
-export function SidebarGroup({ group, isSidebarOpen, expandedGroups, toggleGroup, pathname }: SidebarGroupProps) {
+export function SidebarGroup({ group, isSidebarOpen, expandedGroups, toggleGroup, pathname, onNavigate }: SidebarGroupProps) {
     const isRouteActive = (href: string) => {
         if (href === "/examination") {
             return pathname === href;
@@ -66,6 +67,7 @@ export function SidebarGroup({ group, isSidebarOpen, expandedGroups, toggleGroup
                             isSidebarOpen={isSidebarOpen}
                             isSubItem={true}
                             isActive={isRouteActive(item.href)}
+                            onNavigate={onNavigate}
                         />
                     ))}
                 </div>

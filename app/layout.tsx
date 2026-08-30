@@ -28,7 +28,7 @@ export default function RootLayout({
             <body className={inter.variable}>
                 <AuthKitProvider>
                     <QueryProvider>
-                        <main className="min-h-screen bg-gray-50">
+                        <main className="min-h-[100svh] bg-gray-50">
                             {children}
                         </main>
                         <Toaster closeButton={true} />

@@ -219,7 +219,7 @@ export function OrgSwitcher({ orgs }: { orgs: SwitcherOrg[] }) {
             >
                 <OrgTile org={org} size="md" />
                 <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-zinc-900">
+                    <p className="whitespace-normal break-words text-sm font-medium text-zinc-900">
                         {displayName(org)}
                     </p>
                     <p className="truncate text-[11px] text-zinc-500">{subtitle(org)}</p>
@@ -247,19 +247,20 @@ export function OrgSwitcher({ orgs }: { orgs: SwitcherOrg[] }) {
                     <button
                         type="button"
                         disabled={busy}
-                        aria-label="Switch institution"
-                        className="flex max-w-[240px] items-center gap-2 rounded-lg border border-black/8 bg-white px-2 py-1 shadow-xs transition-colors hover:bg-zinc-50 disabled:opacity-60"
+                        aria-label={active ? `Switch institution, current ${displayName(active)}` : "Switch institution"}
+                        title={active ? displayName(active) : "Workspace"}
+                        className="flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-black/8 bg-white px-2 shadow-xs transition-colors hover:bg-zinc-50 disabled:opacity-60 sm:w-auto sm:max-w-[min(240px,32vw)] sm:justify-start"
                     >
                         {active && <OrgTile org={active} />}
-                        <span className="truncate text-[13px] font-medium text-zinc-900">
+                        <span className="hidden truncate text-[13px] font-medium text-zinc-900 sm:block">
                             {active ? displayName(active) : "Workspace"}
                         </span>
-                        {active && <KindBadge org={active} />}
-                        <ChevronsUpDown className="h-3.5 w-3.5 flex-shrink-0 text-zinc-400" />
+                        {active && <span className="hidden sm:block"><KindBadge org={active} /></span>}
+                        <ChevronsUpDown className="hidden h-3.5 w-3.5 flex-shrink-0 text-zinc-400 sm:block" />
                     </button>
                 </DropdownMenuTrigger>
 
-                <DropdownMenuContent align="start" sideOffset={6} className="w-72 p-1.5">
+                <DropdownMenuContent align="start" sideOffset={6} className="w-72 max-w-[calc(100vw-1rem)] p-1.5">
                     {showSearch && (
                         // Radix's menu owns the keyboard for typeahead, so the
                         // keystrokes have to be stopped before they reach it or

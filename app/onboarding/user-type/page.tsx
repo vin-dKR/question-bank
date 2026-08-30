@@ -79,7 +79,7 @@ export default function UserTypePage() {
      */
     if (joinedOrg) {
         return (
-            <div className="min-h-screen bg-gray-50 py-12 tracking-3">
+            <div className="min-h-[100svh] bg-gray-50 py-12 tracking-3">
                 <div className="mx-auto max-w-2xl px-6">
                     <h1 className="text-3xl font-bold text-gray-900">
                         You&apos;ve been invited to {joinedOrg.name}
@@ -123,7 +123,7 @@ export default function UserTypePage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 py-12 tracking-3">
+        <div className="min-h-[100svh] bg-gray-50 py-12 tracking-3">
             <div className="mx-auto max-w-4xl px-6">
                 <div className="mb-12">
                     <Button

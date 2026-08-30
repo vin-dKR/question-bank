@@ -12,6 +12,7 @@ interface SidebarProps {
     pathname: string;
     expandedGroups: Set<string>;
     toggleGroup: (groupName: string) => void;
+    onNavigate?: () => void;
 }
 
 export function Sidebar({
@@ -21,15 +22,14 @@ export function Sidebar({
     pathname,
     expandedGroups,
     toggleGroup,
+    onNavigate,
 }: SidebarProps) {
     return (
         <div
             className={`
-        ${isSidebarOpen ? "w-64 px-2" : "w-14"} 
-        ${isMobile ? "fixed top-0 left-0 h-full z-50 bg-white transition-transform duration-300 ease-in-out" : "block"}
-        ${isMobile && !isSidebarOpen ? "-translate-x-full" : "translate-x-0"}
-        bg-white transition-all duration-300 ease-in-out 
-        overflow-x-hidden
+        flex h-full min-h-0 flex-col overflow-x-hidden bg-white
+        ${isMobile ? "w-full px-2" : isSidebarOpen ? "w-64 px-2" : "w-14"}
+        transition-[width,padding] duration-300 ease-in-out
       `}
         >
             <SidebarToggle
@@ -37,7 +37,10 @@ export function Sidebar({
                 setIsSidebarOpen={setIsSidebarOpen}
                 isMobile={isMobile}
             />
-            <nav className="mt-6">
+            <nav
+                aria-label="Primary navigation"
+                className="mt-4 min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[max(1rem,env(safe-area-inset-bottom))]"
+            >
                 {sidebarItems.map((item) =>
                     "items" in item ? (
                         <SidebarGroup
@@ -47,6 +50,7 @@ export function Sidebar({
                             expandedGroups={expandedGroups}
                             toggleGroup={toggleGroup}
                             pathname={pathname}
+                            onNavigate={onNavigate}
                         />
                     ) : (
                         <SidebarItem
@@ -54,6 +58,7 @@ export function Sidebar({
                             item={item}
                             isSidebarOpen={isSidebarOpen}
                             isActive={pathname === item.href}
+                            onNavigate={onNavigate}
                         />
                     )
                 )}

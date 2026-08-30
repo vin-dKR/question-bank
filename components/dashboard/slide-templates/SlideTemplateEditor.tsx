@@ -225,16 +225,16 @@ export default function SlideTemplateEditor({ initial, onClose, onSaved }: Props
                 </div>
             )}
 
-            <div className="grid gap-4 lg:grid-cols-[150px_minmax(0,1fr)_260px]">
+            <div className="grid gap-4 @5xl/page:grid-cols-[150px_minmax(0,1fr)_260px]">
                 {/* Slide rail */}
-                <div className="space-y-2 order-2 lg:order-1">
+                <div className="order-2 space-y-2 @5xl/page:order-1">
                     <div className="flex items-center justify-between">
                         <Label className="text-xs text-zinc-500">Slides</Label>
                         <Button size="icon" variant="ghost" onClick={addSlide} title="Add slide">
                             <Plus className="size-4" />
                         </Button>
                     </div>
-                    <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2">
+                    <div className="flex gap-2 overflow-x-auto pb-2 @5xl/page:flex-col @5xl/page:overflow-visible">
                         {slides.map((s, i) => (
                             <div
                                 key={s.id}
@@ -289,7 +289,7 @@ export default function SlideTemplateEditor({ initial, onClose, onSaved }: Props
                 </div>
 
                 {/* Canvas */}
-                <div className="space-y-3 order-1 lg:order-2 min-w-0">
+                <div className="order-1 min-w-0 space-y-3 @5xl/page:order-2">
                     {/* Contextual format bar — PowerPoint's mini-toolbar. */}
                     <div className="min-h-[3rem]">
                         {selected && (

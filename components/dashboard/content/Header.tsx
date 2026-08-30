@@ -14,7 +14,6 @@ import {
 import { Search, Bell, LogOut, Settings, User as UserIcon, ChevronRight } from "lucide-react";
 import type { CurrentUser } from "@/hooks/auth/useCurrentUser";
 import { HamburgerMenu } from "@/components/dashboard/sidebar/HamburgerMenu";
-import { Dispatch, SetStateAction } from "react";
 import { CommandPalette } from "@/components/dashboard/CommandPalette";
 import { OrgSwitcher, type SwitcherOrg } from "@/components/organization/OrgSwitcher";
 
@@ -24,9 +23,7 @@ interface HeaderProps {
     /** Organizations this person belongs to, resolved server-side. */
     orgs: SwitcherOrg[];
     handleLogout: () => void;
-    isSidebarOpen: boolean;
-    setIsSidebarOpen: Dispatch<SetStateAction<boolean>>;
-    isMobile: boolean;
+    isCompact: boolean;
 }
 
 function getPlatformKey() {
@@ -40,9 +37,7 @@ export function Header({
     user,
     orgs,
     handleLogout,
-    isSidebarOpen,
-    setIsSidebarOpen,
-    isMobile,
+    isCompact,
 }: HeaderProps) {
     const router = useRouter();
     const [paletteOpen, setPaletteOpen] = useState(false);
@@ -86,11 +81,11 @@ export function Header({
 
     return (
         <>
-            <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-black/5">
-                <div className="flex items-center gap-3 px-4 py-2.5 md:px-6 md:py-3">
+            <header className="sticky top-0 z-30 shrink-0 border-b border-black/5 bg-white/85 backdrop-blur-md">
+                <div className="shell-gutters flex min-w-0 items-center gap-1 py-2.5 sm:gap-2 lg:py-3">
                     {/* Left: institution + breadcrumb */}
-                    <div className="flex min-w-0 flex-1 items-center gap-2">
-                        {isMobile && !isSidebarOpen && <HamburgerMenu setIsSidebarOpen={setIsSidebarOpen} />}
+                    <div className="flex min-w-0 flex-1 items-center gap-1 sm:gap-2">
+                        {isCompact && <HamburgerMenu />}
 
                         {/*
                           * This was the hardcoded word "Workspace" — accurate
@@ -106,19 +101,19 @@ export function Header({
                         {orgs.length > 0 ? (
                             <OrgSwitcher orgs={orgs} />
                         ) : (
-                            <span className="text-[13px] font-medium text-zinc-500">
+                            <span className="hidden truncate text-[13px] font-medium text-zinc-500 sm:block">
                                 Workspace
                             </span>
                         )}
 
-                        <ChevronRight className="h-3.5 w-3.5 flex-shrink-0 text-zinc-300" />
+                        <ChevronRight className="hidden h-3.5 w-3.5 flex-shrink-0 text-zinc-300 sm:block" />
 
-                        <div className="min-w-0">
-                            <p className="truncate text-[13px] font-medium text-zinc-900">
+                        <div className="min-w-0 flex-1">
+                            <p className="truncate text-[13px] font-medium text-zinc-900" title={pageName}>
                                 {pageName}
                             </p>
                             {pageDescription && (
-                                <p className="hidden truncate text-xs text-zinc-500 sm:block">
+                                <p className="hidden truncate text-xs text-zinc-500 lg:block">
                                     {pageDescription}
                                 </p>
                             )}
@@ -129,7 +124,7 @@ export function Header({
                     <button
                         type="button"
                         onClick={() => setPaletteOpen(true)}
-                        className="hidden md:inline-flex items-center gap-2 h-8 px-3 rounded-lg border border-black/5 bg-zinc-50 hover:bg-zinc-100 text-xs text-zinc-500 transition-colors min-w-[220px] cursor-pointer"
+                        className="hidden h-9 min-w-[200px] max-w-[260px] items-center gap-2 rounded-lg border border-black/5 bg-zinc-50 px-3 text-xs text-zinc-500 transition-colors hover:bg-zinc-100 xl:inline-flex"
                         aria-label="Search"
                     >
                         <Search className="h-3.5 w-3.5" />
@@ -140,11 +135,11 @@ export function Header({
                     </button>
 
                     {/* Right: actions */}
-                    <div className="flex items-center gap-1">
+                    <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
                         <button
                             type="button"
                             onClick={() => setPaletteOpen(true)}
-                            className="md:hidden inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
+                            className="hidden h-10 w-10 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 sm:inline-flex xl:hidden"
                             aria-label="Search"
                         >
                             <Search className="h-4 w-4" />
@@ -152,20 +147,20 @@ export function Header({
 
                         <button
                             type="button"
-                            className="relative inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
+                            className="relative hidden h-10 w-10 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 sm:inline-flex"
                             aria-label="Notifications"
                         >
                             <Bell className="h-4 w-4" />
                             <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-rose-500 ring-2 ring-white" />
                         </button>
 
-                        <div className="h-5 w-px bg-black/5 mx-1" />
+                        <div className="mx-1 hidden h-5 w-px bg-black/5 sm:block" />
 
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <button
                                     type="button"
-                                    className="flex items-center gap-2 h-8 pl-0.5 pr-2 rounded-lg hover:bg-zinc-50 transition-colors group focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30"
+                                    className="group flex h-10 min-w-10 items-center justify-center gap-2 rounded-lg px-1.5 transition-colors hover:bg-zinc-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 sm:justify-start sm:pr-2"
                                     aria-label="Account"
                                 >
                                     <Avatar className="h-7 w-7 ring-2 ring-white shadow-xs">
@@ -200,6 +195,18 @@ export function Header({
                                     </div>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                    className="sm:hidden"
+                                    onClick={() => setPaletteOpen(true)}
+                                >
+                                    <Search className="mr-2 h-4 w-4" />
+                                    Search
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="sm:hidden" disabled>
+                                    <Bell className="mr-2 h-4 w-4" />
+                                    Notifications
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator className="sm:hidden" />
                                 <DropdownMenuItem onClick={() => router.push("/profile")}>
                                     <UserIcon className="mr-2 h-4 w-4" />
                                     Profile

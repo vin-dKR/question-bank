@@ -133,7 +133,7 @@ export function SubmitButton({ loading }: SubmitButtonProps) {
 export function OnboardingLayout({ title, description, children }: OnboardingLayoutProps) {
     const router = useRouter();
     return (
-        <div className="min-h-screen bg-gray-50 py-12">
+        <div className="min-h-[100svh] bg-gray-50 py-12">
             <div className="mx-auto max-w-4xl px-6">
                 <div className="mb-12">
                     <Button

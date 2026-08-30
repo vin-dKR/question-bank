@@ -372,7 +372,7 @@ export default function TestCreator({ paperId }: { paperId: string }) {
                 </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-6">
+            <div className="grid grid-cols-1 gap-5 @5xl/page:grid-cols-2 @5xl/page:gap-6">
                 <div className="space-y-5">
                     {hasLoadedQuestions && (
                         <div className="flex items-start gap-3 p-3.5 rounded-xl border border-indigo-100 bg-indigo-50/50">
@@ -436,7 +436,7 @@ export default function TestCreator({ paperId }: { paperId: string }) {
                     </div>
                 </div>
 
-                <div className="lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)]">
+                <div className="@5xl/page:sticky @5xl/page:top-20 @5xl/page:h-[calc(100dvh-6rem)]">
                     <RealTimePDFPreview
                         paperId={paperId}
                         pdfFormData={pdfFormData}

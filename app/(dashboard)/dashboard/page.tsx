@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default function Dashboard() {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 @2xl/page:grid-cols-2 @5xl/page:grid-cols-3">
             <Suspense fallback={<QuestionsCountSkeleton />}>
                 <QuestionsCountCard />
             </Suspense>

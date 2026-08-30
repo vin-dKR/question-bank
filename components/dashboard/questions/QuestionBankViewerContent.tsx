@@ -22,10 +22,10 @@ const QuestionBankViewerContent = () => {
 
     return (
         <div className="relative">
-            <div className="mx-auto w-full pb-4">
-                <div className="grid grid-cols-1 gap-3 lg:grid-cols-[17rem_minmax(0,1fr)] lg:gap-4 xl:grid-cols-[18rem_minmax(0,1fr)]">
+            <div className="mx-auto w-full space-y-5 pb-6">
+                <div className="grid grid-cols-1 gap-4 sm:gap-6 @5xl/page:grid-cols-6 @7xl/page:grid-cols-8">
                     {/* Sidebar */}
-                    <aside className="self-start lg:sticky lg:top-2">
+                    <aside className="col-span-1 h-fit self-start @5xl/page:sticky @5xl/page:top-0 @5xl/page:col-span-2 @7xl/page:col-span-2">
                         <div className="flex items-start gap-2 sm:block sm:space-y-3">
                             <div className="min-w-0 flex-1 sm:w-full">
                                 <SearchBar />
@@ -35,7 +35,7 @@ const QuestionBankViewerContent = () => {
                     </aside>
 
                     {/* Main Content */}
-                    <main className="min-w-0 space-y-3">
+                    <main className="col-span-1 min-w-0 space-y-3 @5xl/page:col-span-4 @7xl/page:col-span-6">
                         {!loading && !error && (isSearching || total > 0) && (
                             <p className="m-0 px-1 text-xs font-medium text-zinc-500">{countLabel}</p>
                         )}

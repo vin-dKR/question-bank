@@ -422,11 +422,11 @@ export default function FilterControls() {
 
             {/* Mobile modal with same controls (state is shared) */}
             <Dialog open={isMobileModalOpen} onOpenChange={setIsMobileModalOpen}>
-                <DialogContent className="sm:max-w-lg h-[90vh] bg-white">
+                <DialogContent className="flex h-[calc(100dvh-2rem)] max-h-[calc(100dvh-2rem)] flex-col bg-white sm:max-w-lg">
                     <DialogHeader>
                         <DialogTitle>Filter Questions</DialogTitle>
                     </DialogHeader>
-                    <div className="max-h-[calc(90vh-5rem)] overflow-y-auto">
+                    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom)]">
                         {renderFilterControls(false)}
                     </div>
                 </DialogContent>

@@ -183,8 +183,8 @@ export default function SlideDeckDialog({ selectedQuestions, deckName, disabled,
                         ? // Fixed height + flex column: the slide flexes to whatever
                           // is left, so the whole step fits without scrolling.
                           // Tighter padding/gap than the base grid, to buy the slide room.
-                          "sm:max-w-5xl h-[92vh] flex flex-col overflow-hidden gap-3 p-4"
-                        : "sm:max-w-2xl max-h-[85vh] overflow-y-auto"
+                          "sm:max-w-5xl h-[calc(100dvh-2rem)] max-h-[calc(100dvh-2rem)] flex flex-col overflow-hidden gap-3 p-4"
+                        : "sm:max-w-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
                 }`}
             >
                 <DialogHeader className="shrink-0">

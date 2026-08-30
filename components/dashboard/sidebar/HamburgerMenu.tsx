@@ -2,20 +2,19 @@
 
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 
-interface HamburgerMenuProps {
-    setIsSidebarOpen: (open: boolean) => void;
-}
-
-export function HamburgerMenu({ setIsSidebarOpen }: HamburgerMenuProps) {
+export function HamburgerMenu() {
     return (
-        <Button
-            variant="ghost"
-            className="sm:hidden z-50 hover:bg-transparent"
-            onClick={() => setIsSidebarOpen(true)}
-            aria-label="Open sidebar"
-        >
-            <Menu className="h-8 w-8 text-black" />
-        </Button>
+        <DialogPrimitive.Trigger asChild>
+            <Button
+                variant="ghost"
+                className="h-10 w-10 shrink-0 p-0 hover:bg-zinc-100"
+                aria-label="Open main navigation"
+                aria-controls="mobile-navigation"
+            >
+                <Menu className="h-5 w-5 text-zinc-900" />
+            </Button>
+        </DialogPrimitive.Trigger>
     );
 }

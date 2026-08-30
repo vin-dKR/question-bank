@@ -14,9 +14,10 @@ interface SidebarItemProps {
     isSidebarOpen: boolean;
     isSubItem?: boolean;
     isActive: boolean;
+    onNavigate?: () => void;
 }
 
-export function SidebarItem({ item, isSidebarOpen, isSubItem = false, isActive }: SidebarItemProps) {
+export function SidebarItem({ item, isSidebarOpen, isSubItem = false, isActive, onNavigate }: SidebarItemProps) {
     const router = useRouter();
     // Phase 2: wrap nav in useTransition so the click is never "stuck" behind
     // the current route's pending work. Combined with per-segment loading.tsx
@@ -38,6 +39,7 @@ export function SidebarItem({ item, isSidebarOpen, isSubItem = false, isActive }
             return;
         }
         e.preventDefault();
+        onNavigate?.();
         startTransition(() => {
             router.push(item.href);
         });
@@ -62,6 +64,7 @@ export function SidebarItem({ item, isSidebarOpen, isSubItem = false, isActive }
       `}
             title={!isSidebarOpen ? item.name : ""}
             aria-busy={isPending || undefined}
+            aria-current={isActive ? "page" : undefined}
         >
             {isActive && isSidebarOpen && (
                 <span

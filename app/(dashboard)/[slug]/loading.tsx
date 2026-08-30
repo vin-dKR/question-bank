@@ -1,7 +1,7 @@
 export default function Loading() {
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-6 xl:grid-cols-8 gap-4 sm:gap-6 animate-pulse">
-            <aside className="col-span-1 lg:col-span-2 xl:col-span-2 space-y-4">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 @5xl/page:grid-cols-6 @7xl/page:grid-cols-8 animate-pulse">
+            <aside className="col-span-1 space-y-4 @5xl/page:col-span-2 @7xl/page:col-span-2">
                 <div className="bg-white rounded-lg p-4 space-y-3 shadow-sm">
                     <div className="h-5 w-24 bg-gray-200 rounded" />
                     {[0, 1, 2, 3].map((i) => (
@@ -15,7 +15,7 @@ export default function Loading() {
                     ))}
                 </div>
             </aside>
-            <main className="col-span-1 lg:col-span-4 xl:col-span-6 space-y-4">
+            <main className="col-span-1 space-y-4 @5xl/page:col-span-4 @7xl/page:col-span-6">
                 <div className="h-10 w-full bg-gray-200 rounded" />
                 {[0, 1, 2, 3, 4, 5].map((i) => (
                     <div key={i} className="bg-white rounded-lg shadow-sm p-4 space-y-3">

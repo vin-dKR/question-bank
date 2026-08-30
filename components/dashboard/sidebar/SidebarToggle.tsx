@@ -14,7 +14,7 @@ export function SidebarToggle({ isSidebarOpen, setIsSidebarOpen, isMobile }: Sid
         <div className="flex items-center mt-4">
             <Button
                 variant="ghost"
-                className={`w-full hover:bg-transparent ${isSidebarOpen ? "justify-between px-2" : "justify-center"}`}
+                className={`min-h-10 w-full hover:bg-transparent ${isSidebarOpen ? "justify-between px-2" : "justify-center"}`}
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                 aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
                 aria-expanded={isSidebarOpen}
@@ -33,7 +33,7 @@ export function SidebarToggle({ isSidebarOpen, setIsSidebarOpen, isMobile }: Sid
                         />
                     </div>
                 )}
-                <Menu className="h-8 w-8 text-black" />
+                <Menu className="h-5 w-5 text-black" />
             </Button>
         </div>
     );
