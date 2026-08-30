@@ -5,6 +5,7 @@ import { Prisma } from "@/generated/prisma";
 import { AuthError, requireUser } from "@/lib/auth/guard";
 import { requireOrgContext } from "@/lib/auth/session";
 import { enforceRateLimit } from "@/lib/ratelimit";
+import { audit } from "@/lib/audit";
 
 // Define proper types for Prisma where clauses
 type QuestionWhereClause = Prisma.QuestionWhereInput;
@@ -25,6 +26,78 @@ type QuestionScope = {
 /** Hard ceilings so no single call can pull the bank in one shot. */
 const MAX_PAGE_SIZE = 100;
 const MAX_IDS = 100;
+const MAX_MY_QUESTIONS_PAGE_SIZE = 50;
+
+/**
+ * Questions authored through the manual question form by the signed-in user.
+ * This is deliberately independent from FolderQuestion: displaying this list
+ * must never make a question part of a Draft Paper.
+ */
+export async function getMyQuestions({
+    cursor = null,
+    take = 10,
+}: {
+    cursor?: string | null;
+    take?: number;
+} = {}) {
+    try {
+        const ctx = await requireUser();
+        if (!ctx.isAdmin && !ctx.organizationId) {
+            throw new AuthError("An active organization is required.", 403);
+        }
+        await enforceRateLimit("read", `user:${ctx.userId}`);
+
+        const pageSize = Math.min(Math.max(take, 1), MAX_MY_QUESTIONS_PAGE_SIZE);
+        const rows = await prisma.question.findMany({
+            where: {
+                createdById: ctx.userId,
+                // Admin-created manual questions live in the shared bank;
+                // everyone else must match the active tenant exactly.
+                organizationId: ctx.isAdmin ? null : ctx.organizationId!,
+            },
+            select: {
+                id: true,
+                question_text: true,
+                question_image: true,
+                options: true,
+                answer: true,
+                exam_name: true,
+                subject: true,
+                chapter: true,
+            },
+            orderBy: { id: "desc" },
+            take: pageSize + 1,
+            skip: cursor ? 1 : 0,
+            cursor: cursor ? { id: cursor } : undefined,
+        });
+
+        const hasMore = rows.length > pageSize;
+        const items = hasMore ? rows.slice(0, pageSize) : rows;
+        const nextCursor = hasMore ? items.at(-1)?.id ?? null : null;
+
+        audit({
+            event: "question.read",
+            actorType: "user",
+            actorId: ctx.userId,
+            organizationId: ctx.organizationId,
+            count: items.length,
+            meta: { collection: "my-questions", paginated: true },
+        });
+
+        return { success: true as const, items, nextCursor };
+    } catch (error) {
+        if (error instanceof AuthError) {
+            return { success: false as const, items: [], nextCursor: null, error: error.message };
+        }
+        console.error("Error fetching user's questions:", error);
+        return {
+            success: false as const,
+            items: [],
+            nextCursor: null,
+            error: "Failed to fetch your questions",
+        };
+    }
+}
 
 /**
  * Resolves who is asking, from the session — throws AuthError(401/403) if not

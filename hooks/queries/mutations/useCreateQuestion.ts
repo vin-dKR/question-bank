@@ -10,7 +10,10 @@ import { createQuestion } from "@/actions/question/insert";
  * from the session in `createQuestion`. A client that could set it could write
  * into another tenant's org or into the shared bank (doc §13).
  */
-export type CreateQuestionInput = Omit<PrismaQuestion, "id" | "organizationId">;
+export type CreateQuestionInput = Omit<
+    PrismaQuestion,
+    "id" | "organizationId" | "createdById"
+>;
 
 /**
  * Phase 7 mutation hook wrapping `createQuestion`.
@@ -44,6 +47,7 @@ export function useCreateQuestion() {
             // Success messaging is the form caller's responsibility (it
             // toggles a local `success` flag and renders its own UI).
             qc.invalidateQueries({ queryKey: ["questions"] });
+            qc.invalidateQueries({ queryKey: ["myQuestions"] });
             qc.invalidateQueries({ queryKey: ["filterOptions"] });
         },
     });

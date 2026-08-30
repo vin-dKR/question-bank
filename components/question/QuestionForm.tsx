@@ -7,6 +7,8 @@ import { type QuestionFormData, useQuestionForm } from '@/hooks/question/insert'
 import { useQuestionTaxonomy } from '@/hooks/queries/useQuestionTaxonomy';
 import type { PageResult, PreparedPage, QuestionDraft } from '@/lib/school-test/types';
 import QuestionTextEditor from './QuestionTextEditor';
+import { QuestionImageAnnotator } from './QuestionImageAnnotator';
+import { QuestionSpeechControls } from './QuestionSpeechControls';
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -52,6 +54,8 @@ const QuestionForm = ({ initialData }: { initialData?: Question }) => {
     const [extractionResult, setExtractionResult] = useState<PageResult | null>(null);
     const [selectedDraftId, setSelectedDraftId] = useState('');
     const [reviewConfirmed, setReviewConfirmed] = useState(false);
+    const [annotationOpen, setAnnotationOpen] = useState(false);
+    const [annotatedImageDataUrl, setAnnotatedImageDataUrl] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const preExtractionFormRef = useRef<QuestionFormData | null>(null);
 
@@ -86,6 +90,8 @@ const QuestionForm = ({ initialData }: { initialData?: Question }) => {
 
     const applyDraft = (draft: QuestionDraft, result: PageResult) => {
         const crop = result.crops.find((candidate) => candidate.q_no === draft.question_number);
+        setAnnotatedImageDataUrl(null);
+        setAnnotationOpen(false);
         setSelectedDraftId(draft.id);
         setReviewConfirmed(false);
         setSuccess(false);
@@ -165,6 +171,8 @@ const QuestionForm = ({ initialData }: { initialData?: Question }) => {
         setSelectedDraftId('');
         setReviewConfirmed(false);
         setUploadedFile(null);
+        setAnnotatedImageDataUrl(null);
+        setAnnotationOpen(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
         if (preExtractionFormRef.current) setFormData(preExtractionFormRef.current);
         preExtractionFormRef.current = null;
@@ -184,6 +192,7 @@ const QuestionForm = ({ initialData }: { initialData?: Question }) => {
     const selectedCrop = selectedDraft
         ? extractionResult?.crops.find((crop) => crop.q_no === selectedDraft.question_number)
         : null;
+    const annotationSource = selectedCrop?.dataUrl ?? extractionResult?.sourceDataUrl ?? '';
 
     return (
         <div className="mx-auto max-w-3xl rounded-xl border border-black/5 bg-white p-5 shadow-xs sm:p-6">
@@ -324,10 +333,42 @@ const QuestionForm = ({ initialData }: { initialData?: Question }) => {
                                         )}
                                         {selectedCrop && (
                                             <div className="flex items-center gap-3 rounded-lg bg-zinc-50 p-2">
-                                                <Image src={selectedCrop.dataUrl} alt="Diagram detected for this question" width={88} height={64} unoptimized className="h-16 w-20 rounded-md border border-black/5 bg-white object-contain" />
+                                                <Image src={annotatedImageDataUrl ?? selectedCrop.dataUrl} alt={annotatedImageDataUrl ? 'Annotated diagram preview' : 'Diagram detected for this question'} width={88} height={64} unoptimized className="h-16 w-20 rounded-md border border-black/5 bg-white object-contain" />
                                                 <p className="text-xs leading-5 text-zinc-500">A diagram was detected and will be uploaded with the question when you save.</p>
                                             </div>
                                         )}
+                                        <div className="rounded-lg border border-black/5 bg-zinc-50 p-3">
+                                            <p className="text-xs leading-5 text-zinc-600">
+                                                {selectedCrop
+                                                    ? 'Mark or highlight the detected diagram before saving.'
+                                                    : 'No separate diagram was detected. You can annotate the uploaded image if a marked region is required.'}
+                                            </p>
+                                            <div className="mt-2 flex flex-wrap gap-2">
+                                                <button type="button" onClick={() => setAnnotationOpen(true)} className="inline-flex h-8 items-center rounded-md border border-zinc-200 bg-white px-3 text-xs font-medium text-zinc-700 hover:bg-zinc-100">
+                                                    {annotatedImageDataUrl ? 'Replace annotations' : 'Annotate image'}
+                                                </button>
+                                                {annotatedImageDataUrl && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setAnnotatedImageDataUrl(null);
+                                                            setReviewConfirmed(false);
+                                                            setFormData((previous) => ({
+                                                                ...previous,
+                                                                isQuestionImage: Boolean(selectedCrop),
+                                                                question_image: selectedCrop?.dataUrl ?? '',
+                                                            }));
+                                                        }}
+                                                        className="inline-flex h-8 items-center rounded-md px-3 text-xs font-medium text-zinc-600 underline underline-offset-2 hover:text-zinc-900"
+                                                    >
+                                                        Restore original
+                                                    </button>
+                                                )}
+                                            </div>
+                                            {annotatedImageDataUrl && !selectedCrop && (
+                                                <Image src={annotatedImageDataUrl} alt="Annotated question image preview" width={240} height={160} unoptimized className="mt-3 max-h-40 w-auto rounded-md border border-black/5 bg-white object-contain" />
+                                            )}
+                                        </div>
                                         <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-amber-100 bg-amber-50/60 p-3 text-sm text-zinc-700">
                                             <input type="checkbox" checked={reviewConfirmed} onChange={(event) => { setReviewConfirmed(event.target.checked); if (event.target.checked) setError(null); }} className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500" />
                                             <span>I reviewed the extracted text, options and mathematical notation.</span>
@@ -342,6 +383,7 @@ const QuestionForm = ({ initialData }: { initialData?: Question }) => {
                 <div>
                     <label htmlFor="question-text" className={labelClass}>Question Text</label>
                     <QuestionTextEditor id="question-text" value={formData.question_text} onChange={(value) => { setSuccess(false); setFormData((previous) => ({ ...previous, question_text: value })); }} required />
+                    <QuestionSpeechControls text={formData.question_text} />
                 </div>
 
                 <div>
@@ -376,6 +418,24 @@ const QuestionForm = ({ initialData }: { initialData?: Question }) => {
                     </button>
                 </div>
             </form>
+            {annotationSource && (
+                <QuestionImageAnnotator
+                    open={annotationOpen}
+                    sourceDataUrl={annotationSource}
+                    onCancel={() => setAnnotationOpen(false)}
+                    onSave={(dataUrl) => {
+                        setAnnotatedImageDataUrl(dataUrl);
+                        setReviewConfirmed(false);
+                        setFormData((previous) => ({
+                            ...previous,
+                            isQuestionImage: true,
+                            question_image: dataUrl,
+                        }));
+                        setAnnotationOpen(false);
+                        setSuccess(false);
+                    }}
+                />
+            )}
         </div>
     );
 };

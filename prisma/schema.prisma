@@ -124,6 +124,7 @@ model User {
   slideTemplates    SlideTemplate[]
   paperHistories    PaperHistory[]
   tests             Test[] @relation("TestCreator")
+  createdQuestions  Question[] @relation("QuestionCreator")
   // Tombstone. A user deleted in WorkOS keeps their row so that questions,
   // folders and tests they authored keep an author (doc §11) — the old Clerk
   // webhook called prisma.user.delete(), which would cascade away real content.
@@ -197,6 +198,10 @@ model Question {
   // one — worth promoting to a QuestionFlag table that records who and why.
   organizationId   String?    @db.ObjectId
   organization     Organization? @relation(fields: [organizationId], references: [id])
+  // Set only for questions created manually through the authenticated question
+  // form. Legacy/imported rows stay null rather than being guessed at.
+  createdById      String?    @db.ObjectId
+  createdBy        User?      @relation("QuestionCreator", fields: [createdById], references: [id])
   question_number  Int
   file_name       String?
   question_text   String
@@ -232,6 +237,7 @@ model Question {
   @@index([section_name])
   @@index([question_text])
   @@index([organizationId])
+  @@index([createdById, organizationId])
 }
 
 // School-test extracted questions live in their own collection so the shared

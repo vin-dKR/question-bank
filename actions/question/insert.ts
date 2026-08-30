@@ -88,7 +88,7 @@ async function persistQuestionImage(
 }
 
 export async function createQuestion(
-    questionData: Omit<Question, 'id' | 'organizationId'>
+    questionData: Omit<Question, 'id' | 'organizationId' | 'createdById'>
 ) {
     try {
         // Creating is open to any signed-in user: a question you upload is
@@ -106,7 +106,19 @@ export async function createQuestion(
                 //   admin  -> null, i.e. the global shared bank, read-only to orgs
                 //   anyone -> their own org, readable and writable only by them
                 organizationId: user.isAdmin ? null : user.organizationId,
+                // Manual authorship is session-derived. Imports and service
+                // ingestion deliberately use their own write paths and remain
+                // outside the user-facing "My Questions" collection.
+                createdById: user.userId,
             },
+        });
+        audit({
+            event: 'question.create',
+            actorType: 'user',
+            actorId: user.userId,
+            organizationId: newQuestion.organizationId,
+            count: 1,
+            meta: { questionId: newQuestion.id, source: 'manual-form' },
         });
         // `as const` matters: without it TS widens `success` to `boolean`, the
         // return type stops being a discriminated union, and callers doing
@@ -123,11 +135,12 @@ export async function updateQuestion(id: string, questionData: Partial<Question>
         const user = await requireUser();
         await assertCanMutateQuestion(id, user);
 
-        // `id` and `organizationId` are stripped so a caller can neither move a
-        // question to a different id nor hand ownership of it to another org.
+        // Identity and ownership fields are stripped so a caller can neither
+        // move a question nor forge its author or tenant.
         const safeData: Record<string, unknown> = { ...questionData };
         delete safeData.id;
         delete safeData.organizationId;
+        delete safeData.createdById;
         if (typeof safeData.question_image === 'string') {
             safeData.question_image = await persistQuestionImage(safeData.question_image, user);
         }

@@ -105,6 +105,7 @@ export function useUpdateQuestionForm() {
         onSettled: () => {
             // Success messaging is the form caller's responsibility.
             qc.invalidateQueries({ queryKey: ["questions"] });
+            qc.invalidateQueries({ queryKey: ["myQuestions"] });
             qc.invalidateQueries({ queryKey: ["filterOptions"] });
         },
     });

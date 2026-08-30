@@ -74,6 +74,7 @@ export function useDeleteQuestion() {
         },
         onSettled: () => {
             qc.invalidateQueries({ queryKey: ["questions"] });
+            qc.invalidateQueries({ queryKey: ["myQuestions"] });
             // A delete can prune the distinct-value sets — invalidate so the
             // next filter-panel open reflects the canonical list.
             qc.invalidateQueries({ queryKey: ["filterOptions"] });
