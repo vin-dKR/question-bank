@@ -12,7 +12,7 @@ import { useUserRole } from '@/hooks/auth/useUserRole';
 import { useUserSubject } from '@/hooks/auth/useUserSubject';
 import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
 import { useFilterOptions } from '@/hooks/queries/useFilterOptions';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ChevronDown, Funnel } from 'lucide-react';
 
 const EMPTY_FILTER_OPTIONS: FilterOptions = {
@@ -426,9 +426,9 @@ export default function FilterControls() {
                     <DialogHeader>
                         <DialogTitle>Filter Questions</DialogTitle>
                     </DialogHeader>
-                    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom)]">
+                    <DialogBody>
                         {renderFilterControls(false)}
-                    </div>
+                    </DialogBody>
                 </DialogContent>
             </Dialog>
         </>

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogBody, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { sidebarItems } from "@/constant/sidebar/sidebar";
 import { Search, Clock, ArrowUpRight, Command as CmdIcon, FilePlus, User as UserIcon, Settings as SettingsIcon } from "lucide-react";
 
@@ -200,7 +200,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 </div>
 
                 {/* Results */}
-                <div className="max-h-[360px] overflow-y-auto p-1">
+                <DialogBody className="p-1">
                     {sections.length === 0 || flatItems.length === 0 ? (
                         <div className="px-4 py-8 text-center text-sm text-zinc-500">
                             No results for &quot;{query}&quot;
@@ -259,7 +259,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                             );
                         })
                     )}
-                </div>
+                </DialogBody>
 
                 {/* Footer hints */}
                 <div className="flex items-center justify-between border-t border-black/5 bg-zinc-50/60 px-4 py-2 text-[11px] text-zinc-500">

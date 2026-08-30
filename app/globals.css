@@ -124,7 +124,55 @@ body {
 
 input, select, textarea, button {
   font-family: var(--font-inter);
-  font-size: clamp(0.875rem, 2.5vw, 1rem); /* 14px-16px */
+}
+
+input, select, textarea {
+  font-size: 0.875rem;
+}
+
+button {
+  font-size: inherit;
+}
+
+/*
+ * iOS zooms focused form controls whose computed text size is below 16px.
+ * Keep dense desktop typography while guaranteeing a stable phone viewport.
+ * The phone-only important declaration intentionally outranks utility sizes.
+ */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+  select,
+  textarea {
+    font-size: 1rem !important;
+  }
+}
+
+/*
+ * Shared controls stay compact for fine pointers while meeting the product's
+ * 44px target policy on phones, zoom-equivalent layouts, and coarse pointers.
+ */
+@media (max-width: 767px), (pointer: coarse), (any-pointer: coarse) {
+  [data-slot="button"],
+  [data-slot="input"],
+  [data-slot="select-trigger"],
+  [data-slot="checkbox"],
+  [data-slot="dropdown-menu-item"],
+  [data-slot="dropdown-menu-checkbox-item"],
+  [data-slot="dropdown-menu-radio-item"],
+  [data-slot="dropdown-menu-sub-trigger"],
+  [data-slot="select-item"] {
+    min-block-size: 44px;
+  }
+
+  [data-slot="button"][data-size^="icon"],
+  [data-slot="checkbox"] {
+    min-inline-size: 44px;
+  }
+}
+
+/* DialogBody owns scrolling when present; legacy dialogs safely scroll as one surface. */
+[data-slot="dialog-content"]:has(> [data-slot="dialog-body"]) {
+  overflow: hidden;
 }
 
 /* Tailwind v4 changed default border color to currentColor — restore to soft token */

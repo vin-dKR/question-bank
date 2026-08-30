@@ -1,0 +1,103 @@
+{
+  "capturedAt": "2026-08-30",
+  "beforeCommit": "5f8e4b654b1ab621af5a5d5a65a602f088aff812",
+  "viewports": {
+    "390x844": {
+      "before": {
+        "documentOverflow": 0,
+        "controls": {
+          "primary": { "width": 149.8125, "height": 40, "fontSize": "14px" },
+          "icon": { "width": 32, "height": 32, "fontSize": "14px" },
+          "sharedInput": { "width": 316, "height": 36, "fontSize": "14px" },
+          "rawInput": { "width": 316, "height": 36, "fontSize": "14px" },
+          "checkbox": { "width": 16, "height": 16, "fontSize": "14px" }
+        },
+        "dialog": {
+          "bounds": { "top": -192, "bottom": 1036, "width": 358, "height": 1228, "visible": false },
+          "headerVisible": false,
+          "body": { "clientHeight": 992, "scrollHeight": 992 },
+          "footerVisible": false,
+          "close": { "width": 16, "height": 16, "visible": false }
+        }
+      },
+      "after": {
+        "documentOverflow": 0,
+        "controls": {
+          "primary": { "width": 149.8125, "height": 44, "fontSize": "14px" },
+          "icon": { "width": 44, "height": 44, "fontSize": "14px" },
+          "sharedInput": { "width": 316, "height": 44, "fontSize": "16px" },
+          "rawInput": { "width": 316, "height": 36, "fontSize": "16px" },
+          "checkbox": { "width": 44, "height": 44, "fontSize": "14px" }
+        },
+        "dialog": {
+          "bounds": { "top": 16, "bottom": 828, "width": 358, "height": 812, "visible": true },
+          "headerVisible": true,
+          "body": { "clientHeight": 584, "scrollHeight": 1104 },
+          "footerVisible": true,
+          "close": { "width": 44, "height": 44, "visible": true }
+        }
+      }
+    },
+    "667x375": {
+      "before": {
+        "documentOverflow": 0,
+        "controls": {
+          "primary": { "width": 163.21875, "height": 40, "fontSize": "16px" },
+          "icon": { "width": 32, "height": 32, "fontSize": "16px" },
+          "sharedInput": { "width": 270.5, "height": 36, "fontSize": "16px" },
+          "rawInput": { "width": 270.5, "height": 36, "fontSize": "16px" },
+          "checkbox": { "width": 16, "height": 16, "fontSize": "16px" }
+        },
+        "dialog": {
+          "bounds": { "top": -140.5, "bottom": 515.5, "width": 667, "height": 656, "visible": false },
+          "headerVisible": false,
+          "body": { "clientHeight": 488, "scrollHeight": 488 },
+          "footerVisible": false,
+          "close": { "width": 16, "height": 16, "visible": false }
+        }
+      },
+      "after": {
+        "documentOverflow": 0,
+        "controls": {
+          "primary": { "width": 163.21875, "height": 44, "fontSize": "16px" },
+          "icon": { "width": 44, "height": 44, "fontSize": "16px" },
+          "sharedInput": { "width": 270.5, "height": 44, "fontSize": "16px" },
+          "rawInput": { "width": 270.5, "height": 36, "fontSize": "16px" },
+          "checkbox": { "width": 44, "height": 44, "fontSize": "16px" }
+        },
+        "dialog": {
+          "bounds": { "top": 16, "bottom": 359, "width": 667, "height": 343, "visible": true },
+          "headerVisible": true,
+          "body": { "clientHeight": 171, "scrollHeight": 544 },
+          "footerVisible": true,
+          "close": { "width": 44, "height": 44, "visible": true }
+        }
+      }
+    },
+    "768x1024": {
+      "before": {
+        "documentOverflow": 0,
+        "controls": { "primaryHeight": 40, "iconSize": 32, "inputHeight": 36, "checkboxSize": 16 },
+        "dialog": { "visible": true, "body": { "clientHeight": 488, "scrollHeight": 488 }, "footerVisible": true, "closeSize": 16 }
+      },
+      "after": {
+        "documentOverflow": 0,
+        "controls": { "primaryHeight": 40, "iconSize": 32, "inputHeight": 36, "checkboxSize": 16 },
+        "dialog": { "visible": true, "body": { "clientHeight": 488, "scrollHeight": 488 }, "footerVisible": true, "closeSize": 44 }
+      }
+    },
+    "1366x768": {
+      "before": {
+        "documentOverflow": 0,
+        "controls": { "primaryHeight": 40, "iconSize": 32, "inputHeight": 36, "checkboxSize": 16 },
+        "dialog": { "visible": true, "body": { "clientHeight": 488, "scrollHeight": 488 }, "footerVisible": true, "closeSize": 16 }
+      },
+      "after": {
+        "documentOverflow": 0,
+        "controls": { "primaryHeight": 40, "iconSize": 32, "inputHeight": 36, "checkboxSize": 16 },
+        "dialog": { "visible": true, "body": { "clientHeight": 488, "scrollHeight": 488 }, "footerVisible": true, "closeSize": 44 }
+      }
+    }
+  },
+  "status": "Workstream B evidence only; BLA-112 remains open"
+}

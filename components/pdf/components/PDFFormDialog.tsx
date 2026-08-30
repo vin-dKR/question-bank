@@ -3,6 +3,7 @@
 import { memo } from 'react';
 import {
     Dialog,
+    DialogBody,
     DialogContent,
     DialogHeader,
     DialogTitle,
@@ -80,38 +81,40 @@ const PDFFormDialog = memo(({
                     </span>
                 </Button>
             </div>
-            <DialogContent className="sm:max-w-4xl bg-white max-h-[100vh] !top-[50%] !left-[50%] !transform !-translate-x-1/2 !-translate-y-1/2 border border-black/20 rounded-xl">
+            <DialogContent className="sm:max-w-4xl bg-white border border-black/20 rounded-xl">
                 <DialogHeader>
                     <DialogTitle className="text-center text-2xl tracking-3">
                         {step === 'form' ? 'Enter PDF Details' : 'PDF Preview'}
                     </DialogTitle>
                 </DialogHeader>
 
-                {step === 'form' ? (
-                    <>
-                        {selectedQuestions.length === 0 ? (
-                            <div className="text-amber-600 text-center p-4 bg-amber-50 rounded-lg">
-                                <p className="mb-2">⚠️ No questions are currently selected in this view.</p>
-                                <p className="text-sm">Please select questions or check if some selected questions are hidden by current filters.</p>
-                            </div>
-                        ) : (
-                            <PDFDetailsForm
-                                initialData={formData}
-                                onSubmit={onFormSubmit}
-                                onCancel={onClose}
-                                isGenerating={isGenerating === "question"}
-                            />
-                        )}
-                    </>
-                ) : (
-                    <PDFPreviewContent
-                        previewUrl={previewUrl}
-                        error={error}
-                        isMobile={isMobile}
-                        onRetry={() => onFormSubmit(formData)}
-                        onDownload={onDownload}
-                    />
-                )}
+                <DialogBody>
+                    {step === 'form' ? (
+                        <>
+                            {selectedQuestions.length === 0 ? (
+                                <div className="text-amber-600 text-center p-4 bg-amber-50 rounded-lg">
+                                    <p className="mb-2">⚠️ No questions are currently selected in this view.</p>
+                                    <p className="text-sm">Please select questions or check if some selected questions are hidden by current filters.</p>
+                                </div>
+                            ) : (
+                                <PDFDetailsForm
+                                    initialData={formData}
+                                    onSubmit={onFormSubmit}
+                                    onCancel={onClose}
+                                    isGenerating={isGenerating === "question"}
+                                />
+                            )}
+                        </>
+                    ) : (
+                        <PDFPreviewContent
+                            previewUrl={previewUrl}
+                            error={error}
+                            isMobile={isMobile}
+                            onRetry={() => onFormSubmit(formData)}
+                            onDownload={onDownload}
+                        />
+                    )}
+                </DialogBody>
 
                 {step === 'preview' && (
                     <DialogFooter className="sm:justify-between mt-4">

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Trash2, Edit, AlertTriangle, CirclePlus } from 'lucide-react';
@@ -289,7 +289,8 @@ const QuestionTemplate = () => {
                         </DialogDescription>
                     </DialogHeader>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <DialogBody>
+                        <div className="grid grid-cols-2 gap-4">
                         <div>
                             <Label htmlFor="templateName">Template Name *</Label>
                             <Input
@@ -407,7 +408,8 @@ const QuestionTemplate = () => {
                                 className='border border-black/30'
                             />
                         </div>
-                    </div>
+                        </div>
+                    </DialogBody>
 
                     <DialogFooter>
                         <Button className='bg-black/20' onClick={() => setEditModalOpen(false)}>

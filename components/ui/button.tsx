@@ -28,6 +28,7 @@ const buttonVariants = cva(
                 sm: "h-9 px-4",
                 lg: "h-11 px-8",
                 icon: "h-10 w-10",
+                "icon-sm": "h-8 w-8 p-0",
             },
             radius: {
                 default: "rounded-xl",
@@ -60,6 +61,7 @@ function Button({
     return (
         <Comp
             data-slot="button"
+            data-size={size ?? "default"}
             className={cn(buttonVariants({ variant, size, className }))}
             {...props}
         />

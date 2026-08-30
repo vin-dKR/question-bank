@@ -3,6 +3,7 @@
 import { memo } from 'react';
 import {
     Dialog,
+    DialogBody,
     DialogContent,
     DialogHeader,
     DialogTitle,
@@ -34,20 +35,22 @@ const PDFPreviewDialog = memo(({
 }: PDFPreviewDialogProps) => {
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-4xl bg-white max-h-[100vh] !top-[50%] !left-[50%] !transform !-translate-x-1/2 !-translate-y-1/2 border border-black/20 rounded-xl">
+            <DialogContent className="sm:max-w-4xl bg-white border border-black/20 rounded-xl">
                 <DialogHeader>
                     <DialogTitle className="text-center text-2xl tracking-3">
                         {title}
                     </DialogTitle>
                 </DialogHeader>
                 
-                <PDFPreviewContent
-                    previewUrl={previewUrl}
-                    error={error}
-                    isMobile={isMobile}
-                    onRetry={onRetry}
-                    onDownload={onDownload}
-                />
+                <DialogBody>
+                    <PDFPreviewContent
+                        previewUrl={previewUrl}
+                        error={error}
+                        isMobile={isMobile}
+                        onRetry={onRetry}
+                        onDownload={onDownload}
+                    />
+                </DialogBody>
                 
                 <DialogFooter className="sm:justify-between mt-4">
                     <Button variant="outline" onClick={onClose}>

@@ -83,7 +83,7 @@ export function QuestionItem({
                                 <Trash className="h-4 w-4" />
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-md bg-white max-h-[100vh] !top-[50%] !left-[50%] !transform !-translate-x-1/2 !-translate-y-1/2">
+                        <DialogContent className="sm:max-w-md bg-white">
                             <DialogHeader>
                                 <DialogTitle>Remove Question</DialogTitle>
                             </DialogHeader>

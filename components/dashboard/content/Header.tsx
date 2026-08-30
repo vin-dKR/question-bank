@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -121,8 +122,10 @@ export function Header({
                     </div>
 
                     {/* Center: command trigger */}
-                    <button
+                    <Button
                         type="button"
+                        size="sm"
+                        variant="outline"
                         onClick={() => setPaletteOpen(true)}
                         className="hidden h-9 min-w-[200px] max-w-[260px] items-center gap-2 rounded-lg border border-black/5 bg-zinc-50 px-3 text-xs text-zinc-500 transition-colors hover:bg-zinc-100 xl:inline-flex"
                         aria-label="Search"
@@ -132,34 +135,40 @@ export function Header({
                         <kbd className="inline-flex items-center gap-0.5 rounded border border-black/5 bg-white px-1.5 py-0.5 text-[10px] font-mono text-zinc-400">
                             {keyHint}K
                         </kbd>
-                    </button>
+                    </Button>
 
                     {/* Right: actions */}
                     <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
-                        <button
+                        <Button
                             type="button"
+                            size="icon-sm"
+                            variant="ghost"
                             onClick={() => setPaletteOpen(true)}
                             className="hidden h-10 w-10 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 sm:inline-flex xl:hidden"
                             aria-label="Search"
                         >
                             <Search className="h-4 w-4" />
-                        </button>
+                        </Button>
 
-                        <button
+                        <Button
                             type="button"
+                            size="icon-sm"
+                            variant="ghost"
                             className="relative hidden h-10 w-10 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 sm:inline-flex"
                             aria-label="Notifications"
                         >
                             <Bell className="h-4 w-4" />
                             <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-rose-500 ring-2 ring-white" />
-                        </button>
+                        </Button>
 
                         <div className="mx-1 hidden h-5 w-px bg-black/5 sm:block" />
 
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <button
+                                <Button
                                     type="button"
+                                    size="sm"
+                                    variant="ghost"
                                     className="group flex h-10 min-w-10 items-center justify-center gap-2 rounded-lg px-1.5 transition-colors hover:bg-zinc-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 sm:justify-start sm:pr-2"
                                     aria-label="Account"
                                 >
@@ -172,7 +181,7 @@ export function Header({
                                     <span className="hidden lg:block text-xs font-medium text-zinc-700 group-hover:text-zinc-900 max-w-[120px] truncate">
                                         {displayName}
                                     </span>
-                                </button>
+                                </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent
                                 align="end"

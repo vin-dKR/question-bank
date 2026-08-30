@@ -94,7 +94,7 @@ export function DialogCloseButton({ selectedQuestions }: { selectedQuestions: Pi
                     </span>
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md bg-white max-h-[100vh] rounded rounded-xl border border-black/20 !top-[50%] !left-[50%] !transform !-translate-x-1/2 !-translate-y-1/2">
+            <DialogContent className="sm:max-w-md bg-white rounded-xl border border-black/20">
                 <DialogHeader>
                     <DialogTitle>{mode === 'new' ? 'Create New Draft Paper' : 'Add to Existing Draft Paper'}</DialogTitle>
                 </DialogHeader>
