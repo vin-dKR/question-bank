@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "personas": {
+    "teacherOwner": {
+      "storageState": "teacher-owner.json",
+      "kind": "teacher",
+      "organizationRole": "teacher",
+      "homePath": "/dashboard",
+      "identityText": "BLA Teacher Owner",
+      "organizationName": "BLA Teacher Fixture",
+      "criticalActionName": "Question Bank",
+      "dataset": "populated"
+    },
+    "instituteAdmin": {
+      "storageState": "institute-admin.json",
+      "kind": "institute",
+      "organizationRole": "admin",
+      "homePath": "/dashboard",
+      "identityText": "BLA Institute Admin",
+      "organizationName": "Internationale Gemeinschaftsschule für Naturwissenschaften und angewandte Mathematik — पुणे",
+      "criticalActionName": "Settings",
+      "dataset": "long-localized"
+    },
+    "organizationMember": {
+      "storageState": "organization-member.json",
+      "kind": "teacher",
+      "organizationRole": "member",
+      "homePath": "/dashboard",
+      "identityText": "BLA Organization Member",
+      "organizationName": "BLA Populated Organization",
+      "criticalActionName": "Examination",
+      "dataset": "populated"
+    },
+    "organizationViewer": {
+      "storageState": "organization-viewer.json",
+      "kind": "teacher",
+      "organizationRole": "viewer",
+      "homePath": "/dashboard",
+      "identityText": "BLA Organization Viewer",
+      "organizationName": "BLA Empty Organization",
+      "criticalActionName": "Dashboard",
+      "dataset": "empty"
+    }
+  }
+}
