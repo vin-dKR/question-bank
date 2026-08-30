@@ -40,14 +40,13 @@ export function Verifier({
     const [activeIdx, setActiveIdx] = useState(0);
     const [hoverCrop, setHoverCrop] = useState<string | null>(null);
     const [cropTarget, setCropTarget] = useState<CropTarget | null>(null);
-    const [cleaningId, setCleaningId] = useState<string | null>(null);
+    /** Open touch-up session. */
     const [touchUp, setTouchUp] = useState<{
         pageIndex: number;
         questionId: string;
         cleaned: string;
         original: string;
     } | null>(null);
-    const [restoreSource, setRestoreSource] = useState<Record<string, string>>({});
     const [previewOpen, setPreviewOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -115,59 +114,48 @@ export function Verifier({
     );
 
     const saveCrop = useCallback(
-        (i: number, questionId: string, bbox: [number, number, number, number], dataUrl: string) => {
-            updatePage(i, (p) => {
-                const q = p.questions.find((x) => x.id === questionId);
-                const crop: Crop = {
-                    id: `${questionId}-crop`,
-                    q_no: q?.question_number ?? 0,
-                    bbox,
-                    dataUrl,
-                };
-                return { ...p, crops: { ...p.crops, [questionId]: crop } };
-            });
-            setCropTarget(null);
-        },
-        [updatePage],
-    );
-
-    const cleanCrop = useCallback(
-        async (i: number, questionId: string) => {
-            setCleaningId(questionId);
-            const toastId = toast.loading("Whitening the paper…");
+        async (
+            i: number,
+            questionId: string,
+            bbox: [number, number, number, number],
+        ) => {
+            const toastId = toast.loading("Cleaning the adjusted crop…");
             try {
                 const page = pages[i];
-                const crop = page?.crops?.[questionId];
-                if (!page?.sourceDataUrl || !crop?.bbox) {
-                    toast.error("The source page is not available for this crop.", { id: toastId });
+                if (!page?.sourceDataUrl) {
+                    toast.error("The source page is not available for this crop.", {
+                        id: toastId,
+                    });
                     return;
                 }
 
                 const result = await cleanCropRegion({
                     pageDataUrl: page.sourceDataUrl,
-                    bbox: crop.bbox,
+                    bbox,
                 });
                 if (!result.success) {
                     toast.error(errorText(result.error, "Could not clean the diagram."), { id: toastId });
                     return;
                 }
 
-                updatePage(i, (current) => ({
-                    ...current,
+                updatePage(i, (p) => ({
+                    ...p,
                     crops: {
-                        ...current.crops,
-                        [questionId]: { ...current.crops[questionId], dataUrl: result.dataUrl },
+                        ...p.crops,
+                        [questionId]: {
+                            id: `${questionId}-crop`,
+                            q_no: p.questions.find((q) => q.id === questionId)?.question_number ?? 0,
+                            bbox,
+                            dataUrl: result.dataUrl,
+                            restoreDataUrl: result.restoreDataUrl,
+                        },
                     },
                 }));
-                setRestoreSource((current) => ({
-                    ...current,
-                    [questionId]: result.restoreDataUrl,
-                }));
+
+                setCropTarget(null);
                 toast.success("Background cleaned.", { id: toastId });
-            } catch (error) {
-                toast.error(errorText(error, "Could not clean the diagram."), { id: toastId });
-            } finally {
-                setCleaningId(null);
+            } catch (e) {
+                toast.error(errorText(e, "Could not clean the diagram."), { id: toastId });
             }
         },
         [pages, updatePage],
@@ -307,11 +295,6 @@ export function Verifier({
                                         })
                                     }
                                     onRemoveCrop={() => removeCrop(activeIdx, q.id)}
-                                    onCleanCrop={
-                                        page.sourceDataUrl
-                                            ? () => cleanCrop(activeIdx, q.id)
-                                            : undefined
-                                    }
                                     onTouchUp={() => {
                                         const crop = page.crops[q.id];
                                         if (!crop) return;
@@ -319,10 +302,9 @@ export function Verifier({
                                             pageIndex: activeIdx,
                                             questionId: q.id,
                                             cleaned: crop.dataUrl,
-                                            original: restoreSource[q.id] ?? crop.dataUrl,
+                                            original: crop.restoreDataUrl ?? crop.dataUrl,
                                         });
                                     }}
-                                    isCleaning={cleaningId === q.id}
                                     onHoverCrop={(hover) => setHoverCrop(hover ? q.id : null)}
                                 />
                             ))
@@ -357,9 +339,9 @@ export function Verifier({
                     page={pages[cropTarget.pageIndex]}
                     existing={cropTarget.existing}
                     onCancel={() => setCropTarget(null)}
-                    onSave={(bbox, dataUrl) =>
-                        saveCrop(cropTarget.pageIndex, cropTarget.questionId, bbox, dataUrl)
-                    }
+                    onSave={(bbox) => {
+                        void saveCrop(cropTarget.pageIndex, cropTarget.questionId, bbox);
+                    }}
                 />
             )}
 

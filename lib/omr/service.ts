@@ -7,6 +7,12 @@ import { promisify } from 'node:util';
 import { getAuthContext, requireAuth } from '@/lib/auth/session';
 import { resolveOrCreateStudent } from '@/lib/examination/studentRoster';
 import { normalizeChoiceKey } from '@/lib/examination/answerKey';
+import {
+    describeRemoteEndpoint,
+    getRemoteOmrService,
+    remoteHttpError,
+    type RemoteOmrService,
+} from '@/lib/omr/remote';
 import prisma from '@/lib/prisma';
 
 const execFileAsync = promisify(execFile);
@@ -23,7 +29,6 @@ const LOCAL_OMR_PYTHON =
         ? path.join(process.cwd(), '.venv-omr', 'Scripts', 'python.exe')
         : path.join(process.cwd(), '.venv-omr', 'bin', 'python');
 const OPTION_LABELS = 'ABCDEFGH';
-const OMR_SERVICE_TOKEN_HEADER = 'x-omr-service-token';
 
 type OmrQuestionType = 'MCQ' | 'MSQ' | 'TRUEFALSE' | 'FIB';
 
@@ -361,26 +366,6 @@ function parsePythonJson<T>(stdout: string): T {
     }
 }
 
-function normalizeRemoteOmrBaseUrl(url: string): string {
-    return url
-        .replace(/\/+$/, '')
-        .replace(/\/api$/, '');
-}
-
-function getRemoteOmrBaseUrls(): string[] {
-    const urls: string[] = [];
-    const configured = process.env.OMR_SERVICE_URL?.trim();
-    if (configured) urls.push(normalizeRemoteOmrBaseUrl(configured));
-
-    const productionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
-    if (productionUrl) urls.push(normalizeRemoteOmrBaseUrl(`https://${productionUrl.replace(/^https?:\/\//, '')}`));
-
-    const vercelUrl = process.env.VERCEL_URL?.trim();
-    if (vercelUrl) urls.push(normalizeRemoteOmrBaseUrl(`https://${vercelUrl.replace(/^https?:\/\//, '')}`));
-
-    return [...new Set(urls)];
-}
-
 function remoteErrorMessage(error: unknown, fallback: string): string {
     if (typeof error === 'string') return error;
     if (typeof error === 'number' || typeof error === 'boolean') return String(error);
@@ -398,15 +383,6 @@ function remoteErrorMessage(error: unknown, fallback: string): string {
     return fallback;
 }
 
-function describeOmrEndpoint(baseUrl: string, endpoint: string): string {
-    try {
-        const url = new URL(endpoint, baseUrl);
-        return `${url.origin}${url.pathname}`;
-    } catch {
-        return endpoint;
-    }
-}
-
 function assertSafeRemotePath(relativePath: string): string {
     if (!relativePath || path.isAbsolute(relativePath) || relativePath.split(/[\\/]/).includes('..')) {
         throw new Error(`OMR service returned an unsafe file path: ${relativePath}`);
@@ -414,52 +390,44 @@ function assertSafeRemotePath(relativePath: string): string {
     return relativePath;
 }
 
-async function postRemoteOmr<T>(endpoint: string, payload: unknown): Promise<T> {
-    const baseUrls = getRemoteOmrBaseUrls();
-    if (baseUrls.length === 0) {
-        throw new Error('OMR_SERVICE_URL is not configured');
+async function postRemoteOmr<T>(
+    service: RemoteOmrService,
+    endpoint: string,
+    payload: unknown,
+): Promise<T> {
+    const target = `${service.baseUrl}${endpoint}`;
+    const endpointDescription = describeRemoteEndpoint(service.baseUrl, endpoint);
+    let response: Response;
+    try {
+        response = await fetch(target, {
+            method: 'POST',
+            headers: service.headers,
+            body: JSON.stringify(payload),
+        });
+    } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        throw new Error(`OMR service request to ${endpointDescription} failed: ${detail}`);
     }
 
-    const headers: Record<string, string> = {
-        'content-type': 'application/json',
-    };
-    if (process.env.OMR_SERVICE_TOKEN) {
-        headers[OMR_SERVICE_TOKEN_HEADER] = process.env.OMR_SERVICE_TOKEN;
+    const text = await response.text();
+    let data: unknown;
+    try {
+        data = text ? JSON.parse(text) : {};
+    } catch {
+        if (!response.ok) throw remoteHttpError(response, text, endpointDescription);
+        throw new Error(
+            `OMR service returned non-JSON response (${response.status}) from ${endpointDescription}: ${text.slice(0, 300)}`,
+        );
     }
 
-    let lastError: Error | null = null;
-
-    for (const baseUrl of baseUrls) {
-        const target = `${baseUrl}${endpoint}`;
-        try {
-            const response = await fetch(target, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(payload),
-            });
-
-            const text = await response.text();
-            let data: unknown;
-            try {
-                data = text ? JSON.parse(text) : {};
-            } catch {
-                throw new Error(`OMR service returned non-JSON response (${response.status}) from ${describeOmrEndpoint(baseUrl, endpoint)}: ${text.slice(0, 300)}`);
-            }
-
-            if (!response.ok) {
-                const error = typeof data === 'object' && data && 'error' in data
-                    ? remoteErrorMessage(data.error, response.statusText)
-                    : response.statusText;
-                throw new Error(`OMR service failed at ${describeOmrEndpoint(baseUrl, endpoint)}: ${error}`);
-            }
-
-            return data as T;
-        } catch (error) {
-            lastError = error instanceof Error ? error : new Error('OMR service request failed');
-        }
+    if (!response.ok) {
+        const error = typeof data === 'object' && data && 'error' in data
+            ? remoteErrorMessage(data.error, response.statusText)
+            : undefined;
+        throw remoteHttpError(response, text, endpointDescription, error);
     }
 
-    throw lastError ?? new Error('OMR service request failed');
+    return data as T;
 }
 
 async function collectFiles(rootDir: string): Promise<RemoteFile[]> {
@@ -509,14 +477,14 @@ function argValue(args: string[], flag: string): string {
     return args[index + 1];
 }
 
-async function runRemoteOmrPython<T>(args: string[]): Promise<T> {
+async function runRemoteOmrPython<T>(service: RemoteOmrService, args: string[]): Promise<T> {
     const moduleName = args[1];
 
     if (moduleName === 'omr.generate') {
         const specPath = argValue(args, '--spec');
         const outDir = argValue(args, '--out');
         const spec = JSON.parse(await readFile(specPath, 'utf8')) as OmrSpec;
-        const result = await postRemoteOmr<RemoteGenerateResponse>('/api/omr-generate', { spec });
+        const result = await postRemoteOmr<RemoteGenerateResponse>(service, '/api/omr-generate', { spec });
 
         if (!result.ok || !result.summary || !result.files) {
             throw new Error(result.error || 'OMR remote sheet generation failed');
@@ -541,7 +509,7 @@ async function runRemoteOmrPython<T>(args: string[]): Promise<T> {
         const page = args.includes('--page') ? Number(argValue(args, '--page')) : undefined;
         const includeImages = args.includes('--images');
         const imageStats = await stat(imagePath);
-        const result = await postRemoteOmr<T>('/api/omr-detect', {
+        const result = await postRemoteOmr<T>(service, '/api/omr-detect', {
             filename: path.basename(imagePath),
             image_b64: (await readFile(imagePath)).toString('base64'),
             image_size: imageStats.size,
@@ -557,8 +525,9 @@ async function runRemoteOmrPython<T>(args: string[]): Promise<T> {
 }
 
 async function runOmrPython<T>(args: string[], timeout = 60_000): Promise<T> {
-    if (getRemoteOmrBaseUrls().length > 0) {
-        return runRemoteOmrPython<T>(args);
+    const remoteService = getRemoteOmrService();
+    if (remoteService) {
+        return runRemoteOmrPython<T>(remoteService, args);
     }
 
     // Last-resort interpreter name. On Windows `python3` is normally the Microsoft

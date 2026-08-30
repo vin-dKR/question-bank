@@ -14,9 +14,7 @@ export function QuestionCard({
     onDelete,
     onEditCrop,
     onRemoveCrop,
-    onCleanCrop,
     onTouchUp,
-    isCleaning,
     onHoverCrop,
 }: {
     question: QuestionDraft;
@@ -25,11 +23,8 @@ export function QuestionCard({
     onDelete: () => void;
     onEditCrop: () => void;
     onRemoveCrop: () => void;
-    /** Omitted when the page image is unavailable, which is what cleaning needs. */
-    onCleanCrop?: () => void;
-    /** Opens the brush. Available whether or not the crop has been cleaned. */
+    /** Opens the brush using the automatically generated restore copy. */
     onTouchUp?: () => void;
-    isCleaning?: boolean;
     onHoverCrop: (hover: boolean) => void;
 }) {
     const [showPreview, setShowPreview] = useState(true);
@@ -148,17 +143,6 @@ export function QuestionCard({
                             >
                                 Adjust crop
                             </button>
-                            {onCleanCrop && (
-                                <button
-                                    type="button"
-                                    onClick={onCleanCrop}
-                                    disabled={isCleaning}
-                                    title="Separate the drawing, whiten the paper and sharpen the ink"
-                                    className="text-left font-medium text-indigo-600 hover:text-indigo-700 disabled:text-zinc-400"
-                                >
-                                    {isCleaning ? "Cleaning…" : "Clean background"}
-                                </button>
-                            )}
                             {onTouchUp && (
                                 <button
                                     type="button"

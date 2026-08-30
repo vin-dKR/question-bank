@@ -19,6 +19,12 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
+import {
+    describeRemoteEndpoint,
+    getRemoteOmrService,
+    remoteHttpError,
+    type RemoteOmrService,
+} from "@/lib/omr/remote";
 
 const execFileAsync = promisify(execFile);
 
@@ -30,21 +36,6 @@ const LOCAL_PYTHON =
     process.platform === "win32"
         ? path.join(process.cwd(), ".venv-omr", "Scripts", "python.exe")
         : path.join(process.cwd(), ".venv-omr", "bin", "python");
-
-/** Mirrors getRemoteOmrBaseUrls: explicit URL first, then the Vercel defaults. */
-function remoteBaseUrls(): string[] {
-    const urls: string[] = [];
-    const configured = process.env.OMR_SERVICE_URL?.trim();
-    if (configured) urls.push(configured.replace(/\/+$/, ""));
-
-    const production = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
-    if (production) urls.push(`https://${production.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`);
-
-    const vercel = process.env.VERCEL_URL?.trim();
-    if (vercel) urls.push(`https://${vercel.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`);
-
-    return [...new Set(urls)];
-}
 
 interface CleanResponse {
     ok: boolean;
@@ -90,65 +81,53 @@ const DEFAULTS: Required<CleanOptions> = {
     withRestoreCopy: false,
 };
 
-async function cleanRemote(png: Buffer, opts: Required<CleanOptions>): Promise<CleanResult> {
-    const token = process.env.OMR_SERVICE_TOKEN?.trim();
-    let lastError = "No OMR service URL configured.";
-
-    for (const base of remoteBaseUrls()) {
-        try {
-            const res = await fetch(`${base}/api/bg-clean`, {
-                method: "POST",
-                headers: {
-                    "content-type": "application/json",
-                    ...(token ? { "x-omr-service-token": token } : {}),
-                },
-                body: JSON.stringify({
-                    // JPEG would halve the request body (see spec §12), but the
-                    // input here is a crop region, not a full page, so PNG stays
-                    // well inside Vercel's 4.5MB limit and avoids artefacts.
-                    image_b64: png.toString("base64"),
-                    strength: opts.strength,
-                    remove_bg: opts.removeBg,
-                    whiten: opts.whiten,
-                    enhance: opts.enhance,
-                    with_restore: opts.withRestoreCopy,
-                }),
-            });
-
-            const body = (await res.json()) as CleanResponse;
-            if (!res.ok || !body.ok || !body.image_b64) {
-                // `error` is TYPED as a string but arrives from another service,
-                // so it is only a string by agreement. FastAPI validation errors
-                // come back as `detail: [...]`, and a proxy or platform error
-                // page can put anything here. An object reaching
-                // `new Error(...)` below stringifies to the literal text
-                // "[object Object]", which is exactly what a user saw in a toast
-                // after clicking "Clean background" — a message that says
-                // nothing at all about what went wrong.
-                lastError =
-                    typeof body?.error === "string" && body.error.trim()
-                        ? body.error
-                        : `bg-clean at ${base} returned ${res.status}`;
-                continue;
-            }
-            return {
-                cleaned: Buffer.from(body.image_b64, "base64"),
-                restore: body.restore_b64
-                    ? Buffer.from(body.restore_b64, "base64")
-                    : undefined,
-            };
-        } catch (err) {
-            // Covers the case the service isn't there at all: Netlify does not
-            // execute `api/*.py`, so the fetch lands on an HTML page and
-            // `res.json()` throws a parse error rather than returning anything
-            // shaped like CleanResponse.
-            lastError = `bg-clean at ${base}: ${err instanceof Error ? err.message : String(err)}`;
-        }
+async function cleanRemote(
+    service: RemoteOmrService,
+    png: Buffer,
+    opts: Required<CleanOptions>,
+): Promise<CleanResult> {
+    const endpoint = "/api/bg-clean";
+    const endpointDescription = describeRemoteEndpoint(service.baseUrl, endpoint);
+    let res: Response;
+    try {
+        res = await fetch(`${service.baseUrl}${endpoint}`, {
+            method: "POST",
+            headers: service.headers,
+            body: JSON.stringify({
+                image_b64: png.toString("base64"),
+                strength: opts.strength,
+                remove_bg: opts.removeBg,
+                whiten: opts.whiten,
+                enhance: opts.enhance,
+                with_restore: opts.withRestoreCopy,
+            }),
+        });
+    } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        throw new Error(`Background cleanup request to ${endpointDescription} failed: ${detail}`);
     }
 
-    // `lastError` is a string on every path above, so this can never produce
-    // an Error whose message is "[object Object]".
-    throw new Error(lastError);
+    const text = await res.text();
+    let body: CleanResponse;
+    try {
+        body = (text ? JSON.parse(text) : {}) as CleanResponse;
+    } catch {
+        if (!res.ok) throw remoteHttpError(res, text, endpointDescription);
+        throw new Error(
+            `bg-clean returned non-JSON response (${res.status}) from ${endpointDescription}: ${text.slice(0, 300)}`,
+        );
+    }
+
+    if (!res.ok || !body.ok || !body.image_b64) {
+        const applicationError =
+            typeof body?.error === "string" && body.error.trim() ? body.error : undefined;
+        throw remoteHttpError(res, text, endpointDescription, applicationError);
+    }
+
+    return {
+        cleaned: Buffer.from(body.image_b64, "base64"),
+        restore: body.restore_b64 ? Buffer.from(body.restore_b64, "base64") : undefined,
+    };
 }
 
 async function cleanLocal(png: Buffer, opts: Required<CleanOptions>): Promise<CleanResult> {
@@ -199,16 +178,16 @@ async function cleanLocal(png: Buffer, opts: Required<CleanOptions>): Promise<Cl
  * Run the cleaning pipeline over a PNG: background removal, then paper
  * levelling, then ink strengthening.
  *
- * Throws on failure — callers that treat cleaning as cosmetic should catch and
- * fall back to the original buffer rather than failing the whole operation.
+ * Throws on failure so each caller can surface the failed stage explicitly.
  */
 export async function cleanPage(png: Buffer, options: CleanOptions = {}): Promise<CleanResult> {
     const { mkdir } = await import("node:fs/promises");
     await mkdir(WORK_ROOT, { recursive: true });
 
     const opts = { ...DEFAULTS, ...options };
+    const remoteService = getRemoteOmrService();
 
-    return remoteBaseUrls().length > 0
-        ? cleanRemote(png, opts)
+    return remoteService
+        ? cleanRemote(remoteService, png, opts)
         : cleanLocal(png, opts);
 }

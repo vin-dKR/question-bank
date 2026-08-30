@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import hmac
 import json
 import os
 from http import HTTPStatus
@@ -19,12 +20,15 @@ class HttpError(Exception):
 
 
 def require_token(handler: BaseHTTPRequestHandler) -> None:
-    expected = os.environ.get("OMR_SERVICE_TOKEN")
+    expected = os.environ.get("OMR_SERVICE_TOKEN", "").strip()
     if not expected:
-        return
+        raise HttpError(
+            HTTPStatus.SERVICE_UNAVAILABLE,
+            "OMR_SERVICE_TOKEN is not configured on the remote service",
+        )
 
     provided = handler.headers.get(TOKEN_HEADER)
-    if provided != expected:
+    if not provided or not hmac.compare_digest(provided, expected):
         raise HttpError(HTTPStatus.UNAUTHORIZED, "Unauthorized")
 
 

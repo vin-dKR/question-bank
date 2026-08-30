@@ -45,3 +45,34 @@ export async function cropDetections(
     }
     return crops;
 }
+
+/**
+ * Replace already-detected crop images from a processed page without changing
+ * their ids, question mapping, or coordinates.
+ */
+export async function renderProcessedCrops(
+    processedPagePng: Buffer,
+    crops: Crop[],
+    restorePagePng?: Buffer,
+): Promise<Crop[]> {
+    const rendered: Crop[] = [];
+
+    for (const crop of crops) {
+        const [left, top, width, height] = crop.bbox;
+        const window = { left, top, width, height };
+        const cleaned = await sharp(processedPagePng).extract(window).png().toBuffer();
+        const restore = restorePagePng
+            ? await sharp(restorePagePng).extract(window).png().toBuffer()
+            : undefined;
+
+        rendered.push({
+            ...crop,
+            dataUrl: `data:image/png;base64,${cleaned.toString("base64")}`,
+            restoreDataUrl: restore
+                ? `data:image/png;base64,${restore.toString("base64")}`
+                : undefined,
+        });
+    }
+
+    return rendered;
+}

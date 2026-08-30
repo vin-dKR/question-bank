@@ -69,6 +69,12 @@ functions are a **separate Vercel deployment**, reached over HTTP with
 `OMR_SERVICE_TOKEN`. Netlify hosts the Next.js app and does not execute
 `api/*.py` at all.
 
+Protected Vercel deployments require a second, platform-level credential. Enable
+Protection Bypass for Automation on the Python-service project and expose its
+`VERCEL_AUTOMATION_BYPASS_SECRET` to the Next.js caller. Requests then carry both
+`x-vercel-protection-bypass` and the application-level
+`x-omr-service-token`; the bypass does not replace endpoint authentication.
+
 So the library goes into the Python service and is called over HTTP, exactly
 like OMR already is:
 
@@ -212,6 +218,7 @@ Notes:
   would rather not couple them, copy those four helpers into
   `integrations/bg-remover/bgremove/http_helpers.py` instead.
 - Auth is the existing `x-omr-service-token` header against `OMR_SERVICE_TOKEN`.
+  The handler fails closed with 503 when the server token is not configured.
 - `load_image` applies EXIF orientation and rejects corrupt or non-image bytes
   with a message safe to return to a user (`bgremove.ImageError`).
 
@@ -251,48 +258,26 @@ Either widen the glob to `api/*.py`, or add a second entry reusing the same
 
 ## 8. The client — `lib/school-test/clean.ts`
 
-Mirror `lib/omr/service.ts`: same base-URL resolution (`OMR_SERVICE_URL`,
-falling back to `VERCEL_PROJECT_PRODUCTION_URL` / `VERCEL_URL`), same token
-header, same multi-URL retry.
+OMR generation and background cleanup share `lib/omr/remote.ts`. It resolves
+exactly one service URL: explicit `OMR_SERVICE_URL` first, the current
+`VERCEL_URL` for previews, and `VERCEL_PROJECT_PRODUCTION_URL` for production.
+It never retries a failed preview against production. Remote mode requires
+`OMR_SERVICE_TOKEN`; protected deployments also need
+`VERCEL_AUTOMATION_BYPASS_SECRET`.
 
-```ts
-export async function cleanPage(pagePng: Buffer): Promise<Buffer> {
-    const res = await postRemotePy<{ ok: boolean; image_b64: string; error?: string }>(
-        "/api/bg-clean",
-        { image_b64: pagePng.toString("base64") },
-    );
-    if (!res.ok) throw new Error(res.error ?? "bg-clean failed");
-    return Buffer.from(res.image_b64, "base64");
-}
-```
-
-**Fail soft.** Diagram cleanup is cosmetic — if the service is down or slow, the
-page should still process with the original buffer:
-
-```ts
-let pageForCrops = pagePng;
-try {
-    pageForCrops = await cleanPage(pagePng);
-} catch (e) {
-    console.warn("[school-test] page cleanup skipped:", e);
-}
-```
+Cleanup failures are not cosmetic fallbacks. The page reports a `[clean]` stage
+error so a token mismatch, missing bypass secret, or unavailable service is
+visible and the user is never shown an uncleaned crop as if cleanup succeeded.
 
 ---
 
 ## 9. Where it plugs in
 
-`lib/school-test/pipeline.ts`, inside `processPage`, **immediately before the
-crop stage** (currently line ~185):
-
-```ts
-const cropsFull = await runStage("crop", () =>
-    cropDetections(pageForCrops, width, height, detectionsFull, pageNumber),
-);
-```
-
-That is the whole change. `crop.ts` is untouched — it just receives a cleaned
-buffer. Bboxes are unaffected because cleaning does not change dimensions.
+`lib/school-test/pipeline.ts`, inside `processPage`, keeps detection, extraction,
+and automatic cropping unchanged. If crops exist, it cleans the page once and
+re-renders those exact crop boxes from the cleaned result. Bboxes are unaffected
+because cleaning does not change dimensions. The Verifier receives and uses the
+cleaned crop immediately; adjusting a crop also triggers cleanup automatically.
 
 ### Scope decision
 
@@ -345,8 +330,8 @@ call per page** instead of one per diagram.
 3. Line art and captions are still dark and legible; nothing is missing that was
    present before.
 4. Crop dimensions and bbox overlays in the Verifier are unchanged.
-5. With `OMR_SERVICE_URL` unset or the service unreachable, the page still
-   processes and produces crops (uncleaned), with a warning logged.
+5. With a configured remote service unreachable or misconfigured, the page
+   reports an actionable `[clean]` error and does not produce an uncleaned crop.
 6. Page count and question extraction results are identical to before.
 
 ### Payload size — check this against a real page

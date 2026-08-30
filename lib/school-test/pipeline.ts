@@ -1,7 +1,8 @@
 import sharp from "sharp";
 import { detectDiagrams } from "./detect";
 import { extractQuestions } from "./extract";
-import { cropDetections } from "./crop";
+import { cropDetections, renderProcessedCrops } from "./crop";
+import { cleanPage } from "./clean";
 import { rasterizePdf } from "./pdf";
 import type { Detection, PageResult, ProcessEvent, Provider } from "./types";
 
@@ -182,9 +183,19 @@ export async function processPage(
         extractQuestions(preview.buffer, pageNumber),
     );
 
-    const cropsFull = await runStage("crop", () =>
+    const rawCropsFull = await runStage("crop", () =>
         cropDetections(pagePng, width, height, detectionsFull, pageNumber),
     );
+    const cropsFull = rawCropsFull.length > 0
+        ? await runStage("clean", async () => {
+              const cleanedPage = await cleanPage(pagePng, { withRestoreCopy: true });
+              return renderProcessedCrops(
+                  cleanedPage.cleaned,
+                  rawCropsFull,
+                  cleanedPage.restore,
+              );
+          })
+        : rawCropsFull;
     const crops = cropsFull.map((c) => ({
         ...c,
         bbox: rescaleBbox(c.bbox, width, height, preview.width, preview.height),

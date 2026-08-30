@@ -21,6 +21,8 @@ export type Crop = {
     bbox: [number, number, number, number];
     /** base64 data URL, image/png */
     dataUrl: string;
+    /** Cleaned tone-only copy used by the touch-up brush to restore details. */
+    restoreDataUrl?: string;
 };
 
 /** Output of the `/api/school-test/prepare` route — one entry per page. */
