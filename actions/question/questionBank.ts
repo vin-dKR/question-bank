@@ -272,6 +272,8 @@ export async function getFilterOptions(
         subject?: string;
         chapter?: string;
         questionType?: string;
+        /** Exact hierarchy matching for form dependencies; filters keep substring matching. */
+        exact?: boolean;
     },
     // IGNORED — see getQuestions. Scope is resolved from the session.
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -288,12 +290,17 @@ export async function getFilterOptions(
 
         const match: Record<string, unknown> = {};
 
+        const taxonomyPattern = (value: string) => {
+            const escaped = escapeRegex(value);
+            return filters.exact ? `^${escaped}$` : escaped;
+        };
+
         if (filters.exam_name) {
-            match.exam_name = { $regex: escapeRegex(filters.exam_name), $options: "i" };
+            match.exam_name = { $regex: taxonomyPattern(filters.exam_name), $options: "i" };
         }
 
         if (filters.chapter) {
-            match.chapter = { $regex: escapeRegex(filters.chapter), $options: "i" };
+            match.chapter = { $regex: taxonomyPattern(filters.chapter), $options: "i" };
         }
 
         if (filters.questionType) {
@@ -305,7 +312,7 @@ export async function getFilterOptions(
         const effectiveSubject = scope.teacherSubject ?? filters.subject;
 
         if (effectiveSubject) {
-            match.subject = { $regex: escapeRegex(effectiveSubject), $options: "i" };
+            match.subject = { $regex: taxonomyPattern(effectiveSubject), $options: "i" };
         }
 
         // Tenancy: shared bank (organizationId null OR absent — Mongo treats

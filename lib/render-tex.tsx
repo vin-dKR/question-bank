@@ -1,4 +1,4 @@
-import { InlineMath } from 'react-katex';
+import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import { JSX } from 'react';
 
@@ -7,36 +7,27 @@ type StringPart = TextPart | LatexPart;
 const toMixedLatex = (text: string | null | undefined): StringPart[] => {
     text = text ?? "";
     try {
-
         const parts: StringPart[] = [];
-        let current = '';
-        let i = 0;
+        const math = /\\\(([\s\S]+?)\\\)|\\\[([\s\S]+?)\\\]|\$\$([\s\S]+?)\$\$|\$([^$\n]+?)\$/g;
+        let cursor = 0;
+        let match: RegExpExecArray | null;
 
-        while (i < text.length) {
-            // Check for inline LaTeX: \( ... \)
-            if (text.slice(i).startsWith('\\(')) {
-                const endIndex = text.indexOf('\\)', i + 2);
-                if (endIndex !== -1) {
-                    const latexContent = text.slice(i + 2, endIndex);
-                    if (current) {
-                        parts.push({ type: 'text', value: current });
-                        current = '';
-                    }
-                    parts.push({ type: 'latex', value: latexContent });
-                    i = endIndex + 2;
-                } else {
-                    current += text[i];
-                    i++;
-                }
-            } else {
-                current += text[i];
-                i++;
+        while ((match = math.exec(text)) !== null) {
+            if (match.index > cursor) {
+                parts.push({ type: 'text', value: text.slice(cursor, match.index) });
             }
+
+            const inline = match[1] ?? match[4];
+            const display = match[2] ?? match[3];
+            parts.push({
+                type: 'latex',
+                value: (inline ?? display) as string,
+                display: display !== undefined,
+            });
+            cursor = match.index + match[0].length;
         }
 
-        if (current) {
-            parts.push({ type: 'text', value: current });
-        }
+        if (cursor < text.length) parts.push({ type: 'text', value: text.slice(cursor) });
 
         return parts;
     } catch (error) {
@@ -50,8 +41,7 @@ const extractRawLatex = (text: string): string => {
     return parts
         .map((part) => {
             if (part.type === 'latex') {
-                // Ensure proper LaTeX syntax
-                return `$${part.value}$`;
+                return part.display ? `$$${part.value}$$` : `$${part.value}$`;
             }
             // Escape special LaTeX characters
             return part.value
@@ -70,7 +60,13 @@ const renderMixedLatex = (text: string): JSX.Element[] => {
     const parts = toMixedLatex(text);
     return parts.map((part, index) => {
         if (part.type === 'latex') {
-            return <InlineMath key={index}>{part.value}</InlineMath>;
+            return part.display ? (
+                <span key={index} className="my-2 block overflow-x-auto">
+                    <BlockMath>{part.value}</BlockMath>
+                </span>
+            ) : (
+                <InlineMath key={index}>{part.value}</InlineMath>
+            );
         }
         // Split text by \n and map each part to a span with a line break
         return part.value.split('\n').map((line, lineIndex, array) => (

@@ -8,6 +8,9 @@ import {
     requireUser,
 } from '@/lib/auth/guard';
 import { audit } from '@/lib/audit';
+import { supabaseServer, SUPABASE_IMAGE_BUCKET } from '@/lib/supabase';
+import { randomUUID } from 'crypto';
+import sharp from 'sharp';
 
 /**
  * SECURITY NOTE: every export in this file is a Next.js server action, which
@@ -20,8 +23,68 @@ function toErrorResponse(error: unknown, fallback: string) {
     if (error instanceof AuthError) {
         return { success: false as const, error: error.message, status: error.status };
     }
+    if (error instanceof QuestionInputError) {
+        return { success: false as const, error: error.message, status: 400 };
+    }
     console.error(fallback, error);
     return { success: false as const, error: fallback };
+}
+
+const MAX_QUESTION_IMAGE_BYTES = 6 * 1024 * 1024;
+const QUESTION_IMAGE_DATA_URL = /^data:image\/(png|jpe?g|webp);base64,([A-Za-z0-9+/=]+)$/;
+
+class QuestionInputError extends Error {}
+
+/**
+ * Diagram crops returned by the existing school-test pipeline are transient
+ * data URLs. Persist them before the Question row is written so MongoDB keeps
+ * the same URL-based representation used by every existing renderer.
+ *
+ * Direct URLs and null stay untouched for backward compatibility with manual
+ * edits and legacy rows. Data URLs are treated as untrusted input even though
+ * the form normally receives them from our own pipeline: MIME is allowlisted,
+ * decoded size is capped, and sharp must successfully decode/re-encode it.
+ */
+async function persistQuestionImage(
+    value: string | null | undefined,
+    user: Awaited<ReturnType<typeof requireUser>>,
+): Promise<string | null | undefined> {
+    if (!value?.startsWith('data:')) return value;
+    if (value.length > MAX_QUESTION_IMAGE_BYTES * 1.5) {
+        throw new QuestionInputError('The detected diagram is too large to store.');
+    }
+
+    const match = value.match(QUESTION_IMAGE_DATA_URL);
+    if (!match) throw new QuestionInputError('The detected diagram uses an unsupported image type.');
+
+    const decoded = Buffer.from(match[2], 'base64');
+    if (decoded.length === 0 || decoded.length > MAX_QUESTION_IMAGE_BYTES) {
+        throw new QuestionInputError('The detected diagram is too large to store.');
+    }
+
+    const normalized = await sharp(decoded).rotate().png({ compressionLevel: 9 }).toBuffer();
+    if (normalized.length > MAX_QUESTION_IMAGE_BYTES) {
+        throw new QuestionInputError('The detected diagram is too large after processing.');
+    }
+
+    const ownerPath = user.isAdmin ? 'shared' : user.organizationId;
+    if (!ownerPath) throw new AuthError('An active organization is required.', 403);
+
+    const objectPath = `question-bank/${ownerPath}/${randomUUID()}.png`;
+    const supabase = supabaseServer();
+    const { error } = await supabase.storage
+        .from(SUPABASE_IMAGE_BUCKET)
+        .upload(objectPath, normalized, {
+            contentType: 'image/png',
+            cacheControl: '3600',
+            upsert: false,
+        });
+    if (error) {
+        console.error('[question-image] upload failed:', error);
+        throw new QuestionInputError('The detected diagram could not be stored. Try saving again.');
+    }
+
+    return supabase.storage.from(SUPABASE_IMAGE_BUCKET).getPublicUrl(objectPath).data.publicUrl;
 }
 
 export async function createQuestion(
@@ -31,10 +94,12 @@ export async function createQuestion(
         // Creating is open to any signed-in user: a question you upload is
         // yours.
         const user = await requireUser();
+        const questionImage = await persistQuestionImage(questionData.question_image, user);
 
         const newQuestion = await prisma.question.create({
             data: {
                 ...questionData,
+                question_image: questionImage,
                 // Stamped from the SESSION, never accepted from the caller —
                 // otherwise anyone could post a question into another tenant's
                 // org, or into the shared bank. The two cases are doc §13:
@@ -63,6 +128,9 @@ export async function updateQuestion(id: string, questionData: Partial<Question>
         const safeData: Record<string, unknown> = { ...questionData };
         delete safeData.id;
         delete safeData.organizationId;
+        if (typeof safeData.question_image === 'string') {
+            safeData.question_image = await persistQuestionImage(safeData.question_image, user);
+        }
 
         const updatedQuestion = await prisma.question.update({
             where: { id },

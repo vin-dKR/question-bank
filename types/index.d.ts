@@ -413,6 +413,7 @@ declare global {
     interface LatexPart {
         type: 'latex';
         value: string;
+        display?: boolean;
     }
 
     // ai-refine --------------------------------------------------------------
