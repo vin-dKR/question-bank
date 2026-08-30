@@ -1,52 +1,54 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useCurrentUser } from '@/hooks/auth/useCurrentUser';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { getUserRole } from '@/actions/onBoarding/getUserRole';
 
 export const useUserRole = () => {
-    const { user, isLoaded } = useCurrentUser();
-    const [roleState, setRoleState] = useState<UserRoleState>({
-        role: null,
-        isLoading: false,
-        error: null
+    const { user, isLoaded, organizationId } = useCurrentUser();
+    const enabled = isLoaded && Boolean(user?.id);
+    const query = useQuery<UserRole>({
+        queryKey: ['currentUserRole', user?.id ?? null, organizationId ?? null],
+        queryFn: getUserRole,
+        enabled,
+        staleTime: 5 * 60 * 1000,
+        gcTime: 30 * 60 * 1000,
     });
 
     useEffect(() => {
-        const fetchRole = async () => {
-            if (!user?.id || !isLoaded) {
-                setRoleState({ role: null, isLoading: false, error: null })
-                return
-            }
+        if (!query.error) return;
 
-            try {
-                setRoleState((prev) => ({ ...prev, isLoading: true, error: null }))
-                const userRole = await getUserRole()
-                setRoleState((prev) => ({ ...prev, isLoading: false, role: userRole, error: null }))
-            } catch (error) {
-                const errorMessage = error instanceof Error ? error.message : 'Failed to fetch user role';
-                console.error('Error fetching user role:', error);
-                toast.error(errorMessage);
-                setRoleState({ role: null, isLoading: false, error: errorMessage });
-            }
-        };
+        const errorMessage = query.error instanceof Error
+            ? query.error.message
+            : 'Failed to fetch user role';
+        console.error('Error fetching user role:', query.error);
+        toast.error(errorMessage);
+    }, [query.error]);
 
-        fetchRole();
-    }, [user?.id, isLoaded]);
+    const role = query.data ?? null;
+    const error = query.error instanceof Error
+        ? query.error.message
+        : query.error
+            ? 'Failed to fetch user role'
+            : null;
 
     const roleFlag = useMemo(
         () => ({
-            isTeacher: roleState.role === 'teacher',
-            isStudent: roleState.role === 'student',
-            isCoaching: roleState.role === 'coaching',
+            isTeacher: role === 'teacher',
+            isStudent: role === 'student',
+            isCoaching: role === 'coaching',
         }),
-        [roleState.role]
+        [role]
     )
+
     return {
-        role: roleState.role,
-        isLoading: roleState.isLoading,
-        error: roleState.error,
+        role,
+        // AuthKit must resolve before this query can start. Treat that period
+        // as loading too so consumers never fall back to a provisional role.
+        isLoading: !isLoaded || (enabled && query.isPending),
+        error,
         ...roleFlag
     };
 }; 

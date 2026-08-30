@@ -122,8 +122,10 @@ export const useQuestionBankContext = () => {
  */
 export const useQuestionsList = () => {
     const { filters, searchQuery } = useQuestionBankContext();
-    const { role, isTeacher, isLoading: roleLoading } = useUserRole();
+    const { role, isTeacher, isLoading: roleLoading, error: roleError } = useUserRole();
     const { subject, isLoading: subjectLoading } = useUserSubject();
+    const metadataLoading = roleLoading || subjectLoading;
+    const questionsEnabled = Boolean(role) && !metadataLoading;
 
     const query = useQuestions({
         filters,
@@ -131,6 +133,10 @@ export const useQuestionsList = () => {
         isTeacher,
         subject: subject ?? undefined,
         searchQuery,
+        // Without this guard, the fallback role/empty subject form a real
+        // cache key and fetch an overlapping first page before the final
+        // teacher metadata arrives.
+        enabled: questionsEnabled,
     });
 
     const questions = useMemo<Question[]>(
@@ -138,25 +144,34 @@ export const useQuestionsList = () => {
         [query.data]
     );
 
-    const hasMore = Boolean(query.hasNextPage);
+    const {
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+    } = query;
+    const hasMore = Boolean(hasNextPage);
     const loadMore = useCallback(() => {
-        if (query.hasNextPage && !query.isFetchingNextPage) {
-            query.fetchNextPage();
+        if (hasNextPage && !isFetchingNextPage) {
+            // `cancelRefetch: false` also closes the same-render double-click
+            // window before isFetchingNextPage has propagated to the button.
+            void fetchNextPage({ cancelRefetch: false });
         }
-    }, [query]);
+    }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+    const queryError = query.error ? (query.error as Error).message : null;
 
     return {
         questions,
         // True on first-ever load (no data yet). Use `isFetchingNextPage` to
         // differentiate "loading another page" from "initial empty load".
-        loading: query.isPending || roleLoading || subjectLoading,
+        loading: metadataLoading || (questionsEnabled && query.isPending),
         isFetchingNextPage: query.isFetchingNextPage,
-        error: query.error ? (query.error as Error).message : null,
+        error: roleError ?? queryError,
         hasMore,
         loadMore,
         refetch: query.refetch,
         // `initialFetchDone` parity for components that guard EmptyState on it.
-        initialFetchDone: !query.isPending,
+        initialFetchDone: Boolean(roleError) || (questionsEnabled && !query.isPending),
         query,
     };
 };

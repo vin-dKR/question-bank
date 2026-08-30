@@ -1,38 +1,24 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useCurrentUser } from '@/hooks/auth/useCurrentUser';
 import { getUserSubject } from '@/actions/onBoarding/getUserSubject';
 
 export const useUserSubject = () => {
-    const { user, isLoaded } = useCurrentUser();
-    const [subject, setSubject] = useState<string | undefined>(undefined);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchSubject = async () => {
-            if (!user?.id || !isLoaded) {
-                setIsLoading(false);
-                return;
-            }
-
-            try {
-                setIsLoading(true);
-                const userSubject = await getUserSubject();
-                setSubject(userSubject ?? undefined);
-            } catch (error) {
-                console.error('Error fetching user subject:', error);
-                setSubject(undefined);
-            } finally {
-                setIsLoading(false)
-            }
-        }
-
-        fetchSubject();
-    }, [user?.id, isLoaded])
+    const { user, isLoaded, organizationId } = useCurrentUser();
+    const enabled = isLoaded && Boolean(user?.id);
+    const query = useQuery<string | null>({
+        queryKey: ['currentUserSubject', user?.id ?? null, organizationId ?? null],
+        queryFn: getUserSubject,
+        enabled,
+        staleTime: 5 * 60 * 1000,
+        gcTime: 30 * 60 * 1000,
+    });
 
     return {
-        subject,
-        isLoading,
+        subject: query.data ?? undefined,
+        // Keep downstream question/filter queries disabled until both AuthKit
+        // and this server-derived teacher restriction have settled.
+        isLoading: !isLoaded || (enabled && query.isPending),
     }
 }

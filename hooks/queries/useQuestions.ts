@@ -19,6 +19,8 @@ export interface UseQuestionsArgs {
     searchQuery?: string;
     /** Page size. Defaults to 20. */
     pageSize?: number;
+    /** Wait for server-derived role/subject metadata before fetching. */
+    enabled?: boolean;
 }
 
 // A single "page" in the TanStack infinite-query cache. Both branches below
@@ -47,6 +49,7 @@ export function useQuestions({
     subject,
     searchQuery,
     pageSize = 20,
+    enabled = true,
 }: UseQuestionsArgs) {
     const orgKey = useOrgKey();
     const trimmedQuery = (searchQuery ?? "").trim();
@@ -124,6 +127,7 @@ export function useQuestions({
         },
         initialPageParam: null as string | null,
         getNextPageParam: (last) => last.nextCursor ?? null,
+        enabled,
         staleTime: 30_000,
     });
 }

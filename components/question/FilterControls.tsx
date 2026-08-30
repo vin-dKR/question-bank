@@ -58,6 +58,9 @@ export default function FilterControls() {
         filters: activeFilters,
         userRole: role ?? 'student',
         userSubject: isTeacher ? subject : undefined,
+        // Avoid populating a provisional student/no-subject cache entry while
+        // the server-derived teacher restriction is still loading.
+        enabled: Boolean(role) && !roleLoading && !subjectLoading,
     });
 
     const filterOptions = filterOptionsData ?? EMPTY_FILTER_OPTIONS;

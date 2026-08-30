@@ -17,6 +17,8 @@ export interface UseFilterOptionsArgs {
     filters: Filters;
     userRole: UserRole;
     userSubject?: string;
+    /** Wait for server-derived role/subject metadata before fetching. */
+    enabled?: boolean;
 }
 
 const EMPTY_OPTIONS: FilterOptions = {
@@ -27,7 +29,12 @@ const EMPTY_OPTIONS: FilterOptions = {
     question_type: [],
 };
 
-export function useFilterOptions({ filters, userRole, userSubject }: UseFilterOptionsArgs) {
+export function useFilterOptions({
+    filters,
+    userRole,
+    userSubject,
+    enabled = true,
+}: UseFilterOptionsArgs) {
     const orgKey = useOrgKey();
     return useQuery({
         // The org segment sits LAST, not first, and that placement is load
@@ -67,6 +74,7 @@ export function useFilterOptions({ filters, userRole, userSubject }: UseFilterOp
 
             return response.data;
         },
+        enabled,
         // Filter options rarely change — keep them hot for 15 minutes so
         // rapid filter clicks hit the cache instead of Mongo.
         staleTime: 15 * 60 * 1000,
