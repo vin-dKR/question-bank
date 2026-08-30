@@ -36,15 +36,15 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
     // sibling state changes (selection toggles, virtualization re-renders, etc).
     const questionText = useMemo(
         () => renderMixedLatex(question.question_text),
-        [question.id, question.question_text],
+        [question.question_text],
     );
     const answerText = useMemo(
         () => renderMixedLatex(question.answer),
-        [question.id, question.answer],
+        [question.answer],
     );
     const renderedOptions = useMemo(
         () => question.options.map((option) => renderMixedLatex(option)),
-        [question.id, question.options],
+        [question.options],
     );
 
     const handleFlagToggle = async () => {
@@ -167,7 +167,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
 
     return (
         <div
-            className={`group p-4 sm:p-5 bg-white rounded-xl border transition-all duration-150 ${isSelected
+            className={`group rounded-xl border bg-white p-3 transition-all duration-150 sm:p-4 ${isSelected
                 ? 'border-indigo-200 bg-indigo-50/30 shadow-xs ring-1 ring-indigo-100'
                 : 'border-black/5 shadow-xs hover:border-black/10'
                 }`}
@@ -189,7 +189,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                     )}
                 </button>
                 <div className="flex-1 w-full text-wrap min-w-0">
-                    <div className="flex flex-wrap gap-1.5 mb-3 items-center">
+                    <div className="mb-2 flex flex-wrap items-center gap-1.5">
                         {question.exam_name && (
                             <span className="inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 border border-zinc-200/60">
                                 {question.exam_name}
@@ -206,20 +206,25 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                             </span>
                         )}
                         <button
+                            type="button"
                             onClick={handleFlagToggle}
                             disabled={isFlagging}
                             className={`ml-auto p-1 rounded-md hover:bg-zinc-100 transition-colors ${isFlagging ? 'opacity-50 cursor-not-allowed' : ''
                                 } ${question.flagged ? 'text-amber-500' : 'text-zinc-400 hover:text-amber-500'}`}
                             title={question.flagged ? 'Unflag question' : 'Flag question'}
+                            aria-label={question.flagged ? 'Unflag question' : 'Flag question'}
                         >
                             {question.flagged ? <Flag className="h-3.5 w-3.5" /> : <FlagOff className="h-3.5 w-3.5" />}
                         </button>
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-1">
                             <Button
+                                type="button"
+                                size="icon"
                                 onClick={() => handleRefineField('question_text', null)}
                                 disabled={refiningField === 'question_text'}
-                                className="px-3 text-white transition-colors disabled:text-gray-400 disabled:cursor-not-allowed"
+                                className="h-7 w-7 rounded-md p-0 text-white transition-colors disabled:cursor-not-allowed disabled:text-gray-400"
                                 title="Refine Question with AI"
+                                aria-label="Refine question with AI"
                             >
                                 {refiningField === 'question_text' ? (
                                     <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
@@ -242,9 +247,12 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                             </Button>
                             {originalQuestionText && (
                                 <Button
+                                    type="button"
+                                    size="icon"
                                     onClick={handleUndoQuestionText}
-                                    className="p-1 text-red-500 hover:text-red-700 transition-colors"
+                                    className="h-7 w-7 rounded-md p-0 text-red-500 transition-colors hover:text-red-700"
                                     title="Undo Question Update"
+                                    aria-label="Undo question update"
                                 >
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
@@ -267,7 +275,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
 
 
                     <div>
-                        <h3 className="text-sm md:text-base font-medium mb-2 text-zinc-900 leading-relaxed">
+                        <h3 className="mb-1.5 text-sm font-medium leading-relaxed text-zinc-900 md:text-base">
                             {questionText}
                         </h3>
                         {resolveQuestionImage(question.question_image) && (
@@ -311,13 +319,16 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                     {question.match_columns && question.match_columns.length > 0 ? (
                         <MatchTable columns={question.match_columns} matchKey={question.match_key} />
                     ) : !question.isOptionImage ? (
-                        <div className="space-y-2 mb-2">
-                            <div className="flex items-center gap-2">
+                        <div className="mb-2 space-y-1.5">
+                            <div className="flex items-center gap-1">
                                 <Button
+                                    type="button"
+                                    size="icon"
                                     onClick={() => handleRefineField('options', null)}
                                     disabled={refiningField === 'options'}
-                                    className="px-3 text-white transition-colors disabled:text-gray-400 disabled:cursor-not-allowed"
+                                    className="h-7 w-7 rounded-md p-0 text-white transition-colors disabled:cursor-not-allowed disabled:text-gray-400"
                                     title="Refine All Options with AI"
+                                    aria-label="Refine all options with AI"
                                 >
                                     {refiningField === 'options' ? (
                                         <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
@@ -340,9 +351,12 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                                 </Button>
                                 {originalOptions && (
                                     <Button
+                                        type="button"
+                                        size="icon"
                                         onClick={handleUndoOptions}
-                                        className="p-1 text-red-500 hover:text-red-700 transition-colors"
+                                        className="h-7 w-7 rounded-md p-0 text-red-500 transition-colors hover:text-red-700"
                                         title="Undo Options Update"
+                                        aria-label="Undo options update"
                                     >
                                         <svg
                                             xmlns="http://www.w3.org/2000/svg"
@@ -375,7 +389,7 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
                                 return (
                                     <div
                                         key={index}
-                                        className={`flex items-start gap-2.5 pl-3 pr-2 py-2 rounded-md border ${isCorrect
+                                        className={`flex items-start gap-2.5 rounded-md border py-1.5 pl-2.5 pr-2 ${isCorrect
                                             ? 'border-emerald-100 bg-emerald-50/50'
                                             : 'border-black/5 bg-zinc-50/40'
                                             }`}
@@ -408,9 +422,9 @@ const QuestionItem = memo(({ question, isSelected, toggleQuestionSelection, togg
 });
 QuestionItem.displayName = 'QuestionItem';
 
-// Spacer between virtual rows. Matches the visual `space-y-4` (16px) used by
-// the original non-virtualized list so card spacing is preserved.
-const ROW_GAP_PX = 16;
+// Compact spacer between virtual rows; kept outside the card measurement so
+// variable-height LaTeX content can still be positioned accurately.
+const ROW_GAP_PX = 10;
 // Initial estimated row height before measurement kicks in. Cards vary because
 // of LaTeX/MathJax content, so this is just a starting point — the virtualizer
 // re-measures every mounted row via `measureElement`.
@@ -480,7 +494,7 @@ const QuestionList = memo(() => {
 
     return (
         <div className="w-full">
-            <div className="w-full mx-auto space-y-4">
+            <div className="mx-auto w-full space-y-3">
                 {showOnlySelected && (
                     <SelectedQuestionsBanner displayedCount={displayedQuestions.length} totalCount={selectedQuestions.length} />
                 )}

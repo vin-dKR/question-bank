@@ -38,6 +38,7 @@ import { useSlideDeck } from "@/hooks/slides/useSlideDeck";
 import { listSlideTemplates, type StoredSlideTemplate } from "@/actions/slides/slideTemplates";
 import { slideCount as countSlides } from "@/lib/slides/generate";
 import type { BindKey } from "@/types/slides";
+import { cn } from "@/lib/utils";
 
 /** Human labels for the bind keys shown in the slot dropdowns. */
 const KEY_LABELS: Record<BindKey, string> = {
@@ -62,9 +63,10 @@ interface Props {
     /** Used for the download filename. */
     deckName?: string;
     disabled?: boolean;
+    triggerClassName?: string;
 }
 
-export default function SlideDeckDialog({ selectedQuestions, deckName, disabled }: Props) {
+export default function SlideDeckDialog({ selectedQuestions, deckName, disabled, triggerClassName }: Props) {
     const [open, setOpen] = useState(false);
     const [themeId, setThemeId] = useState("midnight");
     const [presetId, setPresetId] = useState("practice");
@@ -168,7 +170,7 @@ export default function SlideDeckDialog({ selectedQuestions, deckName, disabled 
                     size="sm"
                     variant="secondary"
                     disabled={disabled || count === 0}
-                    className="w-full md:w-auto"
+                    className={cn("w-full md:w-auto", triggerClassName)}
                 >
                     <Presentation className="size-4" />
                     <span className="text-xs sm:text-sm text-nowrap">Make Slides</span>

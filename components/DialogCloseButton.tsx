@@ -88,15 +88,15 @@ export function DialogCloseButton({ selectedQuestions }: { selectedQuestions: Pi
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button className="px-2 w-full hover:bg-black/20 border border-black/20" size="sm">
-                    <span className='text-xs sm:text-sm text-nowrap font-bold'>
-                        Save to Folder
+                <Button className="h-8 w-auto rounded-lg border border-zinc-200 bg-white px-2.5 text-zinc-700 shadow-none hover:bg-zinc-100 hover:text-zinc-900 hover:translate-y-0" size="sm">
+                    <span className='text-nowrap text-xs font-semibold'>
+                        Save Draft
                     </span>
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md bg-white max-h-[100vh] rounded rounded-xl border border-black/20 !top-[50%] !left-[50%] !transform !-translate-x-1/2 !-translate-y-1/2">
                 <DialogHeader>
-                    <DialogTitle>{mode === 'new' ? 'Create New Folder' : 'Move to Existing Folder'}</DialogTitle>
+                    <DialogTitle>{mode === 'new' ? 'Create New Draft Paper' : 'Add to Existing Draft Paper'}</DialogTitle>
                 </DialogHeader>
 
                 <div className="flex items-center gap-2 mb-2">
@@ -105,7 +105,7 @@ export function DialogCloseButton({ selectedQuestions }: { selectedQuestions: Pi
                         className={`h-8 rounded-lg ${mode === 'new' ? 'bg-indigo-600 text-white border border-black/20' : 'border border-black/20'}`}
                         onClick={() => setMode('new')}
                     >
-                        New Folder
+                        New Draft
                     </Button>
                     <Button
                         type="button"
@@ -113,7 +113,7 @@ export function DialogCloseButton({ selectedQuestions }: { selectedQuestions: Pi
                         onClick={() => setMode('existing')}
                         disabled={drafts.length === 0}
                     >
-                        Existing Folder
+                        Existing Draft
                     </Button>
                 </div>
 
@@ -121,12 +121,12 @@ export function DialogCloseButton({ selectedQuestions }: { selectedQuestions: Pi
                     <>
                         <div className="flex items-center space-x-2">
                             <div className="grid flex-1 gap-2">
-                                <Label htmlFor="name">Folder Name</Label>
+                                <Label htmlFor="name">Draft Paper Name</Label>
                                 <Input
                                     id="name"
                                     value={folderName}
                                     onChange={(e) => setFolderName(e.target.value)}
-                                    placeholder="Enter folder name"
+                                    placeholder="Enter draft paper name"
                                     className="rounded-lg border border-black/20"
                                 />
                             </div>
@@ -142,7 +142,7 @@ export function DialogCloseButton({ selectedQuestions }: { selectedQuestions: Pi
                                     disabled={!folderName.trim() || selectedQuestions.length === 0}
                                     className="bg-indigo-600 text-white border border-black/20"
                                 >
-                                    Create Folder
+                                    Create Draft
                                 </Button>
                             </DialogClose>
                         </DialogFooter>
@@ -152,10 +152,10 @@ export function DialogCloseButton({ selectedQuestions }: { selectedQuestions: Pi
                 {mode === 'existing' && (
                     <>
                         <div className="grid gap-2">
-                            <Label htmlFor="existing-folder">Choose Folder</Label>
+                            <Label htmlFor="existing-folder">Choose Draft Paper</Label>
                             <Select value={selectedFolderId} onValueChange={setSelectedFolderId}>
                                 <SelectTrigger id="existing-folder" className="border border-black/20">
-                                    <SelectValue placeholder={drafts.length ? "Select a folder" : "No folders available"} />
+                                    <SelectValue placeholder={drafts.length ? "Select a draft paper" : "No draft papers available"} />
                                 </SelectTrigger>
                                 <SelectContent className="bg-white text-black border border-black/20">
                                     {drafts.map((f) => (
@@ -173,10 +173,10 @@ export function DialogCloseButton({ selectedQuestions }: { selectedQuestions: Pi
                         {selectedFolder && duplicateStats && (
                             <div className="text-sm text-muted-foreground space-y-1 pt-2 border-y border-black/30 pb-1">
                                 <div><span className="font-medium">Selected:</span> {selectedQuestions.length}</div>
-                                <div><span className="font-medium">Existing in folder:</span> {duplicateStats.existingCount}</div>
-                                <div><span className="font-medium">Duplicates among selected vs folder:</span> {duplicateStats.duplicatesCount}</div>
+                                <div><span className="font-medium">Existing in draft:</span> {duplicateStats.existingCount}</div>
+                                <div><span className="font-medium">Duplicates among selected vs draft:</span> {duplicateStats.duplicatesCount}</div>
                                 <div><span className="font-medium">New to add{removeDuplicates ? " (deduped)" : " (including duplicates)"}:</span> {removeDuplicates ? duplicateStats.newCountIfDedup : selectedQuestions.length}</div>
-                                <div><span className="font-medium">Total after move:</span> {duplicateStats.totalAfter}</div>
+                                <div><span className="font-medium">Total after adding:</span> {duplicateStats.totalAfter}</div>
                             </div>
                         )}
 
@@ -188,7 +188,7 @@ export function DialogCloseButton({ selectedQuestions }: { selectedQuestions: Pi
                                     disabled={!selectedFolderId || selectedQuestions.length === 0}
                                     className="bg-indigo-600 text-white border border-black/30"
                                 >
-                                    Move to Folder
+                                    Add to Draft
                                 </Button>
                             </DialogClose>
                         </DialogFooter>
@@ -198,4 +198,3 @@ export function DialogCloseButton({ selectedQuestions }: { selectedQuestions: Pi
         </Dialog>
     )
 }
-

@@ -2,7 +2,7 @@
 
 import { memo } from 'react';
 import { Button } from '@/components/ui/button';
-import clsx from 'clsx';
+import { cn } from '@/lib/utils';
 
 interface PDFActionButtonsProps {
     onGeneratePDF: () => void;
@@ -23,11 +23,11 @@ const PDFActionButtons = memo(({
     className
 }: PDFActionButtonsProps) => {
     const buttonClasses = {
-        pdf: clsx(
+        pdf: cn(
             "bg-indigo-600 w-full hover:bg-indigo-600 text-white px-4 py-1 disabled:bg-slate-400 disabled:cursor-not-allowed border border-black/20",
             className
         ),
-        answer: clsx(
+        answer: cn(
             "bg-green-600 w-full hover:bg-green-700 text-white px-4 py-2 whitespace-nowrap disabled:bg-slate-400 disabled:cursor-not-allowed border border-black/20",
             className
         )

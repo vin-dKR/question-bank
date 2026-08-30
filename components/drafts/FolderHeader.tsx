@@ -48,7 +48,7 @@ export function FolderHeader({
                 className="flex items-center gap-1 whitespace-nowrap text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-black/5 self-start sm:self-auto"
             >
                 <StepBack className="h-4 w-4" />
-                <span>Back to folders</span>
+                <span>Back to draft papers</span>
             </Button>
 
             {/* Right side - Action buttons */}

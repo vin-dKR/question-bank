@@ -7,6 +7,7 @@ import { useQuestionBankContext, useQuestionsList } from '@/lib/context/Question
 import { usePDFGeneratorContext } from '@/lib/context/PDFGeneratorContext';
 import PDFGenerator from '../pdf/pdfPreview';
 import SlideDeckDialog from '../slides/SlideDeckDialog';
+import { CheckCheck, ClipboardPlus, Eye, EyeOff, ListChecks, X } from 'lucide-react';
 
 interface SelectedQuestionsActionsProps {
     showPrintBtn: boolean;
@@ -60,80 +61,88 @@ export default function SelectedQuestionsActions({ showPrintBtn }: SelectedQuest
     };
 
     return (
-        <div className="sticky top-[-20px] z-10 flex flex-wrap justify-between items-center gap-3 bg-white p-3 md:p-4 rounded-xl shadow-xs border border-black/5">
-            <div className="flex flex-row w-full justify-between items-center">
-                <span className="text-xs md:text-sm font-medium text-zinc-700">
-                    {selectedCount} Selected
-                </span>
-                <button
-                    onClick={() => setShowOnlySelected(selectedCount > 0 ? !showOnlySelected : false)}
-                    className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-700 font-medium cursor-pointer text-nowrap"
-                >
-                    {selectedCount > 0 && showOnlySelected ? 'Show All Questions' : selectedCount > 0 ? 'See Selected Only' : 'Show All'}
-                </button>
-            </div>
-
-            <div className="flex flex-col w-full gap-3 md:w-auto md:flex-row md:items-center md:justify-between">
-                <div className="flex flex-row w-full gap-2 md:flex-row md:flex-1 md:gap-2">
-                    <Button
-                        size="sm"
-                        onClick={selectAllQuestions}
-                        disabled={showOnlySelected}
-                        className="w-full md:flex-1"
-                    >
-                        <span className="text-xs sm:text-sm text-nowrap">
-                            Select All
+        <section
+            aria-label="Selected question actions"
+            className="sticky top-2 z-20 rounded-xl border border-indigo-100 bg-white/95 p-2 shadow-md shadow-zinc-950/5 backdrop-blur"
+        >
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <div className="flex shrink-0 items-center justify-between gap-2 sm:justify-start">
+                    <div className="flex items-center gap-2 rounded-lg bg-indigo-50 px-2.5 py-1.5 text-indigo-800">
+                        <CheckCheck className="h-4 w-4" aria-hidden="true" />
+                        <span className="text-xs font-semibold">
+                            {selectedCount} selected
                         </span>
-                    </Button>
-
-                    <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={unselectAllQuestions}
-                        className="w-full md:flex-1"
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setShowOnlySelected(!showOnlySelected)}
+                        className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-indigo-700 transition-colors hover:bg-indigo-50"
+                        aria-pressed={showOnlySelected}
                     >
-                        <span className="text-xs sm:text-sm text-nowrap">
-                            Unselect All
-                        </span>
-                    </Button>
-
-                    <Button
-                        size="sm"
-                        onClick={createTestFromSelected}
-                        disabled={selectedCount === 0}
-                        className="w-full md:flex-1 bg-emerald-600 text-white hover:bg-emerald-700"
-                    >
-                        <span className="text-xs sm:text-sm text-nowrap">
-                            Create Test
-                        </span>
-                    </Button>
+                        {showOnlySelected ? <EyeOff className="h-3.5 w-3.5" aria-hidden="true" /> : <Eye className="h-3.5 w-3.5" aria-hidden="true" />}
+                        {showOnlySelected ? 'Show all' : 'Selected only'}
+                    </button>
                 </div>
 
-                {/* Second row - becomes second column on desktop */}
-                <div className='flex flex-row w-full gap-2 md:flex-row md:items-center md:justify-end md:flex-1 md:gap-3'>
+                <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto pb-0.5 sm:justify-end sm:pb-0">
+                    <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={selectAllQuestions}
+                        disabled={showOnlySelected}
+                        className="h-8 shrink-0 rounded-lg px-2.5 text-xs text-zinc-700 shadow-none"
+                    >
+                        <ListChecks className="h-3.5 w-3.5" aria-hidden="true" />
+                        Select all
+                    </Button>
+
+                    <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={unselectAllQuestions}
+                        className="h-8 shrink-0 rounded-lg px-2.5 text-xs text-zinc-700 shadow-none"
+                    >
+                        <X className="h-3.5 w-3.5" aria-hidden="true" />
+                        Clear
+                    </Button>
+
+                    <Button
+                        type="button"
+                        size="sm"
+                        onClick={createTestFromSelected}
+                        className="h-8 shrink-0 rounded-lg bg-indigo-600 px-3 text-xs text-white shadow-none hover:bg-indigo-700 hover:translate-y-0"
+                    >
+                        <ClipboardPlus className="h-3.5 w-3.5" aria-hidden="true" />
+                        Create Test
+                    </Button>
+
                     {showPrintBtn && (
-                        <div className="w-full md:w-auto">
+                        <div className="shrink-0">
                             <PDFGenerator
                                 saveToHistory={true}
                                 institution={institution}
                                 selectedQuestions={selectedQuestions}
                                 options={options}
+                                className="h-8 w-auto rounded-lg border-zinc-200 bg-white px-2.5 text-xs text-zinc-700 shadow-none hover:bg-zinc-100 hover:text-zinc-900 hover:translate-y-0"
                             />
                         </div>
                     )}
 
-                    <div className="w-full md:w-auto">
+                    <div className="shrink-0">
                         <SlideDeckDialog
                             selectedQuestions={selectedQuestions}
                             deckName={institution}
+                            triggerClassName="h-8 w-auto rounded-lg px-2.5 text-xs shadow-none"
                         />
                     </div>
 
-                    <div className="w-full md:w-auto">
+                    <div className="shrink-0">
                         <DialogCloseButton selectedQuestions={selectedQuestions} />
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
     );
 }

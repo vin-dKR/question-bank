@@ -97,7 +97,7 @@ export function QuestionList({
                     </ul>
                 </div>
             ) : (
-                <p className="text-slate-500 text-sm sm:text-base">No questions in this folder</p>
+                <p className="text-slate-500 text-sm sm:text-base">No questions in this draft paper</p>
             )}
         </div>
     );

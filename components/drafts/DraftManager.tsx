@@ -50,22 +50,22 @@ export default function DraftManager({ previewLimit }: DraftManagerPropsLimit) {
                 setUrlFolderLoading(true);
                 try {
                     if (typeof urlFolderId !== "string" || urlFolderId.trim().length === 0) {
-                        throw new Error("Invalid folder ID format");
+                        throw new Error("Invalid draft paper ID format");
                     }
-                    toast.loading("Loading shared folder...", { id: "url-folder-loading" });
+                    toast.loading("Loading shared draft paper...", { id: "url-folder-loading" });
                     const folder = await getFolderById(urlFolderId.trim());
                     toast.dismiss("url-folder-loading");
                     if (folder) {
                         setSelectedFolder(folder);
                         const roleText =
                             folder.userRole === "owner" ? "as owner" : folder.userRole === "editor" ? "with edit access" : "with view access";
-                        toast.success(`Opened shared folder "${folder.name}" ${roleText}`);
+                        toast.success(`Opened shared draft paper "${folder.name}" ${roleText}`);
                     } else {
-                        throw new Error("Unable to access the shared folder. It may not exist or you may not have permission to view it.");
+                        throw new Error("Unable to access the shared draft paper. It may not exist or you may not have permission to view it.");
                     }
                 } catch (error) {
                     toast.dismiss("url-folder-loading");
-                    const errorMessage = error instanceof Error ? error.message : "Failed to load shared folder";
+                    const errorMessage = error instanceof Error ? error.message : "Failed to load shared draft paper";
                     setUrlFolderError(errorMessage);
                     toast.error(errorMessage);
                 } finally {
@@ -111,7 +111,7 @@ export default function DraftManager({ previewLimit }: DraftManagerPropsLimit) {
             setNewName("");
         } catch (error) {
             console.error("Failed to rename folder:", error);
-            toast.error("Failed to rename folder");
+            toast.error("Failed to rename draft paper");
         }
     };
 
@@ -123,7 +123,7 @@ export default function DraftManager({ previewLimit }: DraftManagerPropsLimit) {
             }
         } catch (error) {
             console.error("Failed to delete folder:", error);
-            toast.error("Failed to delete folder");
+            toast.error("Failed to delete draft paper");
         }
     };
 
@@ -166,7 +166,7 @@ export default function DraftManager({ previewLimit }: DraftManagerPropsLimit) {
     };
 
     if (loading) {
-        return <div className="text-center py-8 text-slate-600">Loading folders...</div>;
+        return <div className="text-center py-8 text-slate-600">Loading draft papers...</div>;
     }
 
     if (err) {
@@ -178,7 +178,7 @@ export default function DraftManager({ previewLimit }: DraftManagerPropsLimit) {
             <div className="w-full flex items-center justify-center py-8">
                 <div className="flex flex-col items-center space-y-4">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-                    <p className="text-slate-600">Loading shared folder...</p>
+                    <p className="text-slate-600">Loading shared draft paper...</p>
                 </div>
             </div>
         );
@@ -192,7 +192,7 @@ export default function DraftManager({ previewLimit }: DraftManagerPropsLimit) {
                     onRetry={() => {
                         setUrlFolderError(null);
                         setUrlFolderProcessed(false);
-                        toast.info("Retrying folder access...");
+                        toast.info("Retrying draft paper access...");
                     }}
                     onBrowseFolders={() => {
                         setUrlFolderError(null);

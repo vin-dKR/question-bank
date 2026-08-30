@@ -22,20 +22,22 @@ const QuestionBankViewerContent = () => {
 
     return (
         <div className="relative">
-            <div className="w-full mx-auto pb-6 space-y-5">
-                <div className="grid grid-cols-1 lg:grid-cols-6 xl:grid-cols-8 gap-4 sm:gap-6">
+            <div className="mx-auto w-full pb-4">
+                <div className="grid grid-cols-1 gap-3 lg:grid-cols-[17rem_minmax(0,1fr)] lg:gap-4 xl:grid-cols-[18rem_minmax(0,1fr)]">
                     {/* Sidebar */}
-                    <aside className="col-span-1 lg:col-span-2 xl:col-span-2 lg:sticky lg:top-0 self-start h-fit">
-                        <div className="space-y-4">
+                    <aside className="self-start lg:sticky lg:top-2">
+                        <div className="flex items-start gap-2 sm:block sm:space-y-3">
+                            <div className="min-w-0 flex-1 sm:w-full">
+                                <SearchBar />
+                            </div>
                             <FilterControls />
                         </div>
                     </aside>
 
                     {/* Main Content */}
-                    <main className="col-span-1 lg:col-span-4 xl:col-span-6 space-y-4">
-                        <SearchBar />
+                    <main className="min-w-0 space-y-3">
                         {!loading && !error && (isSearching || total > 0) && (
-                            <p className="m-0 text-xs text-zinc-500">{countLabel}</p>
+                            <p className="m-0 px-1 text-xs font-medium text-zinc-500">{countLabel}</p>
                         )}
                         {selectedQuestions.length > 0 && <SelectedQuestionsActions showPrintBtn={true} />}
                         {error && (
@@ -46,7 +48,7 @@ const QuestionBankViewerContent = () => {
                         {loading && (
                             <div className="space-y-3">
                                 {Array.from({ length: 5 }).map((_, i) => (
-                                    <div key={i} className="rounded-xl border border-black/5 bg-white p-4 sm:p-5 shadow-xs space-y-3">
+                                    <div key={i} className="space-y-3 rounded-xl border border-black/5 bg-white p-3 shadow-xs sm:p-4">
                                         <div className="flex gap-1.5">
                                             <Skeleton className="h-4 w-14" />
                                             <Skeleton className="h-4 w-20" />

@@ -21,13 +21,13 @@ export function ErrorDisplay({ error, onRetry, onBrowseFolders }: ErrorDisplayPr
                     />
                 </svg>
                 <div className="ml-3 flex-1">
-                    <h3 className="text-sm font-medium text-red-800">Unable to access shared folder</h3>
+                    <h3 className="text-sm font-medium text-red-800">Unable to access shared draft paper</h3>
                     <div className="mt-2 text-sm text-red-700">
                         <p>{error}</p>
                         <div className="mt-2 text-xs text-red-600">
-                            {error.includes("permission") && <p>• You may need to be invited to this folder by the owner</p>}
-                            {error.includes("not found") && <p>• The folder may have been deleted or the link is incorrect</p>}
-                            {error.includes("Invalid") && <p>• The folder link appears to be malformed</p>}
+                            {error.includes("permission") && <p>• You may need to be invited to this draft paper by the owner</p>}
+                            {error.includes("not found") && <p>• The draft paper may have been deleted or the link is incorrect</p>}
+                            {error.includes("Invalid") && <p>• The draft paper link appears to be malformed</p>}
                         </div>
                     </div>
                     <div className="mt-4 flex flex-wrap gap-2">
@@ -45,7 +45,7 @@ export function ErrorDisplay({ error, onRetry, onBrowseFolders }: ErrorDisplayPr
                             onClick={onBrowseFolders}
                             className="border-gray-300 text-gray-700 hover:bg-gray-50"
                         >
-                            Browse My Folders
+                            Browse My Draft Papers
                         </Button>
                         {error.includes("permission") && (
                             <Button
@@ -53,7 +53,7 @@ export function ErrorDisplay({ error, onRetry, onBrowseFolders }: ErrorDisplayPr
                                 variant="outline"
                                 onClick={() => {
                                     navigator.clipboard.writeText(window.location.href);
-                                    toast.success("Link copied! Share this with the folder owner to request access.");
+                                    toast.success("Link copied! Share this with the draft paper owner to request access.");
                                 }}
                                 className="border-blue-300 text-blue-700 hover:bg-blue-50"
                             >

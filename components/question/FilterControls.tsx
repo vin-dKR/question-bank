@@ -13,7 +13,7 @@ import { useUserSubject } from '@/hooks/auth/useUserSubject';
 import { useQuestionBankContext } from '@/lib/context/QuestionBankContext';
 import { useFilterOptions } from '@/hooks/queries/useFilterOptions';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Funnel } from 'lucide-react';
+import { ChevronDown, Funnel } from 'lucide-react';
 
 const EMPTY_FILTER_OPTIONS: FilterOptions = {
     exams: [],
@@ -28,9 +28,16 @@ interface FilterUpdate {
     subject?: string;
     chapter?: string;
     section_name?: string;
-    flagged?: boolean;
     question_type?: string;
 }
+
+const FILTER_LABELS: Record<string, string> = {
+    exam_name: 'Exam',
+    subject: 'Subject',
+    chapter: 'Chapter',
+    section_name: 'Section',
+    question_type: 'Type',
+};
 
 export default function FilterControls() {
     const { setFilters, filters: activeFilters } = useQuestionBankContext();
@@ -39,7 +46,6 @@ export default function FilterControls() {
         subject: '',
         chapter: '',
         section_name: '',
-        flagged: '',
         question_type: ''
     });
 
@@ -47,6 +53,7 @@ export default function FilterControls() {
     const { subject, isLoading: subjectLoading } = useUserSubject();
     const hasSetTeacherSubject = useRef(false);
     const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(true);
 
     // TanStack-Query-backed filter options: replaces the old 5-parallel-query
     // useFetchFilterOptions hook. Cached by active filters + role + subject,
@@ -118,8 +125,8 @@ export default function FilterControls() {
             // console.log('Applying filter update:', filterUpdate);
             setFilters(filterUpdate);
             setLocalFilters(newLocalFilters); // Update local state to reflect reset
-        } else if (name === "section_name" || name === "flagged" || name === "question_type") {
-            // Apply section, flagged, and question_type filters immediately
+        } else if (name === "section_name" || name === "question_type") {
+            // Apply leaf filters immediately.
             const filterUpdate: FilterUpdate = {
                 exam_name: localFilters.exam_name || undefined, // Include current exam_name
                 subject: isTeacher && subject ? subject : (localFilters.subject || undefined), // Include subject
@@ -128,9 +135,6 @@ export default function FilterControls() {
 
             if (name === "section_name") {
                 filterUpdate.section_name = value || undefined;
-            }
-            if (name === "flagged") {
-                filterUpdate.flagged = value ? value === 'true' : undefined;
             }
             if (name === "question_type") {
                 filterUpdate.question_type = value || undefined;
@@ -147,13 +151,12 @@ export default function FilterControls() {
             subject: isTeacher && subject ? subject : (localFilters.subject || undefined),
             chapter: localFilters.chapter || undefined,
             section_name: localFilters.section_name || undefined,
-            flagged: localFilters.flagged ? localFilters.flagged === 'true' : undefined,
             question_type: localFilters.question_type || undefined,
         });
     }, [localFilters, setFilters, isTeacher, subject]);
 
     const clearFilters = useCallback(() => {
-        const clearedFilters = { exam_name: '', subject: '', chapter: '', section_name: '', flagged: '', question_type: '' };
+        const clearedFilters = { exam_name: '', subject: '', chapter: '', section_name: '', question_type: '' };
 
         // For teachers, preserve their assigned subject
         if (isTeacher && subject) {
@@ -162,7 +165,11 @@ export default function FilterControls() {
 
         setLocalFilters(clearedFilters);
         setFilters({
-            subject: isTeacher && subject ? subject : undefined
+            exam_name: undefined,
+            subject: isTeacher && subject ? subject : undefined,
+            chapter: undefined,
+            section_name: undefined,
+            question_type: undefined,
         });
     }, [setFilters, isTeacher, subject]);
 
@@ -200,10 +207,9 @@ export default function FilterControls() {
         [filterOptions.question_type]
     );
 
-    const flaggedOptions = useMemo(() => [
-        { value: 'true', label: 'Flagged' },
-        { value: 'false', label: 'Unflagged' },
-    ], []);
+    const activeFilterEntries = Object.entries(activeFilters).filter(
+        ([key, value]) => key in FILTER_LABELS && value !== undefined && value !== '',
+    );
 
     // Update selectStyles to use correct types
     const selectStyles = useMemo<StylesConfig<{ value: string; label: string }, false>>(() => ({
@@ -213,7 +219,7 @@ export default function FilterControls() {
             '&:hover': { borderColor: '#a1a1aa' },
             boxShadow: state.isFocused ? '0 0 0 3px rgb(99 102 241 / 0.15)' : 'none',
             borderRadius: '8px',
-            minHeight: '36px',
+            minHeight: '34px',
         }),
         menu: (base) => ({
             ...base,
@@ -238,7 +244,7 @@ export default function FilterControls() {
     // Show loading state while fetching role and subject
     if (roleLoading || subjectLoading) {
         return (
-            <div className="bg-white p-4 sm:p-5 rounded-xl shadow-xs border border-black/5">
+            <div className="rounded-xl border border-black/5 bg-white p-3 shadow-xs">
                 <div className="animate-pulse">
                     <div className="h-5 w-28 bg-zinc-200 rounded mb-4"></div>
                     <div className="space-y-3">
@@ -251,13 +257,55 @@ export default function FilterControls() {
         );
     }
 
-    const renderFilterControls = () => (
-        <div className="bg-white p-4 sm:p-5 rounded-xl shadow-xs border border-black/5 tracking-3">
-            <h2 className="text-sm font-medium mb-3 text-zinc-500 uppercase tracking-wide">Filter Questions</h2>
-            <div className="space-y-3 mb-4 sm:mb-5">
+    const renderFilterHeaderContent = (showChevron: boolean) => (
+        <>
+            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">Filter Questions</span>
+            <span className="flex items-center gap-2">
+                {activeFilterEntries.length > 0 && (
+                    <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-700">
+                        {activeFilterEntries.length} active
+                    </span>
+                )}
+                {showChevron && (
+                    <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                )}
+            </span>
+        </>
+    );
+
+    const renderFilterControls = (collapsible: boolean) => (
+        <div className="rounded-xl border border-black/5 bg-white p-3 shadow-xs">
+            {collapsible ? (
+                <button
+                    type="button"
+                    onClick={() => setIsExpanded((expanded) => !expanded)}
+                    className="flex w-full cursor-pointer items-center justify-between gap-3 text-left"
+                    aria-expanded={isExpanded}
+                >
+                    {renderFilterHeaderContent(true)}
+                </button>
+            ) : (
+                <div className="flex w-full items-center justify-between gap-3">
+                    {renderFilterHeaderContent(false)}
+                </div>
+            )}
+
+            {activeFilterEntries.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1" aria-label="Active filters">
+                    {activeFilterEntries.map(([key, value]) => (
+                        <span key={key} className="max-w-full truncate rounded-md bg-zinc-100 px-2 py-1 text-[11px] text-zinc-600">
+                            <span className="font-medium text-zinc-700">{FILTER_LABELS[key]}:</span> {String(value)}
+                        </span>
+                    ))}
+                </div>
+            )}
+
+            {(!collapsible || isExpanded) && <div className="mt-3">
+            <div className="mb-3 space-y-2.5">
                 <div>
-                    <label className="block text-xs font-medium text-zinc-600 mb-1.5">Exam</label>
+                    <label htmlFor={`${collapsible ? 'desktop' : 'mobile'}-question-filter-exam`} className="mb-1 block text-xs font-medium text-zinc-600">Exam</label>
                     <Select
+                        inputId={`${collapsible ? 'desktop' : 'mobile'}-question-filter-exam`}
                         name="exam_name"
                         options={examOptions}
                         value={examOptions.find((opt: { value: string; label: string }) => opt.value === localFilters.exam_name) || null}
@@ -265,13 +313,14 @@ export default function FilterControls() {
                         placeholder="Select Exam..."
                         isClearable
                         isLoading={optionsLoading}
-                        className="text-sm sm:text-base"
+                        className="text-sm"
                         styles={selectStyles}
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-zinc-600 mb-1.5">Subject</label>
+                    <label htmlFor={`${collapsible ? 'desktop' : 'mobile'}-question-filter-subject`} className="mb-1 block text-xs font-medium text-zinc-600">Subject</label>
                     <Select
+                        inputId={`${collapsible ? 'desktop' : 'mobile'}-question-filter-subject`}
                         name="subject"
                         options={subjectOptions}
                         value={
@@ -284,13 +333,14 @@ export default function FilterControls() {
                         isClearable={!isTeacher}
                         isDisabled={isTeacher}
                         isLoading={optionsLoading}
-                        className="text-sm sm:text-base"
+                        className="text-sm"
                         styles={selectStyles}
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-zinc-600 mb-1.5">Chapter</label>
+                    <label htmlFor={`${collapsible ? 'desktop' : 'mobile'}-question-filter-chapter`} className="mb-1 block text-xs font-medium text-zinc-600">Chapter</label>
                     <Select
+                        inputId={`${collapsible ? 'desktop' : 'mobile'}-question-filter-chapter`}
                         name="chapter"
                         options={chapterOptions}
                         value={chapterOptions.find((opt: { value: string; label: string }) => opt.value === localFilters.chapter) || null}
@@ -298,13 +348,14 @@ export default function FilterControls() {
                         placeholder="Select chapter..."
                         isClearable
                         isLoading={optionsLoading}
-                        className="text-sm sm:text-base"
+                        className="text-sm"
                         styles={selectStyles}
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-zinc-600 mb-1.5">Section</label>
+                    <label htmlFor={`${collapsible ? 'desktop' : 'mobile'}-question-filter-section`} className="mb-1 block text-xs font-medium text-zinc-600">Section</label>
                     <Select
+                        inputId={`${collapsible ? 'desktop' : 'mobile'}-question-filter-section`}
                         name="section_name"
                         options={sectionNameOptions}
                         value={sectionNameOptions.find((opt: { value: string; label: string }) => opt.value === localFilters.section_name) || null}
@@ -312,13 +363,14 @@ export default function FilterControls() {
                         placeholder="Select section..."
                         isClearable
                         isLoading={optionsLoading}
-                        className="text-sm sm:text-base"
+                        className="text-sm"
                         styles={selectStyles}
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-zinc-600 mb-1.5">Question Type</label>
+                    <label htmlFor={`${collapsible ? 'desktop' : 'mobile'}-question-filter-type`} className="mb-1 block text-xs font-medium text-zinc-600">Question Type</label>
                     <Select
+                        inputId={`${collapsible ? 'desktop' : 'mobile'}-question-filter-type`}
                         name="question_type"
                         options={questionTypeOptions}
                         value={questionTypeOptions.find((opt) => opt.value === localFilters.question_type) || null}
@@ -326,38 +378,28 @@ export default function FilterControls() {
                         placeholder="Select Question Type..."
                         isClearable
                         isLoading={optionsLoading}
-                        className="text-sm sm:text-base"
-                        styles={selectStyles}
-                    />
-                </div>
-                <div>
-                    <label className="block text-xs font-medium text-zinc-600 mb-1.5">Flagged Status</label>
-                    <Select
-                        name="flagged"
-                        options={flaggedOptions}
-                        value={flaggedOptions.find((opt) => opt.value === localFilters.flagged) || null}
-                        onChange={(selected) => handleFilterChange('flagged', selected?.value || null)}
-                        placeholder="Select flagged status..."
-                        isClearable
-                        className="text-sm sm:text-base"
+                        className="text-sm"
                         styles={selectStyles}
                     />
                 </div>
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="grid grid-cols-2 gap-2">
                 <button
+                    type="button"
                     onClick={applyFilters}
-                    className="h-9 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm font-medium"
+                    className="h-8 rounded-lg bg-indigo-600 px-3 text-xs font-semibold text-white transition hover:bg-indigo-700"
                 >
                     Apply Filters
                 </button>
                 <button
+                    type="button"
                     onClick={clearFilters}
-                    className="h-9 px-4 bg-zinc-100 text-zinc-700 rounded-lg hover:bg-zinc-200 transition text-sm font-medium"
+                    className="h-8 rounded-lg bg-zinc-100 px-3 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-200"
                 >
                     Clear Filters
                 </button>
             </div>
+            </div>}
         </div>
     );
 
@@ -365,17 +407,17 @@ export default function FilterControls() {
         <>
             {/* Desktop/Tablet inline panel */}
             <div className="hidden sm:block">
-                {renderFilterControls()}
+                {renderFilterControls(true)}
             </div>
 
-            {/* Mobile floating action button */}
+            {/* Mobile filter trigger sits beside keyword search in the page rail. */}
             <button
                 type="button"
                 aria-label="Open filters"
                 onClick={() => setIsMobileModalOpen(true)}
-                className="sm:hidden fixed bottom-4 right-4 z-40 rounded-full bg-indigo-600 text-white shadow-lg p-3 hover:bg-indigo-700 transition-colors"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-700 shadow-xs transition-colors hover:bg-indigo-100 sm:hidden"
             >
-                <Funnel className="h-6 w-6" />
+                <Funnel className="h-4 w-4" />
             </button>
 
             {/* Mobile modal with same controls (state is shared) */}
@@ -384,8 +426,8 @@ export default function FilterControls() {
                     <DialogHeader>
                         <DialogTitle>Filter Questions</DialogTitle>
                     </DialogHeader>
-                    <div className="max-h-[90vh] overflow-y-auto">
-                        {renderFilterControls()}
+                    <div className="max-h-[calc(90vh-5rem)] overflow-y-auto">
+                        {renderFilterControls(false)}
                     </div>
                 </DialogContent>
             </Dialog>

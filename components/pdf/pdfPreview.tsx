@@ -1,6 +1,5 @@
 'use client';
 
-import clsx from 'clsx';
 import { toast } from 'sonner';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import PDFActionButtons from './components/PDFActionButtons';
@@ -10,6 +9,7 @@ import { preRenderHtml } from '@/lib/preRenderHtml';
 import { htmlTopdfBlob } from '@/actions/htmlToPdf/htmlToPdf';
 import { savePaperHistory } from '@/actions/paperHistory/paperHistory';
 import { pdfConfigToAnswerKeyHTML, pdfConfigToHTML } from '@/lib/questionToHtmlUtils';
+import { cn } from '@/lib/utils';
 
 
 export default function PDFGenerator({
@@ -244,8 +244,8 @@ export default function PDFGenerator({
 
     // Memoize button classes to prevent recalculation
     const buttonClasses = useMemo(() => ({
-        pdf: clsx("bg-indigo-600 w-full hover:bg-indigo-600 text-white px-4 py-1 text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed border border-black/20", className),
-        answer: clsx("bg-green-600 w-full hover:bg-green-700 text-white px-4 py-2 whitespace-nowrap text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed border border-black/20", className)
+        pdf: cn("bg-indigo-600 w-full hover:bg-indigo-600 text-white px-4 py-1 text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed border border-black/20", className),
+        answer: cn("bg-green-600 w-full hover:bg-green-700 text-white px-4 py-2 whitespace-nowrap text-sm sm:text-base disabled:bg-slate-400 disabled:cursor-not-allowed border border-black/20", className)
     }), [className]);
 
     // Memoize disabled states

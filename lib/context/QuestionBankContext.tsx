@@ -69,32 +69,46 @@ export const QuestionBankProvider = ({ children }: { children: React.ReactNode }
         dispatch({ type: 'SET_SELECTED_QUESTIONS', questions });
     }, [dispatch]);
 
+    const setFilters = useCallback((newFilters: Partial<Filters>) => {
+        dispatch({ type: 'SET_FILTERS', filters: newFilters });
+    }, [dispatch]);
+
+    const setSearchQuery = useCallback((query: string) => {
+        dispatch({ type: 'SET_SEARCH_QUERY', query });
+    }, [dispatch]);
+
+    const setShowOnlySelected = useCallback((show: boolean) => {
+        dispatch({ type: 'SET_SHOW_ONLY_SELECTED', show });
+    }, [dispatch]);
+
     const value = useMemo<QuestionBankContextType>(
         () => ({
             filters,
-            setFilters: (newFilters) => dispatch({ type: 'SET_FILTERS', filters: newFilters }),
+            setFilters,
             searchQuery,
-            setSearchQuery: (query) => dispatch({ type: 'SET_SEARCH_QUERY', query }),
+            setSearchQuery,
             toggleQuestionFlag,
             toggleQuestionSelection,
             getAllSelectedQuestions,
             updateQuestion,
             showOnlySelected,
-            setShowOnlySelected: (show) => dispatch({ type: 'SET_SHOW_ONLY_SELECTED', show }),
+            setShowOnlySelected,
             selectedQuestions,
             setSelectedQuestions,
         }),
         [
             filters,
+            setFilters,
             searchQuery,
+            setSearchQuery,
             toggleQuestionFlag,
             toggleQuestionSelection,
             getAllSelectedQuestions,
             updateQuestion,
             showOnlySelected,
+            setShowOnlySelected,
             selectedQuestions,
             setSelectedQuestions,
-            dispatch,
         ]
     );
 

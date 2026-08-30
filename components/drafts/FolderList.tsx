@@ -17,7 +17,7 @@ export function FolderList({ drafts, previewLimit, onFolderClick }: FolderListPr
                     <FolderCard key={draft.id} draft={draft} onClick={onFolderClick} />
                 ))
             ) : (
-                <p className="text-slate-500 text-sm sm:text-base col-span-full">No folders available</p>
+                <p className="text-slate-500 text-sm sm:text-base col-span-full">No draft papers available</p>
             )}
             {previewLimit && drafts?.length > previewLimit && (
                 <div className="col-span-full flex justify-end mt-2">
