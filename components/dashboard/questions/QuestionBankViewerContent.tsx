@@ -4,7 +4,7 @@ import SearchBar from "@/components/question/SearchBar"
 import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/question/EmptyState";
 import QuestionList from "@/components/question/QuestionList";
-import FilterControls from "@/components/question/FilterControls"
+import FilterControls, { ActiveFiltersSummary } from "@/components/question/FilterControls"
 import SelectedQuestionsActions from "@/components/question/SelectedQuestionsActions";
 import { useQuestionBankContext, useQuestionsCount, useQuestionsList } from "@/lib/context/QuestionBankContext";
 
@@ -26,8 +26,8 @@ const QuestionBankViewerContent = () => {
                 <div className="grid grid-cols-1 gap-4 sm:gap-6 @5xl/page:grid-cols-6 @7xl/page:grid-cols-8">
                     {/* Sidebar */}
                     <aside className="col-span-1 h-fit self-start @5xl/page:sticky @5xl/page:top-0 @5xl/page:col-span-2 @7xl/page:col-span-2">
-                        <div className="flex items-start gap-2 sm:block sm:space-y-3">
-                            <div className="min-w-0 flex-1 sm:w-full">
+                        <div className="flex items-start gap-2 @5xl/page:block @5xl/page:space-y-3">
+                            <div className="min-w-0 flex-1 @5xl/page:w-full">
                                 <SearchBar />
                             </div>
                             <FilterControls />
@@ -36,8 +36,13 @@ const QuestionBankViewerContent = () => {
 
                     {/* Main Content */}
                     <main className="col-span-1 min-w-0 space-y-3 @5xl/page:col-span-4 @7xl/page:col-span-6">
-                        {!loading && !error && (isSearching || total > 0) && (
-                            <p className="m-0 px-1 text-xs font-medium text-zinc-500">{countLabel}</p>
+                        {!loading && !error && (
+                            <div className="space-y-2 px-1">
+                                {(isSearching || total > 0) && (
+                                    <p className="m-0 text-xs font-medium text-zinc-500" aria-live="polite">{countLabel}</p>
+                                )}
+                                <ActiveFiltersSummary />
+                            </div>
                         )}
                         {selectedQuestions.length > 0 && <SelectedQuestionsActions showPrintBtn={true} />}
                         {error && (
