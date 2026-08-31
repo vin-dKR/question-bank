@@ -528,7 +528,7 @@ async function runRemoteOmrPython<T>(service: RemoteOmrService, args: string[]):
         const specPath = argValue(args, '--spec');
         const outDir = argValue(args, '--out');
         const spec = JSON.parse(await readFile(specPath, 'utf8')) as OmrSpec;
-        const result = await postRemoteOmr<RemoteHtmlResponse>('/api/omr-html', { spec });
+        const result = await postRemoteOmr<RemoteHtmlResponse>(service, '/api/omr-html', { spec });
 
         if (!result.ok || !result.summary || !result.files) {
             throw new Error(result.error || 'OMR remote HTML generation failed');
