@@ -1,6 +1,6 @@
 'use client';
 
-import { FileText, Download, AlertCircle, Loader2, FileQuestion, FileCheck2 } from 'lucide-react';
+import { FileText, Download, AlertCircle, Loader2, FileQuestion, FileCheck2, ScanLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { cn } from '@/lib/utils';
@@ -12,19 +12,24 @@ import { htmlTopdfBlob } from '@/actions/htmlToPdf/htmlToPdf';
 import { pdfConfigToHTML, pdfConfigToAnswerKeyHTML } from '@/lib/questionToHtmlUtils';
 
 interface RealTimePDFPreviewProps {
+    paperId: string;
     pdfFormData: TemplateFormData;
     selectedQuestions: QuestionForCreateTestData[];
 }
 
-type Tab = 'questions' | 'answers';
+type Tab = 'questions' | 'answers' | 'omr';
 
-export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: RealTimePDFPreviewProps) {
+export default function RealTimePDFPreview({ paperId, pdfFormData, selectedQuestions }: RealTimePDFPreviewProps) {
     const [activeTab, setActiveTab] = useState<Tab>('questions');
     const [questionHtml, setQuestionHtml] = useState<string | null>(null);
     const [answerHtml, setAnswerHtml] = useState<string | null>(null);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState<Tab | null>(null);
+    const [isGeneratingOmr, setIsGeneratingOmr] = useState(false);
+    const [omrPdfUrl, setOmrPdfUrl] = useState<string | null>(null);
+    const [omrPdfBlob, setOmrPdfBlob] = useState<Blob | null>(null);
     const [error, setError] = useState<string | null>(null);
     const generationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const omrPdfUrlRef = useRef<string | null>(null);
 
     const pdfOptions = useMemo(
         () => ({
@@ -118,6 +123,78 @@ export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: R
         };
     }, [questionHtmlContent, answerHtmlContent]);
 
+    useEffect(() => {
+        if (activeTab !== 'omr') return;
+
+        const hasOmrContent = selectedQuestions.length > 0 && Boolean(pdfFormData.exam) && Boolean(pdfFormData.subject);
+        if (!hasOmrContent) {
+            setOmrPdfBlob(null);
+            if (omrPdfUrlRef.current) URL.revokeObjectURL(omrPdfUrlRef.current);
+            omrPdfUrlRef.current = null;
+            setOmrPdfUrl(null);
+            return;
+        }
+
+        const abortController = new AbortController();
+        const timeout = setTimeout(async () => {
+            setIsGeneratingOmr(true);
+            setError(null);
+
+            try {
+                const response = await fetch('/api/omr/preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    signal: abortController.signal,
+                    body: JSON.stringify({
+                        paperId,
+                        examName: pdfFormData.exam,
+                        subject: pdfFormData.subject,
+                        durationMin: Math.max(1, Math.trunc(Number(pdfFormData.time) || 0)),
+                        maxMarks: selectedQuestions.reduce((total, question) => total + (Number(question.marks) || 0), 0),
+                        questions: selectedQuestions.map((question, index) => {
+                            const normalizedOptions = question.options.map((option) => option.trim().toLowerCase());
+                            const looksLikeTrueFalse = normalizedOptions.length === 2
+                                && normalizedOptions.includes('true')
+                                && normalizedOptions.includes('false');
+
+                            return {
+                                no: question.question_number || index + 1,
+                                optionCount: question.options.length,
+                                questionType: question.question_type || (looksLikeTrueFalse ? 'TRUEFALSE' : null),
+                            };
+                        }),
+                    }),
+                });
+
+                if (!response.ok) {
+                    const payload = await response.json().catch(() => null) as { error?: string } | null;
+                    throw new Error(payload?.error || 'Could not generate the OMR preview');
+                }
+
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                if (omrPdfUrlRef.current) URL.revokeObjectURL(omrPdfUrlRef.current);
+                omrPdfUrlRef.current = url;
+                setOmrPdfBlob(blob);
+                setOmrPdfUrl(url);
+            } catch (previewError) {
+                if (previewError instanceof DOMException && previewError.name === 'AbortError') return;
+                setError(previewError instanceof Error ? previewError.message : 'Could not generate the OMR preview');
+            } finally {
+                if (!abortController.signal.aborted) setIsGeneratingOmr(false);
+            }
+        }, 600);
+
+        return () => {
+            clearTimeout(timeout);
+            abortController.abort();
+        };
+    }, [activeTab, paperId, pdfFormData.exam, pdfFormData.subject, pdfFormData.time, selectedQuestions]);
+
+    useEffect(() => () => {
+        if (omrPdfUrlRef.current) URL.revokeObjectURL(omrPdfUrlRef.current);
+    }, []);
+
     const generateQuestionPDF = useCallback(async () => {
         if (selectedQuestions.length === 0) {
             setError('No questions available for download');
@@ -210,10 +287,30 @@ export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: R
         }
     }, [selectedQuestions, pdfFormData, pdfOptions]);
 
-    const isGenerating = isGeneratingPdf === activeTab;
+    const downloadOmrPDF = useCallback(() => {
+        if (!omrPdfBlob || !omrPdfUrl) {
+            setError('The OMR sheet is still being prepared');
+            return;
+        }
+
+        const safeName = (pdfFormData.exam || 'test').replace(/[^A-Za-z0-9._-]+/g, '_');
+        const link = document.createElement('a');
+        link.href = omrPdfUrl;
+        link.download = `${safeName}_omr_sheet.pdf`;
+        link.click();
+    }, [omrPdfBlob, omrPdfUrl, pdfFormData.exam]);
+
+    const isGenerating = activeTab === 'omr' ? isGeneratingOmr : isGeneratingPdf === activeTab;
     const currentHtml = activeTab === 'questions' ? questionHtml : answerHtml;
-    const currentDownload = activeTab === 'questions' ? generateQuestionPDF : generateAnswerPDF;
-    const hasContent = selectedQuestions.length > 0 && pdfFormData.exam && pdfFormData.subject;
+    const currentDownload = activeTab === 'questions'
+        ? generateQuestionPDF
+        : activeTab === 'answers'
+            ? generateAnswerPDF
+            : downloadOmrPDF;
+    const hasContent = selectedQuestions.length > 0 && Boolean(pdfFormData.exam) && Boolean(pdfFormData.subject);
+    const downloadDisabled = isGenerating
+        || selectedQuestions.length === 0
+        || (activeTab === 'omr' && !omrPdfBlob);
 
     return (
         <div className="flex h-full flex-col overflow-hidden rounded-xl border border-black/5 bg-white shadow-xs">
@@ -234,7 +331,7 @@ export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: R
                 </div>
                 <Button
                     onClick={currentDownload}
-                    disabled={isGenerating || selectedQuestions.length === 0}
+                    disabled={downloadDisabled}
                     size="sm"
                     className="flex-shrink-0"
                 >
@@ -281,6 +378,19 @@ export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: R
                         <FileCheck2 className="w-3 h-3" />
                         Answer Key
                     </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('omr')}
+                        className={cn(
+                            "inline-flex flex-1 sm:flex-none items-center justify-center gap-1.5 rounded-md px-3 h-7 text-xs font-medium transition-all",
+                            activeTab === 'omr'
+                                ? 'bg-white text-zinc-900 shadow-xs'
+                                : 'text-zinc-500 hover:text-zinc-900'
+                        )}
+                    >
+                        <ScanLine className="w-3 h-3" />
+                        OMR Sheet
+                    </button>
                 </div>
             </div>
 
@@ -310,6 +420,37 @@ export default function RealTimePDFPreview({ pdfFormData, selectedQuestions }: R
                         <p className="text-xs text-zinc-500 mt-1 max-w-xs">
                             Add a test title, subject, and at least one question to see the live PDF preview.
                         </p>
+                    </div>
+                ) : activeTab === 'omr' ? (
+                    <div className="relative h-full min-h-[500px] overflow-hidden rounded-lg border border-zinc-200 bg-white">
+                        {omrPdfUrl ? (
+                            <iframe
+                                title="OMR sheet preview"
+                                src={omrPdfUrl}
+                                className="h-full min-h-[500px] w-full border-0"
+                            />
+                        ) : error && !isGeneratingOmr ? (
+                            <div className="flex h-full min-h-[500px] flex-col items-center justify-center px-6 text-center">
+                                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
+                                    <AlertCircle className="h-4 w-4" />
+                                </div>
+                                <p className="text-sm font-medium text-zinc-900">OMR preview unavailable</p>
+                                <p className="mt-1 max-w-sm text-xs leading-5 text-zinc-500">
+                                    Check that every OMR question has between two and eight options, then update the paper to try again.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="flex h-full min-h-[500px] flex-col items-center justify-center gap-3 text-zinc-500">
+                                <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
+                                <p className="text-xs font-medium">Building your OMR sheet…</p>
+                            </div>
+                        )}
+                        {isGeneratingOmr && omrPdfUrl && (
+                            <div className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-black/5 bg-white/95 px-2.5 py-1 text-[11px] font-medium text-zinc-600 shadow-sm backdrop-blur">
+                                <Loader2 className="h-3 w-3 animate-spin text-indigo-600" />
+                                Updating
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <PDFBlobViewer htmlContent={currentHtml} className="h-full min-h-[500px]" />

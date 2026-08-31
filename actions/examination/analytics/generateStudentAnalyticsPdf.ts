@@ -1,29 +1,26 @@
 "use server"
 
 import { htmlTopdfBlob } from "@/actions/htmlToPdf/htmlToPdf";
+import { normalizeChoiceKey } from "@/lib/examination/answerKey";
 import prisma from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
-
+import { getAuthContext } from '@/lib/auth/session';
 export const generateStudentAnalyticsPdf = async (
     testId: string,
     studentId: string
 ): Promise<{ data: Uint8Array; filename: string }> => {
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) {
+    const ctx = await getAuthContext();
+    // Access is decided by ORGANISATION, not authorship — see crudTest.ts.
+    if (!ctx?.organizationId) {
         throw new Error('Unauthorized');
     }
 
-    const user = await prisma.user.findUnique({
-        where: { clerkUserId },
-        select: { id: true },
-    });
-
-    if (!user) {
-        throw new Error('User not found');
-    }
-
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
     const test = (await prisma.test.findFirst({
-        where: { id: testId, createdBy: user.id },
+        where: { id: testId, organizationId: ctx.organizationId },
         include: {
             questions: {
                 orderBy: { questionNumber: 'asc' },
@@ -37,7 +34,11 @@ export const generateStudentAnalyticsPdf = async (
                 },
             },
             responses: {
-                where: { studentId },
+                // An absent student holds a StudentResponse so the roster knows
+                // they were accounted for, but it carries no marks. Generating a
+                // report from it would produce a document stating they scored
+                // 0% — which is not what "absent" means.
+                where: { studentId, status: "graded" },
                 include: {
                     student: true,
                     answers: { select: { questionId: true, selectedAnswer: true } },
@@ -53,7 +54,9 @@ export const generateStudentAnalyticsPdf = async (
     const response = test.responses[0];
     // console.log('TEWST response -----------------', test.questions);
     if (!response) {
-        throw new Error('Student response not found');
+        throw new Error(
+            "No marked sheet for this student — they were absent, or their sheet hasn't been scanned yet."
+        );
     }
 
     let correctAnswers = 0;
@@ -64,8 +67,10 @@ export const generateStudentAnalyticsPdf = async (
         // points at a SchoolTestQuestion. Fall back so analytics still shows
         // the question text/answer for either source.
         const src = q.question ?? q.schoolTestQuestion ?? null;
-        const ans = response.answers?.find((a: ResponseAnswerSelect) => a.questionId === q.questionId);
-        const isCorrect = ans && src && ans.selectedAnswer === src.answer;
+        const ans = response.answers?.find((a: ResponseAnswerSelect) => src && a.questionId === src.id);
+        const selectedKey = normalizeChoiceKey(ans?.selectedAnswer, src?.options ?? []);
+        const correctKey = normalizeChoiceKey(src?.answer, src?.options ?? []);
+        const isCorrect = Boolean(selectedKey && correctKey && selectedKey === correctKey);
         if (isCorrect) {
             correctAnswers += 1;
             calculatedScore += q.marks;

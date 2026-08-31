@@ -11,7 +11,7 @@ export function HamburgerMenu({ setIsSidebarOpen }: HamburgerMenuProps) {
     return (
         <Button
             variant="ghost"
-            className="sm:hidden z-50"
+            className="sm:hidden z-50 hover:bg-transparent"
             onClick={() => setIsSidebarOpen(true)}
             aria-label="Open sidebar"
         >

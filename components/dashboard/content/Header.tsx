@@ -12,14 +12,17 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Search, Bell, LogOut, Settings, User as UserIcon, ChevronRight } from "lucide-react";
-import type { UserResource } from "@clerk/types";
+import type { CurrentUser } from "@/hooks/auth/useCurrentUser";
 import { HamburgerMenu } from "@/components/dashboard/sidebar/HamburgerMenu";
 import { Dispatch, SetStateAction } from "react";
 import { CommandPalette } from "@/components/dashboard/CommandPalette";
+import { OrgSwitcher, type SwitcherOrg } from "@/components/organization/OrgSwitcher";
 
 interface HeaderProps {
     activeItem: SidebarItem | SidebarGroup | undefined;
-    user: UserResource | null | undefined;
+    user: CurrentUser | null | undefined;
+    /** Organizations this person belongs to, resolved server-side. */
+    orgs: SwitcherOrg[];
     handleLogout: () => void;
     isSidebarOpen: boolean;
     setIsSidebarOpen: Dispatch<SetStateAction<boolean>>;
@@ -35,6 +38,7 @@ function getPlatformKey() {
 export function Header({
     activeItem,
     user,
+    orgs,
     handleLogout,
     isSidebarOpen,
     setIsSidebarOpen,
@@ -71,30 +75,50 @@ export function Header({
             : activeItem.description
         : undefined;
 
-    const displayName = user?.fullName || user?.username || "User";
-    const displayEmail = user?.primaryEmailAddress?.emailAddress;
+    const displayName = user?.fullName || "User";
+    const displayEmail = user?.email;
     const initials =
         displayName
             .split(" ")
             .slice(0, 2)
-            .map((s) => s[0]?.toUpperCase())
+            .map((part: string) => part[0]?.toUpperCase())
             .join("") || "U";
 
     return (
         <>
             <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-black/5">
                 <div className="flex items-center gap-3 px-4 py-2.5 md:px-6 md:py-3">
-                    {/* Left: breadcrumb */}
+                    {/* Left: institution + breadcrumb */}
                     <div className="flex min-w-0 flex-1 items-center gap-2">
                         {isMobile && !isSidebarOpen && <HamburgerMenu setIsSidebarOpen={setIsSidebarOpen} />}
+
+                        {/*
+                          * This was the hardcoded word "Workspace" — accurate
+                          * only while nobody could belong to two institutions.
+                          * Every folder, paper and class below it belongs to
+                          * exactly one, and nothing on screen said which.
+                          *
+                          * It renders as a real control, not breadcrumb text,
+                          * and it renders even for someone with a single
+                          * organization: it is also the only route to creating
+                          * a second one.
+                          */}
+                        {orgs.length > 0 ? (
+                            <OrgSwitcher orgs={orgs} />
+                        ) : (
+                            <span className="text-[13px] font-medium text-zinc-500">
+                                Workspace
+                            </span>
+                        )}
+
+                        <ChevronRight className="h-3.5 w-3.5 flex-shrink-0 text-zinc-300" />
+
                         <div className="min-w-0">
-                            <div className="flex items-center gap-1 text-[11px] text-zinc-400">
-                                <span>Workspace</span>
-                                <ChevronRight className="h-3 w-3" />
-                                <span className="text-zinc-600 truncate">{pageName}</span>
-                            </div>
+                            <p className="truncate text-[13px] font-medium text-zinc-900">
+                                {pageName}
+                            </p>
                             {pageDescription && (
-                                <p className="hidden sm:block text-xs text-zinc-500 truncate mt-0.5">
+                                <p className="hidden truncate text-xs text-zinc-500 sm:block">
                                     {pageDescription}
                                 </p>
                             )}

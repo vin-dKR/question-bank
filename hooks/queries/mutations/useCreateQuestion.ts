@@ -5,7 +5,12 @@ import { toast } from "sonner";
 import type { Question as PrismaQuestion } from "@/generated/prisma";
 import { createQuestion } from "@/actions/question/insert";
 
-export type CreateQuestionInput = Omit<PrismaQuestion, "id">;
+/**
+ * `organizationId` is omitted deliberately: ownership is stamped server-side
+ * from the session in `createQuestion`. A client that could set it could write
+ * into another tenant's org or into the shared bank (doc §13).
+ */
+export type CreateQuestionInput = Omit<PrismaQuestion, "id" | "organizationId">;
 
 /**
  * Phase 7 mutation hook wrapping `createQuestion`.

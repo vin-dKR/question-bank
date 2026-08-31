@@ -1,44 +1,44 @@
-"use client";
+import { Bell, Palette, Globe, Users, Shield } from "lucide-react";
+import { getOrganizationSettings } from "@/actions/organization/settings";
+import { WorkspaceSection } from "@/components/settings/WorkspaceSection";
+import { TeamSection } from "@/components/settings/TeamSection";
+import { AppearanceRows, NotificationRows } from "@/components/settings/PreferencesSection";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import {
-    Bell,
-    Palette,
-    Globe,
-    Trash2,
-    Download,
-    Shield,
-} from "lucide-react";
+/**
+ * Server component so the organization is loaded before anything renders —
+ * the institution name is real data now, not a `useState("")` that started
+ * blank and forgot whatever you typed.
+ */
 
-type SectionProps = {
+function Section({
+    icon,
+    title,
+    description,
+    badge,
+    children,
+}: {
     icon: React.ReactNode;
     title: string;
     description: string;
+    badge?: string;
     children: React.ReactNode;
-};
-
-function Section({ icon, title, description, children }: SectionProps) {
+}) {
     return (
-        <div className="rounded-xl border border-black/5 bg-white shadow-xs overflow-hidden">
-            <div className="flex items-start gap-3 px-6 py-4 border-b border-black/5">
+        <div className="overflow-hidden rounded-xl border border-black/5 bg-white shadow-xs">
+            <div className="flex items-start gap-3 border-b border-black/5 px-6 py-4">
                 <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
                     {icon}
                 </div>
-                <div className="min-w-0">
-                    <h2 className="text-sm font-semibold tracking-tight text-zinc-900">
-                        {title}
-                    </h2>
-                    <p className="text-xs text-zinc-500 mt-0.5">{description}</p>
+                <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-sm font-semibold tracking-tight text-zinc-900">{title}</h2>
+                        {badge && (
+                            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+                                {badge}
+                            </span>
+                        )}
+                    </div>
+                    <p className="mt-0.5 text-xs text-zinc-500">{description}</p>
                 </div>
             </div>
             <div className="divide-y divide-black/5">{children}</div>
@@ -46,203 +46,86 @@ function Section({ icon, title, description, children }: SectionProps) {
     );
 }
 
-function Toggle({
-    checked,
-    onChange,
-}: {
-    checked: boolean;
-    onChange: (v: boolean) => void;
-}) {
-    return (
-        <button
-            type="button"
-            onClick={() => onChange(!checked)}
-            className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors ${
-                checked ? "bg-indigo-600" : "bg-zinc-200"
-            }`}
-            role="switch"
-            aria-checked={checked}
-        >
-            <span
-                className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
-                    checked ? "translate-x-5" : "translate-x-1"
-                }`}
-            />
-        </button>
-    );
-}
-
-function Row({
-    label,
-    description,
-    control,
-}: {
-    label: string;
-    description?: string;
-    control: React.ReactNode;
-}) {
-    return (
-        <div className="flex items-start justify-between gap-4 px-6 py-4">
-            <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-zinc-900">{label}</p>
-                {description && (
-                    <p className="text-xs text-zinc-500 mt-0.5">{description}</p>
-                )}
-            </div>
-            <div className="flex-shrink-0">{control}</div>
-        </div>
-    );
-}
-
-export default function SettingsPage() {
-    const [emailUpdates, setEmailUpdates] = useState(true);
-    const [testNotifs, setTestNotifs] = useState(true);
-    const [collabNotifs, setCollabNotifs] = useState(false);
-    const [language, setLanguage] = useState("en");
-    const [theme, setTheme] = useState("light");
-    const [institution, setInstitution] = useState("");
+export default async function SettingsPage() {
+    const result = await getOrganizationSettings();
 
     return (
-        <div className="max-w-3xl mx-auto space-y-6">
+        <div className="mx-auto max-w-3xl space-y-6">
             <div>
-                <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-zinc-900">
+                <h1 className="text-xl font-semibold tracking-tight text-zinc-900 md:text-2xl">
                     Settings
                 </h1>
-                <p className="text-sm text-zinc-500 mt-1">
-                    Manage your preferences and account settings.
+                <p className="mt-1 text-sm text-zinc-500">
+                    Manage your institution, your team, and your preferences.
                 </p>
             </div>
 
-            {/* Appearance */}
+            {result.success ? (
+                <>
+                    <Section
+                        icon={<Globe className="h-4 w-4" />}
+                        title="Institution"
+                        description="Shown on generated papers and to anyone you invite."
+                    >
+                        <WorkspaceSection org={result.data} />
+                    </Section>
+
+                    <Section
+                        icon={<Users className="h-4 w-4" />}
+                        title="Team"
+                        description={`${result.data.members.length} member${
+                            result.data.members.length === 1 ? "" : "s"
+                        }${
+                            result.data.invitations.length
+                                ? `, ${result.data.invitations.length} pending invite${
+                                      result.data.invitations.length === 1 ? "" : "s"
+                                  }`
+                                : ""
+                        }. Students don't need accounts — add them to a test roster instead.`}
+                    >
+                        <TeamSection org={result.data} />
+                    </Section>
+                </>
+            ) : (
+                <div className="rounded-xl border border-rose-100 bg-rose-50/40 px-6 py-5">
+                    <p className="text-sm font-medium text-rose-900">
+                        Couldn&apos;t load your institution
+                    </p>
+                    <p className="mt-1 text-xs text-rose-700/80">{result.error}</p>
+                </div>
+            )}
+
             <Section
                 icon={<Palette className="h-4 w-4" />}
                 title="Appearance"
                 description="Customize how Eduents looks on your device."
+                badge="Coming soon"
             >
-                <Row
-                    label="Theme"
-                    description="Light is currently supported. Dark coming soon."
-                    control={
-                        <Select value={theme} onValueChange={setTheme}>
-                            <SelectTrigger className="w-32 h-9 text-sm">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="light">Light</SelectItem>
-                                <SelectItem value="system" disabled>
-                                    System (soon)
-                                </SelectItem>
-                                <SelectItem value="dark" disabled>
-                                    Dark (soon)
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                    }
-                />
-                <Row
-                    label="Language"
-                    description="Display language across the product."
-                    control={
-                        <Select value={language} onValueChange={setLanguage}>
-                            <SelectTrigger className="w-32 h-9 text-sm">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="en">English</SelectItem>
-                                <SelectItem value="hi" disabled>
-                                    हिंदी (soon)
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                    }
-                />
+                <AppearanceRows />
             </Section>
 
-            {/* Notifications */}
             <Section
                 icon={<Bell className="h-4 w-4" />}
                 title="Notifications"
                 description="Control what we email you about."
+                badge="Coming soon"
             >
-                <Row
-                    label="Product updates"
-                    description="Occasional announcements about new features."
-                    control={<Toggle checked={emailUpdates} onChange={setEmailUpdates} />}
-                />
-                <Row
-                    label="Test activity"
-                    description="Alerts when students submit responses to your tests."
-                    control={<Toggle checked={testNotifs} onChange={setTestNotifs} />}
-                />
-                <Row
-                    label="Collaboration"
-                    description="Notify me when teammates edit shared folders."
-                    control={<Toggle checked={collabNotifs} onChange={setCollabNotifs} />}
-                />
+                <NotificationRows />
             </Section>
 
-            {/* Workspace */}
-            <Section
-                icon={<Globe className="h-4 w-4" />}
-                title="Workspace"
-                description="Workspace-level identity shown on generated papers."
-            >
-                <div className="px-6 py-4 space-y-1.5">
-                    <Label htmlFor="institution" className="text-xs font-medium text-zinc-600">
-                        Institution name
-                    </Label>
-                    <Input
-                        id="institution"
-                        value={institution}
-                        onChange={(e) => setInstitution(e.target.value)}
-                        placeholder="Your school or coaching institute"
-                        className="max-w-sm"
-                    />
-                    <p className="text-xs text-zinc-500 pt-0.5">
-                        Printed on test paper headers and PDFs.
-                    </p>
-                </div>
-            </Section>
-
-            {/* Privacy & Data */}
             <Section
                 icon={<Shield className="h-4 w-4" />}
                 title="Privacy & data"
                 description="Export or remove your data."
+                badge="Coming soon"
             >
-                <Row
-                    label="Export all data"
-                    description="Download your questions, tests, and history as JSON."
-                    control={
-                        <Button size="sm" variant="outline">
-                            <Download className="mr-1.5 h-3.5 w-3.5" />
-                            Export
-                        </Button>
-                    }
-                />
-                <Row
-                    label="Delete all papers"
-                    description="Permanently removes generated paper history."
-                    control={
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
-                        >
-                            <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                            Clear
-                        </Button>
-                    }
-                />
+                <div className="px-6 py-4">
+                    <p className="text-xs text-zinc-500">
+                        Data export and bulk deletion aren&apos;t built yet. Ask support and
+                        we&apos;ll do it by hand in the meantime.
+                    </p>
+                </div>
             </Section>
-
-            {/* Save bar */}
-            <div className="flex items-center justify-end gap-2 pt-2">
-                <Button variant="secondary" size="sm">
-                    Reset
-                </Button>
-                <Button size="sm">Save changes</Button>
-            </div>
         </div>
     );
 }

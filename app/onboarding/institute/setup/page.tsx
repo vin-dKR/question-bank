@@ -11,6 +11,7 @@ import {
 } from "@/components/onboarding/FormComponents";
 import { useOnboardingStore } from "@/store/userInitialSelectedState";
 import { useOnboardingForm } from "@/hooks/onboarding/useOnboardingForm";
+import { usePrefillFromSession } from "@/hooks/onboarding/usePrefillFromSession";
 import { exams, teacherCountOptions, studentCountOptions } from "@/constant/on-boarding/coaching";
 
 export default function CoachingSetupPage() {
@@ -24,6 +25,9 @@ export default function CoachingSetupPage() {
             router.push("/onboarding/user-type");
         }
     }, [onboarding, router]);
+
+    // The person filling this in IS the contact person, and they just signed in.
+    usePrefillFromSession({ nameField: "contactPerson", emailField: "email" });
 
     const coachingData = (onboarding?.data as CoachingOnboardingData) || {
         centerName: "",

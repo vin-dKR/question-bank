@@ -1,3 +1,5 @@
+import { resolveQuestionImage } from '@/lib/images';
+
 function textToHtmlWithLatex(text: string): string {
     if (!text) return '';
 
@@ -46,14 +48,17 @@ export function questionToHTML(question: Question, index: number, options: Quest
     // preserves the crop's intrinsic pixel width in the PDF — a 400 px crop
     // renders at 400 px, not a squished fixed-height box. `max-width: 100%`
     // scales down only when the crop is wider than the column.
-    const questionImageHTML = question.question_image ? `
+    // Older rows store a bare object name rather than a URL; resolveQuestionImage
+    // rebuilds the bucket path so those diagrams reach the PDF too.
+    const questionImageSrc = resolveQuestionImage(question.question_image);
+    const questionImageHTML = questionImageSrc ? `
         <div class="question-image" style="
             margin-top: 12px;
             max-width: 100%;
             display: flex;
             justify-content: center;
         ">
-            <img src="${question.question_image}" alt="Question Image" style="
+            <img src="${questionImageSrc}" alt="Question Image" style="
                 max-width: 100%;
                 height: auto;
                 border-radius: 6px;
@@ -78,7 +83,8 @@ export function questionToHTML(question: Question, index: number, options: Quest
         margin-left: auto;
         margin-right: auto;
       ">
-        ${question.option_images!.map((image, imgIndex) => {
+        ${question.option_images!.map((rawImage, imgIndex) => {
+            const image = resolveQuestionImage(rawImage);
             if (!image) return '';
             const optionLetter = String.fromCharCode(65 + imgIndex);
             // const optionText = question.options[imgIndex] ? textToHtmlWithLatex(question.options[imgIndex]) : '';

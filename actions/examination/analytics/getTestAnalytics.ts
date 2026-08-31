@@ -1,7 +1,8 @@
 'use server';
 
 import prisma from '@/lib/prisma';
-import { auth } from '@clerk/nextjs/server';
+import { getAuthContext } from '@/lib/auth/session';
+import { normalizeChoiceKey } from '@/lib/examination/answerKey';
 
 /**
  * @deprecated Use `getTestAnalyticsSummary` for overview metrics and
@@ -11,24 +12,23 @@ import { auth } from '@clerk/nextjs/server';
  */
 export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> => {
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        // Access to a test is decided by ORGANISATION, not authorship. A caller
+        // with no organisation must match nothing at all — without this guard
+        // `where: { organizationId: null }` would match org-less rows instead.
+        if (!ctx?.organizationId) {
             throw new Error('Unauthorized');
         }
 
-        const user = await prisma.user.findUnique({
-            where: { clerkUserId },
-            select: { id: true },
-        });
-
-        if (!user) {
-            throw new Error('User not found');
-        }
-
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
         const test = await prisma.test.findFirst({
             where: {
                 id: testId,
-                createdBy: user.id,
+                organizationId: ctx.organizationId,
             },
             include: {
                 questions: {
@@ -39,6 +39,7 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
                                 id: true,
                                 question_text: true,
                                 answer: true,
+                                options: true,
                                 topic: true,
                                 chapter: true,
                             },
@@ -48,13 +49,19 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
                                 id: true,
                                 question_text: true,
                                 answer: true,
+                                options: true,
                                 topic: true,
                                 chapter: true,
                             },
                         },
                     },
                 },
+                    // Absent students carry a StudentResponse so the roster can
+                    // show they were accounted for, but they have no score.
+                    // Including them would drag every average down — see the
+                    // note on StudentResponse.status.
                 responses: {
+                    where: { status: "graded" },
                     include: {
                         student: true,
                         answers: {
@@ -114,10 +121,12 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
             let totalAttempts = 0;
 
             for (const response of responses) {
-                const answer = response.answers?.find((a) => a.questionId === question.questionId);
+                const answer = response.answers?.find((a) => src && a.questionId === src.id);
                 if (answer) {
                     totalAttempts++;
-                    if (src && answer.selectedAnswer === src.answer) {
+                    const selectedKey = normalizeChoiceKey(answer.selectedAnswer, src?.options ?? []);
+                    const correctKey = normalizeChoiceKey(src?.answer, src?.options ?? []);
+                    if (selectedKey && correctKey && selectedKey === correctKey) {
                         correctAnswers++;
                     }
                 }
@@ -144,7 +153,10 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
             const topicMap: Record<string, { total: number; correct: number }> = {};
 
             for (const answer of response.answers || []) {
-                const question = test.questions.find((q) => q.questionId === answer.questionId);
+                const question = test.questions.find((q) => {
+                    const src = q.question ?? q.schoolTestQuestion;
+                    return src?.id === answer.questionId;
+                });
                 if (question) {
                     const src = question.question ?? question.schoolTestQuestion;
                     const chapter = src?.chapter ?? 'Unknown Chapter';
@@ -159,7 +171,9 @@ export const getTestAnalytics = async (testId: string): Promise<TestAnalytics> =
                     }
                     topicMap[topic].total += 1;
 
-                    if (src && answer.selectedAnswer === src.answer) {
+                    const selectedKey = normalizeChoiceKey(answer.selectedAnswer, src?.options ?? []);
+                    const correctKey = normalizeChoiceKey(src?.answer, src?.options ?? []);
+                    if (selectedKey && correctKey && selectedKey === correctKey) {
                         correctAnswers++;
                         calculatedScore += question.marks;
                         chapterMap[chapter].correct += 1;

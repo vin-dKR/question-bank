@@ -8,8 +8,11 @@ import { toast } from "sonner";
 import type { Crop, PageResult, QuestionDraft } from "@/lib/school-test/types";
 import { cn } from "@/lib/utils";
 import { saveExtractedQuestions } from "@/actions/school-test/saveExtractedQuestions";
+import { cleanCropRegion } from "@/actions/school-test/cleanCropRegion";
+import { errorText } from "@/lib/errorText";
 import { QuestionCard } from "./QuestionCard";
 import { CropEditor } from "./CropEditor";
+import { TouchUpEditor } from "./TouchUpEditor";
 import { PreviewDialog } from "./PreviewDialog";
 
 type EditablePage = {
@@ -37,6 +40,14 @@ export function Verifier({
     const [activeIdx, setActiveIdx] = useState(0);
     const [hoverCrop, setHoverCrop] = useState<string | null>(null);
     const [cropTarget, setCropTarget] = useState<CropTarget | null>(null);
+    const [cleaningId, setCleaningId] = useState<string | null>(null);
+    const [touchUp, setTouchUp] = useState<{
+        pageIndex: number;
+        questionId: string;
+        cleaned: string;
+        original: string;
+    } | null>(null);
+    const [restoreSource, setRestoreSource] = useState<Record<string, string>>({});
     const [previewOpen, setPreviewOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -120,6 +131,48 @@ export function Verifier({
         [updatePage],
     );
 
+    const cleanCrop = useCallback(
+        async (i: number, questionId: string) => {
+            setCleaningId(questionId);
+            const toastId = toast.loading("Whitening the paper…");
+            try {
+                const page = pages[i];
+                const crop = page?.crops?.[questionId];
+                if (!page?.sourceDataUrl || !crop?.bbox) {
+                    toast.error("The source page is not available for this crop.", { id: toastId });
+                    return;
+                }
+
+                const result = await cleanCropRegion({
+                    pageDataUrl: page.sourceDataUrl,
+                    bbox: crop.bbox,
+                });
+                if (!result.success) {
+                    toast.error(errorText(result.error, "Could not clean the diagram."), { id: toastId });
+                    return;
+                }
+
+                updatePage(i, (current) => ({
+                    ...current,
+                    crops: {
+                        ...current.crops,
+                        [questionId]: { ...current.crops[questionId], dataUrl: result.dataUrl },
+                    },
+                }));
+                setRestoreSource((current) => ({
+                    ...current,
+                    [questionId]: result.restoreDataUrl,
+                }));
+                toast.success("Background cleaned.", { id: toastId });
+            } catch (error) {
+                toast.error(errorText(error, "Could not clean the diagram."), { id: toastId });
+            } finally {
+                setCleaningId(null);
+            }
+        },
+        [pages, updatePage],
+    );
+
     const confirmCreateTest = useCallback(async () => {
         if (isSaving) return;
         setIsSaving(true);
@@ -148,7 +201,7 @@ export function Verifier({
 
             const result = await saveExtractedQuestions(payload);
             if (!result.success) {
-                toast.error(result.error);
+                toast.error(errorText(result.error, "Could not save the questions."));
                 setIsSaving(false);
                 return;
             }
@@ -254,6 +307,22 @@ export function Verifier({
                                         })
                                     }
                                     onRemoveCrop={() => removeCrop(activeIdx, q.id)}
+                                    onCleanCrop={
+                                        page.sourceDataUrl
+                                            ? () => cleanCrop(activeIdx, q.id)
+                                            : undefined
+                                    }
+                                    onTouchUp={() => {
+                                        const crop = page.crops[q.id];
+                                        if (!crop) return;
+                                        setTouchUp({
+                                            pageIndex: activeIdx,
+                                            questionId: q.id,
+                                            cleaned: crop.dataUrl,
+                                            original: restoreSource[q.id] ?? crop.dataUrl,
+                                        });
+                                    }}
+                                    isCleaning={cleaningId === q.id}
                                     onHoverCrop={(hover) => setHoverCrop(hover ? q.id : null)}
                                 />
                             ))
@@ -291,6 +360,27 @@ export function Verifier({
                     onSave={(bbox, dataUrl) =>
                         saveCrop(cropTarget.pageIndex, cropTarget.questionId, bbox, dataUrl)
                     }
+                />
+            )}
+
+            {touchUp && (
+                <TouchUpEditor
+                    cleanedDataUrl={touchUp.cleaned}
+                    originalDataUrl={touchUp.original}
+                    onCancel={() => setTouchUp(null)}
+                    onSave={(dataUrl) => {
+                        updatePage(touchUp.pageIndex, (current) => ({
+                            ...current,
+                            crops: {
+                                ...current.crops,
+                                [touchUp.questionId]: {
+                                    ...current.crops[touchUp.questionId],
+                                    dataUrl,
+                                },
+                            },
+                        }));
+                        setTouchUp(null);
+                    }}
                 />
             )}
 

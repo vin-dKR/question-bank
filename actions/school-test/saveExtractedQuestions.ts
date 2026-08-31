@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { getAuthContext } from '@/lib/auth/session';
 import prisma from "@/lib/prisma";
 import { supabaseServer, SUPABASE_IMAGE_BUCKET } from "@/lib/supabase";
 
@@ -125,14 +125,14 @@ function normalizeBbox(
 export async function saveExtractedQuestions(
     input: SaveExtractedPage[],
 ): Promise<SaveExtractedResult> {
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) return { success: false, error: "Not signed in." };
+    const ctx = await getAuthContext();
+    if (!ctx) return { success: false, error: "Not signed in." };
 
-    const user = await prisma.user.findUnique({
-        where: { clerkUserId },
-        select: { id: true },
-    });
-    if (!user) return { success: false, error: "User not found." };
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
 
     if (!Array.isArray(input) || input.length === 0) {
         return { success: false, error: "Nothing to save." };

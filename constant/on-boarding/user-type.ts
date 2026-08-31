@@ -1,15 +1,20 @@
-import { GraduationCap, Users, School } from "lucide-react";
+import { GraduationCap, School } from "lucide-react";
 
+/**
+ * Onboarding paths.
+ *
+ * STUDENT IS DELIBERATELY ABSENT. Students exist in the product, but as roster
+ * rows created by the teacher via the examination/OMR flow — not as accounts
+ * that sign themselves up (docs/WORKOS_MIGRATION_APPROACH.md §2, §3). The
+ * `Student` model, `StudentData` and the /onboarding/student/setup route are
+ * all still in place for when student logins are switched on for online tests;
+ * this list is simply the set of people who can self-onboard today.
+ *
+ * Both remaining paths silently create an Organization. The user is never shown
+ * the word "organization" — a solo teacher just fills in their details and gets
+ * one named after their school.
+ */
 export const userTypes = [
-    {
-        icon: Users,
-        title: "Student",
-        description: "I want to practice with authentic exam questions",
-        features: ["Practice tests", "Progress tracking", "Performance insights"],
-        href: "/onboarding/student/setup",
-        popular: false,
-        roleKey: "student",
-    },
     {
         icon: GraduationCap,
         title: "Individual Teacher",

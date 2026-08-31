@@ -1,0 +1,12 @@
+# Runtime dependencies for Vercel Python Functions in /api.
+# Keep this lean: Vercel installs this for Python functions during deployment.
+
+reportlab>=4.0.0
+qrcode[pil]>=7.4.2
+pillow>=10.0.0
+numpy>=1.25.0
+opencv-python-headless==4.11.0.86
+deepmerge>=1.1.0
+dotmap>=1.3.30
+jsonschema>=4.17.3
+rich>=13.4.2

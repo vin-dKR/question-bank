@@ -1,0 +1,18 @@
+# Python dependencies for the vendored OMR_CG integration.
+#
+# Install these in the runtime that executes the Next.js server process:
+#   python3 -m pip install -r integrations/omr-cg/requirements.txt
+
+reportlab>=4.0.0
+qrcode[pil]>=7.4.2
+pillow>=10.0.0
+numpy>=1.25.0
+opencv-contrib-python==4.11.0.86
+PyMuPDF>=1.23.0
+deepmerge>=1.1.0
+dotmap>=1.3.30
+jsonschema>=4.17.3
+matplotlib>=3.7.1
+pandas>=2.0.2
+rich>=13.4.2
+screeninfo>=0.8.1

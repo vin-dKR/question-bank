@@ -1,33 +1,44 @@
 'use server';
 
 import prisma from '@/lib/prisma';
-import { auth } from '@clerk/nextjs/server';
-
+import { getAuthContext } from '@/lib/auth/session';
 export const createTest = async (data: CreateTestData): Promise<Partial<ExaminationTest>> => {
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        // Access to a test is decided by ORGANISATION, not authorship. A caller
+        // with no organisation must match nothing at all — without this guard
+        // `where: { organizationId: null }` would match org-less rows instead.
+        if (!ctx?.organizationId) {
             throw new Error('Unauthorized');
         }
 
-        const user = await prisma.user.findUnique({
-            where: { clerkUserId },
-            select: { id: true },
-        });
-
-        if (!user) {
-            throw new Error('User not found');
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
+        if (data.omrPaperId && !/^[A-Fa-f0-9]{24}$/.test(data.omrPaperId)) {
+            throw new Error('Invalid OMR paper ID');
         }
 
         // console.log('------------DATA', data);
 
         const test = await prisma.test.create({
             data: {
+                ...(data.omrPaperId ? { id: data.omrPaperId } : {}),
                 title: data.title,
                 description: data.description,
                 subject: data.subject,
+                // Nullable and always will be: tests created before classes
+                // existed have none, and a teacher may legitimately set a paper
+                // without tying it to a roster.
+                classId: data.classId ?? null,
                 duration: typeof data.duration === 'string' ? parseInt(data.duration) : data.duration,
                 totalMarks: data.totalMarks,
+                // The AUTHORIZATION key. Without it a new test is invisible to
+                // the org-scoped reads below — including to its own author.
+                organizationId: ctx.organizationId,
+                // Authorship, not access. Kept so "who wrote this" survives.
                 createdBy: user.id,
                 questions: {
                     // School-test questions live in a separate collection; route
@@ -149,21 +160,20 @@ export const getTests = async (
     const { skip = 0, take = 20 } = args;
 
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        // Access to a test is decided by ORGANISATION, not authorship. A caller
+        // with no organisation must match nothing at all — without this guard
+        // `where: { organizationId: null }` would match org-less rows instead.
+        if (!ctx?.organizationId) {
             throw new Error('Unauthorized');
         }
 
-        const user = await prisma.user.findUnique({
-            where: { clerkUserId },
-            select: { id: true },
-        });
-
-        if (!user) {
-            throw new Error('User not found');
-        }
-
-        const where = { createdBy: user.id } as const;
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
+        const where = { organizationId: ctx.organizationId } as const;
 
         const [tests, total] = await Promise.all([
             prisma.test.findMany({
@@ -231,24 +241,23 @@ export const getTests = async (
 
 export const getTestById = async (testId: string): Promise<Partial<ExaminationTest> | null> => {
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        // Access to a test is decided by ORGANISATION, not authorship. A caller
+        // with no organisation must match nothing at all — without this guard
+        // `where: { organizationId: null }` would match org-less rows instead.
+        if (!ctx?.organizationId) {
             throw new Error('Unauthorized');
         }
 
-        const user = await prisma.user.findUnique({
-            where: { clerkUserId },
-            select: { id: true },
-        });
-
-        if (!user) {
-            throw new Error('User not found');
-        }
-
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
         const test = await prisma.test.findFirst({
             where: {
                 id: testId,
-                createdBy: user.id,
+                organizationId: ctx.organizationId,
             },
             include: {
                 questions: {
@@ -306,24 +315,23 @@ export const getTestById = async (testId: string): Promise<Partial<ExaminationTe
 
 export const deleteTest = async (testId: string): Promise<void> => {
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        // Access to a test is decided by ORGANISATION, not authorship. A caller
+        // with no organisation must match nothing at all — without this guard
+        // `where: { organizationId: null }` would match org-less rows instead.
+        if (!ctx?.organizationId) {
             throw new Error('Unauthorized');
         }
 
-        const user = await prisma.user.findUnique({
-            where: { clerkUserId },
-            select: { id: true },
-        });
-
-        if (!user) {
-            throw new Error('User not found');
-        }
-
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
         await prisma.test.deleteMany({
             where: {
                 id: testId,
-                createdBy: user.id,
+                organizationId: ctx.organizationId,
             },
         });
     } catch (error) {

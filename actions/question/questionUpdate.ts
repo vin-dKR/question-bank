@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
+import { AuthError, assertCanMutateQuestion, requireUser } from '@/lib/auth/guard';
 
 const UpdateQuestionInputSchema = z.object({
     id: z.string().min(1, 'Question ID is required'),
@@ -29,6 +30,12 @@ export async function updateQuestionInDB(
             };
         }
 
+        // Validating the shape of the input says nothing about who is sending
+        // it. This is a server action, so it is a public endpoint — check the
+        // caller before writing. See docs/WORKOS_MIGRATION_APPROACH.md §14.
+        const user = await requireUser();
+        await assertCanMutateQuestion(question.id, user);
+
         // Update the question in the database
         const updatedQuestion = await prisma.question.update({
             where: { id: question.id },
@@ -50,6 +57,12 @@ export async function updateQuestionInDB(
             data: updatedQuestion,
         };
     } catch (error) {
+        // Auth failures are expected outcomes, not bugs — surface the message
+        // as-is and don't log them as errors.
+        if (error instanceof AuthError) {
+            return { success: false, error: error.message };
+        }
+
         console.error('Error updating question:', error);
         let errorMessage = 'Failed to update question';
         if (error instanceof Error) {
@@ -57,7 +70,7 @@ export async function updateQuestionInDB(
         } else if (typeof error === 'string') {
             errorMessage = `Failed to update question: ${error}`;
         } else if (error && typeof error === 'object' && 'message' in error) {
-            errorMessage = `Failed to update question: ${(error as any).message}`;
+            errorMessage = `Failed to update question: ${(error as { message: string }).message}`;
         }
 
         return {

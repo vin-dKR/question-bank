@@ -1,5 +1,4 @@
 export { }
-import WebSocket from 'ws';
 
 declare global {
     interface Window {
@@ -114,8 +113,6 @@ declare global {
         // eslint-disable-next-line
         questions: any[];
         userRole: 'owner' | 'editor' | 'viewer';
-        isCollaborated: boolean;
-        collaboratorCount: number;
     }
 
     interface PDFGeneratorProps {
@@ -425,36 +422,6 @@ declare global {
         error?: string;
     }
 
-    // collaboration ----------------------------------------------------------
-    interface CollaborationUser {
-        userId: string;
-        userName: string;
-        isOnline: boolean;
-    }
-
-    interface CollaborationMessageData {
-        action: "joined" | "left" | "room_state" | "reorder";
-        users?: CollaborationUser[];
-        questionCount?: number;
-    }
-
-    interface CollaborationMessage {
-        type: 'join' | 'leave' | 'update' | 'presence' | 'cursor';
-        folderId: string;
-        userId: string;
-        userName: string;
-        data?: CollaborationMessageData
-    }
-
-    interface CollaborationContextType {
-        connectedUsers: CollaborationUser[];
-        isConnected: boolean;
-        sendMessage: (message: CollaborationMessage) => void;
-        joinFolder: (folderId: string) => void;
-        leaveFolder: () => void;
-        currentFolderId: string | null;
-    }
-
     interface ConnectedUser {
         ws: WebSocket;
         userId: string;
@@ -545,8 +512,11 @@ declare global {
         question_text: string;
         question_number: number;
         question_image?: string | null;
+        isOptionImage?: boolean;
+        option_images?: string[] | null;
         options: string[];
         answer: string;
+        question_type?: string | null;
         marks: number;
         negativeMark?: number;
         // School-test-sourced questions carry their origin + source-page
@@ -560,6 +530,16 @@ declare global {
     }
 
     interface CreateTestData {
+        omrPaperId?: string;
+        /**
+         * The class sitting this test, chosen at creation.
+         *
+         * Distinct from `standard` below, which is free text printed in the PDF
+         * header. This is the roster relation: it is what lets OMR scanning
+         * resolve a detected roll number to a real student instead of asking
+         * the teacher to retype a name for every sheet.
+         */
+        classId?: string | null;
         title: string;
         description: string;
         subject: string;

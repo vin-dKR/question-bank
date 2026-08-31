@@ -3,33 +3,74 @@
 import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { useMediaQuery } from "react-responsive";
-import { useAuth, useUser } from "@clerk/nextjs";
+import { useCurrentUser } from "@/hooks/auth/useCurrentUser";
 import { sidebarItems } from "@/constant/sidebar/sidebar";
 import { Sidebar } from "@/components/dashboard/sidebar/Sidebar";
 import { Header } from "@/components/dashboard/content/Header";
+import type { SwitcherOrg } from "@/components/organization/OrgSwitcher";
 
-export function DashboardLayoutClient({ children }: { children: React.ReactNode }) {
+export function DashboardLayoutClient({
+    children,
+    orgs = [],
+}: {
+    children: React.ReactNode;
+    /** Resolved server-side in the layout — see AuthContext.memberships. */
+    orgs?: SwitcherOrg[];
+}) {
     const pathname = usePathname();
-    const { user } = useUser();
-    const { signOut } = useAuth();
+    const { user, signOut } = useCurrentUser();
     const isMobile = useMediaQuery({ maxWidth: 768 });
     const sidebarRef = useRef<HTMLDivElement>(null);
 
-    const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => {
-        if (typeof window !== "undefined") {
-            const saved = localStorage.getItem("sidebarOpen");
-            return saved !== null ? JSON.parse(saved) : !isMobile;
-        }
-        return !isMobile;
-    });
+    /**
+     * HYDRATION. This state is deliberately seeded with a CONSTANT, and the real
+     * value applied after mount.
+     *
+     * It used to read `localStorage` and `isMobile` in the initialiser, both of
+     * which are unavailable or different on the server: the server rendered the
+     * sidebar open, the browser rendered it however the user last left it, and
+     * React threw #418 ("hydration failed — the initial UI does not match what
+     * was rendered on the server") and discarded the server tree.
+     *
+     * `useMediaQuery` is the same hazard — there is no viewport during SSR, so
+     * it reports desktop on the server and the truth on the client.
+     *
+     * The cost is one frame with the sidebar open on a phone. The alternative is
+     * a hydration failure on every single page load, which also throws away the
+     * server-rendered HTML and re-renders the whole tree on the client.
+     */
+    const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
+    const [hydrated, setHydrated] = useState(false);
 
     const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
+    // Apply the stored preference once, after the first client render.
     useEffect(() => {
-        if (typeof window !== "undefined") {
-            localStorage.setItem("sidebarOpen", JSON.stringify(isSidebarOpen));
+        let restored: boolean | null = null;
+        try {
+            const saved = localStorage.getItem("sidebarOpen");
+            if (saved !== null) restored = JSON.parse(saved) as boolean;
+        } catch {
+            // Private mode, blocked storage, or a corrupt value. Fall through to
+            // the viewport default rather than leaving the sidebar stuck open.
         }
-    }, [isSidebarOpen]);
+        setIsSidebarOpen(restored ?? !isMobile);
+        setHydrated(true);
+        // Runs once: `isMobile` is read for the initial default only. Later
+        // viewport changes are the user's business, not ours to override.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    useEffect(() => {
+        // Don't write until the stored value has been read, or the constant
+        // seeded above would overwrite the user's real preference on first load.
+        if (!hydrated) return;
+        try {
+            localStorage.setItem("sidebarOpen", JSON.stringify(isSidebarOpen));
+        } catch {
+            // Non-fatal — the sidebar just won't be remembered on this device.
+        }
+    }, [isSidebarOpen, hydrated]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -50,7 +91,9 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
     }, [isMobile, isSidebarOpen]);
 
     const handleLogout = async () => {
-        await signOut({ redirectUrl: "/auth/signup" });
+        // Absolute URL — see the note in components/Signout.tsx. A relative
+        // path makes WorkOS fall back to the app homepage URL and fail logout.
+        await signOut({ returnTo: `${window.location.origin}/auth/signup` });
     };
 
     const toggleGroup = (groupName: string) => {
@@ -93,7 +136,7 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
                 />
             </div>
             <div className="flex-1 flex flex-col overflow-hidden">
-                <Header activeItem={activeItem} user={user} handleLogout={handleLogout} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} isMobile={isMobile} />
+                <Header activeItem={activeItem} user={user} orgs={orgs} handleLogout={handleLogout} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} isMobile={isMobile} />
                 {children}
             </div>
         </div>

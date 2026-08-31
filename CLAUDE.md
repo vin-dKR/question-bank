@@ -27,7 +27,7 @@ No test runner is configured — don't invent `bun test` / `jest` invocations. `
 - **`npm start` / `bun start` does NOT run `next start`.** `package.json` remaps `start` to `node scripts/start-collaboration-server.js` (the WS collab server on :3001). If you want the Next.js production server, you must invoke `next start` directly.
 - **Prisma client is generated to `./generated/prisma`**, not `node_modules/@prisma/client` (see `prisma/schema.prisma` `generator.output`). Import as `from "@/generated/prisma"` — the canonical `lib/prisma.ts` does exactly that.
 - **`binaryTargets = ["native", "rhel-openssl-3.0.x"]`**. `next.config.ts` has a webpack hook that (a) removes `@prisma/client` from the server externals list and (b) copies `generated/prisma/query-engine-rhel-openssl-3.0.x` into `.next/server/...` at build time. If you see "query engine not found" on Vercel/Netlify, confirm the file exists *before* `next build` runs — the copy is a no-op when missing (it only `console.warn`s).
-- **CORS is configured in TWO places.** `middleware.ts` handles the general allowlist for `/api/*`. `netlify.toml` adds stricter per-path headers for `/api/omr/*` and `/api/questions` specifically. When adding a new cross-origin caller, update *both* or you'll get intermittent failures depending on deploy target.
+- **CORS lives in ONE place now: `lib/cors.ts`** (`allowedOrigins`), imported by `middleware.ts`. The old per-path `netlify.toml` CORS rules were removed (they had an invalid comma-joined `Access-Control-Allow-Origin` and had drifted from the code). A couple of `/api/omr/*` routes still hardcode a single `omr-checker` origin in their handlers — fine, but fold them into `lib/cors.ts` if you touch them. See `docs/API_SECURITY.md` §Layer 6.
 
 ## Architecture
 
@@ -40,15 +40,14 @@ No test runner is configured — don't invent `bun test` / `jest` invocations. `
 
 Most mutations live in `actions/<domain>/` as server actions. Only use an `app/api/` route handler when you need cross-origin access (and then the origin must be in the `middleware.ts` allowlist and — for OMR/questions — in `netlify.toml`).
 
-### Middleware (`middleware.ts`)
+### Middleware (`middleware.ts`) — WorkOS AuthKit, default-deny for `/api/*`
 
-Single Clerk middleware handles three concerns in one pass:
+Auth is **WorkOS AuthKit** (`authkit()` / `withAuth()`), not Clerk — the whole app migrated. The middleware handles two concerns in one pass:
 
-1. **CORS preflight** for every `/api/*` request. Allowed origins: `localhost:3000/3001/5173` and the deployed satellites (`question-editor.vercel.app`, `multi-crop.vercel.app`, `omr-checker.vercel.app`). Non-API requests fall through.
-2. **Auth gate**: unauthenticated users redirected to Clerk sign-in, except for `isPublicRoute` (`/auth/*`, `/`, `/api`).
-3. **Onboarding gate**: logged-in users without `sessionClaims.metadata.onboardingComplete === true` are bounced to `/onboarding/user-type`, *unless* already on an `/onboarding` path.
+1. **CORS** for `/api/*`. The origin allowlist is imported from `lib/cors.ts` (the SINGLE source of truth — no longer duplicated here) and gates localhost to non-production. No `Access-Control-Allow-Credentials` is sent (satellites use Bearer tokens, not cookies). **CORS is browser-only and is NOT an auth control** — see `docs/API_SECURITY.md`.
+2. **Default-deny auth gate for `/api/*`**: any API request that is not on `PUBLIC_API_PATHS` (just `/api/webhooks/workos`, which verifies its own HMAC signature) and presents neither a WorkOS session nor an `Authorization: Bearer` header is rejected with a JSON 401 *before the route runs*. Individual routes still enforce fine-grained authz via `lib/auth/guard.ts` (`requireApiActor`, `requireOrgContext`, `assertCanMutateQuestion`), but they can no longer be accidentally looser than "credentials were presented." Page routes (non-API) get an HTML redirect to hosted AuthKit instead.
 
-When adding new public routes or API origins, update the `isPublicRoute` matcher and `allowedOrigins` array in this one file. The CORS origin allowlist still references the pre-rename names (`question-editor`, `multi-crop`) — verify these haven't moved before relying on them.
+The onboarding gate is **not** here anymore — it's a DB check in `app/(dashboard)/layout.tsx` (`getAuthContext().onboardingComplete`). When adding a new cross-origin caller, update `allowedOrigins` in `lib/cors.ts` only. When adding a genuinely public API route, add it to `PUBLIC_API_PATHS` — and be sure it authenticates itself some other way.
 
 ### Server actions pattern
 
@@ -89,4 +88,6 @@ Takes a PDF or image and yields a streamed `ProcessEvent` sequence (`page-count`
 
 ### External services
 
-Clerk (auth), MongoDB Atlas (via Prisma + a raw `mongodb` client on some paths), OpenAI + Gemini (vision extraction, LaTeX refinement), Resend (email), Twilio (SMS), Supabase (image storage — **two** project URLs allowlisted in `next.config.ts` `images.remotePatterns`, indicating an in-progress migration between Supabase projects).
+WorkOS AuthKit (auth — migrated off Clerk; some `CLERK_*` / `NEXTAUTH_*` env vars are now dead), MongoDB Atlas (via Prisma + a raw `mongodb` client on some paths), OpenAI + Gemini (vision extraction, LaTeX refinement), Resend (email), Twilio (SMS), Supabase (image storage — **two** project URLs allowlisted in `next.config.ts` `images.remotePatterns`, indicating an in-progress migration between Supabase projects), Cloudflare Turnstile (bot defense — keys provisioned; helper in `lib/turnstile.ts`), Upstash Redis (API rate limiting via `lib/ratelimit.ts`).
+
+**API security:** see `docs/API_SECURITY.md` for the threat model, the endpoint posture table, and the checklist for adding a new endpoint safely. TL;DR: every read is auth'd + org-scoped + page-capped + rate-limited + audited; CORS/login are not a moat against `curl`.

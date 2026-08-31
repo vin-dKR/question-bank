@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useFolderContext } from "@/lib/context/FolderContext";
 import { usePDFGeneratorContext } from "@/lib/context/PDFGeneratorContext";
-import { useCollaboration } from "@/lib/context/CollaborationContext";
-import { checkFolderAccess } from "@/actions/collaboration/folder";
+import { checkFolderAccess } from "@/actions/drafts/folderAccess";
 import { toast } from "sonner";
 import { ErrorDisplay } from "../drafts/ErrorDisplay";
 import { FolderList } from "../drafts/FolderList";
@@ -27,7 +26,6 @@ export default function DraftManager({ previewLimit }: DraftManagerPropsLimit) {
         err,
     } = useFolderContext();
     const { options, institution } = usePDFGeneratorContext();
-    const { joinFolder, leaveFolder, sendMessage, currentFolderId, isConnected } = useCollaboration();
     const [selectedFolder, setSelectedFolder] = useState<LocalFetchDraft | null>(null);
     const [editMode, setEditMode] = useState<string | null>(null);
     const [newName, setNewName] = useState("");
@@ -86,25 +84,13 @@ export default function DraftManager({ previewLimit }: DraftManagerPropsLimit) {
     }, [urlFolderId]);
 
     useEffect(() => {
-        if (selectedFolder && !previewLimit) {
-            if (currentFolderId !== selectedFolder.id || !isConnected) {
-                joinFolder(selectedFolder.id);
+        if (!selectedFolder) return;
+        checkFolderAccess(selectedFolder.id).then((result) => {
+            if (result.success && result.data?.role) {
+                setUserRole(result.data.role);
             }
-            checkFolderAccess(selectedFolder.id).then((result) => {
-                if (result.success && result.data?.role) {
-                    setUserRole(result.data.role);
-                }
-            });
-        } else if (selectedFolder && previewLimit) {
-            checkFolderAccess(selectedFolder.id).then((result) => {
-                if (result.success && result.data?.role) {
-                    setUserRole(result.data.role);
-                }
-            });
-        } else if (isConnected) {
-            leaveFolder();
-        }
-    }, [selectedFolder, previewLimit, currentFolderId, isConnected, joinFolder, leaveFolder]);
+        });
+    }, [selectedFolder]);
 
     const handleFolderClick = (draft: LocalFetchDraft) => {
         setSelectedFolder({ ...draft });
@@ -171,6 +157,7 @@ export default function DraftManager({ previewLimit }: DraftManagerPropsLimit) {
             question_text: q.question_text,
             options: q.options,
             answer: q.answer || "",
+            question_type: q.question_type || null,
             marks: 1,
             questionNumber: index + 1,
         }));
@@ -232,7 +219,6 @@ export default function DraftManager({ previewLimit }: DraftManagerPropsLimit) {
                     onCreateTest={createTestFromSelected}
                     institution={institution}
                     options={options}
-                    sendMessage={sendMessage}
                 />
             ) : (
                 <FolderList drafts={drafts} previewLimit={previewLimit} onFolderClick={handleFolderClick} />

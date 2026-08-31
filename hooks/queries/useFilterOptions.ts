@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getFilterOptions } from "@/actions/question/questionBank";
+import { useOrgKey } from "@/provider/ActiveOrgProvider";
 
 /**
  * Arguments for useFilterOptions.
@@ -27,7 +28,15 @@ const EMPTY_OPTIONS: FilterOptions = {
 };
 
 export function useFilterOptions({ filters, userRole, userSubject }: UseFilterOptionsArgs) {
+    const orgKey = useOrgKey();
     return useQuery({
+        // The org segment sits LAST, not first, and that placement is load
+        // bearing. TanStack matches invalidation keys by PREFIX, and the
+        // mutations in hooks/queries/mutations/* invalidate with
+        // `{ queryKey: ["questions"] }`. Putting the org id in front would make
+        // that prefix stop matching and every optimistic update would silently
+        // stop refetching — a bug with no error and no visible symptom until
+        // stale data is on screen.
         queryKey: [
             "filterOptions",
             {
@@ -38,6 +47,7 @@ export function useFilterOptions({ filters, userRole, userSubject }: UseFilterOp
                 userRole,
                 userSubject: userSubject ?? null,
             },
+            orgKey,
         ],
         queryFn: async (): Promise<FilterOptions> => {
             const response = await getFilterOptions(

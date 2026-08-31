@@ -1,6 +1,7 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
+import { useCurrentUser } from "@/hooks/auth/useCurrentUser";
+import { useUserRole } from "@/hooks/auth/useUserRole";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,12 +10,12 @@ import {
     Calendar,
     Shield,
     KeyRound,
-    ExternalLink,
     Loader2,
 } from "lucide-react";
 
 export default function ProfilePage() {
-    const { user, isLoaded } = useUser();
+    const { user, isLoaded } = useCurrentUser();
+    const { role: userRole } = useUserRole();
 
     if (!isLoaded) {
         return (
@@ -24,8 +25,8 @@ export default function ProfilePage() {
         );
     }
 
-    const displayName = user?.fullName || user?.username || "User";
-    const displayEmail = user?.primaryEmailAddress?.emailAddress;
+    const displayName = user?.fullName || "User";
+    const displayEmail = user?.email;
     const initials =
         displayName
             .split(" ")
@@ -33,10 +34,9 @@ export default function ProfilePage() {
             .map((s) => s[0]?.toUpperCase())
             .join("") || "U";
 
-    const role =
-        (user?.publicMetadata?.role as string | undefined) ||
-        (user?.unsafeMetadata?.role as string | undefined) ||
-        "Member";
+    // WorkOS sessions carry no arbitrary app metadata the way Clerk's
+    // publicMetadata did, so role comes from the database instead.
+    const role = userRole || "Member";
 
     const joinedAt = user?.createdAt
         ? new Date(user.createdAt).toLocaleDateString("en-US", {
@@ -69,18 +69,6 @@ export default function ProfilePage() {
                         {displayEmail && (
                             <p className="mt-1 text-sm text-zinc-500 truncate">{displayEmail}</p>
                         )}
-                        <div className="mt-4 flex flex-wrap gap-2">
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => user?.update({})}
-                                asChild
-                            >
-                                <a href="https://accounts.clerk.com" target="_blank" rel="noreferrer">
-                                    Edit profile <ExternalLink className="ml-1.5 h-3 w-3" />
-                                </a>
-                            </Button>
-                        </div>
                     </div>
                 </div>
             </div>

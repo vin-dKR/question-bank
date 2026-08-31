@@ -1,7 +1,8 @@
 'use server';
 
 import prisma from '@/lib/prisma';
-import { auth } from '@clerk/nextjs/server';
+import { getAuthContext } from '@/lib/auth/session';
+import { normalizeChoiceKey } from '@/lib/examination/answerKey';
 
 export interface TestAnalyticsDetailArgs {
     cursor?: string;
@@ -65,24 +66,23 @@ export const getTestAnalyticsDetail = async (
     const { cursor, take = DEFAULT_TAKE } = args;
 
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        // Access to a test is decided by ORGANISATION, not authorship. A caller
+        // with no organisation must match nothing at all — without this guard
+        // `where: { organizationId: null }` would match org-less rows instead.
+        if (!ctx?.organizationId) {
             throw new Error('Unauthorized');
         }
 
-        const user = await prisma.user.findUnique({
-            where: { clerkUserId },
-            select: { id: true },
-        });
-
-        if (!user) {
-            throw new Error('User not found');
-        }
-
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
         // Load the test with its question source map in one round-trip. This
         // doubles as an ownership check.
         const test = await prisma.test.findFirst({
-            where: { id: testId, createdBy: user.id },
+            where: { id: testId, organizationId: ctx.organizationId },
             select: {
                 id: true,
                 totalMarks: true,
@@ -94,6 +94,7 @@ export const getTestAnalyticsDetail = async (
                             select: {
                                 id: true,
                                 answer: true,
+                                options: true,
                                 chapter: true,
                                 topic: true,
                             },
@@ -102,6 +103,7 @@ export const getTestAnalyticsDetail = async (
                             select: {
                                 id: true,
                                 answer: true,
+                                options: true,
                                 chapter: true,
                                 topic: true,
                             },
@@ -120,13 +122,14 @@ export const getTestAnalyticsDetail = async (
         // original analytics code matched on `q.questionId`.
         const questionMap = new Map<
             string,
-            { answer: string | null; chapter: string | null; topic: string | null; marks: number }
+            { answer: string | null; options: string[]; chapter: string | null; topic: string | null; marks: number }
         >();
         for (const tq of test.questions) {
             const src = tq.question ?? tq.schoolTestQuestion;
             if (src) {
                 questionMap.set(src.id, {
                     answer: src.answer ?? null,
+                    options: src.options ?? [],
                     chapter: src.chapter ?? null,
                     topic: src.topic ?? null,
                     marks: tq.marks,
@@ -138,7 +141,9 @@ export const getTestAnalyticsDetail = async (
 
         // Request one extra row to determine whether there is a next page.
         const responses = await prisma.studentResponse.findMany({
-            where: { testId },
+            // Absent students hold a StudentResponse so the roster knows they
+            // were accounted for, but they have no result to rank or average.
+            where: { testId, status: "graded" },
             orderBy: [{ score: 'desc' }, { id: 'asc' }],
             take: take + 1,
             ...(cursor
@@ -190,7 +195,9 @@ export const getTestAnalyticsDetail = async (
                 chapterMap[chapter].total += 1;
                 topicMap[topic].total += 1;
 
-                if (src.answer != null && ans.selectedAnswer === src.answer) {
+                const selectedKey = normalizeChoiceKey(ans.selectedAnswer, src.options);
+                const correctKey = normalizeChoiceKey(src.answer, src.options);
+                if (selectedKey && correctKey && selectedKey === correctKey) {
                     correctAnswers += 1;
                     chapterMap[chapter].correct += 1;
                     topicMap[topic].correct += 1;

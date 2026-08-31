@@ -10,8 +10,6 @@ interface LocalFetchDraft {
     name: string;
     questions: Question[] | QuestionForCreateTestData[]
     userRole: "owner" | "editor" | "viewer";
-    isCollaborated: boolean;
-    collaboratorCount: number;
 }
 
 interface FolderHeaderProps {

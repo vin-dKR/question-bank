@@ -16,24 +16,124 @@ datasource db {
   url = env("DATABASE_URL")
 }
 
+// ==================== ORG / IDENTITY (WorkOS) ====================
+// Phase 1 of the WorkOS migration is ADDITIVE ONLY. Every field added below is
+// nullable and nothing reads it yet. See docs/WORKOS_MIGRATION_APPROACH.md.
+//
+// Ownership rule once this is live: `organizationId` is the AUTHORIZATION key.
+// `userId` on a resource means "who authored it", never "who may see it".
+
+model Organization {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  workosOrgId String   @unique
+  name        String
+  // 'personal' = the implicit org every solo signup gets, so that no resource
+  // in the system is ever org-less. 'school' | 'coaching' = real tenants.
+  type        String   @default("personal")
+
+  // For type='personal' only: the User this org was created for. This exists so
+  // the backfill can find "does this user already have a personal org?" without
+  // going through Membership — memberships can't be created until the WorkOS
+  // user import has run, and without this field a re-run would create a second
+  // personal org for every user. Null for real (school/coaching) orgs.
+  ownerUserId String?  @db.ObjectId
+
+  // Fields lifted off CoachingData — an org, not a user, owns these.
+  contactPerson String?
+  contactEmail  String?
+  phone         String?
+  location      String?
+  targetExams   String[]
+
+  memberships   Membership[]
+  folders       Folder[]
+  tests         Test[]
+  students      Student[]
+  paperHistories PaperHistory[]
+  templateForms TemplateForm[]
+  slideTemplates SlideTemplate[]
+  questions     Question[]
+  schoolTestQuestions SchoolTestQuestion[]
+  academicYears AcademicYear[]
+  classes       Class[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([type])
+  @@index([ownerUserId])
+}
+
+model Membership {
+  id                 String       @id @default(auto()) @map("_id") @db.ObjectId
+  workosMembershipId String       @unique
+  userId             String       @db.ObjectId
+  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId     String       @db.ObjectId
+  organization       Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // MIRROR of the WorkOS org role slug. WorkOS is the source of truth — this
+  // copy exists only so we can join/list without an API call. Kept fresh by the
+  // organization_membership.* event handler. On conflict, WorkOS wins.
+  role   String @default("member") // 'admin' | 'teacher' | 'member'
+  status String @default("active") // 'active' | 'inactive' | 'pending'
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+  @@index([userId])
+}
+
 model User {
   id                String   @id @default(auto()) @map("_id") @db.ObjectId
   clerkUserId       String   @unique
+  // Nullable through phases 1-4; becomes required and replaces clerkUserId in
+  // phase 5. Do NOT rename clerkUserId — both coexist until cutover is proven.
+  //
+  // DELIBERATELY NOT @unique. On MongoDB, Prisma creates optional unique fields
+  // as a plain { unique: true } index with no `sparse` flag. MongoDB indexes a
+  // missing field as null, and a unique index permits only ONE document with a
+  // null — so `prisma db push` would fail on the very first two existing users,
+  // both of which lack this field. Reported as prisma/prisma#23870 and closed
+  // as not planned, so this is permanent, not a version to wait out.
+  //
+  // Uniqueness is instead guaranteed by (a) WorkOS, whose user ids are unique
+  // by construction, and (b) upserting on this field in our own provisioning
+  // code. Use findFirst({ where: { workosUserId } }) — findUnique needs @unique
+  // and will not compile against this field.
+  //
+  // If you want a DB-level guarantee too, scripts/workos/create-sparse-indexes.ts
+  // adds a partial unique index by hand. Read its warning first: `db push` can
+  // drop indexes it does not know about.
+  workosUserId      String?
   email             String   @unique
   name              String?
   profileImage      String?
+  // DEPRECATED once memberships land. Role is per-org, not per-person: the same
+  // human can be a teacher at one coaching centre and an admin at another.
+  // Read from Membership.role / the WorkOS session, not from here.
   role              String   @default("student")
+  memberships       Membership[]
   folders           Folder[]
-  collaborations    FolderCollaborator[]
-  changeLogs        FolderChangeLog[]
   teacherData       TeacherData?
   coachingData      CoachingData?
   studentData       StudentData?
   templateForms     TemplateForm[]
+  slideTemplates    SlideTemplate[]
   paperHistories    PaperHistory[]
   tests             Test[] @relation("TestCreator")
+  // Tombstone. A user deleted in WorkOS keeps their row so that questions,
+  // folders and tests they authored keep an author (doc §11) — the old Clerk
+  // webhook called prisma.user.delete(), which would cascade away real content.
+  // A non-null value means "cannot sign in, do not show in member lists".
+  deletedAt         DateTime?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+
+  // Non-unique — see the comment on workosUserId above.
+  @@index([workosUserId])
 }
 
 model TeacherData {
@@ -81,6 +181,22 @@ model CoachingData {
 
 model Question {
   id               String     @id @default(auto()) @map("_id") @db.ObjectId
+  // DECIDED (doc §13): global shared bank, and YOU CAN EDIT ONLY WHAT YOU
+  // UPLOADED.
+  //   null     = uploaded by admin. Readable by every org, writable by NO org.
+  //   non-null = uploaded by that org. Readable and writable by that org only.
+  // All existing rows stay null — the backfill deliberately does not touch this.
+  //
+  // Every write path must check:
+  //   question.organizationId === ctx.organizationId   (and null => admin only)
+  // There is no copy-on-write and no forking: shared questions are simply
+  // read-only, so a shared row can never drift between customers.
+  //
+  // NOTE: `flagged` below is a bare boolean on a shared row. Since orgs can no
+  // longer edit shared questions, flagging is their only way to report a bad
+  // one — worth promoting to a QuestionFlag table that records who and why.
+  organizationId   String?    @db.ObjectId
+  organization     Organization? @relation(fields: [organizationId], references: [id])
   question_number  Int
   file_name       String?
   question_text   String
@@ -115,6 +231,7 @@ model Question {
   @@index([flagged])
   @@index([section_name])
   @@index([question_text])
+  @@index([organizationId])
 }
 
 // School-test extracted questions live in their own collection so the shared
@@ -123,6 +240,10 @@ model Question {
 // re-crop from the original source page without re-uploading the PDF.
 model SchoolTestQuestion {
   id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  // Always org-private: these are extracted from a specific school's own paper.
+  // Unlike Question above, there is no "shared" interpretation here.
+  organizationId   String?  @db.ObjectId
+  organization     Organization? @relation(fields: [organizationId], references: [id])
   question_number  Int
   file_name        String?
   question_text    String
@@ -157,21 +278,26 @@ model SchoolTestQuestion {
   @@index([createdBy])
   @@index([question_number])
   @@index([createdAt])
+  @@index([organizationId])
 }
 
 model Folder {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
   name        String
+  // AUTHORIZATION key. Backfilled to the author's personal org in phase 2,
+  // becomes required in phase 5.
+  organizationId String? @db.ObjectId
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  // Author, not owner. Never filter on this alone.
   userId      String    @db.ObjectId
   user        User      @relation(fields: [userId], references: [id])
   questionRelations FolderQuestion[] @relation("FolderToFolderQuestion")
-  collaborators FolderCollaborator[]
-  changeLogs   FolderChangeLog[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   @@index([userId])
   @@index([name])
+  @@index([organizationId])
 }
 
 model FolderQuestion {
@@ -187,38 +313,39 @@ model FolderQuestion {
   @@unique([folderId, questionId]) // Prevent duplicates
 }
 
-model FolderCollaborator {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  folderId   String   @db.ObjectId
-  userId     String   @db.ObjectId
-  role       String   // 'owner', 'editor', 'viewer'
-  folder     Folder   @relation(fields: [folderId], references: [id])
-  user       User     @relation(fields: [userId], references: [id])
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
 
-  @@unique([folderId, userId])
-  @@index([folderId])
+
+// A slide-deck layout built in the PPT template maker. `slides` holds the deck as
+// JSON in the shape of types/slides.ts — boxes with x/y/w/h and a `bind` naming the
+// question field each one shows. Slides flagged `repeat` are stamped once per
+// selected question at generation time.
+//
+// Scoped like TemplateForm (doc §13): `organizationId` is the authorization key,
+// `userId` records who authored it. Nullable org so an admin-authored template can
+// exist outside any tenant, matching the Question convention.
+model SlideTemplate {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  organizationId String?       @db.ObjectId
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  userId         String        @db.ObjectId
+  user           User          @relation(fields: [userId], references: [id])
+  name           String
+  themeId        String        @default("midnight")
+  slides         Json
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
   @@index([userId])
-}
-
-model FolderChangeLog {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  folderId   String   @db.ObjectId
-  userId     String   @db.ObjectId
-  action     String   // 'rename', 'add_question', 'remove_question', 'reorder', 'add_collaborator', 'remove_collaborator'
-  details    String   // JSON string with action-specific details
-  folder     Folder   @relation(fields: [folderId], references: [id])
-  user       User     @relation(fields: [userId], references: [id])
-  createdAt  DateTime @default(now())
-
-  @@index([folderId])
-  @@index([userId])
-  @@index([createdAt])
+  @@index([organizationId])
+  @@index([name])
 }
 
 model TemplateForm {
     id                  String    @id   @default(auto())    @map("_id")    @db.ObjectId
+    organizationId      String?   @db.ObjectId
+    organization        Organization? @relation(fields: [organizationId], references: [id])
+    // NOTE: pre-existing inconsistency — this is a plain String, not @db.ObjectId,
+    // unlike every other userId in the schema. Left as-is to keep phase 1 additive.
     userId              String
     user                User      @relation(fields: [userId], references: [id])
     templateName        String
@@ -236,10 +363,13 @@ model TemplateForm {
     updatedAt DateTime  @updatedAt
 
     @@index([userId])
+    @@index([organizationId])
 }
 
 model PaperHistory {
     id          String   @id @default(auto()) @map("_id") @db.ObjectId
+    organizationId String? @db.ObjectId
+    organization   Organization? @relation(fields: [organizationId], references: [id])
     userId      String   @db.ObjectId
     user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
     title       String
@@ -258,6 +388,7 @@ model PaperHistory {
 
     @@index([userId])
     @@index([createdAt])
+    @@index([organizationId])
 }
 
 model PaperHistoryQuestion {
@@ -286,6 +417,15 @@ model Test {
   subject     String
   duration    Int
   totalMarks  Int
+  organizationId String?   @db.ObjectId
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  // Which class sat this test. NULLABLE ON PURPOSE and permanently so — tests
+  // created before classes existed have none, and a teacher may legitimately
+  // set a paper without tying it to one roster. When it IS set, the OMR scanner
+  // can load that roster and resolve a detected roll number to a real student
+  // instead of asking the teacher to retype a name per sheet.
+  classId     String?      @db.ObjectId
+  class       Class?       @relation(fields: [classId], references: [id])
   createdBy   String       @db.ObjectId
   creator     User         @relation("TestCreator", fields: [createdBy], references: [id])
   questions   TestQuestion[]
@@ -295,6 +435,8 @@ model Test {
 
   @@index([createdBy])
   @@index([subject])
+  @@index([organizationId])
+  @@index([classId])
 }
 
 model TestQuestion {
@@ -319,20 +461,163 @@ model TestQuestion {
   @@index([schoolTestQuestionId])
 }
 
+// ==================== ROSTER: YEARS, CLASSES, ENROLLMENTS ====================
+// Phase 1 of the roster migration is ADDITIVE ONLY. These models are new and
+// empty; nothing reads them yet. See docs/roster-problem.html and T-08.
+//
+// THE PROBLEM THEY SOLVE. `Student.className` and `Student.rollNumber` are
+// strings on the person, so a class has no existence until someone types it on
+// an OMR sheet, and promoting a student in April is impossible to do correctly:
+// updating className rewrites their history (last year's marks start claiming
+// the new class), and not updating it forks the child into two rows with two
+// disconnected histories.
+//
+// THE FIX. `Student` becomes the durable person and never changes class.
+// `Enrollment` records "this student, in this class, in this year, at this roll
+// number". Promotion writes a NEW enrollment and never touches the student or
+// their marks — which is why `StudentResponse.studentId` must keep pointing at
+// `Student`. "How did 10A do last year" becomes a join through the enrollments
+// for that class and year, not a stored value anyone has to keep rewriting.
+
+model AcademicYear {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  organizationId String   @db.ObjectId
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  /// Display label as the school writes it, e.g. "2026-27".
+  name           String
+  startsOn       DateTime?
+  endsOn         DateTime?
+  /// Exactly one per org should be true. Enforced in application code, not by
+  /// the schema — Mongo has no partial unique on a boolean worth the trouble.
+  isCurrent      Boolean  @default(false)
+
+  classes        Class[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, name])
+  @@index([organizationId, isCurrent])
+}
+
+model Class {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  organizationId String   @db.ObjectId
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  academicYearId String   @db.ObjectId
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+
+  /// The grade, e.g. "10". Kept separate from `section` so classes sort and
+  /// group sensibly; the backfill splits "10A" where the pattern is
+  /// unambiguous and leaves the whole string here where it isn't.
+  name           String
+  /// e.g. "A". Null for schools that don't stream.
+  section        String?
+  /// The teacher responsible for this class. Not an authorization key — org
+  /// membership decides access.
+  classTeacherId String?  @db.ObjectId
+
+  enrollments    Enrollment[]
+  tests          Test[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // A class exists once per year. Re-running the backfill, or a teacher
+  // creating "10 A" twice, hits this rather than silently forking the roster.
+  @@unique([organizationId, academicYearId, name, section])
+  @@index([organizationId])
+  @@index([academicYearId])
+}
+
+// The hinge of the whole model: a student's membership of one class for one
+// year. Everything that used to be denormalised onto `Student` lives here.
+model Enrollment {
+  id         String  @id @default(auto()) @map("_id") @db.ObjectId
+  studentId  String  @db.ObjectId
+  student    Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classId    String  @db.ObjectId
+  class      Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  /// Assigned per class per year — which is exactly why it does not belong on
+  /// `Student`. A student's roll number changes when they are promoted.
+  rollNumber String
+
+  /// active | promoted | transferred | left
+  /// Removing a student from a class sets this; it must never delete the row,
+  /// or their marks lose the context that explains them.
+  status     String  @default("active")
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // The constraint a school actually enforces: one roll number per class, and
+  // a student appears in a given class once.
+  @@unique([classId, rollNumber])
+  @@unique([classId, studentId])
+  @@index([studentId])
+  @@index([status])
+}
+
+
+// DECIDED: Option A. The roster row stays the durable identity that marks hang
+// off. It is NOT a User and does NOT require auth — OMR/offline flows keep
+// creating bare rows with no email, which is the normal case.
+//
+// DECIDED: students do not log in. `userId` / `email` below are the seam that
+// lets us turn logins on later for the subset who take online tests, without a
+// second migration. Both stay null for now.
 model Student {
   id          String           @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   rollNumber  String
   className   String
+  // Which school/coaching centre this roster row belongs to. Backfilled in
+  // phase 2 from the org of the tests they have responses for.
+  organizationId String?       @db.ObjectId
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  // Null today, and expected to stay null for the vast majority. Set only if
+  // this student is ever invited and accepts an account.
+  userId      String?          @db.ObjectId
+  email       String?
   responses   StudentResponse[]
+  /// The school's permanent identifier for this child — on the ID card, never
+  /// reissued. This is the durable key the model has been missing:
+  /// (class, roll) is temporary by definition, so it cannot anchor identity
+  /// across a promotion.
+  ///
+  /// DELIBERATELY NOT @@unique YET. A compound unique on
+  /// [organizationId, admissionNumber] would currently see 12 rows that are all
+  /// (null, null) and refuse to build — the same MongoDB null-handling trap as
+  /// User.workosUserId. Add the constraint once admission numbers are actually
+  /// populated, and re-run scripts/workos/create-sparse-indexes.ts afterwards.
+  admissionNumber String?
+  enrollments Enrollment[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
   @@index([className])
+  @@index([organizationId])
+  @@index([userId])
+  // Enabled 24 Aug 2026. check-student-duplicates.ts reported zero duplicates,
+  // and the test roster was cleared, so this built against an empty collection.
+  // This is the DB-level guarantee that a re-scanned OMR sheet updates the
+  // existing roster row instead of forking a second one for the same child.
+  @@unique([organizationId, className, rollNumber])
 }
 
 model StudentResponse {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  /// graded = a sheet was scanned and marked · absent = the student did not sit
+  /// the test.
+  ///
+  /// ABSENT IS NOT ZERO. An absent student has no score, and averaging a zero in
+  /// misrepresents both them and the class — a class of 40 where 8 were absent
+  /// would show an average roughly 20% lower than the paper actually produced.
+  /// So every aggregate filters to status = "graded"; absent rows exist only to
+  /// record that the student was accounted for, which is what makes
+  /// "28 of 42 scanned" trustworthy.
+  status       String   @default("graded")
   testId       String   @db.ObjectId
   test         Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
   studentId    String   @db.ObjectId
@@ -348,6 +633,7 @@ model StudentResponse {
 
   @@unique([testId, studentId])
   @@index([testId])
+  @@index([status])
   @@index([studentId])
   @@index([score])
   @@index([percentage])

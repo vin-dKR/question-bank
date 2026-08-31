@@ -1,8 +1,7 @@
 'use server';
 
 import prisma from '@/lib/prisma';
-import { auth } from '@clerk/nextjs/server';
-
+import { getAuthContext } from '@/lib/auth/session';
 export interface TopStudentEntry {
     studentId: string;
     studentName: string;
@@ -43,31 +42,35 @@ export const getTestAnalyticsSummary = async (
     testId: string,
 ): Promise<TestAnalyticsSummary> => {
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        // Access to a test is decided by ORGANISATION, not authorship. A caller
+        // with no organisation must match nothing at all — without this guard
+        // `where: { organizationId: null }` would match org-less rows instead.
+        if (!ctx?.organizationId) {
             throw new Error('Unauthorized');
         }
 
-        const user = await prisma.user.findUnique({
-            where: { clerkUserId },
-            select: { id: true },
-        });
-
-        if (!user) {
-            throw new Error('User not found');
-        }
-
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
         // Ownership check + overview fields + top-N responses in a single
         // round-trip. Prisma compiles this to one Mongo pipeline.
         const test = await prisma.test.findFirst({
-            where: { id: testId, createdBy: user.id },
+            where: { id: testId, organizationId: ctx.organizationId },
             select: {
                 id: true,
                 title: true,
                 subject: true,
                 totalMarks: true,
-                _count: { select: { responses: true } },
+                _count: { select: { responses: { where: { status: "graded" } } } },
+                    // Absent students carry a StudentResponse so the roster can
+                    // show they were accounted for, but they have no score.
+                    // Including them would drag every average down — see the
+                    // note on StudentResponse.status.
                 responses: {
+                    where: { status: "graded" },
                     orderBy: { score: 'desc' },
                     take: TOP_N,
                     select: {
@@ -112,7 +115,7 @@ export const getTestAnalyticsSummary = async (
         // Separate aggregation for averages / min — this keeps the primary
         // query bounded regardless of response volume.
         const agg = await prisma.studentResponse.aggregate({
-            where: { testId },
+            where: { testId, status: "graded" },
             _avg: { score: true, percentage: true },
             _max: { score: true },
             _min: { score: true },

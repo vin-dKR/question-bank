@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useUser } from "@clerk/nextjs";
+import { useCurrentUser } from "@/hooks/auth/useCurrentUser";
 import {
     ArrowRight,
     Sparkles,
@@ -94,7 +94,7 @@ const SIDEBAR_ITEMS = [
 ] as const;
 
 const Hero = () => {
-    const { user } = useUser();
+    const { user } = useCurrentUser();
     const [activeSubject, setActiveSubject] = useState<Subject>("all");
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(["p1", "m1"]));
 
@@ -204,7 +204,7 @@ const Hero = () => {
                             <aside className="hidden sm:flex w-14 md:w-52 flex-col border-r border-black/5 bg-white">
                                 <div className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2.5 border-b border-black/5">
                                     <video
-                                        src="/output.mp4"
+                                        src="/output.webm"
                                         autoPlay
                                         loop
                                         muted
@@ -246,25 +246,6 @@ const Hero = () => {
                                         );
                                     })}
                                 </nav>
-
-                                {/* Collaborators */}
-                                <div className="hidden md:block p-3 border-t border-black/5">
-                                    <p className="text-[10px] uppercase tracking-wide text-zinc-400 mb-2">Collaborators</p>
-                                    <div className="flex -space-x-1.5">
-                                        {[
-                                            { bg: "bg-gradient-to-br from-rose-400 to-orange-400", l: "P" },
-                                            { bg: "bg-gradient-to-br from-emerald-400 to-teal-400", l: "A" },
-                                            { bg: "bg-gradient-to-br from-indigo-400 to-violet-400", l: "R" },
-                                        ].map((a, i) => (
-                                            <div key={i} className={`h-6 w-6 rounded-full ring-2 ring-white ${a.bg} flex items-center justify-center text-[10px] font-semibold text-white`}>
-                                                {a.l}
-                                            </div>
-                                        ))}
-                                        <div className="h-6 w-6 rounded-full ring-2 ring-white bg-zinc-100 flex items-center justify-center text-[10px] text-zinc-500">
-                                            +5
-                                        </div>
-                                    </div>
-                                </div>
 
                                 {/* User footer */}
                                 <div className="hidden md:flex items-center gap-2 p-3 border-t border-black/5">

@@ -1,0 +1,786 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Roster Problem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+  /* ── Palette ─────────────────────────────────────────────────────────────
+     Drawn from the OMR sheet itself: sheets are printed in a "drop-out" ink
+     the scanner is built to ignore, on near-white stock, and marked in red
+     pen. Paper, graphite, drop-out cyan, marking red.                       */
+  :root {
+    --paper:      #FBFBF9;
+    --surface:    #FFFFFF;
+    --surface-2:  #F4F5F2;
+    --ink:        #14181F;
+    --graphite:   #5A6472;
+    --graphite-2: #848D9A;
+    --rule:       #E3E4E0;
+    --rule-soft:  #EDEEEA;
+    --dropout:    #00808E;
+    --dropout-dim:#E2F2F3;
+    --mark:       #C33B33;
+    --mark-dim:   #FBEAE8;
+    --warn:       #9A6A12;
+    --warn-dim:   #FAF1DE;
+    --ok:         #2F6E4E;
+    --ok-dim:     #E6F1EA;
+
+    --measure: 68ch;
+    --f-display: "Archivo", ui-sans-serif, system-ui, sans-serif;
+    --f-body: "Newsreader", ui-serif, Georgia, serif;
+    --f-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:      #0F1216;
+      --surface:    #161A20;
+      --surface-2:  #1C2128;
+      --ink:        #E8EBE7;
+      --graphite:   #9AA3AF;
+      --graphite-2: #737D8A;
+      --rule:       #262C34;
+      --rule-soft:  #1E232A;
+      --dropout:    #3FC3D1;
+      --dropout-dim:#103034;
+      --mark:       #F0817A;
+      --mark-dim:   #331A19;
+      --warn:       #D9A94B;
+      --warn-dim:   #2B2313;
+      --ok:         #6BBF92;
+      --ok-dim:     #14271D;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper:      #0F1216;
+    --surface:    #161A20;
+    --surface-2:  #1C2128;
+    --ink:        #E8EBE7;
+    --graphite:   #9AA3AF;
+    --graphite-2: #737D8A;
+    --rule:       #262C34;
+    --rule-soft:  #1E232A;
+    --dropout:    #3FC3D1;
+    --dropout-dim:#103034;
+    --mark:       #F0817A;
+    --mark-dim:   #331A19;
+    --warn:       #D9A94B;
+    --warn-dim:   #2B2313;
+    --ok:         #6BBF92;
+    --ok-dim:     #14271D;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    margin: 0;
+    padding: 0 1.5rem 6rem;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: var(--measure); margin: 0 auto; }
+  .wide { max-width: 78rem; margin-inline: auto; }
+
+  /* ── Masthead ─────────────────────────────────────────────────────────── */
+  header.masthead {
+    max-width: var(--measure);
+    margin: 0 auto;
+    padding: 4.5rem 0 2.25rem;
+    border-bottom: 2px solid var(--ink);
+  }
+  .eyebrow {
+    font-family: var(--f-display);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--dropout);
+    margin: 0 0 1rem;
+  }
+  h1 {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: clamp(2.4rem, 7vw, 3.75rem);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+    margin: 0 0 1.1rem;
+  }
+  .standfirst {
+    font-size: 1.25rem;
+    line-height: 1.5;
+    color: var(--graphite);
+    margin: 0;
+    text-wrap: pretty;
+  }
+  .standfirst strong { color: var(--ink); font-weight: 600; }
+
+  /* ── Sections ─────────────────────────────────────────────────────────── */
+  section { margin-top: 4rem; }
+  h2 {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 1.75rem;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    text-wrap: balance;
+    margin: 0 0 0.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--rule);
+  }
+  h3 {
+    font-family: var(--f-display);
+    font-weight: 600;
+    font-size: 1.0625rem;
+    letter-spacing: -0.005em;
+    margin: 2.25rem 0 0.4rem;
+  }
+  .dek {
+    color: var(--graphite);
+    font-size: 1rem;
+    margin: 0 0 1.75rem;
+  }
+  p { margin: 0 0 1.05rem; text-wrap: pretty; }
+  strong { font-weight: 600; }
+  a { color: var(--dropout); text-underline-offset: 2px; }
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--dropout);
+    outline-offset: 3px;
+  }
+
+  code {
+    font-family: var(--f-mono);
+    font-size: 0.855em;
+    background: var(--surface-2);
+    border: 1px solid var(--rule-soft);
+    border-radius: 3px;
+    padding: 0.08em 0.36em;
+    color: var(--ink);
+  }
+
+  ul, ol { margin: 0 0 1.05rem; padding-left: 1.3rem; }
+  li { margin-bottom: 0.45rem; }
+  li::marker { color: var(--graphite-2); }
+
+  /* ── Callout ──────────────────────────────────────────────────────────── */
+  .note {
+    border-left: 3px solid var(--dropout);
+    background: var(--dropout-dim);
+    padding: 1rem 1.25rem;
+    margin: 1.75rem 0;
+    font-size: 0.98rem;
+  }
+  .note.bad { border-left-color: var(--mark); background: var(--mark-dim); }
+  .note p:last-child { margin-bottom: 0; }
+  .note .lbl {
+    display: block;
+    font-family: var(--f-display);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dropout);
+    margin-bottom: 0.4rem;
+  }
+  .note.bad .lbl { color: var(--mark); }
+
+  /* ── Schema blocks ────────────────────────────────────────────────────── */
+  pre {
+    font-family: var(--f-mono);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 1.15rem 1.25rem;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    color: var(--ink);
+  }
+  pre code { background: none; border: none; padding: 0; font-size: inherit; }
+  .c-dim { color: var(--graphite-2); }
+  .c-key { color: var(--dropout); }
+  .c-bad { color: var(--mark); font-weight: 500; }
+  .c-ok  { color: var(--ok); font-weight: 500; }
+
+  /* ── Tables ───────────────────────────────────────────────────────────── */
+  .scroll { overflow-x: auto; margin: 1.75rem 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--f-display);
+    font-size: 0.9rem;
+    min-width: 34rem;
+  }
+  th {
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.6875rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--graphite);
+    border-bottom: 1.5px solid var(--ink);
+    padding: 0 0.9rem 0.55rem 0;
+    white-space: nowrap;
+  }
+  td {
+    border-bottom: 1px solid var(--rule-soft);
+    padding: 0.7rem 0.9rem 0.7rem 0;
+    vertical-align: top;
+    color: var(--ink);
+  }
+  td:last-child, th:last-child { padding-right: 0; }
+  tbody tr:last-child td { border-bottom: none; }
+
+  .pill {
+    display: inline-block;
+    font-family: var(--f-display);
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 0.18rem 0.5rem;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .p-crit { background: var(--mark-dim);  color: var(--mark); }
+  .p-warn { background: var(--warn-dim);  color: var(--warn); }
+  .p-ok   { background: var(--ok-dim);    color: var(--ok); }
+  .p-info { background: var(--dropout-dim); color: var(--dropout); }
+
+  /* ── Model diagram ────────────────────────────────────────────────────── */
+  .models {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 0.9rem;
+    margin: 1.75rem 0;
+  }
+  .model {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .model.key { border-color: var(--dropout); box-shadow: 0 0 0 1px var(--dropout); }
+  .model header {
+    font-family: var(--f-display);
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 0.6rem 0.85rem;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .model.key header { background: var(--dropout-dim); color: var(--dropout); }
+  .model ul {
+    list-style: none;
+    margin: 0;
+    padding: 0.6rem 0.85rem;
+    font-family: var(--f-mono);
+    font-size: 0.75rem;
+    line-height: 1.85;
+  }
+  .model li { margin: 0; color: var(--graphite); }
+  .model li b { color: var(--ink); font-weight: 500; }
+  .tag {
+    font-family: var(--f-display);
+    font-size: 0.5625rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--graphite-2);
+  }
+
+  /* ── Phase list (a real sequence, so it's numbered) ───────────────────── */
+  .phases { list-style: none; padding: 0; margin: 1.75rem 0 0; counter-reset: ph; }
+  .phases > li {
+    counter-increment: ph;
+    display: grid;
+    grid-template-columns: 2.4rem 1fr;
+    gap: 0 1rem;
+    padding: 1.15rem 0;
+    border-top: 1px solid var(--rule-soft);
+    margin: 0;
+  }
+  .phases > li::before {
+    content: counter(ph);
+    font-family: var(--f-mono);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--dropout);
+    padding-top: 0.15rem;
+  }
+  .phases h4 {
+    font-family: var(--f-display);
+    font-weight: 600;
+    font-size: 1rem;
+    margin: 0 0 0.25rem;
+  }
+  .phases p { margin: 0; font-size: 0.98rem; color: var(--graphite); }
+  .phases p strong { color: var(--ink); }
+
+  footer.end {
+    max-width: var(--measure);
+    margin: 5rem auto 0;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--ink);
+    font-family: var(--f-display);
+    font-size: 0.8125rem;
+    color: var(--graphite-2);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+<style>
+  html { -webkit-text-size-adjust: 100%; }
+  img, svg { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+
+
+<header class="masthead">
+  <p class="eyebrow">Eduents · Architecture assessment</p>
+  <h1>The Roster Problem</h1>
+  <p class="standfirst">
+    Classes, yearly promotion, roster-driven OMR scanning, and student logins that
+    already know a child's history — <strong>all four are blocked by the same
+    line in the schema.</strong> Fix that one thing and they stop being four
+    features and become one.
+  </p>
+</header>
+
+<div class="wrap">
+
+<section>
+  <h2>Where the product stands</h2>
+  <p class="dek">The examination domain, as it exists today.</p>
+
+  <p>
+    A teacher creates a <code>Test</code>, generates an OMR sheet, scans filled sheets,
+    and gets analytics. A <code>Student</code> is a bare roster row — it is not a
+    <code>User</code> and has no login, which is correct and deliberate: marks are
+    entered by the teacher, not the child.
+  </p>
+
+  <div class="models">
+    <div class="model">
+      <header>Test <span class="tag">exam</span></header>
+      <ul>
+        <li><b>title</b>, subject, totalMarks</li>
+        <li><b>organizationId</b></li>
+        <li>createdBy → User</li>
+        <li class="c-bad">no class link</li>
+      </ul>
+    </div>
+    <div class="model key">
+      <header>Student <span class="tag">roster</span></header>
+      <ul>
+        <li><b>name</b></li>
+        <li class="c-bad"><b>className</b> — String</li>
+        <li class="c-bad"><b>rollNumber</b> — String</li>
+        <li>organizationId</li>
+        <li class="c-dim">userId? · email?</li>
+      </ul>
+    </div>
+    <div class="model">
+      <header>StudentResponse <span class="tag">marks</span></header>
+      <ul>
+        <li>testId → Test</li>
+        <li><b>studentId</b> → Student</li>
+        <li>score, percentage</li>
+        <li>answers → TestAnswer[]</li>
+      </ul>
+    </div>
+  </div>
+
+  <p>
+    The marks side is sound. <code>StudentResponse</code> hangs off the student and is
+    uniquely keyed on <code>(testId, studentId)</code>, so a re-scan updates rather than
+    duplicates. That's the right shape and it's worth keeping.
+  </p>
+</section>
+
+<section>
+  <h2>The root cause</h2>
+  <p class="dek">A class is not a thing. It's a string typed on every sheet.</p>
+
+  <p>
+    <code>className</code> and <code>rollNumber</code> are plain strings stored on the
+    person. There is no <code>Class</code> model, no <code>AcademicYear</code>, and no
+    enrollment relation. A class only comes into existence as a side effect of someone
+    scanning a sheet and typing <code>10A</code> into a box.
+  </p>
+
+  <p>Everything you want to build runs into this:</p>
+
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr><th>What you want</th><th>Why it can't work today</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Create a class, enroll students</td>
+          <td>A class has no existence before a test is scanned. The roster is a byproduct, not something you manage.</td>
+        </tr>
+        <tr>
+          <td>Promote students each year</td>
+          <td>Changing <code>className</code> rewrites history — see below. Not changing it forks the student.</td>
+        </tr>
+        <tr>
+          <td>Roster appears during OMR</td>
+          <td><code>Test</code> has no class link, so "who should have sat this?" is unanswerable.</td>
+        </tr>
+        <tr>
+          <td>Student logs in, sees past results</td>
+          <td>They'd claim one year's row and see one year's marks. The rest belongs to other rows.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note bad">
+    <span class="lbl">Already fixed today</span>
+    <p>
+      Both OMR paths matched a student on <code>{ name, rollNumber, className }</code> —
+      identity <em>including the name</em>. Since the name comes from OCR or retyping,
+      "Suraj Kumar", "suraj kumar" and "Suraj&nbsp;&nbsp;Kumar" each created a separate
+      roster row holding a slice of one child's marks. Identity is now
+      <code>(org, class, roll)</code> with the name as a mutable attribute. Your data
+      is clean — <strong>0 duplicates across 12 rows</strong> — so this was caught before
+      it did damage.
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2>What breaks in April</h2>
+  <p class="dek">The year rollover, traced through the current schema.</p>
+
+  <p>
+    Priya is roll 12 in class 10A. She sits three tests. In April she moves to 11A and
+    becomes roll 7. There are exactly two things the current model lets you do, and both
+    are wrong.
+  </p>
+
+<pre><code><span class="c-dim">// Option A — update the row</span>
+Student { name: "Priya", className: <span class="c-bad">"11A"</span>, rollNumber: <span class="c-bad">"7"</span> }
+   └─ StudentResponse ×3  <span class="c-bad">← her class-10 marks now claim she was in 11A</span>
+
+<span class="c-dim">   Last year's class analytics silently change. History is corrupted.</span>
+
+
+<span class="c-dim">// Option B — leave it, let the next scan create a row</span>
+Student { name: "Priya", className: "10A", rollNumber: "12" } ─ 3 responses
+Student { name: "Priya", className: <span class="c-bad">"11A"</span>, rollNumber: <span class="c-bad">"7"</span> } ─ new responses
+
+<span class="c-dim">   One child, two rows, two disconnected histories. Neither is complete.</span></code></pre>
+
+  <p>
+    This is the classic slowly-changing-dimension problem, and it has a deadline: it
+    becomes real the first April after you have customers. <strong>Anything built on top
+    of the current model has to be rebuilt after that.</strong>
+  </p>
+</section>
+
+<section>
+  <h2>The fix</h2>
+  <p class="dek">Separate the person from their place in a given year.</p>
+
+  <p>
+    <code>Student</code> becomes the durable person and never changes class. A new
+    <code>Enrollment</code> row records "this student, in this class, in this year, at
+    this roll number". Promotion writes a new enrollment; it never touches the student
+    or their marks.
+  </p>
+
+  <div class="models">
+    <div class="model">
+      <header>AcademicYear <span class="tag">new</span></header>
+      <ul>
+        <li><b>name</b> "2026–27"</li>
+        <li>startsOn, endsOn</li>
+        <li>isCurrent</li>
+        <li>organizationId</li>
+      </ul>
+    </div>
+    <div class="model">
+      <header>Class <span class="tag">new</span></header>
+      <ul>
+        <li><b>name</b> "10", <b>section</b> "A"</li>
+        <li>academicYearId</li>
+        <li>classTeacherId?</li>
+        <li>organizationId</li>
+      </ul>
+    </div>
+    <div class="model key">
+      <header>Enrollment <span class="tag">new · the hinge</span></header>
+      <ul>
+        <li>studentId → Student</li>
+        <li>classId → Class</li>
+        <li><b>rollNumber</b></li>
+        <li>status</li>
+      </ul>
+    </div>
+    <div class="model">
+      <header>Student <span class="tag">changed</span></header>
+      <ul>
+        <li><b>fullName</b></li>
+        <li class="c-ok"><b>admissionNumber</b></li>
+        <li class="c-dim">userId? · email?</li>
+        <li class="c-bad">– className</li>
+        <li class="c-bad">– rollNumber</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Three properties that matter</h3>
+
+  <p>
+    <strong>Roll number moves to <code>Enrollment</code>.</strong> A roll number is
+    assigned per class per year — it was never a property of a person. Unique on
+    <code>(classId, rollNumber)</code>, which is the real constraint a school enforces.
+  </p>
+
+  <p>
+    <strong><code>admissionNumber</code> becomes the durable key.</strong> Every school
+    already issues one; it's on the ID card and never changes. That is the stable
+    identifier the current model lacks — <code>(class, roll)</code> is temporary by
+    definition, so it can't anchor identity.
+  </p>
+
+  <p>
+    <strong><code>StudentResponse</code> doesn't move.</strong> It keeps pointing at
+    <code>Student</code>, so marks survive promotion untouched. To ask "how did 10A do
+    last year", join through the enrollments for that class and year. History becomes a
+    query, not a stored state you have to keep rewriting.
+  </p>
+
+  <div class="note">
+    <span class="lbl">Why this unlocks student login for free</span>
+    <p>
+      The nullable <code>Student.userId</code> seam already exists. Once identity is
+      durable, a student who claims their roster row inherits <em>everything</em>
+      automatically — every test, every OMR scan, every analytic, across all years —
+      because it was all hanging off one <code>Student</code> the whole time. Without
+      this fix they'd claim one row and see one year. The login feature isn't a separate
+      project; it's a consequence.
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2>What the teacher actually sees</h2>
+  <p class="dek">The OMR flow, before and after.</p>
+
+  <p>
+    Today a teacher retypes name, class and roll for <em>every single sheet</em>. Roll is
+    auto-filled from detection; name and class never are. With 42 sheets that's 42 rounds
+    of manual entry and 42 chances to fork a roster row.
+  </p>
+
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr><th>Step</th><th>Today</th><th>With enrollments</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Start</td>
+          <td>Pick a test</td>
+          <td>Pick a test — its class is already known</td>
+        </tr>
+        <tr>
+          <td>Per sheet</td>
+          <td>Type name, class, roll</td>
+          <td>Detected roll matches an enrollment; name fills itself</td>
+        </tr>
+        <tr>
+          <td>Unmatched roll</td>
+          <td>Silently creates a new student</td>
+          <td>Flagged: "Roll 19 isn't in 10A" — add or correct</td>
+        </tr>
+        <tr>
+          <td>Progress</td>
+          <td>None</td>
+          <td>"28 of 42 scanned · 14 pending"</td>
+        </tr>
+        <tr>
+          <td>Absentees</td>
+          <td>Indistinguishable from unscanned</td>
+          <td>Mark absent explicitly</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    The endpoint for this already exists: <code>/api/students/suggest</code> now accepts
+    <code>?className=</code> and returns a whole roster, org-scoped. It's the seam the new
+    UI plugs into.
+  </p>
+</section>
+
+<section>
+  <h2>Everything else worth fixing</h2>
+  <p class="dek">Ordered by what hurts soonest as you add customers.</p>
+
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr><th>Issue</th><th>Impact</th><th>State</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Collab WebSocket has no authorization</strong><br>
+            <span style="color:var(--graphite)">Anyone with a folderId joined the room. Fixed with a signed
+            handshake token, then the whole collaboration feature was removed.</span></td>
+          <td>Cross-tenant data leak</td>
+          <td><span class="pill p-ok">Removed</span></td>
+        </tr>
+        <tr>
+          <td><strong>OMR checker had no auth</strong><br>
+            <span style="color:var(--graphite)">Anyone could post or overwrite marks for any test.</span></td>
+          <td>Mark tampering</td>
+          <td><span class="pill p-ok">Fixed</span></td>
+        </tr>
+        <tr>
+          <td><strong>Roster endpoint leaked every school's students</strong><br>
+            <span style="color:var(--graphite)">Unauthenticated name search across the whole table.</span></td>
+          <td>PII exposure</td>
+          <td><span class="pill p-ok">Fixed</span></td>
+        </tr>
+        <tr>
+          <td><strong><code>GET /api/questions</code> is unauthenticated</strong><br>
+            <span style="color:var(--graphite)">Serves the entire 5,445-question bank to any caller.</span></td>
+          <td>Your main asset is scrapeable</td>
+          <td><span class="pill p-warn">Decision</span></td>
+        </tr>
+        <tr>
+          <td><strong>Satellite apps ride on ambient cookies</strong><br>
+            <span style="color:var(--graphite)"><code>QUESTION_API_KEY</code> exists but isn't adopted.</span></td>
+          <td>Breaks as browsers tighten</td>
+          <td><span class="pill p-warn">Ready</span></td>
+        </tr>
+        <tr>
+          <td><strong>No preferences model</strong><br>
+            <span style="color:var(--graphite)">Theme, language, notifications persist nowhere.</span></td>
+          <td>Settings can't be finished</td>
+          <td><span class="pill p-info">Scoped</span></td>
+        </tr>
+        <tr>
+          <td><strong><code>TeacherData.school</code> duplicates <code>Organization.name</code></strong></td>
+          <td>Two names that will drift</td>
+          <td><span class="pill p-info">Scoped</span></td>
+        </tr>
+        <tr>
+          <td><strong>Phase-2 backfill not yet run</strong><br>
+            <span style="color:var(--graphite)">38 <code>TemplateForm</code> rows still hold Clerk ids.</span></td>
+          <td>Old templates invisible to owners</td>
+          <td><span class="pill p-crit">Blocking</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>Sequence</h2>
+  <p class="dek">Each phase ships on its own and leaves the product working.</p>
+
+  <ol class="phases">
+    <li>
+      <div>
+        <h4>Finish the WorkOS cutover</h4>
+        <p>Run the user import and the backfill. <strong>Not optional</strong> — it's what
+          remaps those <code>TemplateForm</code> rows and stamps <code>organizationId</code>
+          everywhere. Everything below assumes org scoping works.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h4><s>Close the WebSocket hole</s> — struck</h4>
+        <p>Done then deleted: the handshake was secured with a signed token, and the
+          collaboration feature was subsequently removed altogether. Folders are
+          single-owner. If team sharing returns it should be org-scoped rather than a
+          per-folder ACL.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h4>Add AcademicYear, Class, Enrollment</h4>
+        <p>Additive and nullable — nothing reads them yet. Backfill a class per distinct
+          <code>(org, className)</code> into a current year, and one enrollment per student
+          at their existing roll.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h4>Class management UI</h4>
+        <p>Create classes, enroll students, import a roster from CSV. This is the first
+          moment a teacher can set up <em>before</em> scanning anything — the shift from
+          roster-as-byproduct to roster-as-record.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h4>Roster-driven OMR</h4>
+        <p>Link <code>Test</code> to a class. Detected roll resolves to an enrollment,
+          name fills itself, unmatched rolls get flagged, progress is visible. The manual
+          retyping disappears.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h4>Year rollover</h4>
+        <p>Bulk-promote a class into the next year's class with new roll numbers. One
+          screen, run once a year, and the feature that makes the whole model pay off.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h4>Student accounts</h4>
+        <p>Per-class join code — student signs up with any email and enters the code to
+          claim their roster row. Sidesteps the "half of them have no email" problem, and
+          their full history is already attached.</p>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<section>
+  <h2>The one thing to take away</h2>
+  <p>
+    Phases 3 through 7 are one project, not five. They all follow from moving class and
+    roll number off the student and onto an enrollment. Every month that ships on the
+    current model is a month of data that has to be migrated later — and the deadline
+    isn't arbitrary. It's the first April you have paying customers.
+  </p>
+</section>
+
+</div>
+
+<footer class="end">
+  Assessment · 23 August 2026 · Companion to <code>docs/WORKOS_MIGRATION_APPROACH.md</code>
+</footer>
+
+</body>
+</html>

@@ -6,6 +6,7 @@ import { DialogCloseButton } from '../DialogCloseButton';
 import { useQuestionBankContext, useQuestionsList } from '@/lib/context/QuestionBankContext';
 import { usePDFGeneratorContext } from '@/lib/context/PDFGeneratorContext';
 import PDFGenerator from '../pdf/pdfPreview';
+import SlideDeckDialog from '../slides/SlideDeckDialog';
 
 interface SelectedQuestionsActionsProps {
     showPrintBtn: boolean;
@@ -38,11 +39,18 @@ export default function SelectedQuestionsActions({ showPrintBtn }: SelectedQuest
             return;
         }
 
+        // question_image has to travel with the handoff — the create-test preview
+        // renders straight from this payload, so dropping it here is why figures
+        // vanished from the live PDF preview even though the bank shows them.
         const questionsData = selectedQuestions.map((q, index) => ({
             id: q.id,
             question_text: q.question_text,
+            question_image: q.question_image ?? null,
+            isOptionImage: q.isOptionImage ?? false,
+            option_images: q.option_images ?? [],
             options: q.options,
             answer: q.answer || '',
+            question_type: q.question_type || null,
             marks: 1,
             questionNumber: index + 1,
         }));
@@ -113,6 +121,13 @@ export default function SelectedQuestionsActions({ showPrintBtn }: SelectedQuest
                             />
                         </div>
                     )}
+
+                    <div className="w-full md:w-auto">
+                        <SlideDeckDialog
+                            selectedQuestions={selectedQuestions}
+                            deckName={institution}
+                        />
+                    </div>
 
                     <div className="w-full md:w-auto">
                         <DialogCloseButton selectedQuestions={selectedQuestions} />

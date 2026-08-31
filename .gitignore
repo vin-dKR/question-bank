@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/.venv-omr
 /.pnp
 .pnp.*
 .yarn/*
@@ -27,6 +28,8 @@
 # production
 /build
 /generated/prisma
+__pycache__/
+*.pyc
 
 # misc
 .DS_Store
@@ -47,3 +50,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Prisma schema backup taken during the WorkOS migration — local only
+prisma/schema.prisma.bak
+
+# Rollback snapshots written before a bulk database edit. They hold real
+# question content and belong on disk, not in the repository.
+*-backup-*.json
+.integrity-baseline.json

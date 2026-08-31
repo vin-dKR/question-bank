@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { QuestionItem } from "./QuestionItem";
 import { toast } from "sonner";
-import { updateFolderQuestionsWithOrder } from "@/actions/collaboration/folder";
+import { updateFolderQuestionsWithOrder } from "@/actions/drafts/folderAccess";
 import { useState, type Dispatch, type SetStateAction } from "react";
 
 interface QuestionListProps {
@@ -13,7 +13,6 @@ interface QuestionListProps {
     setQuestionToRemove: Dispatch<SetStateAction<string | null>>;
     setSelectedFolder: Dispatch<SetStateAction<LocalFetchDraft | null>>;
     onRemove: (questionId: string) => Promise<void>;
-    sendMessage: (message: CollaborationMessage) => void;
 }
 
 export function QuestionList({
@@ -23,7 +22,6 @@ export function QuestionList({
     setQuestionToRemove,
     setSelectedFolder,
     onRemove,
-    sendMessage,
 }: QuestionListProps) {
     const [dragIndex, setDragIndex] = useState<number | null>(null);
     const [orderLoading, setOrderLoading] = useState<boolean>(false);
@@ -50,13 +48,6 @@ export function QuestionList({
             );
             if (success.success) {
                 toast.success("Question order saved successfully");
-                sendMessage({
-                    type: "update",
-                    folderId: selectedFolder.id,
-                    userId: "current",
-                    userName: "You",
-                    data: { action: "reorder", questionCount: selectedFolder.questions.length },
-                });
             } else {
                 toast.error(success.error || "Failed to save order");
             }

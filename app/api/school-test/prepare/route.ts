@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getAuthContext } from '@/lib/auth/session';
 import { pagesFromSingle, previewImage, type PipelineInput } from "@/lib/school-test/pipeline";
 import type { PreparedPage } from "@/lib/school-test/types";
 
@@ -13,8 +13,8 @@ const MAX_SIZE = 20 * 1024 * 1024;
 const RASTERIZE_DPI = 150;
 
 export async function POST(req: NextRequest) {
-    const { userId } = await auth();
-    if (!userId) return new Response("Unauthorized", { status: 401 });
+    const ctx = await getAuthContext();
+    if (!ctx) return new Response("Unauthorized", { status: 401 });
 
     const form = await req.formData();
     const files = form.getAll("file").filter((v): v is File => v instanceof File);

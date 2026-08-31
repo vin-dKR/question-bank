@@ -1,12 +1,12 @@
 'use client';
 
 import { toast } from 'sonner';
-import { useUser } from '@clerk/nextjs';
+import { useCurrentUser } from '@/hooks/auth/useCurrentUser';
 import { useEffect, useMemo, useState } from 'react';
 import { getUserRole } from '@/actions/onBoarding/getUserRole';
 
 export const useUserRole = () => {
-    const { user, isLoaded } = useUser();
+    const { user, isLoaded } = useCurrentUser();
     const [roleState, setRoleState] = useState<UserRoleState>({
         role: null,
         isLoading: false,
@@ -22,7 +22,7 @@ export const useUserRole = () => {
 
             try {
                 setRoleState((prev) => ({ ...prev, isLoading: true, error: null }))
-                const userRole = await getUserRole(user.id)
+                const userRole = await getUserRole()
                 setRoleState((prev) => ({ ...prev, isLoading: false, role: userRole, error: null }))
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Failed to fetch user role';

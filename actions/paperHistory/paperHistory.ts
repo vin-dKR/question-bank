@@ -1,8 +1,21 @@
 'use server';
 
 import prisma from '@/lib/prisma';
-import { auth } from '@clerk/nextjs/server';
+import { getAuthContext } from '@/lib/auth/session';
 
+/**
+ * Generated papers, scoped by ORGANISATION (doc §1).
+ *
+ * These used to be filtered by `userId` alone, which meant two things at once:
+ * a colleague in the same institution couldn't see a paper you'd generated for
+ * it, and — once a teacher belongs to two institutions — every paper they'd ever
+ * made showed up under both. `userId` stays on the row as authorship; it is not
+ * what decides who may see it.
+ *
+ * A caller with no organisation must match NOTHING. Left to itself,
+ * `where: { organizationId: undefined }` drops the condition entirely and
+ * returns every row in the collection, so each entry point guards first.
+ */
 export const savePaperHistory = async (data: PaperHistoryData): Promise<{ success: boolean; id?: string; error?: string }> => {
     if (!data.isContinue) {
         return {
@@ -12,26 +25,34 @@ export const savePaperHistory = async (data: PaperHistoryData): Promise<{ succes
     }
 
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        if (!ctx?.organizationId) {
             throw new Error('Unauthorized');
         }
 
-        const user = await prisma.user.findUnique({
-            where: { clerkUserId },
-            select: { id: true },
-        });
-
-        if (!user) {
-            throw new Error('User not found');
-        }
-
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
         const paperHistory = await prisma.paperHistory.create({
             data: {
+                // Authorship. Access is decided by organizationId below.
                 userId: user.id,
+                // The AUTHORIZATION key. Without it the paper is invisible to
+                // the reads below — including to the person who just made it.
+                organizationId: ctx.organizationId,
                 title: data.title,
                 description: data.description,
-                institution: data.institution,
+                // Falls back to the ACTIVE organisation's name. The institution
+                // was previously typed independently into four places that never
+                // agreed (doc §4, T-20); the org is the single source of truth,
+                // and a teacher at two institutions gets the right header on the
+                // paper without having to remember which one they're in.
+                institution:
+                    data.institution ||
+                    ctx.memberships.find((m) => m.isActive)?.name ||
+                    data.institution,
                 subject: data.subject,
                 marks: data.marks,
                 time: data.time,
@@ -60,22 +81,18 @@ export const savePaperHistory = async (data: PaperHistoryData): Promise<{ succes
 
 export const getPaperHistories = async (limit: number = 10): Promise<PaperHistoryWithQuestions[]> => {
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        if (!ctx?.organizationId) {
             throw new Error('Unauthorized');
         }
 
-        const user = await prisma.user.findUnique({
-            where: { clerkUserId },
-            select: { id: true },
-        });
-
-        if (!user) {
-            throw new Error('User not found');
-        }
-
+        // getAuthContext() has already resolved — and if necessary created —
+        // this user, so ctx.userId is authoritative. Re-querying it was a
+        // leftover from the Clerk migration, where this lookup translated a
+        // Clerk id into a local one. That translation no longer exists.
+        const user = { id: ctx.userId };
         const paperHistories = await prisma.paperHistory.findMany({
-            where: { userId: user.id },
+            where: { organizationId: ctx.organizationId },
             include: {
                 questions: {
                     orderBy: { questionNumber: 'asc' },
@@ -108,24 +125,15 @@ export const getPaperHistories = async (limit: number = 10): Promise<PaperHistor
 
 export const getPaperHistoryById = async (id: string): Promise<PaperHistoryWithQuestions | null> => {
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        if (!ctx?.organizationId) {
             throw new Error('Unauthorized');
-        }
-
-        const user = await prisma.user.findUnique({
-            where: { clerkUserId },
-            select: { id: true },
-        });
-
-        if (!user) {
-            throw new Error('User not found');
         }
 
         const paperHistory = await prisma.paperHistory.findFirst({
             where: {
                 id,
-                userId: user.id,
+                organizationId: ctx.organizationId,
             },
             include: {
                 questions: {
@@ -157,24 +165,15 @@ export const getPaperHistoryById = async (id: string): Promise<PaperHistoryWithQ
 
 export const deletePaperHistory = async (id: string): Promise<{ success: boolean; error?: string }> => {
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) {
+        const ctx = await getAuthContext();
+        if (!ctx?.organizationId) {
             throw new Error('Unauthorized');
-        }
-
-        const user = await prisma.user.findUnique({
-            where: { clerkUserId },
-            select: { id: true },
-        });
-
-        if (!user) {
-            throw new Error('User not found');
         }
 
         await prisma.paperHistory.deleteMany({
             where: {
                 id,
-                userId: user.id,
+                organizationId: ctx.organizationId,
             },
         });
 
